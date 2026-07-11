@@ -7,7 +7,8 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'GET') return sendJson(res, 405, { error: 'method not allowed' });
   try {
     const rows = await getRecentAnnouncements(20);
-    res.setHeader('Cache-Control', 'no-store');
+    // Vercel CDN 엣지에서 15초간 캐싱하여 DB 부하 방지
+    res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=30');
     return sendJson(res, 200, { items: rows || [] });
   } catch (e) {
     console.error('announcements error', e);

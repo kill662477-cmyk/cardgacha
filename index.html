@@ -69,10 +69,10 @@
   .ticker::before{content:"RARE DROP";position:absolute;left:0;top:0;bottom:0;z-index:2;display:flex;align-items:center;
     padding:0 12px;font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent-ink);
     background:var(--accent)}
-  .ticker-track{display:inline-flex;gap:34px;padding-left:110px;will-change:transform;
-    animation:marquee 34s linear infinite}
+  .ticker-track{display:inline-flex;gap:34px;will-change:transform;
+    animation:marquee 25s linear infinite}
   .ticker:hover .ticker-track{animation-play-state:paused}
-  @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @keyframes marquee{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
   .ti{font-size:13px;font-weight:600;color:var(--muted);flex:0 0 auto}
   .ti b{font-weight:800}
   .ti .who{color:var(--txt)}
@@ -679,10 +679,18 @@ async function fetchAnn(){
 }
 function renderTicker(){
   const bar=$('#ticker'),track=$('#tickerTrack');
+  // 10분이 지난 오래된 로컬 항목들도 지워줌 (새로고침 안했을때 대비)
+  const tenMinsAgo = Date.now() - 10 * 60 * 1000;
+  ANN = ANN.filter(a => new Date(a.created_at || 0).getTime() > tenMinsAgo);
+
   if(!ANN.length){bar.classList.add('hidden');return;}
   bar.classList.remove('hidden');
   if(REDUCE){bar.classList.add('reduce');track.innerHTML=annText(ANN[annRotI%ANN.length]);return;}
-  const html=ANN.map(annText).join('');track.innerHTML=html+html; // 이음새 없는 루프용 2배
+  const html=ANN.map(annText).join('');
+  track.innerHTML=html;
+  // 글자 수에 비례해서 속도 조절 (대략 50px 당 1초)
+  const duration = Math.max(15, track.scrollWidth / 50);
+  track.style.animationDuration = duration + 's';
 }
 
 /* ---- collection ---- */

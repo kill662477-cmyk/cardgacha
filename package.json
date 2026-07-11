@@ -1,0 +1,13 @@
+{
+  "name": "card-gacha",
+  "version": "1.0.0",
+  "private": true,
+  "description": "캄몬스타즈 크루 카드뽑기(가챠) 웹앱",
+  "scripts": {
+    "build-cards": "node scripts/build-cards.js",
+    "dev": "node scripts/dev-server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

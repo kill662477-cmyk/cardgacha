@@ -1,0 +1,524 @@
+[
+  {
+    "id": "arisongi-1",
+    "member": "아리송이",
+    "file": "arisongi-1.avif",
+    "rarity": "HR"
+  },
+  {
+    "id": "arisongi-2",
+    "member": "아리송이",
+    "file": "arisongi-2.avif",
+    "rarity": "RR"
+  },
+  {
+    "id": "arisongi-3",
+    "member": "아리송이",
+    "file": "arisongi-3.avif",
+    "rarity": "U"
+  },
+  {
+    "id": "baeseongheum-1",
+    "member": "배성흠",
+    "file": "baeseongheum-1.avif",
+    "rarity": "C"
+  },
+  {
+    "id": "baeseongheum-2",
+    "member": "배성흠",
+    "file": "baeseongheum-2.webp",
+    "rarity": "C"
+  },
+  {
+    "id": "baeseongheum-3",
+    "member": "배성흠",
+    "file": "baeseongheum-3.jpg",
+    "rarity": "U"
+  },
+  {
+    "id": "byeonhyeonje-1",
+    "member": "변현제",
+    "file": "byeonhyeonje-1.avif",
+    "rarity": "R"
+  },
+  {
+    "id": "byeonhyeonje-2",
+    "member": "변현제",
+    "file": "byeonhyeonje-2.webp",
+    "rarity": "C"
+  },
+  {
+    "id": "byeonhyeonje-3",
+    "member": "변현제",
+    "file": "byeonhyeonje-3.jpg",
+    "rarity": "C"
+  },
+  {
+    "id": "chiri-1",
+    "member": "치리",
+    "file": "chiri-1.avif",
+    "rarity": "C"
+  },
+  {
+    "id": "chiri-2",
+    "member": "치리",
+    "file": "chiri-2.avif",
+    "rarity": "CHR"
+  },
+  {
+    "id": "chiri-3",
+    "member": "치리",
+    "file": "chiri-3.webp",
+    "rarity": "RRR"
+  },
+  {
+    "id": "chiri-4",
+    "member": "치리",
+    "file": "chiri-4.avif",
+    "rarity": "R"
+  },
+  {
+    "id": "chiri-5",
+    "member": "치리",
+    "file": "chiri-5.avif",
+    "rarity": "C"
+  },
+  {
+    "id": "haetsal-1",
+    "member": "햇살",
+    "file": "haetsal-1.avif",
+    "rarity": "U"
+  },
+  {
+    "id": "haetsal-2",
+    "member": "햇살",
+    "file": "haetsal-2.avif",
+    "rarity": "AR"
+  },
+  {
+    "id": "haetsal-3",
+    "member": "햇살",
+    "file": "haetsal-3.jpg",
+    "rarity": "U"
+  },
+  {
+    "id": "haetsal-4",
+    "member": "햇살",
+    "file": "haetsal-4.jpg",
+    "rarity": "AR"
+  },
+  {
+    "id": "imjoy-1",
+    "member": "임조이",
+    "file": "imjoy-1.avif",
+    "rarity": "HR"
+  },
+  {
+    "id": "imjoy-2",
+    "member": "임조이",
+    "file": "imjoy-2.avif",
+    "rarity": "RRR"
+  },
+  {
+    "id": "imjoy-3",
+    "member": "임조이",
+    "file": "imjoy-3.avif",
+    "rarity": "CHR"
+  },
+  {
+    "id": "imjoy-4",
+    "member": "임조이",
+    "file": "imjoy-4.avif",
+    "rarity": "UR"
+  },
+  {
+    "id": "imjoy-5",
+    "member": "임조이",
+    "file": "imjoy-5.avif",
+    "rarity": "UR"
+  },
+  {
+    "id": "jidongwon-1",
+    "member": "지동원",
+    "file": "jidongwon-1.avif",
+    "rarity": "U"
+  },
+  {
+    "id": "jidongwon-2",
+    "member": "지동원",
+    "file": "jidongwon-2.webp",
+    "rarity": "C"
+  },
+  {
+    "id": "jidongwon-3",
+    "member": "지동원",
+    "file": "jidongwon-3.webp",
+    "rarity": "C"
+  },
+  {
+    "id": "jidudu-1",
+    "member": "지두두",
+    "file": "jidudu-1.jpg",
+    "rarity": "FUR"
+  },
+  {
+    "id": "jidudu-2",
+    "member": "지두두",
+    "file": "jidudu-2.avif",
+    "rarity": "SAR"
+  },
+  {
+    "id": "jidudu-3",
+    "member": "지두두",
+    "file": "jidudu-3.webp",
+    "rarity": "MUR"
+  },
+  {
+    "id": "jidudu-4",
+    "member": "지두두",
+    "file": "jidudu-4.avif",
+    "rarity": "R"
+  },
+  {
+    "id": "jidudu-5",
+    "member": "지두두",
+    "file": "jidudu-5.jpg",
+    "rarity": "SR"
+  },
+  {
+    "id": "jidudu-6",
+    "member": "지두두",
+    "file": "jidudu-6.jpg",
+    "rarity": "C"
+  },
+  {
+    "id": "jidudu-7",
+    "member": "지두두",
+    "file": "jidudu-7.jpg",
+    "rarity": "R"
+  },
+  {
+    "id": "jjiking-1",
+    "member": "찌킹",
+    "file": "jjiking-1.jpg",
+    "rarity": "C"
+  },
+  {
+    "id": "jjiking-2",
+    "member": "찌킹",
+    "file": "jjiking-2.webp",
+    "rarity": "U"
+  },
+  {
+    "id": "juharang-1",
+    "member": "주하랑",
+    "file": "juharang-1.avif",
+    "rarity": "U"
+  },
+  {
+    "id": "juharang-2",
+    "member": "주하랑",
+    "file": "juharang-2.avif",
+    "rarity": "UR"
+  },
+  {
+    "id": "juharang-3",
+    "member": "주하랑",
+    "file": "juharang-3.webp",
+    "rarity": "RR"
+  },
+  {
+    "id": "juharang-4",
+    "member": "주하랑",
+    "file": "juharang-4.avif",
+    "rarity": "SR"
+  },
+  {
+    "id": "juharang-5",
+    "member": "주하랑",
+    "file": "juharang-5.avif",
+    "rarity": "U"
+  },
+  {
+    "id": "juharang-6",
+    "member": "주하랑",
+    "file": "juharang-6.webp",
+    "rarity": "C"
+  },
+  {
+    "id": "kimmincheol-1",
+    "member": "김민철",
+    "file": "kimmincheol-1.avif",
+    "rarity": "C"
+  },
+  {
+    "id": "kimmincheol-2",
+    "member": "김민철",
+    "file": "kimmincheol-2.avif",
+    "rarity": "U"
+  },
+  {
+    "id": "kimmincheol-3",
+    "member": "김민철",
+    "file": "kimmincheol-3.webp",
+    "rarity": "R"
+  },
+  {
+    "id": "kimyunhwan-1",
+    "member": "김윤환",
+    "file": "kimyunhwan-1.avif",
+    "rarity": "MUR"
+  },
+  {
+    "id": "kimyunhwan-2",
+    "member": "김윤환",
+    "file": "kimyunhwan-2.webp",
+    "rarity": "FUR"
+  },
+  {
+    "id": "kimyunhwan-3",
+    "member": "김윤환",
+    "file": "kimyunhwan-3.avif",
+    "rarity": "MUR"
+  },
+  {
+    "id": "kimyunhwan-4",
+    "member": "김윤환",
+    "file": "kimyunhwan-4.avif",
+    "rarity": "FUR"
+  },
+  {
+    "id": "kimyunhwan-5",
+    "member": "김윤환",
+    "file": "kimyunhwan-5.avif",
+    "rarity": "MUR"
+  },
+  {
+    "id": "meonjin-1",
+    "member": "먼진",
+    "file": "meonjin-1.avif",
+    "rarity": "R"
+  },
+  {
+    "id": "meonjin-2",
+    "member": "먼진",
+    "file": "meonjin-2.avif",
+    "rarity": "U"
+  },
+  {
+    "id": "meonjin-3",
+    "member": "먼진",
+    "file": "meonjin-3.avif",
+    "rarity": "RR"
+  },
+  {
+    "id": "meonjin-4",
+    "member": "먼진",
+    "file": "meonjin-4.avif",
+    "rarity": "SR"
+  },
+  {
+    "id": "meonjin-5",
+    "member": "먼진",
+    "file": "meonjin-5.avif",
+    "rarity": "AR"
+  },
+  {
+    "id": "namdeokseon-1",
+    "member": "남덕선",
+    "file": "namdeokseon-1.avif",
+    "rarity": "R"
+  },
+  {
+    "id": "namdeokseon-2",
+    "member": "남덕선",
+    "file": "namdeokseon-2.avif",
+    "rarity": "AR"
+  },
+  {
+    "id": "namdeokseon-3",
+    "member": "남덕선",
+    "file": "namdeokseon-3.avif",
+    "rarity": "C"
+  },
+  {
+    "id": "namdeokseon-4",
+    "member": "남덕선",
+    "file": "namdeokseon-4.avif",
+    "rarity": "CHR"
+  },
+  {
+    "id": "namdeokseon-5",
+    "member": "남덕선",
+    "file": "namdeokseon-5.avif",
+    "rarity": "R"
+  },
+  {
+    "id": "namdeokseon-6",
+    "member": "남덕선",
+    "file": "namdeokseon-6.avif",
+    "rarity": "U"
+  },
+  {
+    "id": "nangni-1",
+    "member": "낭니",
+    "file": "nangni-1.avif",
+    "rarity": "CHR"
+  },
+  {
+    "id": "nangni-2",
+    "member": "낭니",
+    "file": "nangni-2.avif",
+    "rarity": "SR"
+  },
+  {
+    "id": "nangni-3",
+    "member": "낭니",
+    "file": "nangni-3.jpeg",
+    "rarity": "U"
+  },
+  {
+    "id": "nangni-4",
+    "member": "낭니",
+    "file": "nangni-4.jpeg",
+    "rarity": "SAR"
+  },
+  {
+    "id": "nangni-5",
+    "member": "낭니",
+    "file": "nangni-5.jpeg",
+    "rarity": "RR"
+  },
+  {
+    "id": "parkjuno-1",
+    "member": "박준오",
+    "file": "parkjuno-1.webp",
+    "rarity": "U"
+  },
+  {
+    "id": "parkjuno-2",
+    "member": "박준오",
+    "file": "parkjuno-2.jpg",
+    "rarity": "R"
+  },
+  {
+    "id": "parksubeom-1",
+    "member": "박수범",
+    "file": "parksubeom-1.avif",
+    "rarity": "C"
+  },
+  {
+    "id": "parksubeom-2",
+    "member": "박수범",
+    "file": "parksubeom-2.jpg",
+    "rarity": "C"
+  },
+  {
+    "id": "parksubeom-3",
+    "member": "박수범",
+    "file": "parksubeom-3.webp",
+    "rarity": "U"
+  },
+  {
+    "id": "sate-1",
+    "member": "사테",
+    "file": "sate-1.avif",
+    "rarity": "C"
+  },
+  {
+    "id": "sate-2",
+    "member": "사테",
+    "file": "sate-2.avif",
+    "rarity": "U"
+  },
+  {
+    "id": "sojuyang-1",
+    "member": "소주양",
+    "file": "sojuyang-1.avif",
+    "rarity": "FUR"
+  },
+  {
+    "id": "sojuyang-2",
+    "member": "소주양",
+    "file": "sojuyang-2.avif",
+    "rarity": "RR"
+  },
+  {
+    "id": "sojuyang-3",
+    "member": "소주양",
+    "file": "sojuyang-3.avif",
+    "rarity": "CHR"
+  },
+  {
+    "id": "sojuyang-4",
+    "member": "소주양",
+    "file": "sojuyang-4.avif",
+    "rarity": "C"
+  },
+  {
+    "id": "tomato-1",
+    "member": "토마토",
+    "file": "tomato-1.avif",
+    "rarity": "R"
+  },
+  {
+    "id": "tomato-2",
+    "member": "토마토",
+    "file": "tomato-2.webp",
+    "rarity": "SAR"
+  },
+  {
+    "id": "tomato-3",
+    "member": "토마토",
+    "file": "tomato-3.avif",
+    "rarity": "RRR"
+  },
+  {
+    "id": "tomato-4",
+    "member": "토마토",
+    "file": "tomato-4.webp",
+    "rarity": "U"
+  },
+  {
+    "id": "tomato-5",
+    "member": "토마토",
+    "file": "tomato-5.avif",
+    "rarity": "HR"
+  },
+  {
+    "id": "tomato-6",
+    "member": "토마토",
+    "file": "tomato-6.avif",
+    "rarity": "FUR"
+  },
+  {
+    "id": "tomato-7",
+    "member": "토마토",
+    "file": "tomato-7.avif",
+    "rarity": "C"
+  },
+  {
+    "id": "tomato-8",
+    "member": "토마토",
+    "file": "tomato-8.avif",
+    "rarity": "R"
+  },
+  {
+    "id": "vitaming-1",
+    "member": "비타밍",
+    "file": "vitaming-1.avif",
+    "rarity": "RRR"
+  },
+  {
+    "id": "vitaming-2",
+    "member": "비타밍",
+    "file": "vitaming-2.avif",
+    "rarity": "UR"
+  },
+  {
+    "id": "vitaming-3",
+    "member": "비타밍",
+    "file": "vitaming-3.avif",
+    "rarity": "AR"
+  }
+]

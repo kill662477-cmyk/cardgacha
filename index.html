@@ -1,0 +1,808 @@
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>캄몬스타즈 카드뽑기</title>
+<meta name="description" content="캄몬스타즈 크루 카드를 뽑고 도감을 완성하세요." />
+<!-- 파비콘 -->
+<link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
+<link rel="apple-touch-icon" href="assets/favicon-192.png" />
+<!-- OG / 트위터 카드. 배포 후 아래 도메인을 실제 도메인으로 교체하세요 (og:image 는 절대 URL 이어야 미리보기가 뜹니다). -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Calm MonstarZ 카드뽑기" />
+<meta property="og:description" content="캄몬스타즈 크루 카드를 뽑고 도감을 완성하세요." />
+<meta property="og:image" content="https://card-gacha.vercel.app/assets/card-back.jpg" />
+<meta property="og:url" content="https://card-gacha.vercel.app/" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Calm MonstarZ 카드뽑기" />
+<meta name="twitter:description" content="캄몬스타즈 크루 카드를 뽑고 도감을 완성하세요." />
+<meta name="twitter:image" content="https://card-gacha.vercel.app/assets/card-back.jpg" />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.20/400.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.20/700.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    /* dark theme lock - near-black navy/zinc base, single electric-blue accent */
+    --bg0:#080b16; --bg1:#0b0f20; --bg2:#111631;
+    --panel:#0f1428; --panel-2:#141a34;
+    --brd:rgba(70,120,220,.18); --brd-2:rgba(90,150,255,.34);
+    --accent:#33ccff; --accent-ink:#04141d; --accent-soft:rgba(51,204,255,.12);
+    --txt:#eef3ff; --muted:#93a1c9; --dim:#5a6690;
+    --ok:#3df0a6; --warn:#ffcf4a; --bad:#ff5d72;
+    --radius:12px;
+    --font-display:'Pretendard Variable','Pretendard',system-ui,-apple-system,sans-serif;
+    --font-body:'Pretendard Variable','Pretendard',system-ui,sans-serif;
+    --font-mono:'JetBrains Mono',ui-monospace,'Cascadia Code',Consolas,monospace;
+    /* rarity ramp: gray -> blue -> gold -> magenta -> holo */
+    --r-C:#8b93a7; --r-U:#57d98a; --r-R:#41a6ff; --r-RR:#6f8dff; --r-RRR:#9d7bff;
+    --r-AR:#c15bff; --r-CHR:#ff6fd6; --r-HR:#ff6b6b; --r-SR:#ffcf4a; --r-SAR:#ffab2e;
+    --r-UR:#ff4fa3; --r-MUR:#22e6ff; --r-FUR:#ff3df0;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--font-body);
+    background:
+      radial-gradient(1100px 640px at 12% -8%, rgba(51,204,255,.10), transparent 60%),
+      radial-gradient(900px 620px at 96% 2%, rgba(51,204,255,.06), transparent 55%),
+      linear-gradient(180deg,var(--bg0),var(--bg1) 45%,var(--bg0));
+    background-attachment:fixed; color:var(--txt); min-height:100vh; line-height:1.45;
+    padding-bottom:86px; letter-spacing:-.01em;
+  }
+  h1,h2,h3{font-family:var(--font-display);font-weight:800;letter-spacing:-.02em;margin:0}
+  .wrap{max-width:980px;margin:0 auto;padding:16px}
+  .hidden{display:none!important}
+  a{color:var(--accent)}
+  button{font-family:inherit;cursor:pointer;color:inherit}
+  .mono{font-family:var(--font-mono)}
+  .muted{color:var(--muted)} .dim{color:var(--dim)} .center{text-align:center}
+
+  /* sticky top (ticker + topbar) */
+  .stickytop{position:sticky;top:0;z-index:30}
+  .topbar{backdrop-filter:blur(12px);
+    background:linear-gradient(180deg,rgba(8,11,22,.94),rgba(8,11,22,.62));
+    border-bottom:1px solid var(--brd)}
+
+  /* announcement ticker (functional MMO-style rare drop feed) */
+  .ticker{overflow:hidden;white-space:nowrap;background:#0a0f22;border-bottom:1px solid var(--brd-2);
+    height:34px;display:flex;align-items:center;position:relative}
+  .ticker::before{content:"RARE DROP";position:absolute;left:0;top:0;bottom:0;z-index:2;display:flex;align-items:center;
+    padding:0 12px;font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent-ink);
+    background:var(--accent)}
+  .ticker-track{display:inline-flex;gap:34px;padding-left:110px;will-change:transform;
+    animation:marquee 34s linear infinite}
+  .ticker:hover .ticker-track{animation-play-state:paused}
+  @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .ti{font-size:13px;font-weight:600;color:var(--muted);flex:0 0 auto}
+  .ti b{font-weight:800}
+  .ti .who{color:var(--txt)}
+  .ti-UR b{color:var(--r-UR)} .ti-MUR b{color:var(--r-MUR)}
+  .ti-FUR b{background:linear-gradient(90deg,#ff3df0,#ffcf4a,#3df0a6,#33ccff,#9d7bff);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    background-size:220% 100%;animation:holoslide 3s linear infinite}
+  .ticker.reduce .ticker-track{animation:none;transform:none}
+  .topbar .wrap{display:flex;align-items:center;justify-content:space-between;padding:13px 16px}
+  .brand{font-family:var(--font-display);font-weight:900;font-size:19px;color:#fff;letter-spacing:-.03em}
+  .brand span{color:var(--accent)}
+  .points{display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-weight:700;
+    background:var(--accent-soft);border:1px solid var(--brd-2);padding:7px 14px;border-radius:999px}
+  .points b{color:var(--accent);font-size:15px}
+  .points i{font-style:normal;color:var(--muted);font-size:12px}
+  .icon-btn{background:transparent;border:1px solid var(--brd);color:var(--muted);
+    border-radius:var(--radius);padding:7px 12px;font-weight:600;font-size:13px;transition:border-color .15s,color .15s}
+  .icon-btn:hover{border-color:var(--brd-2);color:var(--txt)}
+
+  /* surfaces */
+  .panel{background:var(--panel);border:1px solid var(--brd);border-radius:var(--radius);padding:18px}
+  .grid{display:grid;gap:14px}
+  input[type=text]{width:100%;background:#0a0e1e;border:1px solid var(--brd);color:var(--txt);
+    border-radius:var(--radius);padding:13px 14px;font-size:16px;font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s}
+  input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  label.fld{display:block;font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
+  /* accent CTA - AA contrast: dark ink on bright cyan */
+  .cta{width:100%;border:none;border-radius:var(--radius);padding:14px;font-weight:800;font-size:16px;
+    font-family:var(--font-display);letter-spacing:-.01em;color:var(--accent-ink);background:var(--accent);
+    transition:transform .12s,filter .15s}
+  .cta:hover{filter:brightness(1.08)} .cta:active{transform:scale(.985)}
+  .cta:disabled{filter:grayscale(.6) brightness(.55);cursor:not-allowed}
+  .cta.sub{background:transparent;color:var(--txt);border:1px solid var(--brd-2)}
+  .cta.sub:hover{filter:none;background:var(--panel-2)}
+  .divider{display:flex;align-items:center;gap:12px;color:var(--dim);margin:20px 0;font-size:12px}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--brd)}
+
+  .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);z-index:120;
+    background:#0c1124;border:1px solid var(--brd-2);color:var(--txt);padding:12px 18px;border-radius:var(--radius);
+    font-weight:600;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;max-width:88vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-8px)}
+  .toast.err{border-color:var(--bad);color:#ffd7dc}
+
+  /* rarity badge (mono, semantic multi-color allowed) */
+  .rb{display:inline-block;font-family:var(--font-mono);font-weight:700;font-size:11px;
+    padding:2px 7px;border-radius:6px;color:#06101a;line-height:1.3}
+  .rb-C{background:var(--r-C)} .rb-U{background:var(--r-U)} .rb-R{background:var(--r-R)}
+  .rb-RR{background:var(--r-RR)} .rb-RRR{background:var(--r-RRR)} .rb-AR{background:var(--r-AR)}
+  .rb-CHR{background:var(--r-CHR)} .rb-HR{background:var(--r-HR)} .rb-SR{background:var(--r-SR)}
+  .rb-SAR{background:var(--r-SAR)} .rb-UR{background:var(--r-UR)} .rb-MUR{background:var(--r-MUR)}
+  .rb-FUR{color:#fff;background:linear-gradient(90deg,#ff3df0,#ffcf4a,#3df0a6,#33ccff,#9d7bff);
+    background-size:280% 100%;animation:holoslide 3s linear infinite}
+  @keyframes holoslide{to{background-position:280% 0}}
+
+  /* auth */
+  .auth-shell{max-width:440px;margin:7vh auto 0}
+  .auth-shell h2{font-size:23px;margin:0 0 4px}
+
+  /* shop - asymmetric bento */
+  .attend-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+  .attend-bar .lbl{font-size:13px;color:var(--muted)}
+  .attend-bar .amt{font-family:var(--font-mono);font-weight:700;font-size:18px;color:var(--accent)}
+  .sec-title{font-size:18px;margin:8px 2px 12px}
+  .bento{display:grid;gap:14px;grid-template-columns:1fr}
+  @media(min-width:760px){.bento{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));grid-auto-rows:1fr}}
+  .pack{position:relative;overflow:hidden;background:var(--panel);border:1px solid var(--brd);
+    border-radius:var(--radius);padding:18px;display:flex;flex-direction:column}
+  .pack .kname{font-size:19px;font-weight:800}
+  .pack .kprice{font-family:var(--font-mono);font-weight:700;color:var(--accent);font-size:14px;margin-top:2px}
+  .pack .guar{align-self:flex-start;font-family:var(--font-mono);font-size:11px;font-weight:700;
+    padding:3px 9px;border-radius:999px;border:1px solid var(--warn);color:var(--warn);margin:10px 0}
+  details.odds{margin:6px 0 14px;font-size:12px}
+  details.odds summary{cursor:pointer;color:var(--dim);list-style:none;user-select:none}
+  details.odds summary::-webkit-details-marker{display:none}
+  .oddsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:5px;margin-top:9px}
+  .oddsgrid span{display:flex;justify-content:space-between;gap:4px;background:#0a0e1e;border-radius:6px;
+    padding:3px 6px;font-family:var(--font-mono);font-size:11px}
+  .pack-hero{border-color:var(--brd-2)}
+  .pack-hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(420px 260px at 78% -10%,rgba(51,204,255,.14),transparent 60%)}
+  .pack .spacer{flex:1;min-height:6px}
+  .pack-art{width:100%;max-height:172px;object-fit:contain;display:block;margin:8px auto 4px;
+    filter:drop-shadow(0 12px 14px rgba(0,0,0,.38))}
+
+  /* TCG tile 5:7 */
+  .tile{position:relative;border-radius:var(--radius);overflow:hidden;background:#0a0e1e;
+    border:1.5px solid var(--brd);aspect-ratio:5/7}
+  .tile .card-art,.revface .card-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .card-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;z-index:2;pointer-events:none}
+  .tile .cap{position:absolute;left:0;right:0;bottom:0;padding:6px 8px;
+    background:linear-gradient(180deg,transparent,rgba(4,6,16,.94));
+    display:flex;align-items:center;justify-content:space-between;gap:4px;z-index:3}
+  .tile .nm{font-weight:700;font-size:13px;text-shadow:0 1px 3px #000}
+  .tile .qty{position:absolute;top:6px;right:6px;z-index:4;background:rgba(4,6,16,.82);border:1px solid var(--brd-2);
+    border-radius:999px;font-family:var(--font-mono);font-size:11px;font-weight:700;padding:1px 8px}
+  .tile .newb{position:absolute;top:6px;left:6px;z-index:4;background:var(--accent);color:var(--accent-ink);font-weight:800;
+    font-family:var(--font-mono);font-size:10px;padding:2px 7px;border-radius:6px}
+  .glow-SR,.glow-SAR{border-color:var(--r-SR);box-shadow:0 0 16px rgba(255,207,74,.5)}
+  .glow-UR{border-color:var(--r-UR);box-shadow:0 0 16px rgba(255,79,163,.55)}
+  .glow-MUR{border-color:var(--r-MUR);box-shadow:0 0 18px rgba(34,230,255,.55)}
+  .glow-FUR{border-color:#fff;box-shadow:0 0 24px rgba(255,61,240,.5),0 0 40px rgba(51,204,255,.34)}
+
+  /* ranking */
+  .rank-item{display:flex;align-items:center;padding:14px;border-radius:12px;background:rgba(10,14,30,.6);border:1px solid var(--brd);margin-bottom:10px;backdrop-filter:blur(10px);transition:all .2s}
+  .rank-item:hover{transform:translateY(-2px);background:rgba(10,14,30,.8);border-color:var(--brd-2)}
+  .rank-num{font-family:var(--font-mono);font-size:22px;font-weight:900;width:40px;text-align:center;color:var(--dim)}
+  .rank-nick{flex:1;font-size:16px;font-weight:700;margin-left:12px}
+  .rank-score{font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--accent)}
+  .rank-1{border-color:rgba(255,215,0,.6);box-shadow:0 0 15px rgba(255,215,0,.15);background:linear-gradient(90deg,rgba(255,215,0,.08),transparent)}
+  .rank-1 .rank-num{color:#ffd700;text-shadow:0 0 8px rgba(255,215,0,.5)}
+  .rank-2{border-color:rgba(192,192,192,.5);background:linear-gradient(90deg,rgba(192,192,192,.06),transparent)}
+  .rank-2 .rank-num{color:#c0c0c0}
+  .rank-3{border-color:rgba(205,127,50,.5);background:linear-gradient(90deg,rgba(205,127,50,.06),transparent)}
+  .rank-3 .rank-num{color:#cd7f32}
+
+  /* collection */
+  .col-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .col-head .stat{font-family:var(--font-mono);font-weight:700}
+  .col-head .stat b{color:var(--accent)}
+  .filters{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .chip{border:1px solid var(--brd);background:#0a0e1e;color:var(--muted);border-radius:999px;
+    padding:5px 12px;font-size:12px;font-weight:700;font-family:var(--font-mono);transition:all .15s}
+  .chip.on{color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
+  .memhead{display:flex;align-items:center;gap:10px;margin:22px 0 10px}
+  .memhead h3{font-size:16px}
+  .memhead .mc{font-family:var(--font-mono);font-size:12px;color:var(--dim)}
+  .colgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  @media(min-width:560px){.colgrid{grid-template-columns:repeat(4,1fr)}}
+  @media(min-width:860px){.colgrid{grid-template-columns:repeat(6,1fr)}}
+  .tile.locked img{filter:grayscale(1) brightness(.26)}
+  .tile.locked .card-art{filter:none}
+  .tile.locked::after{content:"";position:absolute;inset:0;z-index:1;background:rgba(3,6,14,.38);pointer-events:none}
+  .tile.locked .nm{color:var(--dim)}
+  .empty{padding:36px 16px;text-align:center;color:var(--dim);font-size:14px}
+  .col-actions{display:flex;gap:8px;align-items:center;margin-top:12px}
+  .small-btn{border:1px solid var(--brd-2);border-radius:6px;background:transparent;color:var(--muted);padding:6px 9px;font-size:12px;font-weight:700}
+  .small-btn:hover{color:var(--txt);border-color:var(--accent)}
+  .small-btn:disabled{opacity:.45;cursor:not-allowed}
+  .memhead .small-btn{margin-left:auto}
+  .detail-modal{position:fixed;inset:0;z-index:130;display:flex;align-items:center;justify-content:center;padding:16px}
+  .detail-backdrop{position:absolute;inset:0;background:rgba(1,3,10,.78);backdrop-filter:blur(8px)}
+  .detail-panel{position:relative;width:min(520px,100%);max-height:calc(100vh - 32px);overflow:auto;background:var(--panel);border:1px solid var(--brd-2);border-radius:var(--radius);padding:18px}
+  .detail-close{position:absolute;right:12px;top:12px;width:34px;height:34px;border:1px solid var(--brd);border-radius:6px;background:#0a0e1e;color:var(--muted);font-size:20px;line-height:1}
+  .detail-card{width:min(210px,58vw);aspect-ratio:5/7;position:relative;overflow:hidden;border-radius:var(--radius);margin:0 auto 16px;background:#090d1d}
+  .detail-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .detail-card .card-frame{z-index:2}.detail-card .detail-name{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:10px;background:linear-gradient(transparent,rgba(3,5,12,.94));font-weight:800}
+  .detail-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.detail-meta div{background:#0a0e1e;border:1px solid var(--brd);border-radius:6px;padding:9px}.detail-meta span{display:block;font-size:11px;color:var(--dim);margin-bottom:3px}
+  .detail-actions{display:grid;gap:8px;margin-top:14px}
+
+  /* skeleton */
+  .sk{background:linear-gradient(90deg,#0e1430 25%,#151d3d 37%,#0e1430 63%);background-size:400% 100%;
+    animation:shimmer 1.3s ease infinite;border-radius:var(--radius)}
+  @keyframes shimmer{to{background-position:-140% 0}}
+  .sk-tile{aspect-ratio:5/7}
+
+  /* pack opening - the signature */
+  .opening{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 38%,rgba(14,20,52,.97),rgba(4,6,16,.99));padding:18px}
+  .opening.show{display:flex}
+  .fx-intro{position:fixed;inset:0;z-index:120;display:none;background:#03030a;overflow:hidden}
+  .fx-intro.show{display:block;animation:fxFade .22s ease both}
+  .fx-intro video{width:100%;height:100%;object-fit:cover;display:block}
+  @keyframes fxFade{from{opacity:0}to{opacity:1}}
+  .opening.shake,.special.shake{animation:shake .5s ease}
+  @keyframes shake{0%,100%{transform:translate(0,0)}20%{transform:translate(-7px,4px)}40%{transform:translate(6px,-5px)}
+    60%{transform:translate(-5px,-3px)}80%{transform:translate(4px,4px)}}
+  .revarea{width:100%;max-width:860px;text-align:center;perspective:1200px}
+  .revrow{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-bottom:22px;min-height:230px;align-items:center}
+  .rev{width:132px;display:flex;flex-direction:column;align-items:center;gap:7px}
+  .revcard{width:100%;aspect-ratio:5/7;border-radius:var(--radius);position:relative;transform-style:preserve-3d;
+    transform:rotateY(180deg);opacity:.001;transition:transform .55s cubic-bezier(.2,.7,.2,1),opacity .2s}
+  .rev.flip .revcard{transform:rotateY(0);opacity:1}
+  .revface,.revback{position:absolute;inset:0;border-radius:var(--radius);overflow:hidden;backface-visibility:hidden}
+  .revback{transform:rotateY(180deg);overflow:hidden;
+    background:
+      radial-gradient(circle at 50% 42%, rgba(51,204,255,.30), transparent 64%),
+      repeating-linear-gradient(135deg, rgba(255,255,255,.035) 0 8px, transparent 8px 16px),
+      linear-gradient(160deg,#182247,#0d1330);
+    border:1.5px solid rgba(120,175,255,.55);display:flex;align-items:center;justify-content:center}
+  .revback .backlogo{width:66%;height:auto;object-fit:contain;
+    filter:drop-shadow(0 0 12px rgba(51,204,255,.7));opacity:1}
+  .revback .backshine{position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.16) 50%,transparent 62%);
+    background-size:250% 100%;animation:backsweep 3.4s ease-in-out infinite}
+  @keyframes backsweep{0%{background-position:130% 0}100%{background-position:-130% 0}}
+  .revface{border:1.5px solid var(--brd)}
+  .revface .cap{position:absolute;left:0;right:0;bottom:0;padding:5px 7px;
+    background:linear-gradient(180deg,transparent,rgba(4,6,16,.94));display:flex;justify-content:space-between;align-items:center;z-index:3}
+  .revface .cap .nm{font-weight:700;font-size:12px}
+  .newb2{position:absolute;top:6px;left:6px;z-index:4;background:var(--accent);color:var(--accent-ink);
+    font-family:var(--font-mono);font-weight:800;font-size:10px;padding:2px 7px;border-radius:6px}
+  /* holographic foil (FUR) */
+  .foil{position:absolute;inset:0;z-index:2;pointer-events:none;mix-blend-mode:color-dodge;opacity:.55;
+    background:conic-gradient(from var(--fa,0deg),#ff3df0,#ffcf4a,#3df0a6,#33ccff,#9d7bff,#ff3df0)}
+  .shine{position:absolute;inset:0;z-index:2;pointer-events:none;mix-blend-mode:overlay;opacity:.5;
+    background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.7) 48%,transparent 62%);
+    background-size:220% 220%;background-position:var(--sx,10%) var(--sy,10%)}
+  /* gold ray burst (SR+) */
+  .burst{position:absolute;left:50%;top:50%;width:10px;height:10px;z-index:1;transform:translate(-50%,-50%) scale(.2);
+    border-radius:50%;pointer-events:none;opacity:0;
+    background:radial-gradient(circle,rgba(255,207,74,.9),rgba(255,207,74,0) 62%)}
+  .rev.flip .burst{animation:burst .8s ease-out forwards}
+  @keyframes burst{0%{opacity:.9;transform:translate(-50%,-50%) scale(.2)}
+    100%{opacity:0;transform:translate(-50%,-50%) scale(9)}}
+  .rev .rtag{min-height:20px}
+  .tap-hint{color:var(--muted);font-size:13px;letter-spacing:.06em}
+  .tap-hint.pulse{animation:blink 1.3s infinite}
+  @keyframes blink{50%{opacity:.4}}
+
+  /* special stage (MUR / FUR only) */
+  .special{position:fixed;inset:0;z-index:110;display:none;align-items:center;justify-content:center;padding:18px;
+    background:radial-gradient(circle at 50% 34%,rgba(10,14,40,.9),rgba(2,3,10,.99) 70%)}
+  .special.show{display:flex}
+  .special .spot{position:absolute;left:50%;top:34%;width:120vmax;height:120vmax;transform:translate(-50%,-50%);
+    pointer-events:none;background:radial-gradient(circle,rgba(255,255,255,.06),transparent 22%)}
+  .special .sp-aura{position:absolute;left:50%;top:34%;width:380px;height:380px;transform:translate(-50%,-50%);
+    pointer-events:none;border-radius:50%;opacity:.55;filter:blur(18px);will-change:transform,opacity;
+    animation:auraPulse 2.6s ease-in-out infinite}
+  .sp-aura.mur{background:radial-gradient(circle,rgba(34,230,255,.55),transparent 62%)}
+  .sp-aura.fur{background:conic-gradient(from 0deg,#ff3df0,#ffcf4a,#3df0a6,#33ccff,#9d7bff,#ff3df0);animation:auraSpin 6s linear infinite,auraPulse 2.6s ease-in-out infinite}
+  @keyframes auraPulse{50%{opacity:.85;transform:translate(-50%,-50%) scale(1.08)}}
+  @keyframes auraSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+  .special .revarea{position:relative;z-index:2}
+  .sp-title{font-family:var(--font-display);font-weight:800;font-size:15px;letter-spacing:.02em;margin-bottom:16px;color:var(--txt)}
+  .sp-title .mono{color:var(--muted)}
+  .awaitcard{cursor:pointer}
+  .awaitcard .revcard{animation:awaitPulse 1.5s ease-in-out infinite}
+  .awaitcard.done .revcard{animation:none}
+  @keyframes awaitPulse{0%,100%{transform:rotateY(180deg) scale(1)}50%{transform:rotateY(180deg) scale(1.045)}}
+  .awaitcard .revcard{box-shadow:0 0 30px rgba(51,204,255,.6),0 0 60px rgba(51,204,255,.25)}
+  .awaitcard[data-rar="FUR"] .revcard{box-shadow:0 0 34px rgba(255,61,240,.6),0 0 64px rgba(255,207,74,.3)}
+  .particle{position:absolute;left:50%;top:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;z-index:4;pointer-events:none}
+
+  /* bottom nav */
+  .nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:500px;z-index:40;display:flex;
+    background:rgba(8,11,22,.94);backdrop-filter:blur(12px);border-top:1px solid var(--brd);border-radius:16px 16px 0 0}
+  .nav button{flex:1;background:none;border:none;color:var(--dim);padding:11px 0 15px;font-weight:700;
+    font-size:12px;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .15s}
+  .nav button .ic{font-size:19px;line-height:1}
+  .nav button.on{color:var(--accent)}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+    .revcard{transform:none!important;opacity:1!important}
+  }
+</style>
+
+<div class="stickytop">
+  <div class="ticker hidden" id="ticker"><div class="ticker-track" id="tickerTrack"></div></div>
+  <div class="topbar"><div class="wrap">
+    <div class="brand">Calm <span>MonstarZ</span> 카드뽑기</div>
+    <div id="userbar" class="hidden" style="display:flex;gap:10px;align-items:center">
+      <div class="points"><i>P</i><b id="ptval">0</b></div>
+      <button class="icon-btn" id="soundBtn" aria-pressed="false">SFX OFF</button>
+      <button class="icon-btn" id="logoutBtn">로그아웃</button>
+    </div>
+  </div></div>
+</div>
+
+<div class="wrap">
+  <!-- AUTH -->
+  <section id="view-auth" class="hidden">
+    <div class="panel auth-shell">
+      <h2>환영합니다</h2>
+      <p class="muted" style="margin:0 0 18px;font-size:14px">캄몬스타즈 크루 카드를 모아보세요. 가입하면 <b style="color:var(--accent)" class="mono">1000P</b> 지급.</p>
+      <label class="fld">닉네임을 입력하세요</label>
+      <input type="text" id="regNick" placeholder="닉네임 입력" maxlength="40" />
+      <button class="cta" style="margin-top:10px" id="regBtn">가입하고 KEY 받기</button>
+      <div class="divider">이미 KEY가 있다면</div>
+      <label class="fld">발급받은 KEY로 로그인</label>
+      <input type="text" id="loginKey" placeholder="KEY 붙여넣기" />
+      <button class="cta sub" style="margin-top:10px" id="loginBtn">로그인</button>
+    </div>
+    <div id="keyIssued" class="panel auth-shell hidden" style="margin-top:16px;border-color:var(--accent)">
+      <h3 style="color:var(--accent);font-size:17px">KEY 발급 완료</h3>
+      <p class="muted" style="font-size:14px;margin:8px 0 10px">이 KEY가 <b style="color:var(--warn)">유일한 로그인 수단</b>입니다. 꼭 복사해서 저장하세요. 분실 시 계정 복구가 안 됩니다.</p>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="issuedKey" readonly class="mono" style="font-size:13px" />
+        <button class="icon-btn" id="copyKeyBtn" style="white-space:nowrap">복사</button>
+      </div>
+      <button class="cta" style="margin-top:12px" id="goShopBtn">시작하기</button>
+    </div>
+  </section>
+
+  <!-- SHOP -->
+  <section id="view-shop" class="hidden">
+    <div class="panel attend-bar">
+      <div><div class="lbl">매일 출석 보너스 <span id="streakText">연속 출석 준비 중</span></div><div class="amt">+200 P</div></div>
+      <button class="cta" style="width:auto;padding:12px 22px" id="attendBtn">출석하기</button>
+    </div>
+    <h2 class="sec-title">카드팩 상점</h2>
+    <div id="packWrap" class="bento"></div>
+  </section>
+
+  <!-- COLLECTION -->
+  <section id="view-col" class="hidden">
+    <div class="panel" style="margin-bottom:14px">
+      <div class="col-head">
+        <h2 style="font-size:18px">도감</h2>
+        <div class="stat"><b id="colOwned">0</b> <span class="dim">/ <span id="colTotal">0</span></span></div>
+      </div>
+      <div class="col-actions"><button class="small-btn" id="batchDismantleBtn">중복 일괄 분해</button></div>
+      <div class="filters" id="rarFilters"></div>
+    </div>
+    <div id="colWrap"></div>
+  </section>
+
+  <!-- RANKING -->
+  <section id="view-rank" class="hidden">
+    <h2 class="sec-title" style="text-align:center;margin:10px 0 20px;font-size:22px;text-shadow:0 0 10px var(--accent)">명예의 전당</h2>
+    <div id="rankWrap" style="display:flex;flex-direction:column"></div>
+  </section>
+</div>
+
+<!-- pack opening -->
+<div class="opening" id="opening">
+  <div class="revarea">
+    <div class="revrow" id="revrow"></div>
+    <div class="tap-hint pulse" id="tapHint">화면을 탭하면 바로 전체 공개</div>
+    <button class="cta hidden" id="closeOpen" style="max-width:300px;margin:10px auto 0">확인</button>
+  </div>
+</div>
+
+<div class="fx-intro" id="fxIntro" aria-hidden="true"><video id="fxVideo" playsinline preload="metadata"></video></div>
+
+<!-- special stage: MUR / FUR only -->
+<div class="special" id="special">
+  <div class="spot"></div>
+  <div class="sp-aura" id="spAura"></div>
+  <div class="revarea">
+    <div class="sp-title" id="spTitle"></div>
+    <div class="revrow" id="sprow"></div>
+    <button class="cta hidden" id="closeSpecial" style="max-width:300px;margin:10px auto 0">확인</button>
+  </div>
+</div>
+
+<div class="nav hidden" id="nav">
+  <button data-nav="shop" class="on"><span class="ic">◈</span>상점</button>
+  <button data-nav="col"><span class="ic">▤</span>도감</button>
+  <button data-nav="rank"><span class="ic">👑</span>랭킹</button>
+</div>
+<div class="toast" id="toast"></div>
+<div class="detail-modal hidden" id="cardModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+  <div class="detail-backdrop" id="cardModalBackdrop"></div>
+  <div class="detail-panel"><button class="detail-close" id="cardModalClose" aria-label="닫기">×</button><div id="cardDetail"></div></div>
+</div>
+
+<script>
+const RAR=['C','U','R','RR','RRR','AR','CHR','HR','SR','SAR','UR','MUR','FUR'];
+const RANK=Object.fromEntries(RAR.map((r,i)=>[r,i]));
+const framePath=rarity=>`assets/frames/${rarity.toLowerCase()}.svg`;
+const packArt={normal:'normal',premium:'rare',luxury:'premium'};
+const MEMBER_ORDER=['김윤환','소주양','지두두','남덕선','토마토','햇살','찌킹','치리','주하랑','임조이','비타밍','먼진','아리송이','낭니','변현제','김민철','사테','박준오','박수범','지동원','배성흠'];
+const DISMANTLE_REFUND={C:5,U:8,R:15,RR:25,RRR:40,AR:60,CHR:80,HR:100,SR:130,SAR:170,UR:220,MUR:300,FUR:400};
+const state={key:null,nickname:null,points:0,canAttend:false,streak:null,cards:[],byId:{},collection:{},first:{},claimed:[],filter:'ALL',cardsLoaded:false,soundOn:localStorage.getItem('cardgacha_sound')==='on'};
+const REDUCE=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const $=s=>document.querySelector(s);
+const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
+function toast(m,err){const t=$('#toast');t.textContent=m;t.className='toast show'+(err?' err':'');clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast'+(err?' err':''),2600);}
+function glowClass(r){return RANK[r]>=RANK.SR?'glow-'+r:'';}
+function imgPath(f){return 'assets/cards/'+f;}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function updateStreak(v){state.streak=v==null?null:v;$('#streakText').textContent=v==null?'연속 출석 준비 중':`연속 ${v}일`}
+function updateSoundBtn(){const b=$('#soundBtn');b.textContent=state.soundOn?'SFX ON':'SFX OFF';b.setAttribute('aria-pressed',String(state.soundOn));}
+let audioContext=null;
+function sfx(kind){if(!state.soundOn||REDUCE)return;const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;audioContext=audioContext||new Ctx();const ctx=audioContext,t=ctx.currentTime;ctx.resume();const spec={open:[110,.10,.08],flip:[250,.06,.06],rare:[520,.13,.08],fur:[880,.22,.11]}[kind]||[180,.06,.05];const o=ctx.createOscillator(),g=ctx.createGain();o.type=kind==='fur'?'triangle':'sine';o.frequency.setValueAtTime(spec[0],t);o.frequency.exponentialRampToValueAtTime(spec[0]*1.6,t+spec[1]);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(spec[2],t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+spec[1]);o.connect(g).connect(ctx.destination);o.start(t);o.stop(t+spec[1]+.02)}
+
+async function apiPost(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const j=await r.json().catch(()=>({error:'응답 오류'}));if(!r.ok)throw new Error(j.error||('오류 '+r.status));return j;}
+async function apiGet(p){const r=await fetch(p);const j=await r.json().catch(()=>({error:'응답 오류'}));if(!r.ok)throw new Error(j.error||('오류 '+r.status));return j;}
+
+function show(v){
+  ['auth','shop','col','rank'].forEach(x=>$('#view-'+x).classList.toggle('hidden',x!==v));
+  $('#nav').classList.toggle('hidden',v==='auth');
+  $('#userbar').classList.toggle('hidden',v==='auth');
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.nav===v));
+  if(v==='col')renderCollection();
+  if(v==='shop')renderShop();
+  if(v==='rank')renderRanking();
+  window.scrollTo(0,0);
+}
+function setPoints(p){state.points=p;$('#ptval').textContent=p.toLocaleString();}
+
+/* auth */
+$('#regBtn').onclick=async()=>{
+  const nickname=$('#regNick').value.trim();
+  if(!nickname)return toast('닉네임을 입력하세요',true);
+  const b=$('#regBtn');b.disabled=true;b.textContent='발급 중...';
+  try{
+    const j=await apiPost('/api/register',{nickname});
+    state.key=j.key;state.nickname=j.user.nickname;setPoints(j.user.points);state.canAttend=j.user.canAttend;updateStreak(j.user.streak);
+    localStorage.setItem('cardgacha_key',j.key);
+    $('#issuedKey').value=j.key;$('#keyIssued').classList.remove('hidden');$('#keyIssued').scrollIntoView({behavior:'smooth'});
+  }catch(e){toast(e.message,true);}
+  b.disabled=false;b.textContent='가입하고 KEY 받기';
+};
+$('#copyKeyBtn').onclick=async()=>{const v=$('#issuedKey').value;
+  try{await navigator.clipboard.writeText(v);toast('KEY 복사됨');}
+  catch(e){$('#issuedKey').select();document.execCommand('copy');toast('KEY 복사됨');}};
+$('#goShopBtn').onclick=()=>{$('#keyIssued').classList.add('hidden');show('shop');};
+$('#loginBtn').onclick=async()=>{const key=$('#loginKey').value.trim();if(!key)return toast('KEY를 입력하세요',true);await doLogin(key);};
+async function doLogin(key){
+  try{const j=await apiPost('/api/login',{key});
+    state.key=key;state.nickname=j.user.nickname;setPoints(j.user.points);state.canAttend=j.user.canAttend;updateStreak(j.user.streak);
+    localStorage.setItem('cardgacha_key',key);show('shop');
+  }catch(e){toast(e.message,true);localStorage.removeItem('cardgacha_key');show('auth');}
+}
+$('#logoutBtn').onclick=()=>{localStorage.removeItem('cardgacha_key');state.key=null;show('auth');};
+$('#soundBtn').onclick=()=>{state.soundOn=!state.soundOn;localStorage.setItem('cardgacha_sound',state.soundOn?'on':'off');updateSoundBtn();if(state.soundOn)sfx('flip');};
+
+/* shop */
+const PACKS=[
+  {id:'luxury',name:'프리미엄팩',price:500,count:5,guar:'SR',hero:true,
+   odds:{C:10,U:15,R:18,RR:15,RRR:12,AR:9,CHR:7,HR:5,SR:4,SAR:2.5,UR:1.5,MUR:0.7,FUR:0.3}},
+  {id:'premium',name:'고급팩',price:150,count:4,guar:'R',hero:false,
+   odds:{C:25,U:22,R:20,RR:12,RRR:8,AR:5,CHR:3,HR:2,SR:1.5,SAR:0.8,UR:0.4,MUR:0.2,FUR:0.1}},
+  {id:'normal',name:'일반팩',price:50,count:3,guar:null,hero:false,
+   odds:{C:45,U:25,R:14,RR:7,RRR:4,AR:2,CHR:1.2,HR:0.8,SR:0.5,SAR:0.25,UR:0.15,MUR:0.07,FUR:0.03}},
+];
+function oddsHtml(o){return Object.entries(o).map(([r,v])=>`<span><b class="rb rb-${r}" style="padding:0 5px">${r}</b>${v}%</span>`).join('');}
+
+function renderShop(){
+  $('#attendBtn').disabled=!state.canAttend;
+  $('#attendBtn').textContent=state.canAttend?'출석하기':'출석 완료';
+  const wrap=$('#packWrap');wrap.innerHTML='';
+  PACKS.forEach(p=>{
+    const card=el('div','pack'+(p.hero?' pack-hero':''));
+    card.innerHTML=`
+      <div class="kname">${p.name}</div>
+      <div class="kprice">${p.price} P · ${p.count}장</div>
+      ${p.guar?`<span class="guar">${p.guar} 이상 확정</span>`:''}
+      <img class="pack-art" src="assets/packs/${packArt[p.id]}.png" alt="${p.name} 카드팩" loading="lazy"/>
+      <details class="odds"><summary>등급 확률 보기 ▾</summary><div class="oddsgrid">${oddsHtml(p.odds)}</div></details>
+      <div class="spacer"></div>
+      <button class="cta" data-buy="${p.id}">${p.price} P로 뽑기</button>`;
+    wrap.appendChild(card);
+  });
+  wrap.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buyPack(b.dataset.buy));
+}
+$('#attendBtn').onclick=async()=>{
+  try{const j=await apiPost('/api/attend',{key:state.key});setPoints(j.points);
+    if(j.attended){state.canAttend=false;updateStreak(j.streak);sfx('rare');toast(`출석 완료. +${j.bonus}P`);}else {updateStreak(j.streak);toast(j.message||'오늘은 이미 출석했습니다');}
+    renderShop();
+  }catch(e){toast(e.message,true);}
+};
+async function buyPack(id){
+  const pack=PACKS.find(p=>p.id===id);
+  if(state.points<pack.price)return toast('포인트가 부족합니다',true);
+  const btn=document.querySelector(`[data-buy="${id}"]`);if(btn){btn.disabled=true;btn.textContent='개봉 중...';}
+  try{
+    const j=await apiPost('/api/open-pack',{key:state.key,packId:id});
+    setPoints(j.points);
+    j.cards.forEach(c=>{state.collection[c.id]=(state.collection[c.id]||0)+1;});
+    sfx('open');playOpening(j.cards);
+  }catch(e){toast(e.message,true);}
+  if(btn){btn.disabled=false;btn.textContent=pack.price+' P로 뽑기';}
+}
+
+/* ranking */
+async function renderRanking(){
+  const wrap=$('#rankWrap'); wrap.innerHTML='<div class="empty">로딩 중...</div>';
+  try {
+    const j=await apiGet('/api/ranking');
+    if(!j.rankings||!j.rankings.length){ wrap.innerHTML='<div class="empty">아직 랭킹 데이터가 없습니다</div>'; return; }
+    wrap.innerHTML=j.rankings.map((r,i)=>{
+      const rankClass = i===0 ? 'rank-1' : i===1 ? 'rank-2' : i===2 ? 'rank-3' : '';
+      return `<div class="rank-item ${rankClass}">
+        <div class="rank-num">${i+1}</div>
+        <div class="rank-nick">${esc(r.nickname)}</div>
+        <div class="rank-score">${r.score.toLocaleString()}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    wrap.innerHTML=`<div class="empty">${esc(e.message)}</div>`;
+  }
+}
+
+/* ---- pack opening: the signature ---- */
+function revcardHTML(c){
+  const hi=RANK[c.rarity]>=RANK.SR;
+  return `<div class="revcard ${glowClass(c.rarity)}" data-rar="${c.rarity}">
+      ${hi?'<div class="burst"></div>':''}
+      <div class="revback"><img class="backlogo" src="assets/card-back.jpg" alt="Calm MonstarZ"/><div class="backshine"></div></div>
+      <div class="revface">
+        ${c.isNew?'<span class="newb2">NEW</span>':''}
+        ${c.rarity==='FUR'?'<div class="foil"></div><div class="shine"></div>':''}
+        <img class="card-art" src="${imgPath(c.file)}" alt="${esc(c.member)}"/>
+        <img class="card-frame" src="${framePath(c.rarity)}" alt="" aria-hidden="true"/>
+        <div class="cap"><span class="nm">${esc(c.member)}</span></div>
+      </div>
+    </div>`;
+}
+function playOpening(cards){
+  // UR 이상은 즉시 로컬 티커 반영
+  cards.filter(c=>RANK[c.rarity]>=RANK.UR).forEach(c=>pushLocalAnn({nickname:state.nickname,member:c.member,rarity:c.rarity,card_id:c.id,created_at:new Date().toISOString()}));
+  const special=cards.filter(c=>RANK[c.rarity]>=RANK.MUR); // MUR/FUR 전용 2단계
+  const normal=cards.filter(c=>RANK[c.rarity]<RANK.MUR);
+  const hasNext=special.length>0;
+  openStage1(normal,hasNext,()=>openStage2(special));
+}
+/* stage 1: C~UR 자동 플립 공개 */
+function openStage1(cards,hasNext,next){
+  const ov=$('#opening'),row=$('#revrow');row.innerHTML='';
+  const btn=$('#closeOpen');btn.classList.add('hidden');btn.textContent=hasNext?'다음':'확인';
+  const hint=$('#tapHint');
+  if(!cards.length){ov.classList.remove('show');next&&next();return;} // 전부 특별카드면 스킵
+  hint.classList.remove('hidden');hint.classList.add('pulse');hint.textContent='화면을 탭하면 바로 전체 공개';
+  const items=cards.map(c=>{const w=el('div','rev');
+    w.innerHTML=revcardHTML(c)+`<div class="rtag"><span class="rb rb-${c.rarity}">${c.rarity}</span></div>`;
+    row.appendChild(w);return {wrap:w,card:c};});
+  ov.classList.add('show');
+  let i=0,done=false,timer=null;
+  function dwell(r){if(REDUCE)return 60;return RANK[r]>=RANK.SR?1050:RANK[r]>=RANK.RRR?620:RANK[r]>=RANK.R?430:320;}
+  function reveal(){if(i>=items.length){finish();return;}
+    const it=items[i];it.wrap.classList.add('flip');sfx(RANK[it.card.rarity]>=RANK.SR?'rare':'flip');
+    if(RANK[it.card.rarity]>=RANK.UR&&!REDUCE){ov.classList.remove('shake');void ov.offsetWidth;ov.classList.add('shake');}
+    i++;timer=setTimeout(reveal,dwell(it.card.rarity));}
+  function finish(){if(done)return;done=true;clearTimeout(timer);
+    items.forEach(it=>it.wrap.classList.add('flip'));
+    hint.classList.remove('pulse');hint.textContent='';btn.classList.remove('hidden');ov.onclick=null;}
+  ov.onclick=e=>{if(e.target.id==='closeOpen')return;finish();};
+  btn.onclick=()=>{ov.classList.remove('show');if(hasNext)setTimeout(()=>next&&next(),280);};
+  timer=setTimeout(reveal,REDUCE?0:340);
+}
+/* stage 2: MUR/FUR 전용 - 직접 탭해서 한 장씩 오픈 */
+function openStage2(cards){
+  const topRar=cards.reduce((m,c)=>RANK[c.rarity]>RANK[m]?c.rarity:m,cards[0].rarity);
+  if(playSpecialIntro(topRar,()=>openStage2Cards(cards)))return;
+  openStage2Cards(cards);
+}
+function playSpecialIntro(rarity,done){
+  if(REDUCE)return false;
+  const intro=$('#fxIntro'),video=$('#fxVideo'),base=`assets/fx/${rarity==='FUR'?'fur':'mur'}-intro`;let settled=false,usedFallback=false;
+  video.muted=false;video.volume=.58;
+  const finish=()=>{if(settled)return;settled=true;clearTimeout(video._introTimer);video.pause();video.removeAttribute('src');video.load();intro.classList.remove('show');done();};
+  const play=()=>{const result=video.play();if(result&&result.catch)result.catch(()=>{video.muted=true;video.play().catch(finish);});};
+  video.onended=finish;video.onerror=()=>{if(usedFallback)return finish();usedFallback=true;video.src=base+'.mp4';play();};
+  video.src=base+'.webm';intro.classList.add('show');video._introTimer=setTimeout(finish,7400);play();
+  return true;
+}
+function openStage2Cards(cards){
+  const ov=$('#special'),row=$('#sprow'),aura=$('#spAura'),title=$('#spTitle'),btn=$('#closeSpecial');
+  row.innerHTML='';btn.classList.add('hidden');
+  const topRar=cards.reduce((m,c)=>RANK[c.rarity]>RANK[m]?c.rarity:m,cards[0].rarity);
+  aura.className='sp-aura '+(topRar==='FUR'?'fur':'mur');
+  title.innerHTML=topRar==='FUR'?'<span class="mono">FINAL ULTRA</span> 카드 등장':'<span class="mono">MEGA ULTRA</span> 카드 등장';
+  const items=cards.map(c=>{const w=el('div','rev awaitcard');w.dataset.rar=c.rarity;
+    w.innerHTML=revcardHTML(c)+`<div class="rtag"></div>`;row.appendChild(w);return {wrap:w,card:c,flipped:false};});
+  ov.classList.add('show');
+  if(cards.some(c=>c.rarity==='FUR'))attachFoilTilt(ov);
+  let remaining=items.length;
+  function flipOne(it){
+    if(it.flipped)return;it.flipped=true;remaining--;sfx(it.card.rarity==='FUR'?'fur':'rare');
+    it.wrap.classList.remove('awaitcard');it.wrap.classList.add('flip','done');
+    it.wrap.querySelector('.rtag').innerHTML=`<span class="rb rb-${it.card.rarity}">${it.card.rarity}</span>`;
+    if(!REDUCE)burstParticles(it.wrap,it.card.rarity);
+    if(it.card.rarity==='FUR'&&!REDUCE){ov.classList.remove('shake');void ov.offsetWidth;ov.classList.add('shake');}
+    if(remaining<=0)btn.classList.remove('hidden');
+  }
+  items.forEach(it=>{it.wrap.style.cursor='pointer';it.wrap.onclick=()=>flipOne(it);});
+  btn.onclick=()=>{ov.classList.remove('show');ov.onpointermove=null;};
+}
+/* 파티클 버스트 (SR+ 골드/FUR 레인보우) */
+function burstParticles(wrap,rarity){
+  const host=wrap.querySelector('.revcard');if(!host)return;
+  const colors=rarity==='FUR'?['#ff3df0','#ffcf4a','#3df0a6','#33ccff','#9d7bff']:['#22e6ff','#7ff0ff','#ffffff'];
+  const n=rarity==='FUR'?20:12;
+  for(let k=0;k<n;k++){
+    const p=el('span','particle');const col=colors[k%colors.length];
+    p.style.background=col;p.style.boxShadow='0 0 8px '+col;host.appendChild(p);
+    const ang=Math.random()*Math.PI*2,dist=55+Math.random()*95;
+    const dx=Math.cos(ang)*dist,dy=Math.sin(ang)*dist;
+    p.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${dx}px,${dy}px) scale(0)`,opacity:0}],
+      {duration:620+Math.random()*420,easing:'cubic-bezier(.1,.7,.3,1)'}).onfinish=()=>p.remove();
+  }
+}
+/* 홀로그래픽 포일: 뒤집힌 카드만 포인터 추적 (rAF, scroll listener 없음) */
+function attachFoilTilt(ov){
+  if(REDUCE)return;
+  let raf=null,px=.5,py=.5;
+  function apply(){raf=null;
+    ov.querySelectorAll('.rev.flip .revcard').forEach(rc=>{
+      const rx=(py-.5)*-10,ry=(px-.5)*12;
+      rc.style.transform=`rotateY(0deg) rotateX(${rx}deg) rotateY(${ry}deg)`;
+      const foil=rc.querySelector('.foil'),shine=rc.querySelector('.shine');
+      if(foil)foil.style.setProperty('--fa',(px*360).toFixed(0)+'deg');
+      if(shine){shine.style.setProperty('--sx',(px*100).toFixed(0)+'%');shine.style.setProperty('--sy',(py*100).toFixed(0)+'%');}
+    });
+  }
+  ov.onpointermove=e=>{const r=ov.getBoundingClientRect();px=(e.clientX-r.left)/r.width;py=(e.clientY-r.top)/r.height;if(!raf)raf=requestAnimationFrame(apply);};
+}
+
+/* ---- announcement ticker ---- */
+let ANN=[],annRotI=0;
+function annKey(a){return (a.card_id||(a.member+a.rarity))+'|'+(a.nickname||'')+'|'+(a.created_at||'');}
+function annText(a){return `<span class="ti ti-${a.rarity}"><span class="who">${esc(a.nickname)}</span>님이 <b>${esc(a.member)} ${a.rarity}</b> 카드를 뽑으셨습니다!</span>`;}
+function pushLocalAnn(a){ANN.unshift(a);const seen=new Set();ANN=ANN.filter(x=>{const k=annKey(x);if(seen.has(k))return false;seen.add(k);return true;}).slice(0,20);renderTicker();}
+async function fetchAnn(){
+  try{const j=await apiGet('/api/announcements');
+    const map=new Map();(j.items||[]).forEach(a=>map.set(annKey(a),a));ANN.forEach(a=>{if(!map.has(annKey(a)))map.set(annKey(a),a);});
+    ANN=[...map.values()].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,20);
+    renderTicker();
+  }catch(e){}
+}
+function renderTicker(){
+  const bar=$('#ticker'),track=$('#tickerTrack');
+  if(!ANN.length){bar.classList.add('hidden');return;}
+  bar.classList.remove('hidden');
+  if(REDUCE){bar.classList.add('reduce');track.innerHTML=annText(ANN[annRotI%ANN.length]);return;}
+  const html=ANN.map(annText).join('');track.innerHTML=html+html; // 이음새 없는 루프용 2배
+}
+
+/* ---- collection ---- */
+function skeletonCollection(){
+  const wrap=$('#colWrap');wrap.innerHTML='';
+  for(let m=0;m<2;m++){
+    wrap.appendChild(el('div','memhead','<div class="sk" style="height:18px;width:120px"></div>'));
+    const g=el('div','colgrid');
+    for(let k=0;k<6;k++)g.appendChild(el('div','sk sk-tile'));
+    wrap.appendChild(g);
+  }
+}
+async function renderCollection(){
+  if(!state.cardsLoaded){$('#colWrap').innerHTML='<div class="empty">카드 정보를 불러오지 못했습니다.</div>';return;}
+  skeletonCollection();
+  try{const j=await apiGet('/api/collection?key='+encodeURIComponent(state.key));state.collection=j.cards||{};}
+  catch(e){/* 기존 값 유지 */}
+
+  const owned=state.cards.filter(c=>state.collection[c.id]>0).length,total=state.cards.length;
+  $('#colOwned').textContent=owned;$('#colTotal').textContent=total;
+
+  const fw=$('#rarFilters');fw.innerHTML='';
+  ['ALL',...RAR].forEach(r=>{const c=el('button','chip'+(state.filter===r?' on':''),r==='ALL'?'전체':r);
+    c.onclick=()=>{state.filter=r;renderCollection();};fw.appendChild(c);});
+
+  const wrap=$('#colWrap');wrap.innerHTML='';
+  const byMember={};state.cards.forEach(c=>{(byMember[c.member]=byMember[c.member]||[]).push(c);});
+  const order=MEMBER_ORDER.filter(m=>byMember[m]).concat(Object.keys(byMember).filter(m=>!MEMBER_ORDER.includes(m)));
+  let shown=0;
+  order.forEach(m=>{
+    let list=byMember[m].slice().sort((a,b)=>RANK[b.rarity]-RANK[a.rarity]);
+    if(state.filter!=='ALL')list=list.filter(c=>c.rarity===state.filter);
+    if(!list.length)return;
+    shown++;
+    const ownedM=byMember[m].filter(c=>state.collection[c.id]>0).length;
+    wrap.appendChild(el('div','memhead',`<h3>${esc(m)}</h3><span class="mc">${ownedM}/${byMember[m].length}</span>`));
+    const grid=el('div','colgrid');
+    list.forEach(c=>{
+      const qty=state.collection[c.id]||0,owned=qty>0;
+      const tile=el('div','tile '+(owned?glowClass(c.rarity):'locked'));
+      tile.innerHTML=`${owned&&qty>1?`<span class="qty">x${qty}</span>`:''}
+        <img class="card-art" src="${imgPath(c.file)}" alt="${owned?esc(c.member):'미보유'}" loading="lazy"/>
+        <img class="card-frame" src="${framePath(c.rarity)}" alt="" aria-hidden="true"/>
+        <div class="cap"><span class="nm">${owned?esc(c.member):'???'}</span><span class="rb rb-${c.rarity}">${c.rarity}</span></div>`;
+      if(owned)enableTilt(tile);
+      grid.appendChild(tile);
+    });
+    wrap.appendChild(grid);
+  });
+  if(!shown)wrap.appendChild(el('div','empty','해당 등급으로 보유한 카드가 없습니다.'));
+}
+async function renderCollection(){
+  if(!state.cardsLoaded){$('#colWrap').innerHTML='<div class="empty">카드 정보를 불러오지 못했습니다.</div>';return;}
+  skeletonCollection();
+  try{const j=await apiGet('/api/collection?key='+encodeURIComponent(state.key));state.collection=j.cards||{};state.first=j.first||{};state.claimed=j.claimed||[];}
+  catch(e){/* existing collection stays visible */}
+  const owned=state.cards.filter(c=>state.collection[c.id]>0).length,total=state.cards.length;
+  $('#colOwned').textContent=owned;$('#colTotal').textContent=total;
+  $('#batchDismantleBtn').disabled=!state.cards.some(c=>(state.collection[c.id]||0)>1);
+  const fw=$('#rarFilters');fw.innerHTML='';
+  ['ALL',...RAR].forEach(r=>{const button=el('button','chip'+(state.filter===r?' on':''),r==='ALL'?'전체':r);button.onclick=()=>{state.filter=r;renderCollection();};fw.appendChild(button);});
+  const wrap=$('#colWrap');wrap.innerHTML='';const byMember={};state.cards.forEach(c=>{(byMember[c.member]=byMember[c.member]||[]).push(c);});
+  const order=MEMBER_ORDER.filter(m=>byMember[m]).concat(Object.keys(byMember).filter(m=>!MEMBER_ORDER.includes(m)));let shown=0;
+  order.forEach(member=>{
+    let list=byMember[member].slice().sort((a,b)=>RANK[b.rarity]-RANK[a.rarity]);if(state.filter!=='ALL')list=list.filter(c=>c.rarity===state.filter);if(!list.length)return;shown++;
+    const ownedMember=byMember[member].filter(c=>state.collection[c.id]>0).length,complete=ownedMember===byMember[member].length,claimed=state.claimed.includes(member);
+    const reward=complete&&!claimed?`<button class="small-btn" data-claim="${esc(member)}">보상 받기 +500P</button>`:(claimed?'<span class="mc">보상 수령 완료</span>':'');
+    wrap.appendChild(el('div','memhead',`<h3>${esc(member)}</h3><span class="mc">${ownedMember}/${byMember[member].length}</span>${reward}`));
+    const grid=el('div','colgrid');list.forEach(card=>{
+      const qty=state.collection[card.id]||0,hasCard=qty>0,tile=el('div','tile '+(hasCard?glowClass(card.rarity):'locked'));
+      tile.innerHTML=`${hasCard?`<span class="qty">x${qty}</span>`:''}<img class="card-art" src="${hasCard?imgPath(card.file):'assets/card-back.jpg'}" alt="${esc(card.member)}" loading="lazy"/><img class="card-frame" src="${framePath(card.rarity)}" alt="" aria-hidden="true"/><div class="cap"><span class="nm">${esc(card.member)}</span><span class="rb rb-${card.rarity}">${card.rarity}</span></div>`;
+      if(hasCard){enableTilt(tile);tile.onclick=()=>openCardDetail(card);}grid.appendChild(tile);
+    });wrap.appendChild(grid);
+  });
+  if(!shown)wrap.appendChild(el('div','empty','해당 등급 카드가 없습니다.'));
+  wrap.querySelectorAll('[data-claim]').forEach(button=>button.onclick=()=>claimMemberReward(button.dataset.claim));
+}
+function closeCardModal(){$('#cardModal').classList.add('hidden');}
+function openCardDetail(card){
+  const qty=state.collection[card.id]||0,extra=Math.max(0,qty-1),refund=DISMANTLE_REFUND[card.rarity]*extra,first=state.first[card.id]?new Date(state.first[card.id]).toLocaleDateString('ko-KR'):'-';
+  $('#cardDetail').innerHTML=`<h2 id="detailTitle" style="font-size:18px;margin-bottom:14px">카드 상세</h2><div class="detail-card"><img src="${imgPath(card.file)}" alt="${esc(card.member)}"/><img class="card-frame" src="${framePath(card.rarity)}" alt=""/><div class="detail-name">${esc(card.member)}</div></div><div class="detail-meta"><div><span>등급</span><b class="rb rb-${card.rarity}">${card.rarity}</b></div><div><span>보유 수량</span><b>${qty}장</b></div><div><span>첫 획득일</span><b>${first}</b></div><div><span>카드 ID</span><b class="mono">${esc(card.id)}</b></div></div><div class="detail-actions">${extra?`<button class="cta sub" id="detailDismantle">중복 ${extra}장 분해 +${refund}P</button>`:''}</div>`;
+  const button=$('#detailDismantle');if(button)button.onclick=()=>dismantleCard(card.id,extra);$('#cardModal').classList.remove('hidden');
+}
+async function dismantleCard(cardId,count){try{const j=await apiPost('/api/dismantle',{key:state.key,cardId,count});state.collection=j.collection||{};setPoints(j.points);closeCardModal();sfx('rare');toast(`분해 완료. +${j.refund}P`);renderCollection();}catch(e){toast(e.message,true);}}
+async function dismantleAll(){if(!confirm('모든 중복 카드를 분해합니다. 카드별 1장은 보존됩니다.'))return;try{const j=await apiPost('/api/dismantle',{key:state.key,mode:'all'});state.collection=j.collection||{};setPoints(j.points);sfx('rare');toast(`중복 분해 완료. +${j.refund}P`);renderCollection();}catch(e){toast(e.message,true);}}
+async function claimMemberReward(member){try{const j=await apiPost('/api/claim-reward',{key:state.key,member});if(!j.ok)return toast(j.message||'보상 수령이 아직 준비되지 않았습니다',true);state.claimed.push(member);setPoints(j.points);sfx('fur');toast(`${member} 완성 보상 +${j.reward}P`);renderCollection();}catch(e){toast(e.message,true);}}
+$('#cardModalClose').onclick=closeCardModal;$('#cardModalBackdrop').onclick=closeCardModal;$('#batchDismantleBtn').onclick=dismantleAll;
+
+/* card 3D tilt on hover (rAF + transform only) */
+function enableTilt(tile){
+  if(REDUCE)return;
+  let raf=null,px=.5,py=.5,active=false;
+  const apply=()=>{raf=null;const rx=(py-.5)*-9,ry=(px-.5)*11;
+    tile.style.transform=active?`perspective(600px) rotateX(${rx}deg) rotateY(${ry}deg) scale(1.04)`:'';};
+  tile.style.transition='transform .18s ease';
+  tile.onpointermove=e=>{const r=tile.getBoundingClientRect();px=(e.clientX-r.left)/r.width;py=(e.clientY-r.top)/r.height;active=true;if(!raf)raf=requestAnimationFrame(apply);};
+  tile.onpointerleave=()=>{active=false;if(!raf)raf=requestAnimationFrame(apply);};
+}
+
+let realtimeClient=null;
+async function initRealtime(){
+  if(realtimeClient||!window.supabase)return;
+  try{const config=await apiGet('/api/public-config');if(!config.url||!config.anonKey)return;
+    realtimeClient=window.supabase.createClient(config.url,config.anonKey,{auth:{persistSession:false}});
+    realtimeClient.channel('gacha-announcements').on('postgres_changes',{event:'INSERT',schema:'public',table:'gacha_announcements'},payload=>{if(payload.new)pushLocalAnn(payload.new);}).subscribe();
+  }catch(e){/* polling remains fallback */}
+}
+
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset.nav));
+
+/* boot */
+(async function(){
+  updateSoundBtn();
+  try{const j=await apiGet('/api/cards');state.cards=j.cards;state.byId=Object.fromEntries(j.cards.map(c=>[c.id,c]));state.cardsLoaded=true;}
+  catch(e){console.error('cards load fail',e);}
+  fetchAnn();
+  initRealtime();
+  setInterval(fetchAnn,30000); // 30초 폴링
+  if(REDUCE)setInterval(()=>{if(ANN.length){annRotI++;renderTicker();}},4500); // reduced-motion: 정적 로테이션
+  const saved=localStorage.getItem('cardgacha_key');
+  if(saved)await doLogin(saved);else show('auth');
+})();
+</script>

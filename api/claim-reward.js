@@ -1,5 +1,5 @@
 // POST /api/claim-reward {key, member} -> {ok, points, reward, member}
-// 멤버의 cards.json 전체 카드를 보유(각 1장 이상)했고 미수령이면 500P 1회 지급.
+// 멤버의 cards.json 전체 카드를 보유(각 1장 이상)했고 미수령이면 100P 1회 지급.
 // migration2(gacha_member_rewards) 실행 전에는 ok:false 로 graceful 응답.
 const { sendJson, readBody } = require('../lib/http');
 const { getCards } = require('../lib/gacha');
@@ -7,7 +7,7 @@ const {
   getUserByKey, updateUser, getCollection, getMemberRewards, insertMemberReward,
 } = require('../lib/supabase');
 
-const MEMBER_REWARD = 500;
+const MEMBER_REWARD = 100;
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });

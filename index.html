@@ -436,7 +436,9 @@ const framePath=rarity=>`assets/frames/${rarity.toLowerCase()}.svg`;
 const packArt={normal:'normal',premium:'rare',luxury:'premium'};
 const MEMBER_ORDER=['김윤환','소주양','지두두','남덕선','토마토','햇살','찌킹','치리','주하랑','임조이','비타밍','먼진','아리송이','낭니','변현제','김민철','사테','박준오','박수범','지동원','배성흠'];
 const DISMANTLE_REFUND={C:5,U:8,R:12,RR:20,RRR:30,AR:45,CHR:60,HR:80,SR:100,SAR:130,UR:160,MUR:200,FUR:250};
-const MEMBER_REWARDS={'김윤환':900,'지두두':560,'토마토':440,'임조이':380,'소주양':320,'주하랑':260,'낭니':260,'비타밍':220,'먼진':180,'남덕선':160,'치리':150,'아리송이':150,'햇살':140,'김민철':110,'변현제':110,'박준오':100,'지동원':100,'배성흠':100,'박수범':100,'사테':100,'찌킹':100,'주콩콩':260,'히영씨':350,'꽁아':200,'깐숙':160,'암주양':350,'암치리':260,'암하랑':200,'암찌킹':160,'암타밍':130,'암마토':130,'암조이':100,'암낭니':100,'암두두':80};
+const MEMBER_REWARDS={'김윤환':900,'지두두':560,'토마토':440,'임조이':380,'소주양':320,'주하랑':260,'낭니':260,'비타밍':220,'먼진':180,'남덕선':160,'치리':150,'아리송이':150,'햇살':140,'김민철':110,'변현제':110,'박준오':100,'지동원':100,'배성흠':100,'박수범':100,'사테':100,'찌킹':100};
+/* 명예유스/암연시는 컬렉션 단위 보상 — 카드 전부 모아야 1회 지급. label(섹션명)이 claim member 파라미터. */
+const COLLECTION_REWARDS={honor:1000,dark:1500};
 const HONOR_MEMBERS=['주콩콩','히영씨','꽁아','깐숙'];
 const DARK_MEMBERS=['암주양','암치리','암하랑','암찌킹','암타밍','암마토','암조이','암낭니','암두두'];
 const COLLECTIONS=[{key:'crew',label:'크루',members:MEMBER_ORDER},{key:'honor',label:'명예유스',members:HONOR_MEMBERS},{key:'dark',label:'암연시',members:DARK_MEMBERS}];
@@ -772,12 +774,16 @@ async function renderCollection(){
   const wrap=$('#colWrap');wrap.innerHTML='';const byMember={};state.cards.forEach(c=>{(byMember[c.member]=byMember[c.member]||[]).push(c);});
   const assigned=new Set();COLLECTIONS.forEach(s=>s.members.forEach(m=>assigned.add(m)));
   let shown=0;
-  const renderMember=member=>{
+  const renderMember=(member,isCol)=>{
     if(!byMember[member])return;
     let list=byMember[member].slice().sort((a,b)=>RANK[b.rarity]-RANK[a.rarity]);if(state.filter!=='ALL')list=list.filter(c=>c.rarity===state.filter);if(!list.length)return false;shown++;
     const ownedMember=byMember[member].filter(c=>state.collection[c.id]>0).length,complete=ownedMember===byMember[member].length,claimed=state.claimed.includes(member);
-    const rewardAmt=MEMBER_REWARDS[member]||0;
-    const reward=complete&&!claimed?`<button class="small-btn" data-claim="${esc(member)}">보상 받기 +${rewardAmt}P</button>`:(claimed?'<span class="mc">보상 수령 완료</span>':`<span class="mc">완성 보상 ${rewardAmt}P</span>`);
+    // 컬렉션(명예유스/암연시) 멤버는 개별 보상 없음 — 보상은 섹션 헤더에서 컬렉션 단위로 처리
+    let reward='';
+    if(!isCol){
+      const rewardAmt=MEMBER_REWARDS[member]||0;
+      reward=complete&&!claimed?`<button class="small-btn" data-claim="${esc(member)}">보상 받기 +${rewardAmt}P</button>`:(claimed?'<span class="mc">보상 수령 완료</span>':`<span class="mc">완성 보상 ${rewardAmt}P</span>`);
+    }
     wrap.appendChild(el('div','memhead',`<h3>${esc(member)}</h3><span class="mc">${ownedMember}/${byMember[member].length}</span>${reward}`));
     const grid=el('div','colgrid');list.forEach(card=>{
       const qty=state.collection[card.id]||0,hasCard=qty>0,tile=el('div','tile '+(hasCard?glowClass(card.rarity):'locked'));
@@ -786,11 +792,25 @@ async function renderCollection(){
     });wrap.appendChild(grid);return true;
   };
   COLLECTIONS.forEach(sec=>{
+    const isCol=sec.key!=='crew';
     let members=sec.members.filter(m=>byMember[m]);
     if(sec.key==='crew')members=members.concat(Object.keys(byMember).filter(m=>!assigned.has(m)));
     const anchor=wrap.childElementCount;let any=false;
-    members.forEach(m=>{if(renderMember(m))any=true;});
-    if(any){const hd=el('div','col-section col-section-'+sec.key,`<span class="cs-line"></span><h2>${sec.label}</h2><span class="cs-line"></span>`);wrap.insertBefore(hd,wrap.children[anchor]||null);}
+    members.forEach(m=>{if(renderMember(m,isCol))any=true;});
+    if(any){
+      let head=`<span class="cs-line"></span><h2>${sec.label}</h2>`;
+      if(isCol){
+        // 컬렉션 단위 진행도 + 완성 보상 (필터 무관하게 전체 기준)
+        const colCards=state.cards.filter(c=>c.collection===sec.key);
+        const ownedCol=colCards.filter(c=>state.collection[c.id]>0).length,totalCol=colCards.length;
+        const complete=totalCol>0&&ownedCol===totalCol,claimed=state.claimed.includes(sec.label),amt=COLLECTION_REWARDS[sec.key]||0;
+        const reward=complete&&!claimed?`<button class="small-btn" data-claim="${esc(sec.label)}">보상 받기 +${amt}P</button>`:(claimed?'<span class="mc">보상 수령 완료</span>':`<span class="mc">완성 보상 ${amt}P</span>`);
+        head+=`<span class="mc">${ownedCol}/${totalCol}</span>${reward}`;
+      }
+      head+=`<span class="cs-line"></span>`;
+      const hd=el('div','col-section col-section-'+sec.key,head);
+      wrap.insertBefore(hd,wrap.children[anchor]||null);
+    }
   });
   if(!shown)wrap.appendChild(el('div','empty','해당 등급 카드가 없습니다.'));
   wrap.querySelectorAll('[data-claim]').forEach(button=>button.onclick=()=>claimMemberReward(button.dataset.claim));

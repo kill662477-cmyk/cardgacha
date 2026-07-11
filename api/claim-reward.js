@@ -2,12 +2,10 @@
 // 멤버의 cards.json 전체 카드를 보유(각 1장 이상)했고 미수령이면 100P 1회 지급.
 // migration2(gacha_member_rewards) 실행 전에는 ok:false 로 graceful 응답.
 const { sendJson, readBody } = require('../lib/http');
-const { getCards } = require('../lib/gacha');
+const { getCards, MEMBER_REWARDS } = require('../lib/gacha');
 const {
   getUserByKey, updateUser, getCollection, getMemberRewards, insertMemberReward,
 } = require('../lib/supabase');
-
-const MEMBER_REWARD = 100;
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });
@@ -49,14 +47,15 @@ module.exports = async function handler(req, res) {
     } catch (dupErr) {
       return sendJson(res, 200, { ok: false, reason: 'claimed', message: '이미 수령한 보상입니다' });
     }
+    const memberReward = MEMBER_REWARDS[member] || 0;
     const RANKING_BONUS = 1000;
-    const updatePayload = { points: user.points + MEMBER_REWARD };
+    const updatePayload = { points: user.points + memberReward };
     if ('ranking_score' in user) {
       updatePayload.ranking_score = user.ranking_score + RANKING_BONUS;
     }
     const updated = await updateUser(user.id, updatePayload);
 
-    return sendJson(res, 200, { ok: true, points: updated.points, reward: MEMBER_REWARD, member });
+    return sendJson(res, 200, { ok: true, points: updated.points, reward: memberReward, member });
   } catch (e) {
     console.error('claim-reward error', e);
     return sendJson(res, 500, { error: '보상 수령 실패', detail: String(e.message || e) });

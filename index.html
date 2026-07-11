@@ -426,7 +426,8 @@ const RANK=Object.fromEntries(RAR.map((r,i)=>[r,i]));
 const framePath=rarity=>`assets/frames/${rarity.toLowerCase()}.svg`;
 const packArt={normal:'normal',premium:'rare',luxury:'premium'};
 const MEMBER_ORDER=['김윤환','소주양','지두두','남덕선','토마토','햇살','찌킹','치리','주하랑','임조이','비타밍','먼진','아리송이','낭니','변현제','김민철','사테','박준오','박수범','지동원','배성흠'];
-const DISMANTLE_REFUND={C:5,U:8,R:15,RR:25,RRR:40,AR:60,CHR:80,HR:100,SR:130,SAR:170,UR:220,MUR:300,FUR:400};
+const DISMANTLE_REFUND={C:5,U:8,R:12,RR:20,RRR:30,AR:45,CHR:60,HR:80,SR:100,SAR:130,UR:160,MUR:200,FUR:250};
+const MEMBER_REWARDS={'김윤환':450,'지두두':280,'토마토':220,'임조이':190,'소주양':160,'주하랑':130,'낭니':130,'비타밍':110,'먼진':90,'남덕선':80,'치리':75,'아리송이':75,'햇살':70,'김민철':55,'변현제':55,'박준오':50,'지동원':50,'배성흠':50,'박수범':50,'사테':50,'찌킹':50};
 const state={key:null,nickname:null,points:0,canAttend:false,streak:null,cards:[],byId:{},collection:{},first:{},claimed:[],filter:'ALL',cardsLoaded:false,soundOn:localStorage.getItem('cardgacha_sound')==='on'};
 const REDUCE=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -757,7 +758,8 @@ async function renderCollection(){
   order.forEach(member=>{
     let list=byMember[member].slice().sort((a,b)=>RANK[b.rarity]-RANK[a.rarity]);if(state.filter!=='ALL')list=list.filter(c=>c.rarity===state.filter);if(!list.length)return;shown++;
     const ownedMember=byMember[member].filter(c=>state.collection[c.id]>0).length,complete=ownedMember===byMember[member].length,claimed=state.claimed.includes(member);
-    const reward=complete&&!claimed?`<button class="small-btn" data-claim="${esc(member)}">보상 받기 +500P</button>`:(claimed?'<span class="mc">보상 수령 완료</span>':'');
+    const rewardAmt=MEMBER_REWARDS[member]||0;
+    const reward=complete&&!claimed?`<button class="small-btn" data-claim="${esc(member)}">보상 받기 +${rewardAmt}P</button>`:(claimed?'<span class="mc">보상 수령 완료</span>':`<span class="mc">완성 보상 ${rewardAmt}P</span>`);
     wrap.appendChild(el('div','memhead',`<h3>${esc(member)}</h3><span class="mc">${ownedMember}/${byMember[member].length}</span>${reward}`));
     const grid=el('div','colgrid');list.forEach(card=>{
       const qty=state.collection[card.id]||0,hasCard=qty>0,tile=el('div','tile '+(hasCard?glowClass(card.rarity):'locked'));

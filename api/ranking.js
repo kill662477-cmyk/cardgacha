@@ -13,6 +13,7 @@ module.exports = async function handler(req, res) {
     return sendJson(res, 200, { rankings: rows.map(r => ({ nickname: r.nickname, score: r.ranking_score || 0 })) });
   } catch (e) {
     console.error('ranking error', e);
-    return sendJson(res, 500, { error: '랭킹 조회 실패', detail: String(e.message || e) });
+    console.error('ranking error', e?.message || e);
+    return sendJson(res, 500, { error: '랭킹 조회 실패' });
   }
 };

@@ -10,6 +10,7 @@ module.exports = async function handler(req, res) {
     return sendJson(res, 200, { cards });
   } catch (e) {
     console.error('cards error', e);
-    return sendJson(res, 500, { error: '카드 목록 조회 실패', detail: String(e.message || e) });
+    console.error('cards error', e?.message || e);
+    return sendJson(res, 500, { error: '카드 목록 조회 실패' });
   }
 };

@@ -2,10 +2,12 @@
 const { sendJson, readBody } = require('../lib/http');
 const { seoulToday } = require('../lib/gacha');
 const { getUserByKey, updateUser } = require('../lib/supabase');
+const { enforceRateLimit, serverError } = require('../lib/security');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });
   try {
+    if (!await enforceRateLimit(req, res, 'login-ip', 12, 60)) return;
     const body = await readBody(req);
     const key = (body.key || '').toString().trim();
     if (!key) return sendJson(res, 400, { error: 'key를 입력하세요' });
@@ -28,7 +30,6 @@ module.exports = async function handler(req, res) {
       },
     });
   } catch (e) {
-    console.error('login error', e);
-    return sendJson(res, 500, { error: '로그인 실패', detail: String(e.message || e) });
+    return serverError(res, 'login', e, '로그인에 실패했습니다');
   }
 };

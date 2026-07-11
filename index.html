@@ -730,7 +730,7 @@ function skeletonCollection(){
 async function renderCollection(){
   if(!state.cardsLoaded){$('#colWrap').innerHTML='<div class="empty">카드 정보를 불러오지 못했습니다.</div>';return;}
   skeletonCollection();
-  try{const j=await apiGet('/api/collection?key='+encodeURIComponent(state.key));state.collection=j.cards||{};}
+  try{const j=await apiPost('/api/collection',{key:state.key});state.collection=j.cards||{};}
   catch(e){/* 기존 값 유지 */}
 
   const owned=state.cards.filter(c=>state.collection[c.id]>0).length,total=state.cards.length;
@@ -769,7 +769,7 @@ async function renderCollection(){
 async function renderCollection(){
   if(!state.cardsLoaded){$('#colWrap').innerHTML='<div class="empty">카드 정보를 불러오지 못했습니다.</div>';return;}
   skeletonCollection();
-  try{const j=await apiGet('/api/collection?key='+encodeURIComponent(state.key));state.collection=j.cards||{};state.first=j.first||{};state.claimed=j.claimed||[];}
+  try{const j=await apiPost('/api/collection',{key:state.key});state.collection=j.cards||{};state.first=j.first||{};state.claimed=j.claimed||[];}
   catch(e){/* existing collection stays visible */}
   const owned=state.cards.filter(c=>state.collection[c.id]>0).length,total=state.cards.length;
   $('#colOwned').textContent=owned;$('#colTotal').textContent=total;

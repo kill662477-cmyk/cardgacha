@@ -72,7 +72,7 @@ const server = http.createServer((req, res) => {
       console.error('handler crash', e);
       if (!res.headersSent) {
         res.statusCode = 500;
-        res.end(JSON.stringify({ error: 'server error', detail: String(e.message || e) }));
+        res.end(JSON.stringify({ error: 'server error' }));
       }
     });
     return;

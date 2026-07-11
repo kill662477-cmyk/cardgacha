@@ -2,10 +2,12 @@
 const { sendJson, readBody } = require('../lib/http');
 const { newKey } = require('../lib/gacha');
 const { insertUser, getRecentAccountsCountByIp } = require('../lib/supabase');
+const { enforceRateLimit, serverError } = require('../lib/security');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });
   try {
+    if (!await enforceRateLimit(req, res, 'register-ip', 4, 1800)) return;
     const body = await readBody(req);
     const nickname = (body.nickname || '').toString().trim();
     if (!nickname) return sendJson(res, 400, { error: '닉네임을 입력하세요' });
@@ -33,7 +35,6 @@ module.exports = async function handler(req, res) {
       },
     });
   } catch (e) {
-    console.error('register error', e);
-    return sendJson(res, 500, { error: '가입 실패', detail: String(e.message || e) });
+    return serverError(res, 'register', e, '가입에 실패했습니다');
   }
 };

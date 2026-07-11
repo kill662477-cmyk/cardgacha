@@ -36,6 +36,12 @@
     "rarity": "U"
   },
   {
+    "id": "baeseongheum-4",
+    "member": "배성흠",
+    "file": "baeseongheum-4.avif",
+    "rarity": "C"
+  },
+  {
     "id": "byeonhyeonje-1",
     "member": "변현제",
     "file": "byeonhyeonje-1.avif",
@@ -51,6 +57,18 @@
     "id": "byeonhyeonje-3",
     "member": "변현제",
     "file": "byeonhyeonje-3.jpg",
+    "rarity": "C"
+  },
+  {
+    "id": "byeonhyeonje-4",
+    "member": "변현제",
+    "file": "byeonhyeonje-4.avif",
+    "rarity": "U"
+  },
+  {
+    "id": "byeonhyeonje-5",
+    "member": "변현제",
+    "file": "byeonhyeonje-5.avif",
     "rarity": "C"
   },
   {
@@ -153,6 +171,12 @@
     "id": "jidongwon-3",
     "member": "지동원",
     "file": "jidongwon-3.webp",
+    "rarity": "C"
+  },
+  {
+    "id": "jidongwon-4",
+    "member": "지동원",
+    "file": "jidongwon-4.avif",
     "rarity": "C"
   },
   {
@@ -262,6 +286,12 @@
     "member": "김민철",
     "file": "kimmincheol-3.webp",
     "rarity": "R"
+  },
+  {
+    "id": "kimmincheol-4",
+    "member": "김민철",
+    "file": "kimmincheol-4.avif",
+    "rarity": "C"
   },
   {
     "id": "kimyunhwan-1",
@@ -402,6 +432,18 @@
     "rarity": "R"
   },
   {
+    "id": "parkjuno-3",
+    "member": "박준오",
+    "file": "parkjuno-3.avif",
+    "rarity": "C"
+  },
+  {
+    "id": "parkjuno-4",
+    "member": "박준오",
+    "file": "parkjuno-4.avif",
+    "rarity": "U"
+  },
+  {
     "id": "parksubeom-1",
     "member": "박수범",
     "file": "parksubeom-1.avif",
@@ -420,6 +462,18 @@
     "rarity": "U"
   },
   {
+    "id": "parksubeom-4",
+    "member": "박수범",
+    "file": "parksubeom-4.avif",
+    "rarity": "C"
+  },
+  {
+    "id": "parksubeom-5",
+    "member": "박수범",
+    "file": "parksubeom-5.avif",
+    "rarity": "U"
+  },
+  {
     "id": "sate-1",
     "member": "사테",
     "file": "sate-1.avif",
@@ -429,6 +483,18 @@
     "id": "sate-2",
     "member": "사테",
     "file": "sate-2.avif",
+    "rarity": "U"
+  },
+  {
+    "id": "sate-3",
+    "member": "사테",
+    "file": "sate-3.avif",
+    "rarity": "R"
+  },
+  {
+    "id": "sate-4",
+    "member": "사테",
+    "file": "sate-4.avif",
     "rarity": "U"
   },
   {

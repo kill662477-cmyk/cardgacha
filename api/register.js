@@ -12,7 +12,8 @@ module.exports = async function handler(req, res) {
     if (nickname.length > 40) return sendJson(res, 400, { error: '닉네임이 너무 깁니다' });
 
     const key = newKey();
-    const user = await insertUser(nickname, key);
+    const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
+    const user = await insertUser(nickname, key, ip);
     return sendJson(res, 200, {
       key,
       user: {

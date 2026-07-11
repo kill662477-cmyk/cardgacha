@@ -196,6 +196,15 @@
   .chip{border:1px solid var(--brd);background:#0a0e1e;color:var(--muted);border-radius:999px;
     padding:5px 12px;font-size:12px;font-weight:700;font-family:var(--font-mono);transition:all .15s}
   .chip.on{color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
+  .col-section{display:flex;align-items:center;gap:14px;margin:34px 0 6px}
+  .col-section:first-child{margin-top:8px}
+  .col-section h2{font-size:15px;font-weight:800;letter-spacing:.14em;white-space:nowrap;font-family:var(--font-mono);text-transform:uppercase}
+  .col-section .cs-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,currentColor,transparent);opacity:.5}
+  .col-section-crew{color:var(--accent)}
+  .col-section-honor{color:#ffcf4a}
+  .col-section-honor h2{text-shadow:0 0 12px rgba(255,207,74,.45)}
+  .col-section-dark{color:#c45cff}
+  .col-section-dark h2{text-shadow:0 0 12px rgba(196,92,255,.5)}
   .memhead{display:flex;align-items:center;gap:10px;margin:22px 0 10px}
   .memhead h3{font-size:16px}
   .memhead .mc{font-family:var(--font-mono);font-size:12px;color:var(--dim)}
@@ -427,7 +436,10 @@ const framePath=rarity=>`assets/frames/${rarity.toLowerCase()}.svg`;
 const packArt={normal:'normal',premium:'rare',luxury:'premium'};
 const MEMBER_ORDER=['김윤환','소주양','지두두','남덕선','토마토','햇살','찌킹','치리','주하랑','임조이','비타밍','먼진','아리송이','낭니','변현제','김민철','사테','박준오','박수범','지동원','배성흠'];
 const DISMANTLE_REFUND={C:5,U:8,R:12,RR:20,RRR:30,AR:45,CHR:60,HR:80,SR:100,SAR:130,UR:160,MUR:200,FUR:250};
-const MEMBER_REWARDS={'김윤환':900,'지두두':560,'토마토':440,'임조이':380,'소주양':320,'주하랑':260,'낭니':260,'비타밍':220,'먼진':180,'남덕선':160,'치리':150,'아리송이':150,'햇살':140,'김민철':110,'변현제':110,'박준오':100,'지동원':100,'배성흠':100,'박수범':100,'사테':100,'찌킹':100};
+const MEMBER_REWARDS={'김윤환':900,'지두두':560,'토마토':440,'임조이':380,'소주양':320,'주하랑':260,'낭니':260,'비타밍':220,'먼진':180,'남덕선':160,'치리':150,'아리송이':150,'햇살':140,'김민철':110,'변현제':110,'박준오':100,'지동원':100,'배성흠':100,'박수범':100,'사테':100,'찌킹':100,'주콩콩':260,'히영씨':350,'꽁아':200,'깐숙':160,'암주양':350,'암치리':260,'암하랑':200,'암찌킹':160,'암타밍':130,'암마토':130,'암조이':100,'암낭니':100,'암두두':80};
+const HONOR_MEMBERS=['주콩콩','히영씨','꽁아','깐숙'];
+const DARK_MEMBERS=['암주양','암치리','암하랑','암찌킹','암타밍','암마토','암조이','암낭니','암두두'];
+const COLLECTIONS=[{key:'crew',label:'크루',members:MEMBER_ORDER},{key:'honor',label:'명예유스',members:HONOR_MEMBERS},{key:'dark',label:'암연시',members:DARK_MEMBERS}];
 const state={key:null,nickname:null,points:0,canAttend:false,streak:null,cards:[],byId:{},collection:{},first:{},claimed:[],filter:'ALL',cardsLoaded:false,soundOn:localStorage.getItem('cardgacha_sound')==='on'};
 const REDUCE=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -758,9 +770,11 @@ async function renderCollection(){
   const fw=$('#rarFilters');fw.innerHTML='';
   ['ALL',...RAR].forEach(r=>{const button=el('button','chip'+(state.filter===r?' on':''),r==='ALL'?'전체':r);button.onclick=()=>{state.filter=r;renderCollection();};fw.appendChild(button);});
   const wrap=$('#colWrap');wrap.innerHTML='';const byMember={};state.cards.forEach(c=>{(byMember[c.member]=byMember[c.member]||[]).push(c);});
-  const order=MEMBER_ORDER.filter(m=>byMember[m]).concat(Object.keys(byMember).filter(m=>!MEMBER_ORDER.includes(m)));let shown=0;
-  order.forEach(member=>{
-    let list=byMember[member].slice().sort((a,b)=>RANK[b.rarity]-RANK[a.rarity]);if(state.filter!=='ALL')list=list.filter(c=>c.rarity===state.filter);if(!list.length)return;shown++;
+  const assigned=new Set();COLLECTIONS.forEach(s=>s.members.forEach(m=>assigned.add(m)));
+  let shown=0;
+  const renderMember=member=>{
+    if(!byMember[member])return;
+    let list=byMember[member].slice().sort((a,b)=>RANK[b.rarity]-RANK[a.rarity]);if(state.filter!=='ALL')list=list.filter(c=>c.rarity===state.filter);if(!list.length)return false;shown++;
     const ownedMember=byMember[member].filter(c=>state.collection[c.id]>0).length,complete=ownedMember===byMember[member].length,claimed=state.claimed.includes(member);
     const rewardAmt=MEMBER_REWARDS[member]||0;
     const reward=complete&&!claimed?`<button class="small-btn" data-claim="${esc(member)}">보상 받기 +${rewardAmt}P</button>`:(claimed?'<span class="mc">보상 수령 완료</span>':`<span class="mc">완성 보상 ${rewardAmt}P</span>`);
@@ -769,7 +783,14 @@ async function renderCollection(){
       const qty=state.collection[card.id]||0,hasCard=qty>0,tile=el('div','tile '+(hasCard?glowClass(card.rarity):'locked'));
       tile.innerHTML=`${hasCard?`<span class="qty">x${qty}</span>`:''}<img class="card-art" src="${hasCard?imgPath(card.file):'assets/card-back.jpg'}" alt="${esc(card.member)}" loading="lazy"/><img class="card-frame" src="${framePath(card.rarity)}" alt="" aria-hidden="true"/><div class="cap"><span class="nm">${esc(card.member)}</span><span class="rb rb-${card.rarity}">${card.rarity}</span></div>`;
       if(hasCard){enableTilt(tile);tile.onclick=()=>openCardDetail(card);}grid.appendChild(tile);
-    });wrap.appendChild(grid);
+    });wrap.appendChild(grid);return true;
+  };
+  COLLECTIONS.forEach(sec=>{
+    let members=sec.members.filter(m=>byMember[m]);
+    if(sec.key==='crew')members=members.concat(Object.keys(byMember).filter(m=>!assigned.has(m)));
+    const anchor=wrap.childElementCount;let any=false;
+    members.forEach(m=>{if(renderMember(m))any=true;});
+    if(any){const hd=el('div','col-section col-section-'+sec.key,`<span class="cs-line"></span><h2>${sec.label}</h2><span class="cs-line"></span>`);wrap.insertBefore(hd,wrap.children[anchor]||null);}
   });
   if(!shown)wrap.appendChild(el('div','empty','해당 등급 카드가 없습니다.'));
   wrap.querySelectorAll('[data-claim]').forEach(button=>button.onclick=()=>claimMemberReward(button.dataset.claim));

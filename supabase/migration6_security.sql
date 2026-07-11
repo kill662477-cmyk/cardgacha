@@ -101,8 +101,8 @@ begin
 
   return query
   update public.gacha_users
-  set points = points - p_price,
-      ranking_score = coalesce(ranking_score, 0) + p_score_gain
+  set points = public.gacha_users.points - p_price,
+      ranking_score = coalesce(public.gacha_users.ranking_score, 0) + p_score_gain
   where id = p_user_id
   returning public.gacha_users.points, public.gacha_users.ranking_score;
 end;
@@ -143,7 +143,7 @@ begin
 
   return query
   update public.gacha_users
-  set points = points + v_bonus, last_attend = p_today, streak = v_streak
+  set points = public.gacha_users.points + v_bonus, last_attend = p_today, streak = v_streak
   where id = p_user_id
   returning public.gacha_users.points, true, v_bonus, v_streak, v_newbie,
     case when (7 - (v_streak % 7)) % 7 = 0 then 7 else (7 - (v_streak % 7)) % 7 end;
@@ -190,7 +190,7 @@ begin
   end loop;
 
   return query
-  update public.gacha_users set points = points + v_total where id = p_user_id
+  update public.gacha_users set points = public.gacha_users.points + v_total where id = p_user_id
   returning public.gacha_users.points;
 end;
 $$;
@@ -224,8 +224,8 @@ begin
 
   return query
   update public.gacha_users
-  set points = points + p_reward,
-      ranking_score = coalesce(ranking_score, 0) + p_ranking_bonus
+  set points = public.gacha_users.points + p_reward,
+      ranking_score = coalesce(public.gacha_users.ranking_score, 0) + p_ranking_bonus
   where id = p_user_id
   returning true, public.gacha_users.points;
 end;

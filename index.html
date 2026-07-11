@@ -519,7 +519,10 @@ $('#attendBtn').onclick=async()=>{
     renderShop();
   }catch(e){toast(e.message,true);}
 };
+let isPackOpening = false;
 async function buyPack(id){
+  if(isPackOpening) return;
+  isPackOpening = true;
   const pack=PACKS.find(p=>p.id===id);
   if(state.points<pack.price)return toast('포인트가 부족합니다',true);
   const btn=document.querySelector(`[data-buy="${id}"]`);if(btn){btn.disabled=true;btn.textContent='개봉 중...';}
@@ -529,6 +532,7 @@ async function buyPack(id){
     j.cards.forEach(c=>{state.collection[c.id]=(state.collection[c.id]||0)+1;});
     sfx('open');playOpening(j.cards);
   }catch(e){toast(e.message,true);}
+  finally{isPackOpening=false;}
   if(btn){btn.disabled=false;btn.textContent=pack.price+' P로 뽑기';}
 }
 

@@ -445,7 +445,7 @@ const MEMBER_REWARDS={'김윤환':900,'지두두':560,'토마토':440,'임조이
 /* 명예유스/암연시는 컬렉션 단위 보상 — 카드 전부 모아야 1회 지급. label(섹션명)이 claim member 파라미터. */
 const COLLECTION_REWARDS={honor:1000,dark:1500};
 const HONOR_MEMBERS=['주콩콩','히영씨','꽁아','깐숙'];
-const DARK_MEMBERS=['암주양','암치리','암하랑','암찌킹','암타밍','암마토','암조이','암낭니','암두두'];
+const DARK_MEMBERS=['암주양','암치리','암하랑','암찌킹','암타밍','암마토','암먼진','암조이','암낭니','암두두'];
 const COLLECTIONS=[{key:'crew',label:'크루',members:MEMBER_ORDER},{key:'honor',label:'명예유스',members:HONOR_MEMBERS},{key:'dark',label:'암연시',members:DARK_MEMBERS}];
 const state={key:null,nickname:null,points:0,canAttend:false,streak:null,cards:[],byId:{},collection:{},first:{},claimed:[],filter:'ALL',cardsLoaded:false,soundOn:localStorage.getItem('cardgacha_sound')==='on'};
 const REDUCE=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;

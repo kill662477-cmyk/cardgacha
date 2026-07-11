@@ -1,7 +1,7 @@
 // POST /api/login {key} -> {user}
 const { sendJson, readBody } = require('../lib/http');
 const { seoulToday } = require('../lib/gacha');
-const { getUserByKey } = require('../lib/supabase');
+const { getUserByKey, updateUser } = require('../lib/supabase');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });

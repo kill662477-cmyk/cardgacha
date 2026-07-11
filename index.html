@@ -161,6 +161,11 @@
   .tile{position:relative;border-radius:var(--radius);overflow:hidden;background:#0a0e1e;
     border:1.5px solid var(--brd);aspect-ratio:5/7}
   .tile .card-art,.revface .card-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .tile .card-art:is([src$="amharang-1.avif"],[src$="amjjiking-1.png"],[src$="amtaming-1.avif"],[src$="amnangni-1.avif"]),
+  .revface .card-art:is([src$="amharang-1.avif"],[src$="amjjiking-1.png"],[src$="amtaming-1.avif"],[src$="amnangni-1.avif"]),
+  .detail-card img:is([src$="amharang-1.avif"],[src$="amjjiking-1.png"],[src$="amtaming-1.avif"],[src$="amnangni-1.avif"]){object-fit:contain;background:#080b16}
+  .tile .card-art[src$="amjuyang-1.avif"],.revface .card-art[src$="amjuyang-1.avif"],.detail-card img[src$="amjuyang-1.avif"]{
+    object-fit:contain;background:#080b16;transform:rotate(90deg) scale(.74);transform-origin:center}
   .card-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;z-index:2;pointer-events:none}
   .tile .cap{position:absolute;left:0;right:0;bottom:0;padding:6px 8px;
     background:linear-gradient(180deg,transparent,rgba(4,6,16,.94));

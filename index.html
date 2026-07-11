@@ -796,7 +796,23 @@ async function renderCollection(){
     let members=sec.members.filter(m=>byMember[m]);
     if(sec.key==='crew')members=members.concat(Object.keys(byMember).filter(m=>!assigned.has(m)));
     const anchor=wrap.childElementCount;let any=false;
-    members.forEach(m=>{if(renderMember(m,isCol))any=true;});
+    if(isCol){
+      // 컬렉션(명예유스/암연시)은 멤버 구분 없이 카드 전체를 한 그리드로
+      let list=state.cards.filter(c=>c.collection===sec.key).sort((a,b)=>RANK[b.rarity]-RANK[a.rarity]);
+      if(state.filter!=='ALL')list=list.filter(c=>c.rarity===state.filter);
+      if(list.length){
+        any=true;shown++;
+        const grid=el('div','colgrid');
+        list.forEach(card=>{
+          const qty=state.collection[card.id]||0,hasCard=qty>0,tile=el('div','tile '+(hasCard?glowClass(card.rarity):'locked'));
+          tile.innerHTML=`${hasCard?`<span class="qty">x${qty}</span>`:''}<img class="card-art" src="${hasCard?imgPath(card.file):'assets/card-back.jpg'}" alt="${esc(card.member)}" loading="lazy"/><img class="card-frame" src="${framePath(card.rarity)}" alt="" aria-hidden="true"/><div class="cap"><span class="nm">${esc(card.member)}</span><span class="rb rb-${card.rarity}">${card.rarity}</span></div>`;
+          if(hasCard){enableTilt(tile);tile.onclick=()=>openCardDetail(card);}grid.appendChild(tile);
+        });
+        wrap.appendChild(grid);
+      }
+    }else{
+      members.forEach(m=>{if(renderMember(m,false))any=true;});
+    }
     if(any){
       let head=`<span class="cs-line"></span><h2>${sec.label}</h2>`;
       if(isCol){

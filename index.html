@@ -508,6 +508,7 @@
       <button class="icon-btn" id="showKeyBtn">KEY 복사</button>
       <a class="icon-btn hidden" id="bridgeBtn" title="후원 API 연동" href="/donation-bridge.html" target="_blank" rel="noopener">API 연동</a>
       <button class="icon-btn" id="soundBtn" aria-pressed="false">SFX OFF</button>
+      <button class="icon-btn" id="bgmBtn" aria-pressed="false" title="배경음악 켜기/끄기">BGM OFF</button>
       <button class="icon-btn" id="logoutBtn">로그아웃</button>
     </div>
   </div></div>
@@ -665,6 +666,8 @@
   <button data-nav="rank"><span class="ic">👑</span>랭킹</button>
 </div>
 <div class="toast" id="toast"></div>
+<!-- BGM: monstarznew 펀딩 플레이어에서 이식한 유튜브 IFrame 백그라운드 플레이어 (숨김 마운트) -->
+<div id="bgmMount" aria-hidden="true" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;pointer-events:none;opacity:0"></div>
 <div class="detail-modal hidden" id="cardModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
   <div class="detail-backdrop" id="cardModalBackdrop"></div>
   <div class="detail-panel"><button class="detail-close" id="cardModalClose" aria-label="닫기">×</button><div id="cardDetail"></div></div>
@@ -677,12 +680,12 @@ const framePath=rarity=>`assets/frames/${rarity.toLowerCase()}.svg`;
 const packArt={normal:'normal',premium:'rare',luxury:'premium'};
 const MEMBER_ORDER=['김윤환','소주양','지두두','남덕선','토마토','햇살','찌킹','치리','주하랑','임조이','비타밍','먼진','아리송이','낭니','변현제','김민철','사테','박준오','박수범','지동원','배성흠'];
 const DISMANTLE_REFUND={C:5,U:8,R:12,RR:20,RRR:30,AR:45,CHR:60,HR:80,SR:100,SAR:130,UR:160,MUR:200,FUR:250};
-const MEMBER_REWARDS={'김윤환':1000,'토마토':900,'지두두':850,'치리':750,'비타밍':650,'주하랑':550,'임조이':500,'햇살':400,'소주양':400,'낭니':400,'먼진':400,'찌킹':300,'아리송이':250,'변현제':250,'김민철':250,'남덕선':200,'박준오':150,'지동원':150,'배성흠':150,'박수범':150,'사테':150};
+const MEMBER_REWARDS={'김윤환':900,'지두두':600,'치리':580,'토마토':750,'비타밍':510,'주하랑':490,'임조이':430,'낭니':450,'햇살':450,'소주양':370,'먼진':450,'찌킹':450,'아리송이':450,'남덕선':450,'변현제':260,'김민철':250,'박수범':160,'박준오':150,'사테':150,'배성흠':150,'지동원':150};
 const FUSE_RATES={C:90,U:85,R:80,RR:75,RRR:70,AR:60,CHR:55,HR:50,SR:40,SAR:35,UR:25,MUR:1};
 const FUSE_GRADES=RAR.filter(r=>FUSE_RATES[r]!=null); // FUR 제외
 function fuseConsolation(r){return Math.floor((DISMANTLE_REFUND[r]||0)*3/2);}
 const COLLECTIONS=[{key:'crew',label:'크루',members:MEMBER_ORDER}];
-const state={key:null,nickname:null,points:0,canAttend:false,canUseDonationBridge:false,streak:null,cards:[],byId:{},collection:{},first:{},claimed:[],serials:{},issued:{},filter:'ALL',cardsLoaded:false,soundOn:localStorage.getItem('cardgacha_sound')==='on',fuseGrade:null,fuseSel:[]};
+const state={key:null,nickname:null,points:0,canAttend:false,canUseDonationBridge:false,streak:null,cards:[],byId:{},collection:{},first:{},claimed:[],serials:{},issued:{},filter:'ALL',cardsLoaded:false,soundOn:localStorage.getItem('cardgacha_sound')==='on',bgmOn:localStorage.getItem('cardgacha_bgm')==='on',fuseGrade:null,fuseSel:[]};
 const REDUCE=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const $=s=>document.querySelector(s);
@@ -748,6 +751,44 @@ async function doLogin(key){
 }
 $('#logoutBtn').onclick=()=>{localStorage.removeItem('cardgacha_key');state.key=null;setNickname('');setDonationBridgeAccess(false);show('auth');};
 $('#soundBtn').onclick=()=>{state.soundOn=!state.soundOn;localStorage.setItem('cardgacha_sound',state.soundOn?'on':'off');updateSoundBtn();if(state.soundOn)sfx('flip');};
+
+/* ===== BGM (monstarznew 펀딩 플레이어 이식: 유튜브 IFrame 백그라운드 재생) =====
+   원본은 유튜브 영상ID 기반 뮤직플레이어라 <audio> 대신 유튜브 IFrame 을 그대로 사용.
+   WebAudio SFX 와는 별도 iframe 이라 충돌 없음. 볼륨 35(0.35) 로 SFX 안 묻히게. */
+const BGM_TRACK={id:'b5pmzCNLSpg',title:'이원석 - 여전히 푸르다'}; // 원본 펀딩 플레이어 1번 트랙
+const BGM_VOLUME=35;
+let bgmPlayer=null,bgmReady=false,bgmWantCreate=false,bgmWantAutoplay=false;
+function updateBgmBtn(){const b=$('#bgmBtn');if(!b)return;b.textContent=state.bgmOn?'BGM ON':'BGM OFF';b.setAttribute('aria-pressed',String(state.bgmOn));}
+function createBgmPlayer(autoplay){
+  if(bgmPlayer)return;
+  if(typeof YT==='undefined'||!YT.Player){bgmWantCreate=true;bgmWantAutoplay=autoplay;return;} // API 아직 로드 전 → 대기
+  bgmPlayer=new YT.Player('bgmMount',{width:'1',height:'1',videoId:BGM_TRACK.id,
+    playerVars:{autoplay:autoplay?1:0,controls:0,loop:1,playlist:BGM_TRACK.id,playsinline:1,disablekb:1,fs:0,modestbranding:1},
+    events:{
+      onReady:e=>{bgmReady=true;e.target.setVolume(BGM_VOLUME);if(state.bgmOn){e.target.playVideo();}},
+      onStateChange:e=>{if(e.data===YT.PlayerState.ENDED)e.target.playVideo();} // 무한 루프 보강
+    }});
+}
+// 유튜브 IFrame API 준비되면 대기중이던 생성 요청 처리 (전역 콜백)
+function onYouTubeIframeAPIReady(){if(bgmWantCreate){bgmWantCreate=false;createBgmPlayer(bgmWantAutoplay);}}
+function bgmPlay(){if(bgmPlayer&&bgmReady){bgmPlayer.setVolume(BGM_VOLUME);bgmPlayer.playVideo();}else{createBgmPlayer(true);}}
+function bgmPause(){if(bgmPlayer&&bgmReady&&bgmPlayer.pauseVideo)bgmPlayer.pauseVideo();}
+$('#bgmBtn').onclick=()=>{
+  state.bgmOn=!state.bgmOn;
+  localStorage.setItem('cardgacha_bgm',state.bgmOn?'on':'off');
+  updateBgmBtn();
+  if(state.bgmOn)bgmPlay();else bgmPause();
+};
+updateBgmBtn();
+// 자동재생 정책: 저장상태가 ON 이면 즉시 재생 시도하되, 브라우저가 막으면(제스처 필요)
+// 첫 유저 상호작용에서 재생. 유튜브 IFrame 은 playVideo 가 프라미스가 아니라 예외를 안 던지므로
+// 제스처 리스너로 확실히 보강 (try/catch 대신 gesture-fallback).
+if(state.bgmOn){
+  createBgmPlayer(true);
+  ['pointerdown','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,function _once(){
+    if(state.bgmOn){bgmPlay();}
+  },{once:true,passive:true}));
+}
 
 /* shop */
 const PACKS=[
@@ -1225,3 +1266,5 @@ function readAuthHash(){
   return params;
 }
 </script>
+<!-- BGM 유튜브 IFrame API (onYouTubeIframeAPIReady 전역 콜백 사용) -->
+<script src="https://www.youtube.com/iframe_api"></script>

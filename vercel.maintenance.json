@@ -1,5 +1,9 @@
 {
-  "rewrites": [
-    { "source": "/((?!maintenance\\.html|assets/card-back\\.jpg).*)", "destination": "/maintenance.html" }
+  "redirects": [
+    {
+      "source": "/:path((?!maintenance\\.html|assets/).*)",
+      "destination": "/maintenance.html",
+      "permanent": false
+    }
   ]
 }

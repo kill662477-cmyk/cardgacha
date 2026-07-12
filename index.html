@@ -708,6 +708,7 @@ function show(v){
   if(v==='shop')renderShop();
   if(v==='fuse')renderFuse();
   if(v==='rank')renderRanking();
+  if(v==='auth')maybeShowGuide();
   window.scrollTo(0,0);
 }
 function setPoints(p){state.points=p;$('#ptval').textContent=p.toLocaleString();}
@@ -1203,7 +1204,7 @@ document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset
   if(REDUCE)setInterval(()=>{if(ANN.length){annRotI++;renderTicker();}},4500); // reduced-motion: 정적 로테이션
   // 숲 콜백 리다이렉트(#soop=KEY / #sooperr=1) 처리
   const auth=readAuthHash();
-  if(auth&&auth.sooperr){show('auth');maybeShowGuide();toast('숲 로그인에 실패했습니다. 다시 시도해주세요.',true);return;}
+  if(auth&&auth.sooperr){show('auth');toast('숲 로그인에 실패했습니다. 다시 시도해주세요.',true);return;}
   if(auth&&auth.soop){
     const key=auth.soop;
     localStorage.setItem('cardgacha_key',key);
@@ -1212,7 +1213,7 @@ document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset
     return;
   }
   const saved=localStorage.getItem('cardgacha_key');
-  if(saved)await doLogin(saved);else{show('auth');maybeShowGuide();}
+  if(saved)await doLogin(saved);else show('auth');
 })();
 // location.hash 에서 숲 인증 결과 파싱 후, key 가 로그/히스토리에 남지 않도록 hash 제거
 function readAuthHash(){

@@ -44,8 +44,8 @@ module.exports = async function handler(req, res) {
   if (!session?.soopId) return redirect(res, '/donation-bridge.html?error=auth');
   if (!await enforceRateLimit(req, res, 'soop-bridge-callback', 12, 300)) return;
 
-  const clientId = process.env.SOOP_CLIENT_ID;
-  const clientSecret = process.env.SOOP_CLIENT_SECRET;
+  const clientId = process.env.SOOP_DONATION_CLIENT_ID || process.env.SOOP_CLIENT_ID;
+  const clientSecret = process.env.SOOP_DONATION_CLIENT_SECRET || process.env.SOOP_CLIENT_SECRET;
   const redirectUri = process.env.SOOP_DONATION_REDIRECT_URI;
   const code = (getQuery(req).code || '').toString().trim();
   if (!clientId || !clientSecret || !redirectUri || !code) return redirect(res, '/donation-bridge.html?error=soop');

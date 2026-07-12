@@ -146,6 +146,15 @@
   .key-modal{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
     padding:20px;background:rgba(2,8,14,.72);backdrop-filter:blur(4px)}
   .key-modal .auth-shell{margin:0;width:100%}
+  /* 안내 모달 본문 */
+  .guide-body .guide-row{margin:0 0 12px;padding-bottom:12px;border-bottom:1px solid var(--brd)}
+  .guide-body .guide-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+  .guide-body .guide-row>b{display:block;font-size:14px;margin-bottom:4px}
+  .guide-body .guide-row>p{font-size:13px;line-height:1.6;color:var(--muted);margin:0}
+  .guide-body ul{margin:4px 0 0;padding-left:18px}
+  .guide-body ul li{font-size:12.5px;line-height:1.7;color:var(--muted)}
+  .guide-dismiss{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);margin-top:8px;cursor:pointer;user-select:none}
+  .guide-dismiss input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
 
   /* shop - asymmetric bento */
   .attend-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
@@ -534,6 +543,39 @@
     </div>
   </div>
 
+  <!-- 안내 모달 (첫 화면 · 다시 보지 않기) -->
+  <div id="guideModal" class="key-modal hidden">
+    <div class="panel auth-shell" style="border-color:var(--accent);max-width:440px">
+      <h3 style="color:var(--accent);font-size:18px;margin-bottom:14px">처음이신가요? 🎴</h3>
+      <div class="guide-body">
+        <div class="guide-row">
+          <b>① 숲(SOOP) 로그인 = 자동 가입</b>
+          <p>SOOP 숲 계정으로 로그인하면 계정이 자동으로 만들어지고 <b class="mono" style="color:var(--accent)">5000P</b>가 지급됩니다.</p>
+        </div>
+        <div class="guide-row">
+          <b>② 백업 KEY 안전 보관</b>
+          <p>가입 시 발급되는 KEY는 기기 이동·숲 로그인 불가 시의 <b style="color:var(--warn)">백업 수단</b>입니다. 메모·비밀노트 등 <b>다른 곳에 따로 저장</b>해 두세요. <span class="dim">(숲 재로그인 시 새 KEY로 갱신됩니다)</span></p>
+        </div>
+        <div class="guide-row">
+          <b>③ 스트리머 전용 · 별풍선 후원 연동</b>
+          <p>크루 스트리머에게는 SOOP 별풍선 후원이 포인트로 연동되는 <b>후원 브리지</b>가 제공됩니다. <span class="dim">(일반 유저에게는 노출되지 않습니다)</span></p>
+        </div>
+        <div class="guide-row">
+          <b>④ 포인트 획득 방법</b>
+          <ul>
+            <li>출석: 매일 <b class="mono">+400P</b> · 연속 출석 <b class="mono">+800P</b> · 신규 첫 출석 <b class="mono">+100P</b></li>
+            <li>중복 카드 분해: 등급별 환급 (<b class="mono">C 5P</b> ~ <b class="mono">FUR 250P</b>)</li>
+            <li>합성 실패 위로금: 재료 등급 분해가 × 3의 50%</li>
+            <li>스트리머: 별풍선 후원 1개 = 1P 연동</li>
+          </ul>
+          <p class="dim" style="margin-top:6px">모은 포인트로 카드팩을 구매해 크루 카드를 수집하세요.</p>
+        </div>
+      </div>
+      <label class="guide-dismiss"><input type="checkbox" id="guideDismiss" /> 다시 보지 않기</label>
+      <button class="cta" id="guideCloseBtn" style="margin-top:14px">확인</button>
+    </div>
+  </div>
+
   <!-- SHOP -->
   <section id="view-shop" class="hidden">
     <div class="panel attend-bar">
@@ -690,6 +732,11 @@ async function copyKey(value){
 $('#copyKeyBtn').onclick=()=>copyKey($('#issuedKey').value);
 $('#goShopBtn').onclick=closeKeyModal;
 $('#keyModal').onclick=(e)=>{if(e.target===$('#keyModal'))closeKeyModal();};
+/* 안내 모달 (첫 화면 · 다시 보지 않기) */
+function maybeShowGuide(){if(localStorage.getItem('cardgacha_guide_dismissed')==='1')return;$('#guideModal').classList.remove('hidden');}
+function closeGuide(){if($('#guideDismiss').checked)localStorage.setItem('cardgacha_guide_dismissed','1');$('#guideModal').classList.add('hidden');}
+$('#guideCloseBtn').onclick=closeGuide;
+$('#guideModal').onclick=(e)=>{if(e.target===$('#guideModal'))closeGuide();};
 $('#showKeyBtn').onclick=()=>{if(state.key)copyKey(state.key);else toast('로그인 후 이용하세요',true);};
 $('#loginBtn').onclick=async()=>{const key=$('#loginKey').value.trim();if(!key)return toast('KEY를 입력하세요',true);await doLogin(key);};
 async function doLogin(key){
@@ -931,45 +978,6 @@ function skeletonCollection(){
 async function renderCollection(){
   if(!state.cardsLoaded){$('#colWrap').innerHTML='<div class="empty">카드 정보를 불러오지 못했습니다.</div>';return;}
   skeletonCollection();
-  try{const j=await apiPost('/api/collection',{key:state.key});state.collection=j.cards||{};}
-  catch(e){/* 기존 값 유지 */}
-
-  const owned=state.cards.filter(c=>state.collection[c.id]>0).length,total=state.cards.length;
-  $('#colOwned').textContent=owned;$('#colTotal').textContent=total;
-
-  const fw=$('#rarFilters');fw.innerHTML='';
-  ['ALL',...RAR].forEach(r=>{const c=el('button','chip'+(state.filter===r?' on':''),r==='ALL'?'전체':r);
-    c.onclick=()=>{state.filter=r;renderCollection();};fw.appendChild(c);});
-
-  const wrap=$('#colWrap');wrap.innerHTML='';
-  const byMember={};state.cards.forEach(c=>{(byMember[c.member]=byMember[c.member]||[]).push(c);});
-  const order=MEMBER_ORDER.filter(m=>byMember[m]).concat(Object.keys(byMember).filter(m=>!MEMBER_ORDER.includes(m)));
-  let shown=0;
-  order.forEach(m=>{
-    let list=byMember[m].slice().sort((a,b)=>RANK[b.rarity]-RANK[a.rarity]);
-    if(state.filter!=='ALL')list=list.filter(c=>c.rarity===state.filter);
-    if(!list.length)return;
-    shown++;
-    const ownedM=byMember[m].filter(c=>state.collection[c.id]>0).length;
-    wrap.appendChild(el('div','memhead',`<h3>${esc(m)}</h3><span class="mc">${ownedM}/${byMember[m].length}</span>`));
-    const grid=el('div','colgrid');
-    list.forEach(c=>{
-      const qty=state.collection[c.id]||0,owned=qty>0;
-      const tile=el('div','tile '+(owned?glowClass(c.rarity):'locked'));
-      tile.innerHTML=`${owned&&qty>1?`<span class="qty">x${qty}</span>`:''}
-        <img class="card-art" src="${imgPath(c.file)}" alt="${owned?esc(c.member):'미보유'}" loading="lazy"/>
-        <img class="card-frame" src="${framePath(c.rarity)}" alt="" aria-hidden="true"/>
-        <div class="cap"><span class="nm">${owned?esc(c.member):'???'}</span><span class="rb rb-${c.rarity}">${c.rarity}</span></div>`;
-      if(owned)enableTilt(tile);
-      grid.appendChild(tile);
-    });
-    wrap.appendChild(grid);
-  });
-  if(!shown)wrap.appendChild(el('div','empty','해당 등급으로 보유한 카드가 없습니다.'));
-}
-async function renderCollection(){
-  if(!state.cardsLoaded){$('#colWrap').innerHTML='<div class="empty">카드 정보를 불러오지 못했습니다.</div>';return;}
-  skeletonCollection();
   try{const j=await apiPost('/api/collection',{key:state.key,includeDetails:false});state.collection=j.cards||{};state.first=j.first||{};}
   catch(e){/* existing collection stays visible */}
   const owned=state.cards.filter(c=>state.collection[c.id]>0).length,total=state.cards.length;
@@ -1196,7 +1204,7 @@ document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset
   if(REDUCE)setInterval(()=>{if(ANN.length){annRotI++;renderTicker();}},4500); // reduced-motion: 정적 로테이션
   // 숲 콜백 리다이렉트(#soop=KEY / #sooperr=1) 처리
   const auth=readAuthHash();
-  if(auth&&auth.sooperr){show('auth');toast('숲 로그인에 실패했습니다. 다시 시도해주세요.',true);return;}
+  if(auth&&auth.sooperr){show('auth');maybeShowGuide();toast('숲 로그인에 실패했습니다. 다시 시도해주세요.',true);return;}
   if(auth&&auth.soop){
     const key=auth.soop;
     localStorage.setItem('cardgacha_key',key);
@@ -1205,7 +1213,7 @@ document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset
     return;
   }
   const saved=localStorage.getItem('cardgacha_key');
-  if(saved)await doLogin(saved);else show('auth');
+  if(saved)await doLogin(saved);else{show('auth');maybeShowGuide();}
 })();
 // location.hash 에서 숲 인증 결과 파싱 후, key 가 로그/히스토리에 남지 않도록 hash 제거
 function readAuthHash(){

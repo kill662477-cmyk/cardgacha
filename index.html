@@ -91,6 +91,33 @@
   .icon-btn{background:transparent;border:1px solid var(--brd);color:var(--muted);
     border-radius:var(--radius);padding:7px 12px;font-weight:600;font-size:13px;transition:border-color .15s,color .15s}
   .icon-btn:hover{border-color:var(--brd-2);color:var(--txt)}
+  /* ===== BGM 풀 플레이어 (헤더 인라인 / 모바일 접힘) — 헤더 디자인 토큰 그대로 사용 ===== */
+  .bgm{position:relative;display:flex;align-items:center}
+  .bgm-fold{display:none;width:34px;padding:7px 0;justify-content:center}
+  .bgm-fold.on{border-color:var(--brd-2);color:var(--accent)}
+  .bgm-panel{display:flex;align-items:center;gap:8px}
+  .bgm-pp{background:transparent;border:1px solid var(--brd);color:var(--muted);border-radius:var(--radius);
+    width:30px;height:30px;font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:border-color .15s,color .15s;flex:0 0 auto}
+  .bgm-pp:hover{border-color:var(--brd-2);color:var(--txt)}
+  .bgm-pp.playing{color:var(--accent);border-color:var(--brd-2)}
+  .bgm-sel{max-width:158px;background:#0a0e1e;border:1px solid var(--brd);color:var(--txt);border-radius:var(--radius);
+    padding:6px 8px;font-size:12px;font-family:inherit;cursor:pointer;outline:none;transition:border-color .15s}
+  .bgm-sel:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .bgm-vol{display:flex;align-items:center;gap:6px}
+  .bgm-vol-ico{font-size:12px;opacity:.75}
+  #bgmVol{width:84px;accent-color:var(--accent);cursor:pointer;height:4px}
+  @media(max-width:768px){
+    .bgm-fold{display:flex;align-items:center}
+    .bgm-panel{position:absolute;top:calc(100% + 10px);right:0;flex-direction:column;align-items:stretch;gap:12px;
+      background:var(--panel-2);border:1px solid var(--brd-2);border-radius:var(--radius);padding:14px;min-width:210px;
+      box-shadow:0 14px 34px rgba(0,0,0,.55);z-index:60;display:none}
+    .bgm.open .bgm-panel{display:flex}
+    .bgm-panel .bgm-pp{width:100%;height:32px}
+    .bgm-sel{max-width:none;width:100%}
+    .bgm-vol{justify-content:space-between}
+    #bgmVol{flex:1;width:auto}
+  }
 
   /* surfaces */
   .panel{background:var(--panel);border:1px solid var(--brd);border-radius:var(--radius);padding:18px}
@@ -508,7 +535,14 @@
       <button class="icon-btn" id="showKeyBtn">KEY 복사</button>
       <a class="icon-btn hidden" id="bridgeBtn" title="후원 API 연동" href="/donation-bridge.html" target="_blank" rel="noopener">API 연동</a>
       <button class="icon-btn" id="soundBtn" aria-pressed="false">SFX OFF</button>
-      <button class="icon-btn" id="bgmBtn" aria-pressed="false" title="배경음악 켜기/끄기">BGM OFF</button>
+      <div class="bgm" id="bgmPlayer">
+        <button class="icon-btn bgm-fold" id="bgmFold" aria-label="배경음악 플레이어" aria-expanded="false" title="배경음악">♪</button>
+        <div class="bgm-panel" id="bgmPanel">
+          <button class="bgm-pp" id="bgmPlayPause" aria-pressed="false" aria-label="재생/정지" title="재생/정지">▶</button>
+          <select class="bgm-sel" id="bgmSelect" aria-label="배경음악 곡 선택" title="곡 선택"></select>
+          <span class="bgm-vol"><span class="bgm-vol-ico" aria-hidden="true">🔊</span><input type="range" id="bgmVol" min="0" max="100" step="1" aria-label="배경음악 볼륨" title="볼륨"/></span>
+        </div>
+      </div>
       <button class="icon-btn" id="logoutBtn">로그아웃</button>
     </div>
   </div></div>
@@ -680,7 +714,7 @@ const framePath=rarity=>`assets/frames/${rarity.toLowerCase()}.svg`;
 const packArt={normal:'normal',premium:'rare',luxury:'premium'};
 const MEMBER_ORDER=['김윤환','소주양','지두두','남덕선','토마토','햇살','찌킹','치리','주하랑','임조이','비타밍','먼진','아리송이','낭니','변현제','김민철','사테','박준오','박수범','지동원','배성흠'];
 const DISMANTLE_REFUND={C:5,U:8,R:12,RR:20,RRR:30,AR:45,CHR:60,HR:80,SR:100,SAR:130,UR:160,MUR:200,FUR:250};
-const MEMBER_REWARDS={'김윤환':900,'지두두':600,'치리':580,'토마토':750,'비타밍':510,'주하랑':490,'임조이':430,'낭니':450,'햇살':450,'소주양':370,'먼진':450,'찌킹':450,'아리송이':450,'남덕선':450,'변현제':260,'김민철':250,'박수범':160,'박준오':150,'사테':150,'배성흠':150,'지동원':150};
+const MEMBER_REWARDS={'김윤환':900,'지두두':600,'치리':580,'토마토':750,'비타밍':510,'주하랑':490,'임조이':430,'낭니':450,'햇살':450,'소주양':550,'먼진':450,'찌킹':450,'아리송이':450,'남덕선':450,'변현제':260,'김민철':250,'박수범':160,'박준오':150,'사테':150,'배성흠':150,'지동원':150};
 const FUSE_RATES={C:90,U:85,R:80,RR:75,RRR:70,AR:60,CHR:55,HR:50,SR:40,SAR:35,UR:25,MUR:1};
 const FUSE_GRADES=RAR.filter(r=>FUSE_RATES[r]!=null); // FUR 제외
 function fuseConsolation(r){return Math.floor((DISMANTLE_REFUND[r]||0)*3/2);}
@@ -752,34 +786,72 @@ async function doLogin(key){
 $('#logoutBtn').onclick=()=>{localStorage.removeItem('cardgacha_key');state.key=null;setNickname('');setDonationBridgeAccess(false);show('auth');};
 $('#soundBtn').onclick=()=>{state.soundOn=!state.soundOn;localStorage.setItem('cardgacha_sound',state.soundOn?'on':'off');updateSoundBtn();if(state.soundOn)sfx('flip');};
 
-/* ===== BGM (monstarznew 펀딩 플레이어 이식: 유튜브 IFrame 백그라운드 재생) =====
-   원본은 유튜브 영상ID 기반 뮤직플레이어라 <audio> 대신 유튜브 IFrame 을 그대로 사용.
-   WebAudio SFX 와는 별도 iframe 이라 충돌 없음. 볼륨 35(0.35) 로 SFX 안 묻히게. */
-const BGM_TRACK={id:'b5pmzCNLSpg',title:'이원석 - 여전히 푸르다'}; // 원본 펀딩 플레이어 1번 트랙
-const BGM_VOLUME=35;
+/* ===== BGM 풀 플레이어 (monstarznew 펀딩 뮤직플레이어 이식: 유튜브 IFrame 백그라운드 재생) =====
+   재생/정지 + 5곡 선택 + 볼륨(0~100). 원본 펀딩 플레이어의 5곡 ID/곡명 그대로.
+   유튜브 IFrame 은 WebAudio SFX 와 별도 iframe 이라 충돌 없음. 볼륨 기본 35 로 SFX 안 묻히게.
+   상태 저장: cardgacha_bgm(on/off) + cardgacha_bgm_track(곡 인덱스) + cardgacha_bgm_vol(볼륨). */
+const BGM_TRACKS=[
+  {id:'b5pmzCNLSpg',title:'이원석 - 여전히 푸르다'},
+  {id:'9V3dCGjupXU',title:'Spence - Right Here Beside You (또르르르)'},
+  {id:'aQb6q-ma0u0',title:'이원석 - MONSTERS'},
+  {id:'x2o1zxTWrh4',title:'Hashigeaszy - Unstoppable'},
+  {id:'Dh7enXPvFMI',title:'The Amazing Digital Circus - Your New Home'},
+];
+let bgmVol=(()=>{const v=parseInt(localStorage.getItem('cardgacha_bgm_vol'),10);return isNaN(v)?35:Math.max(0,Math.min(100,v));})();
+let bgmIdx=(()=>{const i=parseInt(localStorage.getItem('cardgacha_bgm_track'),10);return (isNaN(i)||i<0||i>=BGM_TRACKS.length)?0:i;})();
 let bgmPlayer=null,bgmReady=false,bgmWantCreate=false,bgmWantAutoplay=false;
-function updateBgmBtn(){const b=$('#bgmBtn');if(!b)return;b.textContent=state.bgmOn?'BGM ON':'BGM OFF';b.setAttribute('aria-pressed',String(state.bgmOn));}
+function bgmCurrent(){return BGM_TRACKS[bgmIdx];}
+function updateBgmUI(){
+  const pp=$('#bgmPlayPause');if(pp){pp.textContent=state.bgmOn?'⏸':'▶';pp.classList.toggle('playing',state.bgmOn);pp.setAttribute('aria-pressed',String(state.bgmOn));}
+  const sel=$('#bgmSelect');if(sel&&sel.selectedIndex!==bgmIdx)sel.selectedIndex=bgmIdx;
+  const vol=$('#bgmVol');if(vol&&String(vol.value)!==String(bgmVol))vol.value=bgmVol;
+  const fold=$('#bgmFold');if(fold){fold.classList.toggle('on',state.bgmOn);fold.setAttribute('aria-pressed',String(state.bgmOn));}
+}
 function createBgmPlayer(autoplay){
   if(bgmPlayer)return;
   if(typeof YT==='undefined'||!YT.Player){bgmWantCreate=true;bgmWantAutoplay=autoplay;return;} // API 아직 로드 전 → 대기
-  bgmPlayer=new YT.Player('bgmMount',{width:'1',height:'1',videoId:BGM_TRACK.id,
-    playerVars:{autoplay:autoplay?1:0,controls:0,loop:1,playlist:BGM_TRACK.id,playsinline:1,disablekb:1,fs:0,modestbranding:1},
+  bgmPlayer=new YT.Player('bgmMount',{width:'1',height:'1',videoId:bgmCurrent().id,
+    playerVars:{autoplay:autoplay?1:0,controls:0,loop:1,playlist:bgmCurrent().id,playsinline:1,disablekb:1,fs:0,modestbranding:1},
     events:{
-      onReady:e=>{bgmReady=true;e.target.setVolume(BGM_VOLUME);if(state.bgmOn){e.target.playVideo();}},
-      onStateChange:e=>{if(e.data===YT.PlayerState.ENDED)e.target.playVideo();} // 무한 루프 보강
+      onReady:e=>{bgmReady=true;e.target.setVolume(bgmVol);if(state.bgmOn){e.target.playVideo();}},
+      onStateChange:e=>{if(e.data===YT.PlayerState.ENDED)e.target.playVideo();} // 무한 루프 보강 (현재 곡 재생)
     }});
 }
 // 유튜브 IFrame API 준비되면 대기중이던 생성 요청 처리 (전역 콜백)
 function onYouTubeIframeAPIReady(){if(bgmWantCreate){bgmWantCreate=false;createBgmPlayer(bgmWantAutoplay);}}
-function bgmPlay(){if(bgmPlayer&&bgmReady){bgmPlayer.setVolume(BGM_VOLUME);bgmPlayer.playVideo();}else{createBgmPlayer(true);}}
+function bgmPlay(){if(bgmPlayer&&bgmReady){bgmPlayer.setVolume(bgmVol);bgmPlayer.playVideo();}else{createBgmPlayer(true);}}
 function bgmPause(){if(bgmPlayer&&bgmReady&&bgmPlayer.pauseVideo)bgmPlayer.pauseVideo();}
-$('#bgmBtn').onclick=()=>{
+function bgmToggle(){
   state.bgmOn=!state.bgmOn;
   localStorage.setItem('cardgacha_bgm',state.bgmOn?'on':'off');
-  updateBgmBtn();
+  updateBgmUI();
   if(state.bgmOn)bgmPlay();else bgmPause();
-};
-updateBgmBtn();
+}
+function bgmSetTrack(idx){ // 곡 변경 → 즉시 해당 곡 재생 + ON 상태로
+  bgmIdx=Math.max(0,Math.min(BGM_TRACKS.length-1,idx|0));
+  localStorage.setItem('cardgacha_bgm_track',String(bgmIdx));
+  state.bgmOn=true;localStorage.setItem('cardgacha_bgm','on');
+  if(bgmPlayer&&bgmReady&&bgmPlayer.loadVideoById){bgmPlayer.loadVideoById(bgmCurrent().id);bgmPlayer.setVolume(bgmVol);}
+  else{createBgmPlayer(true);}
+  updateBgmUI();
+}
+function bgmSetVol(v){
+  bgmVol=Math.max(0,Math.min(100,parseInt(v,10)||0));
+  localStorage.setItem('cardgacha_bgm_vol',String(bgmVol));
+  if(bgmPlayer&&bgmReady&&bgmPlayer.setVolume)bgmPlayer.setVolume(bgmVol);
+}
+(function initBgmPlayer(){
+  const sel=$('#bgmSelect');
+  if(sel){sel.innerHTML=BGM_TRACKS.map((t,i)=>`<option value="${i}">${t.title}</option>`).join('');sel.selectedIndex=bgmIdx;sel.onchange=()=>bgmSetTrack(parseInt(sel.value,10));}
+  const vol=$('#bgmVol');if(vol){vol.value=bgmVol;vol.oninput=()=>bgmSetVol(vol.value);}
+  const pp=$('#bgmPlayPause');if(pp)pp.onclick=bgmToggle;
+  const wrap=$('#bgmPlayer'),fold=$('#bgmFold');
+  if(fold&&wrap){
+    fold.onclick=(e)=>{e.stopPropagation();const open=wrap.classList.toggle('open');fold.setAttribute('aria-expanded',String(open));};
+    document.addEventListener('click',(e)=>{if(wrap.classList.contains('open')&&!wrap.contains(e.target)){wrap.classList.remove('open');fold.setAttribute('aria-expanded','false');}});
+  }
+  updateBgmUI();
+})();
 // 자동재생 정책: 저장상태가 ON 이면 즉시 재생 시도하되, 브라우저가 막으면(제스처 필요)
 // 첫 유저 상호작용에서 재생. 유튜브 IFrame 은 playVideo 가 프라미스가 아니라 예외를 안 던지므로
 // 제스처 리스너로 확실히 보강 (try/catch 대신 gesture-fallback).

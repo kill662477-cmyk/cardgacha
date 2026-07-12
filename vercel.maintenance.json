@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/((?!maintenance\\.html|assets/card-back\\.jpg).*)", "destination": "/maintenance.html" }
+  ]
+}

@@ -33,6 +33,7 @@ async function fetchStationId(accessToken) {
   });
   if (!response.ok) throw new Error(`stationinfo failed: ${response.status}`);
   const data = await response.json();
+  console.log('[SOOP-DEBUG] bridge stationinfo full:', JSON.stringify(data)); // 임시 진단 로그 — 로그인ID 필드 확인 후 제거
   const soopId = (data?.data?.station_name || '').toString().trim();
   if (data?.result !== 1 || !soopId) throw new Error('stationinfo: no station_name');
   return soopId;

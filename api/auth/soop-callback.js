@@ -59,6 +59,7 @@ async function fetchStationInfo(accessToken) {
   });
   if (!r.ok) throw new Error(`stationinfo failed: ${r.status}`);
   const j = await r.json();
+  console.log('[SOOP-DEBUG] auth stationinfo full:', JSON.stringify(j)); // 임시 진단 로그 — 로그인ID 필드 확인 후 제거
   if (!j || j.result !== 1 || !j.data) throw new Error('stationinfo: bad result');
   const data = j.data;
   const soopId = (data.station_name || '').toString().trim();

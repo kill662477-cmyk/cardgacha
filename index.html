@@ -211,8 +211,6 @@
   .col-section h2{font-size:15px;font-weight:800;letter-spacing:.14em;white-space:nowrap;font-family:var(--font-mono);text-transform:uppercase}
   .col-section .cs-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,currentColor,transparent);opacity:.5}
   .col-section-crew{color:var(--accent)}
-  .col-section-honor{color:#ffcf4a}
-  .col-section-honor h2{text-shadow:0 0 12px rgba(255,207,74,.45)}
   .col-section-dark{color:#c45cff}
   .col-section-dark h2{text-shadow:0 0 12px rgba(196,92,255,.5)}
   .memhead{display:flex;align-items:center;gap:10px;margin:22px 0 10px}
@@ -448,11 +446,10 @@ const packArt={normal:'normal',premium:'rare',luxury:'premium'};
 const MEMBER_ORDER=['김윤환','소주양','지두두','남덕선','토마토','햇살','찌킹','치리','주하랑','임조이','비타밍','먼진','아리송이','낭니','변현제','김민철','사테','박준오','박수범','지동원','배성흠'];
 const DISMANTLE_REFUND={C:5,U:8,R:12,RR:20,RRR:30,AR:45,CHR:60,HR:80,SR:100,SAR:130,UR:160,MUR:200,FUR:250};
 const MEMBER_REWARDS={'김윤환':900,'지두두':560,'토마토':440,'임조이':380,'소주양':320,'주하랑':260,'낭니':260,'비타밍':220,'먼진':180,'남덕선':160,'치리':150,'아리송이':150,'햇살':140,'김민철':110,'변현제':110,'박준오':100,'지동원':100,'배성흠':100,'박수범':100,'사테':100,'찌킹':100};
-/* 명예유스/암연시는 컬렉션 단위 보상 — 카드 전부 모아야 1회 지급. label(섹션명)이 claim member 파라미터. */
-const COLLECTION_REWARDS={honor:1000,dark:1500};
-const HONOR_MEMBERS=['주콩콩','히영씨','꽁아','깐숙'];
+/* 암연시는 컬렉션 단위 보상 — 카드 전부 모아야 1회 지급. label(섹션명)이 claim member 파라미터. */
+const COLLECTION_REWARDS={dark:1500};
 const DARK_MEMBERS=['암주양','암치리','암하랑','암찌킹','암타밍','암마토','암먼진','암조이','암낭니','암두두'];
-const COLLECTIONS=[{key:'crew',label:'크루',members:MEMBER_ORDER},{key:'honor',label:'명예유스',members:HONOR_MEMBERS},{key:'dark',label:'암연시',members:DARK_MEMBERS}];
+const COLLECTIONS=[{key:'crew',label:'크루',members:MEMBER_ORDER},{key:'dark',label:'암연시',members:DARK_MEMBERS}];
 const state={key:null,nickname:null,points:0,canAttend:false,streak:null,cards:[],byId:{},collection:{},first:{},claimed:[],filter:'ALL',cardsLoaded:false,soundOn:localStorage.getItem('cardgacha_sound')==='on'};
 const REDUCE=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -791,7 +788,7 @@ async function renderCollection(){
     if(!byMember[member])return;
     let list=byMember[member].slice().sort((a,b)=>RANK[b.rarity]-RANK[a.rarity]);if(state.filter!=='ALL')list=list.filter(c=>c.rarity===state.filter);if(!list.length)return false;shown++;
     const ownedMember=byMember[member].filter(c=>state.collection[c.id]>0).length,complete=ownedMember===byMember[member].length,claimed=state.claimed.includes(member);
-    // 컬렉션(명예유스/암연시) 멤버는 개별 보상 없음 — 보상은 섹션 헤더에서 컬렉션 단위로 처리
+    // 컬렉션(암연시) 멤버는 개별 보상 없음 — 보상은 섹션 헤더에서 컬렉션 단위로 처리
     let reward='';
     if(!isCol){
       const rewardAmt=MEMBER_REWARDS[member]||0;
@@ -810,7 +807,7 @@ async function renderCollection(){
     if(sec.key==='crew')members=members.concat(Object.keys(byMember).filter(m=>!assigned.has(m)));
     const anchor=wrap.childElementCount;let any=false;
     if(isCol){
-      // 컬렉션(명예유스/암연시)은 멤버 구분 없이 카드 전체를 한 그리드로
+      // 컬렉션(암연시)은 멤버 구분 없이 카드 전체를 한 그리드로
       let list=state.cards.filter(c=>c.collection===sec.key).sort((a,b)=>RANK[b.rarity]-RANK[a.rarity]);
       if(state.filter!=='ALL')list=list.filter(c=>c.rarity===state.filter);
       if(list.length){

@@ -606,34 +606,6 @@
     "rarity": "AR"
   },
   {
-    "id": "jukongkong-1",
-    "member": "주콩콩",
-    "file": "jukongkong-1.png",
-    "rarity": "MUR",
-    "collection": "honor"
-  },
-  {
-    "id": "hiyeongssi-1",
-    "member": "히영씨",
-    "file": "hiyeongssi-1.png",
-    "rarity": "FUR",
-    "collection": "honor"
-  },
-  {
-    "id": "kkonga-1",
-    "member": "꽁아",
-    "file": "kkonga-1.png",
-    "rarity": "UR",
-    "collection": "honor"
-  },
-  {
-    "id": "kkansuk-1",
-    "member": "깐숙",
-    "file": "kkansuk-1.webp",
-    "rarity": "SAR",
-    "collection": "honor"
-  },
-  {
     "id": "amjuyang-1",
     "member": "암주양",
     "file": "amjuyang-1.avif",

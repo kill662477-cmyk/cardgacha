@@ -95,7 +95,10 @@
     async function eventId(action,message,senderId,recipientId,count){
       const upstream=first(message,['eventId','giftId','transactionId','donationId','id','data.eventId','data.giftId','data.transactionId']);
       if(upstream)return `soop:${action}:${upstream}`;
-      const source=JSON.stringify({action,senderId,recipientId,count,at:first(message,['createdAt','timestamp','time','data.createdAt','data.timestamp']),message});
+      // 이벤트 자체에 고유 ID/타임스탬프가 없으면 수신 시각을 섞는다 —
+      // 같은 사람이 같은 수량을 다시 쏴도 별개 이벤트로 처리 (서버 중복방지는 upstream ID 있는 경우에만 실효)
+      const at=first(message,['createdAt','timestamp','time','data.createdAt','data.timestamp'])||`recv:${Date.now()}:${Math.random().toString(36).slice(2,8)}`;
+      const source=JSON.stringify({action,senderId,recipientId,count,at,message});
       const bytes=new TextEncoder().encode(source);
       const hash=await crypto.subtle.digest('SHA-256',bytes);
       return 'soop:'+Array.from(new Uint8Array(hash)).map(v=>v.toString(16).padStart(2,'0')).join('');

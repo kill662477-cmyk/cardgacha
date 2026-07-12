@@ -30,7 +30,6 @@ const MIME = {
 
 // api 핸들러 매핑
 const API = {
-  '/api/register': require('../api/register'),
   '/api/login': require('../api/login'),
   '/api/attend': require('../api/attend'),
   '/api/open-pack': require('../api/open-pack'),
@@ -41,6 +40,14 @@ const API = {
   '/api/claim-reward': require('../api/claim-reward'),
   '/api/public-config': require('../api/public-config'),
   '/api/ranking': require('../api/ranking'),
+  '/api/auth/soop-start': require('../api/auth/soop-start'),
+  '/api/auth/soop-callback': require('../api/auth/soop-callback'),
+  '/api/bridge/auth': require('../api/bridge/auth'),
+  '/api/bridge/status': require('../api/bridge/status'),
+  '/api/bridge/credentials': require('../api/bridge/credentials'),
+  '/api/bridge/soop-start': require('../api/bridge/soop-start'),
+  '/api/bridge/soop-callback': require('../api/bridge/soop-callback'),
+  '/api/bridge/donation': require('../api/bridge/donation'),
 };
 
 function serveStatic(req, res, urlPath) {

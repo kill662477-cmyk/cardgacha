@@ -43,6 +43,19 @@ module.exports = async function handler(req, res) {
     const updated = committed?.[0];
     if (!updated) throw new Error('pack commit failed');
 
+    // 시리얼 부여: RPC가 카드별 발행 시리얼 배열(오름차순)을 반환. 뽑은 순서대로 각 장에 매핑.
+    // migration8 전이면 serials 필드가 없으므로 graceful 생략.
+    const serialsMap = updated.serials || {};
+    const serialCursor = {};
+    for (const c of cards) {
+      const arr = serialsMap[c.id];
+      if (Array.isArray(arr)) {
+        const idx = serialCursor[c.id] || 0;
+        if (arr[idx] != null) c.serial = arr[idx];
+        serialCursor[c.id] = idx + 1;
+      }
+    }
+
     try {
       const rare = drawn
         .filter((c) => RANK[c.rarity] >= RANK.UR)

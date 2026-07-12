@@ -2,14 +2,14 @@
 // 도감의 모든 카드 가치를 합산하여 ranking_score 초기값을 세팅합니다.
 // node scripts/sync-scores.js
 const { REST, headers, sbFetch } = require('../lib/supabase');
-const { cardById, DISMANTLE_REFUND, getCards } = require('../lib/gacha');
+const { cardById, DISMANTLE_REFUND, MEMBER_REWARDS } = require('../lib/gacha');
 
-async function getMemberRewardsCount(userId) {
+async function getMemberRewardsScore(userId) {
   try {
     const rows = await sbFetch(`${REST}/gacha_member_rewards?user_id=eq.${userId}`, {
       headers: headers()
     });
-    return rows.length;
+    return rows.reduce((score, row) => score + (MEMBER_REWARDS[row.member] || 0), 0);
   } catch (e) {
     return 0; // 테이블이 없거나 에러면 0
   }
@@ -33,9 +33,8 @@ async function run() {
       }
     }
 
-    // 2. 획득한 멤버 완성 보상이 있다면 +1000 점씩
-    const rewardsCount = await getMemberRewardsCount(user.id);
-    score += rewardsCount * 1000;
+    // 2. 수령한 멤버 완성 보상 점수 합산
+    score += await getMemberRewardsScore(user.id);
 
     // 업데이트
     await sbFetch(`${REST}/gacha_users?id=eq.${user.id}`, {

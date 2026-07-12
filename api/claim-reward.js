@@ -1,6 +1,6 @@
 // POST /api/claim-reward {key, member}
 const { sendJson, readBody } = require('../lib/http');
-const { getCards, MEMBER_REWARDS, COLLECTION_REWARDS, COLLECTION_LABELS } = require('../lib/gacha');
+const { getCards, MEMBER_REWARDS } = require('../lib/gacha');
 const { getUserByKey, getCollection, rpc } = require('../lib/supabase');
 const { enforceRateLimit, serverError } = require('../lib/security');
 
@@ -18,15 +18,9 @@ module.exports = async function handler(req, res) {
     if (!await enforceRateLimit(req, res, 'reward-user', 6, 60, user.id)) return;
 
     const cards = getCards();
-    const collectionKey = COLLECTION_LABELS[member];
-    const targetCards = collectionKey
-      ? cards.filter((card) => card.collection === collectionKey)
-      : cards.filter((card) => card.member === member);
-    if (!collectionKey && targetCards.some((card) => card.collection)) {
-      return sendJson(res, 400, { error: '컬렉션 단위 보상입니다', ok: false });
-    }
+    const targetCards = cards.filter((card) => card.member === member);
     if (!targetCards.length) return sendJson(res, 400, { error: '알 수 없는 멤버입니다' });
-    const reward = collectionKey ? COLLECTION_REWARDS[collectionKey] || 0 : MEMBER_REWARDS[member] || 0;
+    const reward = MEMBER_REWARDS[member] || 0;
     const owned = new Set((await getCollection(user.id)).filter((row) => row.count > 0).map((row) => row.card_id));
     if (!targetCards.every((card) => owned.has(card.id))) {
       return sendJson(res, 400, { error: '아직 도감을 완성하지 않았습니다', ok: false });

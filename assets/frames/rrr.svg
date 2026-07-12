@@ -1,13 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1434" viewBox="0 0 1024 1434">
-  <defs>
-    <linearGradient id="metal" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#5276d7"/><stop offset=".48" stop-color="#1b225a"/><stop offset="1" stop-color="#5276d7"/></linearGradient>
-    <linearGradient id="accent" x1="0" x2="1"><stop stop-color="#d8e5ff" stop-opacity=".15"/><stop offset=".5" stop-color="#d8e5ff"/><stop offset="1" stop-color="#d8e5ff" stop-opacity=".15"/></linearGradient>
-  </defs>
-  <rect x="12" y="12" width="1000" height="1410" rx="34" fill="none" stroke="url(#metal)" stroke-width="7"/>
-  <rect x="25" y="25" width="974" height="1384" rx="25" fill="none" stroke="#1b225a" stroke-width="8"/>
-  <rect x="31" y="31" width="962" height="1372" rx="20" fill="none" stroke="#d8e5ff" stroke-width="3"/>
-  <path d="M54 18H184L158 43H58ZM970 18H840L866 43H966ZM54 1416H184L158 1391H58ZM970 1416H840L866 1391H966Z" fill="url(#metal)"/>
-  <path d="M18 54V184L43 158V58ZM1006 54V184L981 158V58ZM18 1380V1250L43 1276V1376ZM1006 1380V1250L981 1276V1376Z" fill="url(#metal)"/>
-  <path d="M198 29H826M198 1405H826" fill="none" stroke="url(#accent)" stroke-width="3"/>
-  <path d="M29 198V1236M995 198V1236" fill="none" stroke="url(#accent)" stroke-width="3"/>
+  <path d="M24 78V24H78 M946 24H1000V78 M1000 1356V1410H946 M78 1410H24V1356" fill="none" stroke="#7258b6" stroke-width="5"/>
+  <path d="M39 180V39H180 M844 39H985V180 M985 1254V1395H844 M180 1395H39V1254" fill="none" stroke="#eee9f8" stroke-width="3" opacity=".9"/>
+  <path d="M39 232V80 M985 232V80 M39 1202V1354 M985 1202V1354" fill="none" stroke="#7258b6" stroke-width="2" opacity=".72"/>
+  <path d="M73 55H332 M692 55H951 M73 1379H332 M692 1379H951" fill="none" stroke="#7258b6" stroke-width="2" opacity=".78"/>
+  <rect x="54" y="54" width="112" height="31" fill="#7258b6"/>
+  <text x="110" y="75" text-anchor="middle" fill="#ffffff" font-family="monospace" font-size="18" font-weight="700">RRR</text>
+  <text x="512" y="80" text-anchor="middle" fill="#7258b6" font-family="monospace" font-size="14" font-weight="700" opacity=".88">CMZ ARCHIVE</text>
+  <text x="512" y="1372" text-anchor="middle" fill="#7258b6" font-family="monospace" font-size="13" font-weight="700" opacity=".82">COLLECTOR EDITION</text>
 </svg>

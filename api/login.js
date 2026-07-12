@@ -3,6 +3,7 @@ const { sendJson, readBody } = require('../lib/http');
 const { seoulToday } = require('../lib/gacha');
 const { getUserByKey, updateUser } = require('../lib/supabase');
 const { enforceRateLimit, serverError } = require('../lib/security');
+const { isBridgeMember } = require('../lib/bridge-members');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });
@@ -27,6 +28,7 @@ module.exports = async function handler(req, res) {
         points: user.points,
         canAttend: user.last_attend !== seoulToday(),
         streak: 'streak' in user ? user.streak : null,
+        canUseDonationBridge: isBridgeMember(user.soop_id),
       },
     });
   } catch (e) {

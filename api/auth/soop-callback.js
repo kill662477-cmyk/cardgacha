@@ -1,9 +1,11 @@
 // GET /api/auth/soop-callback?code=xxx
 //  1. code -> access_token 교환 (auth/token)
 //  2. access_token -> 유저 정보 (user/stationinfo)
-//  3. station_name(=soop_id)으로 gacha_users 조회:
+//  3. profile_image URL 에서 파싱한 로그인ID(=soop_id)로 gacha_users 조회:
 //       없으면 신규 생성(닉네임=user_nick, points=5000, 새 login_key 발급)
 //       있으면 닉네임 갱신 + login_key 회전(새 key 발급)
+//     로그인ID 추출 실패 시 계정을 만들거나 조회하지 않고 sooperr 로 리다이렉트한다
+//     (station_name 폴백 금지 → 중복계정 재발 방지).
 //  4. 성공 -> 302 `/#soop={login_key}` (신규는 &new=1),  실패 -> 302 `/#sooperr=1`
 //
 // login_key 를 URL fragment 로 전달하는 이유: fragment 는 서버로 전송되지 않고
@@ -17,6 +19,7 @@ const {
   rotateSoopUserKey,
 } = require('../../lib/supabase');
 const { enforceRateLimit } = require('../../lib/security');
+const { extractSoopLoginId } = require('../../lib/soop');
 
 loadEnv();
 
@@ -59,11 +62,14 @@ async function fetchStationInfo(accessToken) {
   });
   if (!r.ok) throw new Error(`stationinfo failed: ${r.status}`);
   const j = await r.json();
-  console.log('[SOOP-DEBUG] auth stationinfo full:', JSON.stringify(j)); // 임시 진단 로그 — 로그인ID 필드 확인 후 제거
   if (!j || j.result !== 1 || !j.data) throw new Error('stationinfo: bad result');
   const data = j.data;
-  const soopId = (data.station_name || '').toString().trim();
-  if (!soopId) throw new Error('stationinfo: no station_name');
+  // 계정 식별은 로그인ID 기준. profile_image URL 에서 파싱하며, 실패 시 폴백 없이 중단.
+  const soopId = extractSoopLoginId(data.profile_image);
+  if (!soopId) {
+    console.error('soop-callback: profile_image 에서 로그인ID 추출 실패', data.profile_image);
+    throw new Error('stationinfo: no login id');
+  }
   const nick = (data.user_nick || '').toString().trim() || soopId;
   return { soopId, nick };
 }

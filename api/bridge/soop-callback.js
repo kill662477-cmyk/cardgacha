@@ -1,6 +1,7 @@
 const { getQuery, sendJson } = require('../../lib/http');
 const { enforceRateLimit } = require('../../lib/security');
 const { sessionFrom, setSoopToken } = require('../../lib/bridge-auth');
+const { extractSoopLoginId } = require('../../lib/soop');
 
 const TOKEN_URL = 'https://openapi.sooplive.com/auth/token';
 const STATION_URL = 'https://openapi.sooplive.com/user/stationinfo';
@@ -33,10 +34,11 @@ async function fetchStationId(accessToken) {
   });
   if (!response.ok) throw new Error(`stationinfo failed: ${response.status}`);
   const data = await response.json();
-  console.log('[SOOP-DEBUG] bridge stationinfo full:', JSON.stringify(data)); // 임시 진단 로그 — 로그인ID 필드 확인 후 제거
-  const soopId = (data?.data?.station_name || '').toString().trim();
-  if (data?.result !== 1 || !soopId) throw new Error('stationinfo: no station_name');
-  return soopId;
+  if (data?.result !== 1 || !data?.data) throw new Error('stationinfo: bad result');
+  // 본인계정 검증은 로그인ID 기준. profile_image URL 에서 파싱한다.
+  const loginId = extractSoopLoginId(data.data.profile_image);
+  if (!loginId) throw new Error('stationinfo: no login id');
+  return loginId;
 }
 
 module.exports = async function handler(req, res) {

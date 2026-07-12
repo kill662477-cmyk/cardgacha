@@ -88,6 +88,7 @@
     background:var(--accent-soft);border:1px solid var(--brd-2);padding:7px 14px;border-radius:999px}
   .points b{color:var(--accent);font-size:15px}
   .points i{font-style:normal;color:var(--muted);font-size:12px}
+  .user-nick{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:800;color:var(--txt)}
   .icon-btn{background:transparent;border:1px solid var(--brd);color:var(--muted);
     border-radius:var(--radius);padding:7px 12px;font-weight:600;font-size:13px;transition:border-color .15s,color .15s}
   .icon-btn:hover{border-color:var(--brd-2);color:var(--txt)}
@@ -192,6 +193,10 @@
   .rank-2 .rank-num{color:#c0c0c0}
   .rank-3{border-color:rgba(205,127,50,.5);background:linear-gradient(90deg,rgba(205,127,50,.06),transparent)}
   .rank-3 .rank-num{color:#cd7f32}
+  .rank-me{display:flex;align-items:center;gap:12px;padding:14px;margin:0 0 14px;border:1px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius)}
+  .rank-me .rank-num{color:var(--accent);width:auto;min-width:48px}.rank-me .rank-score{font-size:16px}.rank-me-label{font-size:11px;color:var(--muted);font-weight:700}
+
+  @media(max-width:620px){.topbar .wrap{flex-wrap:wrap;gap:8px}.topbar .brand{width:100%}#userbar{width:100%;justify-content:space-between}.user-nick{max-width:120px}.points{padding:6px 10px}.icon-btn{padding:6px 9px}}
 
   /* collection */
   .col-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
@@ -339,6 +344,7 @@
   <div class="topbar"><div class="wrap">
     <div class="brand">Calm <span>MonstarZ</span> 카드뽑기</div>
     <div id="userbar" class="hidden" style="display:flex;gap:10px;align-items:center">
+      <div class="user-nick" id="userNick"></div>
       <div class="points"><i>P</i><b id="ptval">0</b></div>
       <button class="icon-btn" id="soundBtn" aria-pressed="false">SFX OFF</button>
       <button class="icon-btn" id="logoutBtn">로그아웃</button>
@@ -475,6 +481,7 @@ function show(v){
   window.scrollTo(0,0);
 }
 function setPoints(p){state.points=p;$('#ptval').textContent=p.toLocaleString();}
+function setNickname(nickname){state.nickname=nickname||'';$('#userNick').textContent=state.nickname;}
 
 /* auth */
 $('#regBtn').onclick=async()=>{
@@ -483,7 +490,7 @@ $('#regBtn').onclick=async()=>{
   const b=$('#regBtn');b.disabled=true;b.textContent='발급 중...';
   try{
     const j=await apiPost('/api/register',{nickname});
-    state.key=j.key;state.nickname=j.user.nickname;setPoints(j.user.points);state.canAttend=j.user.canAttend;updateStreak(j.user.streak);
+    state.key=j.key;setNickname(j.user.nickname);setPoints(j.user.points);state.canAttend=j.user.canAttend;updateStreak(j.user.streak);
     localStorage.setItem('cardgacha_key',j.key);
     $('#issuedKey').value=j.key;$('#keyIssued').classList.remove('hidden');$('#keyIssued').scrollIntoView({behavior:'smooth'});
   }catch(e){toast(e.message,true);}
@@ -496,11 +503,11 @@ $('#goShopBtn').onclick=()=>{$('#keyIssued').classList.add('hidden');show('shop'
 $('#loginBtn').onclick=async()=>{const key=$('#loginKey').value.trim();if(!key)return toast('KEY를 입력하세요',true);await doLogin(key);};
 async function doLogin(key){
   try{const j=await apiPost('/api/login',{key});
-    state.key=key;state.nickname=j.user.nickname;setPoints(j.user.points);state.canAttend=j.user.canAttend;updateStreak(j.user.streak);
+    state.key=key;setNickname(j.user.nickname);setPoints(j.user.points);state.canAttend=j.user.canAttend;updateStreak(j.user.streak);
     localStorage.setItem('cardgacha_key',key);show('shop');
   }catch(e){toast(e.message,true);localStorage.removeItem('cardgacha_key');show('auth');}
 }
-$('#logoutBtn').onclick=()=>{localStorage.removeItem('cardgacha_key');state.key=null;show('auth');};
+$('#logoutBtn').onclick=()=>{localStorage.removeItem('cardgacha_key');state.key=null;setNickname('');show('auth');};
 $('#soundBtn').onclick=()=>{state.soundOn=!state.soundOn;localStorage.setItem('cardgacha_sound',state.soundOn?'on':'off');updateSoundBtn();if(state.soundOn)sfx('flip');};
 
 /* shop */
@@ -559,12 +566,13 @@ async function buyPack(id){
 async function renderRanking(){
   const wrap=$('#rankWrap'); wrap.innerHTML='<div class="empty">로딩 중...</div>';
   try {
-    const j=await apiGet('/api/ranking');
+    const j=await apiPost('/api/ranking',{key:state.key});
     if(!j.rankings||!j.rankings.length){ wrap.innerHTML='<div class="empty">아직 랭킹 데이터가 없습니다</div>'; return; }
-    wrap.innerHTML=j.rankings.map((r,i)=>{
-      const rankClass = i===0 ? 'rank-1' : i===1 ? 'rank-2' : i===2 ? 'rank-3' : '';
+    const mine=j.me?`<div class="rank-me"><div class="rank-num">${j.me.rank}</div><div class="rank-nick"><span class="rank-me-label">내 현재 순위</span>${esc(j.me.nickname)}</div><div class="rank-score">${j.me.score.toLocaleString()}</div></div>`:'';
+    wrap.innerHTML=mine+j.rankings.map((r,i)=>{
+      const rankClass = r.rank===1 ? 'rank-1' : r.rank===2 ? 'rank-2' : r.rank===3 ? 'rank-3' : '';
       return `<div class="rank-item ${rankClass}">
-        <div class="rank-num">${i+1}</div>
+        <div class="rank-num">${r.rank}</div>
         <div class="rank-nick">${esc(r.nickname)}</div>
         <div class="rank-score">${r.score.toLocaleString()}</div>
       </div>`;

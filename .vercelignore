@@ -1,0 +1,7 @@
+.claude/
+.bridge-keys/
+tmp/
+tools/
+HANDOVER-NEXT-SESSION.md
+.env*
+node_modules/

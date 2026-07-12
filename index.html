@@ -506,7 +506,7 @@
       <div class="user-nick" id="userNick"></div>
       <div class="points"><i>P</i><b id="ptval">0</b></div>
       <button class="icon-btn" id="showKeyBtn">KEY 복사</button>
-      <button class="icon-btn hidden" id="bridgeBtn" title="후원 API 연동">API 연동</button>
+      <a class="icon-btn hidden" id="bridgeBtn" title="후원 API 연동" href="/donation-bridge.html" target="_blank" rel="noopener">API 연동</a>
       <button class="icon-btn" id="soundBtn" aria-pressed="false">SFX OFF</button>
       <button class="icon-btn" id="logoutBtn">로그아웃</button>
     </div>
@@ -746,7 +746,6 @@ async function doLogin(key){
   }catch(e){toast(e.message,true);localStorage.removeItem('cardgacha_key');show('auth');}
 }
 $('#logoutBtn').onclick=()=>{localStorage.removeItem('cardgacha_key');state.key=null;setNickname('');setDonationBridgeAccess(false);show('auth');};
-$('#bridgeBtn').onclick=()=>window.open('/donation-bridge.html','_blank','noopener');
 $('#soundBtn').onclick=()=>{state.soundOn=!state.soundOn;localStorage.setItem('cardgacha_sound',state.soundOn?'on':'off');updateSoundBtn();if(state.soundOn)sfx('flip');};
 
 /* shop */

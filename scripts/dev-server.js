@@ -38,6 +38,7 @@ const API = {
   '/api/announcements': require('../api/announcements'),
   '/api/dismantle': require('../api/dismantle'),
   '/api/claim-reward': require('../api/claim-reward'),
+  '/api/claim-all-rewards': require('../api/claim-all-rewards'),
   '/api/public-config': require('../api/public-config'),
   '/api/ranking': require('../api/ranking'),
   '/api/auth/soop-start': require('../api/auth/soop-start'),

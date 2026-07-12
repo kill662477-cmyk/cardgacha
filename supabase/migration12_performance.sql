@@ -62,7 +62,8 @@ begin
   end if;
 
   update public.gacha_users
-  set points = public.gacha_users.points + p_amount;
+  set points = public.gacha_users.points + p_amount
+  where public.gacha_users.id is not null;
   get diagnostics v_updated = row_count;
   return query select v_updated;
 end;

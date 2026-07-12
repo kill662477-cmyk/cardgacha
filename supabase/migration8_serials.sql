@@ -156,7 +156,7 @@ begin
     where id in (
       select id from public.gacha_card_serials
       where user_id = p_user_id and card_id = v_item.card_id
-      order by serial desc
+      order by gacha_card_serials.serial desc
       limit (v_item.expected_count - v_item.new_count)
     );
   end loop;

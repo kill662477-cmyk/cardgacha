@@ -612,6 +612,16 @@
     </div>
   </div>
 
+  <!-- 합성 오류 보상 안내 (로그인 후 기기당 1회) -->
+  <div id="fuseFixModal" class="key-modal hidden" role="dialog" aria-modal="true" aria-labelledby="fuseFixTitle">
+    <div class="panel auth-shell" style="border-color:var(--accent);max-width:440px">
+      <h3 id="fuseFixTitle" style="color:var(--accent);font-size:18px">합성 시스템 오류 수정 완료</h3>
+      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">카드 합성 과정의 오류를 수정했습니다.</p>
+      <p style="font-size:15px;font-weight:800;margin:8px 0 0">불편 보상으로 <b class="mono" style="color:var(--accent)">500P</b>가 지급되었습니다.</p>
+      <button class="cta" id="fuseFixCloseBtn" style="margin-top:16px">확인</button>
+    </div>
+  </div>
+
   <!-- SHOP -->
   <section id="view-shop" class="hidden">
     <div class="panel attend-bar">
@@ -629,7 +639,7 @@
         <h2 style="font-size:18px">도감</h2>
         <div class="stat"><b id="colOwned">0</b> <span class="dim">/ <span id="colTotal">0</span></span></div>
       </div>
-      <div class="col-actions"><button class="small-btn" id="batchDismantleBtn">중복 일괄 분해</button></div>
+      <div class="col-actions"><button class="small-btn" id="batchDismantleBtn">중복 일괄 분해</button><button class="small-btn" id="claimAllRewardsBtn">도감 보상 일괄 받기</button></div>
       <div class="filters" id="rarFilters"></div>
     </div>
     <div id="colWrap"></div>
@@ -759,7 +769,7 @@ function openKeyModal(key,first){
   $('#keyModalTitle').textContent=first?'KEY 발급 완료':'내 백업 KEY';
   $('#keyModal').classList.remove('hidden');
 }
-function closeKeyModal(){$('#keyModal').classList.add('hidden');}
+function closeKeyModal(){$('#keyModal').classList.add('hidden');setTimeout(maybeShowFuseFixNotice,0);}
 async function copyKey(value){
   try{await navigator.clipboard.writeText(value);toast('KEY 복사됨');}
   catch(e){
@@ -776,12 +786,19 @@ function maybeShowGuide(){if(localStorage.getItem('cardgacha_guide_dismissed')==
 function closeGuide(){if($('#guideDismiss').checked)localStorage.setItem('cardgacha_guide_dismissed','1');$('#guideModal').classList.add('hidden');}
 $('#guideCloseBtn').onclick=closeGuide;
 $('#guideModal').onclick=(e)=>{if(e.target===$('#guideModal'))closeGuide();};
+function maybeShowFuseFixNotice(){
+  if(!state.key||localStorage.getItem('cardgacha_fuse_fix_notice_v1')==='1'||!$('#keyModal').classList.contains('hidden'))return;
+  $('#fuseFixModal').classList.remove('hidden');
+}
+function closeFuseFixNotice(){localStorage.setItem('cardgacha_fuse_fix_notice_v1','1');$('#fuseFixModal').classList.add('hidden');}
+$('#fuseFixCloseBtn').onclick=closeFuseFixNotice;
+$('#fuseFixModal').onclick=(e)=>{if(e.target===$('#fuseFixModal'))closeFuseFixNotice();};
 $('#showKeyBtn').onclick=()=>{if(state.key)copyKey(state.key);else toast('로그인 후 이용하세요',true);};
 $('#loginBtn').onclick=async()=>{const key=$('#loginKey').value.trim();if(!key)return toast('KEY를 입력하세요',true);await doLogin(key);};
 async function doLogin(key){
   try{const j=await apiPost('/api/login',{key});
     state.key=key;setNickname(j.user.nickname);setPoints(j.user.points);state.canAttend=j.user.canAttend;setDonationBridgeAccess(j.user.canUseDonationBridge);updateStreak(j.user.streak);
-    localStorage.setItem('cardgacha_key',key);show('shop');
+    localStorage.setItem('cardgacha_key',key);show('shop');setTimeout(maybeShowFuseFixNotice,0);
   }catch(e){toast(e.message,true);localStorage.removeItem('cardgacha_key');show('auth');}
 }
 $('#logoutBtn').onclick=()=>{localStorage.removeItem('cardgacha_key');state.key=null;setNickname('');setDonationBridgeAccess(false);show('auth');};
@@ -1100,6 +1117,8 @@ async function renderCollection(){
   const fw=$('#rarFilters');fw.innerHTML='';
   ['ALL',...RAR].forEach(r=>{const button=el('button','chip'+(state.filter===r?' on':''),r==='ALL'?'전체':r);button.onclick=()=>{state.filter=r;renderCollection();};fw.appendChild(button);});
   const wrap=$('#colWrap');wrap.innerHTML='';const byMember={};state.cards.forEach(c=>{(byMember[c.member]=byMember[c.member]||[]).push(c);});
+  const claimable=Object.entries(byMember).some(([member,cards])=>!state.claimed.includes(member)&&(MEMBER_REWARDS[member]||0)>0&&cards.every(card=>(state.collection[card.id]||0)>0));
+  $('#claimAllRewardsBtn').disabled=!claimable;
   const assigned=new Set();COLLECTIONS.forEach(s=>s.members.forEach(m=>assigned.add(m)));
   let shown=0;
   const renderMember=(member)=>{
@@ -1141,7 +1160,8 @@ function openCardDetail(card){
 async function dismantleCard(cardId,count){try{const j=await apiPost('/api/dismantle',{key:state.key,cardId,count});state.collection=j.collection||{};setPoints(j.points);closeCardModal();sfx('rare');toast(`분해 완료. +${j.refund}P`);renderCollection();}catch(e){toast(e.message,true);}}
 async function dismantleAll(){if(!confirm('모든 중복 카드를 분해합니다. 카드별 1장은 보존됩니다.'))return;try{const j=await apiPost('/api/dismantle',{key:state.key,mode:'all'});state.collection=j.collection||{};setPoints(j.points);sfx('rare');toast(`중복 분해 완료. +${j.refund}P`);renderCollection();}catch(e){toast(e.message,true);}}
 async function claimMemberReward(member){try{const j=await apiPost('/api/claim-reward',{key:state.key,member});if(!j.ok)return toast(j.message||'보상 수령이 아직 준비되지 않았습니다',true);state.claimed.push(member);setPoints(j.points);sfx('fur');toast(`${member} 완성 보상 +${j.reward}P`);renderCollection();}catch(e){toast(e.message,true);}}
-$('#cardModalClose').onclick=closeCardModal;$('#cardModalBackdrop').onclick=closeCardModal;$('#batchDismantleBtn').onclick=dismantleAll;
+async function claimAllRewards(){const button=$('#claimAllRewardsBtn');button.disabled=true;try{const j=await apiPost('/api/claim-all-rewards',{key:state.key});if(!j.ok)return toast(j.message||'받을 수 있는 도감 보상이 없습니다',true);state.claimed=[...new Set([...state.claimed,...j.claimed])];setPoints(j.points);sfx('fur');toast(`도감 보상 ${j.claimed.length}개 수령. +${j.total}P`);renderCollection();}catch(e){toast(e.message,true);renderCollection();}}
+$('#cardModalClose').onclick=closeCardModal;$('#cardModalBackdrop').onclick=closeCardModal;$('#batchDismantleBtn').onclick=dismantleAll;$('#claimAllRewardsBtn').onclick=claimAllRewards;
 
 /* ---- fuse (카드 합성) ---- */
 function fuseExcess(id){return Math.max(0,(state.collection[id]||0)-1);}

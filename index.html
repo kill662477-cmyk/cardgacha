@@ -576,6 +576,13 @@
   .prediction-choice:hover{transform:translate(1px,1px);box-shadow:3px 3px 0 #111b1a}
   .prediction-choice.selected{background:#18231b;color:#f8fbf3;border-color:#f1cb66;box-shadow:0 0 0 2px #111b1a,0 0 18px #f1cb6677}
   .prediction-choice.selected span{color:#f1cb66}.prediction-choice:disabled{cursor:not-allowed;opacity:.72;filter:none;transform:none}
+  .prediction-rate{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin-top:16px;padding:12px 14px;border:1px solid #111b1a;background:#18231b;color:#f8fbf3;font-family:var(--font-mono);box-shadow:3px 3px 0 #f1cb66}
+  .prediction-rate-side{min-width:0}.prediction-rate-side:last-child{text-align:right}
+  .prediction-rate-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:800;color:#cbd5cb}
+  .prediction-rate-value{display:block;margin-top:3px;font-size:21px;font-weight:900;line-height:1;color:#f1cb66}
+  .prediction-rate-vs{font-size:11px;font-weight:900;color:#fff;border-left:1px solid #718071;border-right:1px solid #718071;padding:8px 10px}
+  .prediction-rate-empty{grid-column:1/-1;text-align:center;font-size:12px;font-weight:900;color:#f1cb66}
+  .prediction-rate-total{grid-column:1/-1;text-align:center;padding-top:8px;border-top:1px solid #435044;font-size:10px;font-weight:800;color:#aeb9ae}
   .prediction-result{margin-top:14px;border:1px solid #111b1a;background:#fff;padding:12px;font-size:13px;font-weight:800;color:#111b1a}
 </style>
 
@@ -1117,6 +1124,11 @@ function renderPredictionUI(j){
   const selected=vote&&vote.option;
   const settled=Boolean(ev.settledAt);
   const locked=Boolean(selected||ev.closed||settled);
+  const tally=j.tally||{total:0,counts:{}};
+  const total=Number(tally.total)||0;
+  const firstCount=Number(tally.counts&&tally.counts[ev.options[0]])||0;
+  const firstRate=total?Math.round(firstCount/total*100):0;
+  const secondRate=total?100-firstRate:0;
   const status=settled?'결과 확정':ev.closed?'선택 마감':'선택 가능';
   const result=settled
     ? `<div class="prediction-result">정답: <b>${esc(ev.winningOption)}</b>${selected?` · 내 선택: <b>${esc(selected)}</b>`:''}</div>`
@@ -1134,6 +1146,14 @@ function renderPredictionUI(j){
         <b>${esc(option)}</b>
         <span>${selected===option?'내 선택':locked?'선택 마감':'이 팀으로 예측하기'}</span>
       </button>`).join('')}
+    </div>
+    <div class="prediction-rate">
+      ${total?`
+        <div class="prediction-rate-side"><span class="prediction-rate-name">${esc(ev.options[0])}</span><strong class="prediction-rate-value">${firstRate}%</strong></div>
+        <div class="prediction-rate-vs">현재 선택률</div>
+        <div class="prediction-rate-side"><span class="prediction-rate-name">${esc(ev.options[1])}</span><strong class="prediction-rate-value">${secondRate}%</strong></div>
+        <div class="prediction-rate-total">총 ${total.toLocaleString()}명 참여</div>
+      `:'<div class="prediction-rate-empty">아직 선택 없음</div>'}
     </div>
     ${result}`;
   wrap.querySelectorAll('[data-predict]').forEach(button=>button.onclick=()=>votePrediction(button.dataset.predict));

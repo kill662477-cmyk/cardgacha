@@ -20,9 +20,21 @@ async function getVote(userId) {
   return rows?.[0] || null;
 }
 
+async function getVoteTally() {
+  const rows = await sbFetch(
+    `${REST}/gacha_prediction_votes?event_id=eq.${encodeURIComponent(CIVIL_WAR_EVENT.id)}&select=option`,
+    { headers: headers() }
+  );
+  const counts = Object.fromEntries(CIVIL_WAR_EVENT.options.map(option => [option, 0]));
+  for (const row of rows || []) {
+    if (Object.hasOwn(counts, row.option)) counts[row.option] += 1;
+  }
+  return { total: Object.values(counts).reduce((sum, count) => sum + count, 0), counts };
+}
+
 async function status(userId) {
-  const [event, vote] = await Promise.all([getEvent(), getVote(userId)]);
-  return { event: publicEvent(event), vote };
+  const [event, vote, tally] = await Promise.all([getEvent(), getVote(userId), getVoteTally()]);
+  return { event: publicEvent(event), vote, tally };
 }
 
 async function vote(userId, option) {

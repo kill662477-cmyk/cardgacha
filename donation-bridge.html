@@ -103,14 +103,17 @@
       const hash=await crypto.subtle.digest('SHA-256',bytes);
       return 'soop:'+Array.from(new Uint8Array(hash)).map(v=>v.toString(16).padStart(2,'0')).join('');
     }
+    const DONATION_ACTIONS=new Set(['BALLOON_GIFTED','BATTLE_MISSION_GIFTED']);
     async function handleMessage(action,message){
-      if(action!=='BALLOON_GIFTED')return;
-      const senderId=sender(message),recipientId=recipient(message),count=amount(message),name=nickname(message);
+      if(!DONATION_ACTIONS.has(action))return;
+      // 대결미션 후원은 수신 BJ ID가 없으므로, 현재 브릿지 인증 방송인을 수신자로 쓴다.
+      const senderId=sender(message),recipientId=recipient(message)||state.credentials?.soopId,count=amount(message),name=nickname(message);
       if(!senderId||!recipientId||count<1){state.skipped++;render();eventRow(`${name} · 식별 정보 부족`,'제외','skip');return;}
       try{
         const id=await eventId(action,message,senderId,recipientId,count);
         const result=await request('/api/bridge/donation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:id,senderSoopId:senderId,recipientSoopId:recipientId,amount:count})});
-        if(result.applied){state.events++;state.balloons+=count*3;eventRow(`${name} → ${recipientId}`,`+${count*3}P`);}
+        const label=action==='BATTLE_MISSION_GIFTED'?'대결미션 · ':'';
+        if(result.applied){state.events++;state.balloons+=count*3;eventRow(`${label}${name} → ${recipientId}`,`+${count*3}P`);}
         else{state.skipped++;eventRow(`${name} · 중복 이벤트`,'중복','skip');}
       }catch(error){state.skipped++;eventRow(`${name} · ${error.message}`,'실패','fail');}
       render();

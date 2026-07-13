@@ -41,6 +41,7 @@ const API = {
   '/api/claim-all-rewards': require('../api/claim-all-rewards'),
   '/api/public-config': require('../api/public-config'),
   '/api/ranking': require('../api/ranking'),
+  '/api/prediction': require('../api/prediction'),
   '/api/auth/soop-start': require('../api/auth/soop-start'),
   '/api/auth/soop-callback': require('../api/auth/soop-callback'),
   '/api/bridge/auth': require('../api/bridge/auth'),

@@ -914,7 +914,6 @@ function renderShop(){
       <div class="kname">${p.name}</div>
       <div class="kprice">${p.price} P · ${p.count}장</div>
       ${p.guar?`<span class="guar">${p.guar} 이상 확정</span>`:''}
-      ${p.race?`<span class="race-tag race-${RACE_CLASS[p.race]}">${p.race} 전용</span>`:''}
       <img class="pack-art" src="assets/packs/${packArt[p.id]}" alt="${p.name} 카드팩" loading="lazy"/>
       <details class="odds"><summary>등급 확률 보기 ▾</summary><div class="oddsgrid">${oddsHtml(p.odds)}</div></details>
       <div class="spacer"></div>

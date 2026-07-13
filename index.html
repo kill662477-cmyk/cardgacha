@@ -688,6 +688,15 @@
     </div>
   </div>
 
+  <div id="civilWarModal" class="key-modal reward-modal hidden" role="dialog" aria-modal="true" aria-labelledby="civilWarTitle">
+    <div class="panel auth-shell" style="border-color:#f1cb66;max-width:440px">
+      <h3 id="civilWarTitle" style="color:#f1cb66;font-size:18px">시빌워 기념 지급</h3>
+      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">시빌워를 기념해 모든 계정에 보상을 지급했습니다.</p>
+      <p style="font-size:15px;font-weight:800;margin:10px 0 0">기념 보상 <b class="reward-amount">+2,000P</b>가 추가 지급되었습니다.</p>
+      <button class="cta" id="civilWarCloseBtn" style="margin-top:16px">확인</button>
+    </div>
+  </div>
+
   <!-- SHOP -->
   <section id="view-shop" class="hidden">
     <div class="panel attend-bar">
@@ -871,8 +880,13 @@ function maybeShowNewCardsNotice(){
   $('#newCardsModal').classList.remove('hidden');
 }
 function maybeShowSubscriber300Notice(){
-  if(!state.key||localStorage.getItem('cardgacha_subscriber_300_notice_v1')==='1'||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden')||!$('#newCardsModal').classList.contains('hidden'))return;
+  if(!state.key||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden')||!$('#newCardsModal').classList.contains('hidden'))return;
+  if(localStorage.getItem('cardgacha_subscriber_300_notice_v1')==='1'){maybeShowCivilWarNotice();return;}
   $('#subscriber300Modal').classList.remove('hidden');
+}
+function maybeShowCivilWarNotice(){
+  if(!state.key||localStorage.getItem('cardgacha_civil_war_notice_v1')==='1'||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden')||!$('#newCardsModal').classList.contains('hidden')||!$('#subscriber300Modal').classList.contains('hidden'))return;
+  $('#civilWarModal').classList.remove('hidden');
 }
 function closeFuseFixNotice(){localStorage.setItem('cardgacha_fuse_fix_notice_v1','1');$('#fuseFixModal').classList.add('hidden');maybeShowPackReleaseNotice();}
 $('#fuseFixCloseBtn').onclick=closeFuseFixNotice;
@@ -883,9 +897,12 @@ $('#packReleaseModal').onclick=(e)=>{if(e.target===$('#packReleaseModal'))closeP
 function closeNewCardsNotice(){localStorage.setItem('cardgacha_new_cards_notice_v1','1');$('#newCardsModal').classList.add('hidden');maybeShowSubscriber300Notice();}
 $('#newCardsCloseBtn').onclick=closeNewCardsNotice;
 $('#newCardsModal').onclick=(e)=>{if(e.target===$('#newCardsModal'))closeNewCardsNotice();};
-function closeSubscriber300Notice(){localStorage.setItem('cardgacha_subscriber_300_notice_v1','1');$('#subscriber300Modal').classList.add('hidden');}
+function closeSubscriber300Notice(){localStorage.setItem('cardgacha_subscriber_300_notice_v1','1');$('#subscriber300Modal').classList.add('hidden');maybeShowCivilWarNotice();}
 $('#subscriber300CloseBtn').onclick=closeSubscriber300Notice;
 $('#subscriber300Modal').onclick=(e)=>{if(e.target===$('#subscriber300Modal'))closeSubscriber300Notice();};
+function closeCivilWarNotice(){localStorage.setItem('cardgacha_civil_war_notice_v1','1');$('#civilWarModal').classList.add('hidden');}
+$('#civilWarCloseBtn').onclick=closeCivilWarNotice;
+$('#civilWarModal').onclick=(e)=>{if(e.target===$('#civilWarModal'))closeCivilWarNotice();};
 $('#showKeyBtn').onclick=()=>{if(state.key)copyKey(state.key);else toast('로그인 후 이용하세요',true);};
 $('#loginBtn').onclick=async()=>{const key=$('#loginKey').value.trim();if(!key)return toast('KEY를 입력하세요',true);await doLogin(key);};
 async function doLogin(key){

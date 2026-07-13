@@ -1114,5 +1114,61 @@
     "member": "햇살",
     "file": "haetsal-11.avif",
     "rarity": "HR"
+  },
+  {
+    "id": "group-1",
+    "member": "단체사진",
+    "file": "group-1.avif",
+    "rarity": "FUR",
+    "group": true
+  },
+  {
+    "id": "group-2",
+    "member": "단체사진",
+    "file": "group-2.avif",
+    "rarity": "MUR",
+    "group": true
+  },
+  {
+    "id": "group-3",
+    "member": "단체사진",
+    "file": "group-3.avif",
+    "rarity": "MUR",
+    "group": true
+  },
+  {
+    "id": "group-4",
+    "member": "단체사진",
+    "file": "group-4.avif",
+    "rarity": "UR",
+    "group": true
+  },
+  {
+    "id": "group-5",
+    "member": "단체사진",
+    "file": "group-5.avif",
+    "rarity": "UR",
+    "group": true
+  },
+  {
+    "id": "group-6",
+    "member": "단체사진",
+    "file": "group-6.avif",
+    "rarity": "SAR",
+    "group": true
+  },
+  {
+    "id": "group-7",
+    "member": "단체사진",
+    "file": "group-7.avif",
+    "rarity": "SAR",
+    "group": true
+  },
+  {
+    "id": "group-8",
+    "member": "단체사진",
+    "file": "group-8.avif",
+    "rarity": "SR",
+    "group": true
   }
 ]

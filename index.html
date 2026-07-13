@@ -504,6 +504,16 @@
   .tile .card-art[src$="parkjuno-3.avif"],.revface .card-art[src$="parkjuno-3.avif"],.detail-card img[src$="parkjuno-3.avif"],.fslot .card-art[src$="parkjuno-3.avif"],.fmat .card-art[src$="parkjuno-3.avif"]{object-position:center top}
   .tile .card-art:is([src$="arisongi-7.avif"],[src$="arisongi-8.avif"],[src$="arisongi-9.avif"],[src$="arisongi-10.avif"]),.revface .card-art:is([src$="arisongi-7.avif"],[src$="arisongi-8.avif"],[src$="arisongi-9.avif"],[src$="arisongi-10.avif"]),.detail-card img:is([src$="arisongi-7.avif"],[src$="arisongi-8.avif"],[src$="arisongi-9.avif"],[src$="arisongi-10.avif"]),.fslot .card-art:is([src$="arisongi-7.avif"],[src$="arisongi-8.avif"],[src$="arisongi-9.avif"],[src$="arisongi-10.avif"]),.fmat .card-art:is([src$="arisongi-7.avif"],[src$="arisongi-8.avif"],[src$="arisongi-9.avif"],[src$="arisongi-10.avif"]){object-position:center top}
   .card-frame{inset:0;width:100%;height:100%;object-fit:fill;overflow:hidden}
+  /* Group photos keep the full landscape composition inside their own archive window. */
+  .tile.group-tile{grid-column:span 2;aspect-ratio:16/9}
+  .detail-card.group-detail-card{width:min(560px,92vw);aspect-ratio:16/9}
+  .rev.group-rev{width:252px}.rev.group-rev .revcard{aspect-ratio:16/9}
+  .fslot.group-fslot{width:min(156px,42vw);aspect-ratio:16/9}
+  .fmat.group-fmat{width:160px;aspect-ratio:16/9}
+  .tile .group-card-art,.revface .group-card-art,.detail-card .group-card-art,.fslot .group-card-art,.fmat .group-card-art{
+    position:absolute;inset:12px;width:calc(100% - 24px);height:calc(100% - 24px);object-fit:cover!important;object-position:center;background:#05090d;z-index:1
+  }
+  @media(max-width:560px){.rev.group-rev{width:min(88vw,350px)}.fmat.group-fmat{width:132px}}
   .tile .cap,.revface .cap,.detail-card .detail-name{padding:7px 8px;background:rgba(8,18,15,.9);border-top:1px solid rgba(255,255,255,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
   .tile .nm,.revface .cap .nm{color:#fff;font-size:12px;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.92)}.detail-card .detail-name{color:#fff;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.92)}.tile .qty,.tile .newb,.newb2,.serialb{border-radius:2px;border-color:var(--txt)}
   .tile .qty,.serialb{background:#fbfcf8e8;color:var(--txt)}.tile .newb,.newb2{background:var(--accent);color:var(--accent-ink)}
@@ -753,7 +763,8 @@
 <script>
 const RAR=['C','U','R','RR','RRR','AR','CHR','HR','SR','SAR','UR','MUR','FUR'];
 const RANK=Object.fromEntries(RAR.map((r,i)=>[r,i]));
-const framePath=rarity=>`assets/frames/${rarity.toLowerCase()}.svg`;
+const framePath=card=>`assets/frames/${(card.group?'group':card.rarity).toLowerCase()}.svg`;
+const artClass=card=>`card-art${card.group?' group-card-art':''}`;
 const packArt={normal:'normal.png',premium:'rare.png',luxury:'premium.png',zerg:'zerg.avif',terran:'terran.avif',protoss:'protoss.avif'};
 const MEMBER_ORDER=['김윤환','소주양','지두두','남덕선','토마토','햇살','찌킹','치리','주하랑','임조이','비타밍','먼진','아리송이','낭니','변현제','김민철','사테','박준오','박수범','지동원','배성흠'];
 const DISMANTLE_REFUND={C:5,U:8,R:12,RR:20,RRR:30,AR:45,CHR:60,HR:80,SR:100,SAR:130,UR:160,MUR:200,FUR:250};
@@ -1009,15 +1020,15 @@ async function renderRanking(){
 /* ---- pack opening: the signature ---- */
 function revcardHTML(c){
   const hi=RANK[c.rarity]>=RANK.SR;
-  return `<div class="revcard ${glowClass(c.rarity)}" data-rar="${c.rarity}">
+  return `<div class="revcard ${c.group?'group-revcard ':''}${glowClass(c.rarity)}" data-rar="${c.rarity}">
       ${hi?'<div class="burst"></div>':''}
       <div class="revback"><img class="backlogo" src="assets/card-back.jpg" alt="Calm MonstarZ"/><div class="backshine"></div></div>
       <div class="revface">
         ${c.isNew?'<span class="newb2">NEW</span>':''}
         ${c.serial!=null?`<span class="serialb">No. ${c.serial}</span>`:''}
         ${c.rarity==='FUR'?'<div class="foil"></div><div class="shine"></div>':''}
-        <img class="card-art" src="${imgPath(c.file)}" alt="${esc(c.member)}"/>
-        <img class="card-frame" src="${framePath(c.rarity)}" alt="" aria-hidden="true"/>
+        <img class="${artClass(c)}" src="${imgPath(c.file)}" alt="${esc(c.member)}"/>
+        <img class="card-frame" src="${framePath(c)}" alt="" aria-hidden="true"/>
         <div class="cap"><span class="cap-meta"><span class="nm">${esc(c.member)}</span>${raceTag(c)}</span></div>
       </div>
     </div>`;
@@ -1037,7 +1048,7 @@ function openStage1(cards,hasNext,next){
   const hint=$('#tapHint');
   if(!cards.length){ov.classList.remove('show');next&&next();return;} // 전부 특별카드면 스킵
   hint.classList.remove('hidden');hint.classList.add('pulse');hint.textContent='화면을 탭하면 바로 전체 공개';
-  const items=cards.map(c=>{const w=el('div','rev');
+  const items=cards.map(c=>{const w=el('div','rev'+(c.group?' group-rev':''));
     w.innerHTML=revcardHTML(c)+`<div class="rtag"><span class="rb rb-${c.rarity}">${c.rarity}</span></div>`;
     row.appendChild(w);return {wrap:w,card:c};});
   ov.classList.add('show');
@@ -1076,7 +1087,7 @@ function openStage2Cards(cards){
   const topRar=cards.reduce((m,c)=>RANK[c.rarity]>RANK[m]?c.rarity:m,cards[0].rarity);
   aura.className='sp-aura '+(topRar==='FUR'?'fur':'mur');
   title.innerHTML=topRar==='FUR'?'<span class="mono">FINAL ULTRA</span> 카드 등장':'<span class="mono">MEGA ULTRA</span> 카드 등장';
-  const items=cards.map(c=>{const w=el('div','rev awaitcard');w.dataset.rar=c.rarity;
+  const items=cards.map(c=>{const w=el('div','rev awaitcard'+(c.group?' group-rev':''));w.dataset.rar=c.rarity;
     w.innerHTML=revcardHTML(c)+`<div class="rtag"></div>`;row.appendChild(w);return {wrap:w,card:c,flipped:false};});
   ov.classList.add('show');
   if(cards.some(c=>c.rarity==='FUR'))attachFoilTilt(ov);
@@ -1206,8 +1217,8 @@ async function renderCollection(){
     const reward=complete&&!claimed?`<button class="small-btn" data-claim="${esc(member)}">보상 받기 +${rewardAmt}P</button>`:(claimed?'<span class="mc">보상 수령 완료</span>':`<span class="mc">완성 보상 ${rewardAmt}P</span>`);
     wrap.appendChild(el('div','memhead',`<h3>${esc(member)}</h3><span class="mc">${ownedMember}/${byMember[member].length}</span>${reward}`));
     const grid=el('div','colgrid');list.forEach(card=>{
-      const qty=state.collection[card.id]||0,hasCard=qty>0,tile=el('div','tile '+(hasCard?glowClass(card.rarity):'locked'));
-      tile.innerHTML=`${hasCard?`<span class="qty">x${qty}</span>`:''}<img class="card-art" src="${hasCard?imgPath(card.file):'assets/card-back.jpg'}" alt="${esc(card.member)}" loading="lazy"/><img class="card-frame" src="${framePath(card.rarity)}" alt="" aria-hidden="true"/><div class="cap"><span class="cap-meta"><span class="nm">${esc(card.member)}</span>${raceTag(card)}</span><span class="rb rb-${card.rarity}">${card.rarity}</span></div>`;
+      const qty=state.collection[card.id]||0,hasCard=qty>0,tile=el('div','tile '+(card.group?'group-tile ':'')+(hasCard?glowClass(card.rarity):'locked'));
+      tile.innerHTML=`${hasCard?`<span class="qty">x${qty}</span>`:''}<img class="${hasCard?artClass(card):'card-art'}" src="${hasCard?imgPath(card.file):'assets/card-back.jpg'}" alt="${esc(card.member)}" loading="lazy"/><img class="card-frame" src="${framePath(card)}" alt="" aria-hidden="true"/><div class="cap"><span class="cap-meta"><span class="nm">${esc(card.member)}</span>${raceTag(card)}</span><span class="rb rb-${card.rarity}">${card.rarity}</span></div>`;
       if(hasCard){enableTilt(tile);tile.onclick=()=>openCardDetail(card);}grid.appendChild(tile);
     });wrap.appendChild(grid);return true;
   };
@@ -1231,7 +1242,7 @@ function openCardDetail(card){
   const mySerials=(state.serials&&state.serials[card.id])||[],issuedTotal=state.issued&&state.issued[card.id];
   const issuedCell=issuedTotal!=null?`<div><span>총 발행</span><b>${issuedTotal}장</b></div>`:'';
   const serialBlock=mySerials.length?`<div style="background:#0a0e1e;border:1px solid var(--brd);border-radius:6px;padding:9px;margin:0 0 12px"><span style="display:block;font-size:11px;color:var(--dim);margin-bottom:4px">내 시리얼</span><b class="mono" style="line-height:1.6">${mySerials.map(s=>'No. '+s).join(' · ')}</b></div>`:'';
-  $('#cardDetail').innerHTML=`<h2 id="detailTitle" style="font-size:18px;margin-bottom:14px">카드 상세</h2><div class="detail-card"><img src="${imgPath(card.file)}" alt="${esc(card.member)}"/><img class="card-frame" src="${framePath(card.rarity)}" alt=""/><div class="detail-name"><span>${esc(card.member)}</span>${raceTag(card)}</div></div><div class="detail-meta"><div><span>등급</span><b class="rb rb-${card.rarity}">${card.rarity}</b></div><div><span>종족</span><b>${esc(card.race||'-')}</b></div><div><span>보유 수량</span><b>${qty}장</b></div><div><span>첫 획득일</span><b>${first}</b></div><div><span>카드 ID</span><b class="mono">${esc(card.id)}</b></div>${issuedCell}</div>${serialBlock}<div class="detail-actions">${extra?`<button class="cta sub" id="detailDismantle">중복 ${extra}장 분해 +${refund}P</button>`:''}</div>`;
+  $('#cardDetail').innerHTML=`<h2 id="detailTitle" style="font-size:18px;margin-bottom:14px">카드 상세</h2><div class="detail-card ${card.group?'group-detail-card':''}"><img class="${card.group?'group-card-art':''}" src="${imgPath(card.file)}" alt="${esc(card.member)}"/><img class="card-frame" src="${framePath(card)}" alt=""/><div class="detail-name"><span>${esc(card.member)}</span>${raceTag(card)}</div></div><div class="detail-meta"><div><span>등급</span><b class="rb rb-${card.rarity}">${card.rarity}</b></div><div><span>종족</span><b>${esc(card.race||'-')}</b></div><div><span>보유 수량</span><b>${qty}장</b></div><div><span>첫 획득일</span><b>${first}</b></div><div><span>카드 ID</span><b class="mono">${esc(card.id)}</b></div>${issuedCell}</div>${serialBlock}<div class="detail-actions">${extra?`<button class="cta sub" id="detailDismantle">중복 ${extra}장 분해 +${refund}P</button>`:''}</div>`;
   const button=$('#detailDismantle');if(button)button.onclick=()=>dismantleCard(card.id,extra);$('#cardModal').classList.remove('hidden');
 }
 async function dismantleCard(cardId,count){try{const j=await apiPost('/api/dismantle',{key:state.key,cardId,count});state.collection=j.collection||{};setPoints(j.points);closeCardModal();sfx('rare');toast(`분해 완료. +${j.refund}P`);renderCollection();}catch(e){toast(e.message,true);}}
@@ -1269,9 +1280,9 @@ function renderFuseUI(){
   const slots=$('#fuseSlots');slots.innerHTML='';
   for(let i=0;i<3;i++){
     const id=state.fuseSel[i];
-    const s=el('button','fslot'+(id?' filled':' empty'));
+    const s=el('button','fslot'+(id&&state.byId[id].group?' group-fslot':'')+(id?' filled':' empty'));
     if(id){const c=state.byId[id];
-      s.innerHTML=`<img class="card-art" src="${imgPath(c.file)}" alt="${esc(c.member)}"/><img class="card-frame" src="${framePath(c.rarity)}" alt=""/><span class="rm">✕</span>`;
+      s.innerHTML=`<img class="${artClass(c)}" src="${imgPath(c.file)}" alt="${esc(c.member)}"/><img class="card-frame" src="${framePath(c)}" alt=""/><span class="rm">✕</span>`;
       s.title='클릭하여 해제';s.onclick=()=>{state.fuseSel.splice(i,1);renderFuseUI();};
     }else{s.setAttribute('aria-label','빈 재료 슬롯');s.onclick=()=>toast('아래에서 재료 카드를 선택하세요');}
     slots.appendChild(s);
@@ -1293,10 +1304,10 @@ function renderFuseUI(){
   const grid=el('div','colgrid');
   list.forEach(c=>{
     const excess=fuseExcess(c.id),sel=fuseSelCount(c.id);
-    const tile=el('div','tile'+(sel?' selmat':''));
+    const tile=el('div','tile'+(c.group?' group-tile':'')+(sel?' selmat':''));
     tile.innerHTML=`<span class="qty">재료 x${excess}</span>${sel?`<span class="selc">선택 ${sel}</span>`:''}
       <img class="card-art" src="${imgPath(c.file)}" alt="${esc(c.member)}" loading="lazy"/>
-      <img class="card-frame" src="${framePath(c.rarity)}" alt="" aria-hidden="true"/>
+      <img class="card-frame" src="${framePath(c)}" alt="" aria-hidden="true"/>
       <div class="cap"><span class="cap-meta"><span class="nm">${esc(c.member)}</span>${raceTag(c)}</span><span class="rb rb-${c.rarity}">${c.rarity}</span></div>`;
     tile.style.cursor='pointer';
     tile.onclick=()=>{
@@ -1361,8 +1372,8 @@ function playFuseAnim(mats,j){
   sfx('open');
   const offs=[-125,0,125];
   mats.forEach((c,i)=>{
-    const d=el('div','fmat');
-    d.innerHTML=`<img class="card-art" src="${imgPath(c.file)}" alt=""/><img class="card-frame" src="${framePath(c.rarity)}" alt=""/>`;
+    const d=el('div','fmat'+(c.group?' group-fmat':''));
+    d.innerHTML=`<img class="${artClass(c)}" src="${imgPath(c.file)}" alt=""/><img class="card-frame" src="${framePath(c)}" alt=""/>`;
     d.style.transform=`translateX(${offs[i]}px)`;
     stage.appendChild(d);
     d.animate([

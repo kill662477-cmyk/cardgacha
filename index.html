@@ -628,6 +628,26 @@
     </div>
   </div>
 
+  <!-- 신규 카드팩 출시 보상 안내 (로그인 후 기기당 1회) -->
+  <div id="packReleaseModal" class="key-modal hidden" role="dialog" aria-modal="true" aria-labelledby="packReleaseTitle">
+    <div class="panel auth-shell" style="border-color:var(--accent);max-width:440px">
+      <h3 id="packReleaseTitle" style="color:var(--accent);font-size:18px">신규 카드팩 출시 기념</h3>
+      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">저그 · 테란 · 프로토스 종족팩이 출시되었습니다.</p>
+      <p style="font-size:15px;font-weight:800;margin:8px 0 0">출시 기념 선물로 <b class="mono" style="color:var(--accent)">1,000P</b>가 지급되었습니다.</p>
+      <button class="cta" id="packReleaseCloseBtn" style="margin-top:16px">확인</button>
+    </div>
+  </div>
+
+  <!-- 신규 카드 추가 보상 안내 (로그인 후 기기당 1회) -->
+  <div id="newCardsModal" class="key-modal hidden" role="dialog" aria-modal="true" aria-labelledby="newCardsTitle">
+    <div class="panel auth-shell" style="border-color:var(--accent);max-width:440px">
+      <h3 id="newCardsTitle" style="color:var(--accent);font-size:18px">신규 카드 47종 추가 기념</h3>
+      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">신규 카드 47종이 도감에 추가되었습니다.</p>
+      <p style="font-size:15px;font-weight:800;margin:8px 0 0">기념 선물로 <b class="mono" style="color:var(--accent)">1,000P</b>가 추가 지급되었습니다.</p>
+      <button class="cta" id="newCardsCloseBtn" style="margin-top:16px">확인</button>
+    </div>
+  </div>
+
   <!-- SHOP -->
   <section id="view-shop" class="hidden">
     <div class="panel attend-bar">
@@ -798,15 +818,29 @@ function maybeShowFuseFixNotice(){
   if(!state.key||localStorage.getItem('cardgacha_fuse_fix_notice_v1')==='1'||!$('#keyModal').classList.contains('hidden'))return;
   $('#fuseFixModal').classList.remove('hidden');
 }
-function closeFuseFixNotice(){localStorage.setItem('cardgacha_fuse_fix_notice_v1','1');$('#fuseFixModal').classList.add('hidden');}
+function maybeShowPackReleaseNotice(){
+  if(!state.key||localStorage.getItem('cardgacha_pack_release_notice_v1')==='1'||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden'))return;
+  $('#packReleaseModal').classList.remove('hidden');
+}
+function maybeShowNewCardsNotice(){
+  if(!state.key||localStorage.getItem('cardgacha_new_cards_notice_v1')==='1'||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden'))return;
+  $('#newCardsModal').classList.remove('hidden');
+}
+function closeFuseFixNotice(){localStorage.setItem('cardgacha_fuse_fix_notice_v1','1');$('#fuseFixModal').classList.add('hidden');maybeShowPackReleaseNotice();maybeShowNewCardsNotice();}
 $('#fuseFixCloseBtn').onclick=closeFuseFixNotice;
 $('#fuseFixModal').onclick=(e)=>{if(e.target===$('#fuseFixModal'))closeFuseFixNotice();};
+function closePackReleaseNotice(){localStorage.setItem('cardgacha_pack_release_notice_v1','1');$('#packReleaseModal').classList.add('hidden');maybeShowNewCardsNotice();}
+$('#packReleaseCloseBtn').onclick=closePackReleaseNotice;
+$('#packReleaseModal').onclick=(e)=>{if(e.target===$('#packReleaseModal'))closePackReleaseNotice();};
+function closeNewCardsNotice(){localStorage.setItem('cardgacha_new_cards_notice_v1','1');$('#newCardsModal').classList.add('hidden');}
+$('#newCardsCloseBtn').onclick=closeNewCardsNotice;
+$('#newCardsModal').onclick=(e)=>{if(e.target===$('#newCardsModal'))closeNewCardsNotice();};
 $('#showKeyBtn').onclick=()=>{if(state.key)copyKey(state.key);else toast('로그인 후 이용하세요',true);};
 $('#loginBtn').onclick=async()=>{const key=$('#loginKey').value.trim();if(!key)return toast('KEY를 입력하세요',true);await doLogin(key);};
 async function doLogin(key){
   try{const j=await apiPost('/api/login',{key});
     state.key=key;setNickname(j.user.nickname);setPoints(j.user.points);state.canAttend=j.user.canAttend;setDonationBridgeAccess(j.user.canUseDonationBridge);updateStreak(j.user.streak);
-    localStorage.setItem('cardgacha_key',key);show('shop');setTimeout(maybeShowFuseFixNotice,0);
+    localStorage.setItem('cardgacha_key',key);show('shop');setTimeout(()=>{maybeShowFuseFixNotice();maybeShowPackReleaseNotice();maybeShowNewCardsNotice();},0);
   }catch(e){toast(e.message,true);localStorage.removeItem('cardgacha_key');show('auth');}
 }
 $('#logoutBtn').onclick=()=>{localStorage.removeItem('cardgacha_key');state.key=null;setNickname('');setDonationBridgeAccess(false);show('auth');};

@@ -1163,7 +1163,14 @@ async function renderCollection(){
   $('#colOwned').textContent=owned;$('#colTotal').textContent=total;
   $('#batchDismantleBtn').disabled=!state.cards.some(c=>(state.collection[c.id]||0)>1);
   const fw=$('#rarFilters');fw.innerHTML='';
-  ['ALL',...RAR].forEach(r=>{const button=el('button','chip'+(state.filter===r?' on':''),r==='ALL'?'전체':r);button.onclick=()=>{state.filter=r;renderCollection();};fw.appendChild(button);});
+  const filters=[
+    {id:'ALL',label:'전체'},
+    {id:'RACE:저그',label:'저그반'},
+    {id:'RACE:프로토스',label:'토스반'},
+    {id:'RACE:테란',label:'테란반'},
+    ...RAR.map(r=>({id:r,label:r})),
+  ];
+  filters.forEach(filter=>{const button=el('button','chip'+(state.filter===filter.id?' on':''),filter.label);button.onclick=()=>{state.filter=filter.id;renderCollection();};fw.appendChild(button);});
   const wrap=$('#colWrap');wrap.innerHTML='';const byMember={};state.cards.forEach(c=>{(byMember[c.member]=byMember[c.member]||[]).push(c);});
   const claimable=Object.entries(byMember).some(([member,cards])=>!state.claimed.includes(member)&&(MEMBER_REWARDS[member]||0)>0&&cards.every(card=>(state.collection[card.id]||0)>0));
   $('#claimAllRewardsBtn').disabled=!claimable;
@@ -1171,7 +1178,10 @@ async function renderCollection(){
   let shown=0;
   const renderMember=(member)=>{
     if(!byMember[member])return false;
-    let list=byMember[member].slice().sort((a,b)=>RANK[b.rarity]-RANK[a.rarity]);if(state.filter!=='ALL')list=list.filter(c=>c.rarity===state.filter);if(!list.length)return false;shown++;
+    let list=byMember[member].slice().sort((a,b)=>RANK[b.rarity]-RANK[a.rarity]);
+    if(state.filter.startsWith('RACE:'))list=list.filter(c=>c.race===state.filter.slice(5));
+    else if(state.filter!=='ALL')list=list.filter(c=>c.rarity===state.filter);
+    if(!list.length)return false;shown++;
     const ownedMember=byMember[member].filter(c=>state.collection[c.id]>0).length,complete=ownedMember===byMember[member].length,claimed=state.claimed.includes(member);
     const rewardAmt=MEMBER_REWARDS[member]||0;
     const reward=complete&&!claimed?`<button class="small-btn" data-claim="${esc(member)}">보상 받기 +${rewardAmt}P</button>`:(claimed?'<span class="mc">보상 수령 완료</span>':`<span class="mc">완성 보상 ${rewardAmt}P</span>`);

@@ -560,6 +560,7 @@
   .ticker.leaderboard .rank-1 .rank-no{background:#ffd94c!important;color:#111b1a!important}.ticker.leaderboard .rank-2 .rank-no{background:#e7f4ff!important;color:#172126!important}.ticker.leaderboard .rank-3 .rank-no{background:#ffad70!important;color:#2a160c!important}
   @keyframes rankSpotlight{from{opacity:.72;transform:translateY(4px) scale(.985);filter:brightness(.9)}to{opacity:1;transform:translateY(0) scale(1);filter:brightness(1)}}
   @media(max-width:620px){.ticker.leaderboard{height:46px!important}.ticker.leaderboard::before{width:88px;font-size:9px!important}.ticker.leaderboard .ticker-track{width:calc(100% - 88px);margin-left:88px}.ticker.leaderboard .rank-ti{width:calc(100vw - 102px);height:34px;padding:0 7px;gap:7px}.ticker.leaderboard .rank-no{width:39px!important;height:26px!important}.ticker.leaderboard .rank-no small{font-size:6px;margin-top:3px}.ticker.leaderboard .rank-no b{font-size:14px}.ticker.leaderboard .rank-name{font-size:13px}.ticker.leaderboard .rank-copy small{display:none}.ticker.leaderboard .rank-score{font-size:12px!important}.ticker.leaderboard .rank-score small{font-size:8px}}
+  .reward-modal .reward-amount{display:inline-flex;align-items:center;margin-left:4px;padding:3px 8px;background:#f1cb66!important;border:1px solid #fff0ad;color:#12201d!important;font-family:var(--font-mono);font-size:18px;font-weight:900;line-height:1;text-shadow:none!important;box-shadow:0 0 12px #f1cb6680}
 </style>
 
 <div class="stickytop">
@@ -675,6 +676,15 @@
       <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">신규 카드 47종이 도감에 추가되었습니다.</p>
       <p style="font-size:15px;font-weight:800;margin:8px 0 0">기념 선물로 <b class="mono" style="color:var(--accent)">1,000P</b>가 추가 지급되었습니다.</p>
       <button class="cta" id="newCardsCloseBtn" style="margin-top:16px">확인</button>
+    </div>
+  </div>
+
+  <div id="subscriber300Modal" class="key-modal reward-modal hidden" role="dialog" aria-modal="true" aria-labelledby="subscriber300Title">
+    <div class="panel auth-shell" style="border-color:#f1cb66;max-width:440px">
+      <h3 id="subscriber300Title" style="color:#f1cb66;font-size:18px">가입자 수 300명 돌파 기념</h3>
+      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">함께해 주신 모든 분께 감사드립니다.</p>
+      <p style="font-size:15px;font-weight:800;margin:10px 0 0">기념 보상으로 <b class="reward-amount">+2,000P</b>가 추가 지급되었습니다.</p>
+      <button class="cta" id="subscriber300CloseBtn" style="margin-top:16px">확인</button>
     </div>
   </div>
 
@@ -846,32 +856,42 @@ function closeGuide(){if($('#guideDismiss').checked)localStorage.setItem('cardga
 $('#guideCloseBtn').onclick=closeGuide;
 $('#guideModal').onclick=(e)=>{if(e.target===$('#guideModal'))closeGuide();};
 function maybeShowFuseFixNotice(){
-  if(!state.key||localStorage.getItem('cardgacha_fuse_fix_notice_v1')==='1'||!$('#keyModal').classList.contains('hidden'))return;
+  if(!state.key||!$('#keyModal').classList.contains('hidden'))return;
+  if(localStorage.getItem('cardgacha_fuse_fix_notice_v1')==='1'){maybeShowPackReleaseNotice();return;}
   $('#fuseFixModal').classList.remove('hidden');
 }
 function maybeShowPackReleaseNotice(){
-  if(!state.key||localStorage.getItem('cardgacha_pack_release_notice_v1')==='1'||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden'))return;
+  if(!state.key||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden'))return;
+  if(localStorage.getItem('cardgacha_pack_release_notice_v1')==='1'){maybeShowNewCardsNotice();return;}
   $('#packReleaseModal').classList.remove('hidden');
 }
 function maybeShowNewCardsNotice(){
-  if(!state.key||localStorage.getItem('cardgacha_new_cards_notice_v1')==='1'||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden'))return;
+  if(!state.key||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden'))return;
+  if(localStorage.getItem('cardgacha_new_cards_notice_v1')==='1'){maybeShowSubscriber300Notice();return;}
   $('#newCardsModal').classList.remove('hidden');
 }
-function closeFuseFixNotice(){localStorage.setItem('cardgacha_fuse_fix_notice_v1','1');$('#fuseFixModal').classList.add('hidden');maybeShowPackReleaseNotice();maybeShowNewCardsNotice();}
+function maybeShowSubscriber300Notice(){
+  if(!state.key||localStorage.getItem('cardgacha_subscriber_300_notice_v1')==='1'||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden')||!$('#newCardsModal').classList.contains('hidden'))return;
+  $('#subscriber300Modal').classList.remove('hidden');
+}
+function closeFuseFixNotice(){localStorage.setItem('cardgacha_fuse_fix_notice_v1','1');$('#fuseFixModal').classList.add('hidden');maybeShowPackReleaseNotice();}
 $('#fuseFixCloseBtn').onclick=closeFuseFixNotice;
 $('#fuseFixModal').onclick=(e)=>{if(e.target===$('#fuseFixModal'))closeFuseFixNotice();};
 function closePackReleaseNotice(){localStorage.setItem('cardgacha_pack_release_notice_v1','1');$('#packReleaseModal').classList.add('hidden');maybeShowNewCardsNotice();}
 $('#packReleaseCloseBtn').onclick=closePackReleaseNotice;
 $('#packReleaseModal').onclick=(e)=>{if(e.target===$('#packReleaseModal'))closePackReleaseNotice();};
-function closeNewCardsNotice(){localStorage.setItem('cardgacha_new_cards_notice_v1','1');$('#newCardsModal').classList.add('hidden');}
+function closeNewCardsNotice(){localStorage.setItem('cardgacha_new_cards_notice_v1','1');$('#newCardsModal').classList.add('hidden');maybeShowSubscriber300Notice();}
 $('#newCardsCloseBtn').onclick=closeNewCardsNotice;
 $('#newCardsModal').onclick=(e)=>{if(e.target===$('#newCardsModal'))closeNewCardsNotice();};
+function closeSubscriber300Notice(){localStorage.setItem('cardgacha_subscriber_300_notice_v1','1');$('#subscriber300Modal').classList.add('hidden');}
+$('#subscriber300CloseBtn').onclick=closeSubscriber300Notice;
+$('#subscriber300Modal').onclick=(e)=>{if(e.target===$('#subscriber300Modal'))closeSubscriber300Notice();};
 $('#showKeyBtn').onclick=()=>{if(state.key)copyKey(state.key);else toast('로그인 후 이용하세요',true);};
 $('#loginBtn').onclick=async()=>{const key=$('#loginKey').value.trim();if(!key)return toast('KEY를 입력하세요',true);await doLogin(key);};
 async function doLogin(key){
   try{const j=await apiPost('/api/login',{key});
     state.key=key;setNickname(j.user.nickname);setPoints(j.user.points);state.canAttend=j.user.canAttend;setDonationBridgeAccess(j.user.canUseDonationBridge);updateStreak(j.user.streak);
-    localStorage.setItem('cardgacha_key',key);show('shop');setTimeout(()=>{maybeShowFuseFixNotice();maybeShowPackReleaseNotice();maybeShowNewCardsNotice();},0);
+    localStorage.setItem('cardgacha_key',key);show('shop');setTimeout(maybeShowFuseFixNotice,0);
   }catch(e){toast(e.message,true);localStorage.removeItem('cardgacha_key');show('auth');}
 }
 $('#logoutBtn').onclick=()=>{localStorage.removeItem('cardgacha_key');state.key=null;setNickname('');setDonationBridgeAccess(false);show('auth');};

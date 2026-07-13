@@ -223,6 +223,9 @@
   .tile .cap{position:absolute;left:0;right:0;bottom:0;padding:6px 8px;
     background:linear-gradient(180deg,transparent,rgba(4,6,16,.94));
     display:flex;align-items:center;justify-content:space-between;gap:4px;z-index:3}
+  .cap-meta{display:flex;align-items:center;gap:4px;min-width:0}
+  .race-tag{display:inline-flex;align-items:center;justify-content:center;flex:none;border:1px solid currentColor;border-radius:2px;padding:1px 3px;font-family:var(--font-mono);font-size:9px;font-weight:800;line-height:1.15;white-space:nowrap}
+  .race-zerg{color:#c73657;background:#fff3f5}.race-terran{color:#227c78;background:#effcfa}.race-protoss{color:#8a6113;background:#fff7d8}
   .tile .nm{font-weight:700;font-size:13px;text-shadow:0 1px 3px #000}
   .tile .qty{position:absolute;top:6px;right:6px;z-index:4;background:rgba(4,6,16,.82);border:1px solid var(--brd-2);
     border-radius:999px;font-family:var(--font-mono);font-size:11px;font-weight:700;padding:1px 8px}
@@ -491,6 +494,8 @@
   .tile{border:1px solid var(--txt);background:#dfe6db;box-shadow:2px 2px 0 #18231b;isolation:isolate}
   .tile:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 #18231b}
   .tile .card-art,.revface .card-art,.detail-card img,.fslot .card-art,.fmat .card-art{object-position:center;clip-path:inset(0)}
+  .tile .card-art[src$="parkjuno-3.avif"],.revface .card-art[src$="parkjuno-3.avif"],.detail-card img[src$="parkjuno-3.avif"],.fslot .card-art[src$="parkjuno-3.avif"],.fmat .card-art[src$="parkjuno-3.avif"]{object-position:center top}
+  .tile .card-art:is([src$="arisongi-7.avif"],[src$="arisongi-8.avif"],[src$="arisongi-9.avif"],[src$="arisongi-10.avif"]),.revface .card-art:is([src$="arisongi-7.avif"],[src$="arisongi-8.avif"],[src$="arisongi-9.avif"],[src$="arisongi-10.avif"]),.detail-card img:is([src$="arisongi-7.avif"],[src$="arisongi-8.avif"],[src$="arisongi-9.avif"],[src$="arisongi-10.avif"]),.fslot .card-art:is([src$="arisongi-7.avif"],[src$="arisongi-8.avif"],[src$="arisongi-9.avif"],[src$="arisongi-10.avif"]),.fmat .card-art:is([src$="arisongi-7.avif"],[src$="arisongi-8.avif"],[src$="arisongi-9.avif"],[src$="arisongi-10.avif"]){object-position:center top}
   .card-frame{inset:0;width:100%;height:100%;object-fit:fill;overflow:hidden}
   .tile .cap,.revface .cap,.detail-card .detail-name{padding:7px 8px;background:linear-gradient(180deg,transparent,#162019e8)}
   .tile .nm,.revface .cap .nm{font-size:12px;text-shadow:none}.tile .qty,.tile .newb,.newb2,.serialb{border-radius:2px;border-color:var(--txt)}
@@ -722,7 +727,7 @@
 const RAR=['C','U','R','RR','RRR','AR','CHR','HR','SR','SAR','UR','MUR','FUR'];
 const RANK=Object.fromEntries(RAR.map((r,i)=>[r,i]));
 const framePath=rarity=>`assets/frames/${rarity.toLowerCase()}.svg`;
-const packArt={normal:'normal',premium:'rare',luxury:'premium'};
+const packArt={normal:'normal.png',premium:'rare.png',luxury:'premium.png',zerg:'zerg.avif',terran:'terran.avif',protoss:'protoss.avif'};
 const MEMBER_ORDER=['김윤환','소주양','지두두','남덕선','토마토','햇살','찌킹','치리','주하랑','임조이','비타밍','먼진','아리송이','낭니','변현제','김민철','사테','박준오','박수범','지동원','배성흠'];
 const DISMANTLE_REFUND={C:5,U:8,R:12,RR:20,RRR:30,AR:45,CHR:60,HR:80,SR:100,SAR:130,UR:160,MUR:200,FUR:250};
 const MEMBER_REWARDS={'김윤환':900,'지두두':600,'치리':580,'토마토':750,'비타밍':510,'주하랑':490,'임조이':430,'낭니':450,'햇살':450,'소주양':550,'먼진':450,'찌킹':450,'아리송이':450,'남덕선':450,'변현제':260,'김민철':250,'박수범':160,'박준오':150,'사테':150,'배성흠':150,'지동원':150};
@@ -738,6 +743,8 @@ const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=nu
 function toast(m,err){const t=$('#toast');t.textContent=m;t.className='toast show'+(err?' err':'');clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast'+(err?' err':''),2600);}
 function glowClass(r){return RANK[r]>=RANK.SR?'glow-'+r:'';}
 function imgPath(f){return 'assets/cards/'+f;}
+const RACE_CLASS={저그:'zerg',테란:'terran',프로토스:'protoss'};
+function raceTag(card){return card.race?`<span class="race-tag race-${RACE_CLASS[card.race]||'other'}">${esc(card.race)}</span>`:'';}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function updateStreak(v){state.streak=v==null?null:v;$('#streakText').textContent=v==null?'연속 출석 준비 중':`연속 ${v}일`}
 function updateSoundBtn(){const b=$('#soundBtn');b.textContent=state.soundOn?'SFX ON':'SFX OFF';b.setAttribute('aria-pressed',String(state.soundOn));}
@@ -888,6 +895,12 @@ const PACKS=[
    odds:{C:25,U:22,R:20,RR:12,RRR:8,AR:5,CHR:3,HR:2,SR:0.75,SAR:0.4,UR:0.2,MUR:0.1,FUR:0.05}},
   {id:'normal',name:'일반팩',price:50,count:3,guar:null,hero:false,
    odds:{C:45,U:25,R:14,RR:7,RRR:4,AR:2,CHR:1.2,HR:0.8,SR:0.25,SAR:0.125,UR:0.075,MUR:0.035,FUR:0.015}},
+  {id:'zerg',name:'저그 종족팩',price:100,count:3,guar:null,hero:false,race:'저그',
+   odds:{C:49.36,U:27,R:14,RR:6,RRR:2,AR:1,CHR:0.35,HR:0.15,SR:0.07,SAR:0.04,UR:0.02,MUR:0.008,FUR:0.002}},
+  {id:'terran',name:'테란 종족팩',price:100,count:3,guar:null,hero:false,race:'테란',
+   odds:{C:49.36,U:27,R:14,RR:6,RRR:2,AR:1,CHR:0.35,HR:0.15,SR:0.07,SAR:0.04,UR:0.02,MUR:0.008,FUR:0.002}},
+  {id:'protoss',name:'프로토스 종족팩',price:100,count:3,guar:null,hero:false,race:'프로토스',
+   odds:{C:49.36,U:27,R:14,RR:6,RRR:2,AR:1,CHR:0.35,HR:0.15,SR:0.07,SAR:0.04,UR:0.02,MUR:0.008,FUR:0.002}},
 ];
 function oddsHtml(o){return Object.entries(o).map(([r,v])=>`<span><b class="rb rb-${r}" style="padding:0 5px">${r}</b>${v}%</span>`).join('');}
 
@@ -901,7 +914,8 @@ function renderShop(){
       <div class="kname">${p.name}</div>
       <div class="kprice">${p.price} P · ${p.count}장</div>
       ${p.guar?`<span class="guar">${p.guar} 이상 확정</span>`:''}
-      <img class="pack-art" src="assets/packs/${packArt[p.id]}.png" alt="${p.name} 카드팩" loading="lazy"/>
+      ${p.race?`<span class="race-tag race-${RACE_CLASS[p.race]}">${p.race} 전용</span>`:''}
+      <img class="pack-art" src="assets/packs/${packArt[p.id]}" alt="${p.name} 카드팩" loading="lazy"/>
       <details class="odds"><summary>등급 확률 보기 ▾</summary><div class="oddsgrid">${oddsHtml(p.odds)}</div></details>
       <div class="spacer"></div>
       <button class="cta" data-buy="${p.id}">${p.price} P로 뽑기</button>`;
@@ -964,7 +978,7 @@ function revcardHTML(c){
         ${c.rarity==='FUR'?'<div class="foil"></div><div class="shine"></div>':''}
         <img class="card-art" src="${imgPath(c.file)}" alt="${esc(c.member)}"/>
         <img class="card-frame" src="${framePath(c.rarity)}" alt="" aria-hidden="true"/>
-        <div class="cap"><span class="nm">${esc(c.member)}</span></div>
+        <div class="cap"><span class="cap-meta"><span class="nm">${esc(c.member)}</span>${raceTag(c)}</span></div>
       </div>
     </div>`;
 }
@@ -1130,7 +1144,7 @@ async function renderCollection(){
     wrap.appendChild(el('div','memhead',`<h3>${esc(member)}</h3><span class="mc">${ownedMember}/${byMember[member].length}</span>${reward}`));
     const grid=el('div','colgrid');list.forEach(card=>{
       const qty=state.collection[card.id]||0,hasCard=qty>0,tile=el('div','tile '+(hasCard?glowClass(card.rarity):'locked'));
-      tile.innerHTML=`${hasCard?`<span class="qty">x${qty}</span>`:''}<img class="card-art" src="${hasCard?imgPath(card.file):'assets/card-back.jpg'}" alt="${esc(card.member)}" loading="lazy"/><img class="card-frame" src="${framePath(card.rarity)}" alt="" aria-hidden="true"/><div class="cap"><span class="nm">${esc(card.member)}</span><span class="rb rb-${card.rarity}">${card.rarity}</span></div>`;
+      tile.innerHTML=`${hasCard?`<span class="qty">x${qty}</span>`:''}<img class="card-art" src="${hasCard?imgPath(card.file):'assets/card-back.jpg'}" alt="${esc(card.member)}" loading="lazy"/><img class="card-frame" src="${framePath(card.rarity)}" alt="" aria-hidden="true"/><div class="cap"><span class="cap-meta"><span class="nm">${esc(card.member)}</span>${raceTag(card)}</span><span class="rb rb-${card.rarity}">${card.rarity}</span></div>`;
       if(hasCard){enableTilt(tile);tile.onclick=()=>openCardDetail(card);}grid.appendChild(tile);
     });wrap.appendChild(grid);return true;
   };
@@ -1154,7 +1168,7 @@ function openCardDetail(card){
   const mySerials=(state.serials&&state.serials[card.id])||[],issuedTotal=state.issued&&state.issued[card.id];
   const issuedCell=issuedTotal!=null?`<div><span>총 발행</span><b>${issuedTotal}장</b></div>`:'';
   const serialBlock=mySerials.length?`<div style="background:#0a0e1e;border:1px solid var(--brd);border-radius:6px;padding:9px;margin:0 0 12px"><span style="display:block;font-size:11px;color:var(--dim);margin-bottom:4px">내 시리얼</span><b class="mono" style="line-height:1.6">${mySerials.map(s=>'No. '+s).join(' · ')}</b></div>`:'';
-  $('#cardDetail').innerHTML=`<h2 id="detailTitle" style="font-size:18px;margin-bottom:14px">카드 상세</h2><div class="detail-card"><img src="${imgPath(card.file)}" alt="${esc(card.member)}"/><img class="card-frame" src="${framePath(card.rarity)}" alt=""/><div class="detail-name">${esc(card.member)}</div></div><div class="detail-meta"><div><span>등급</span><b class="rb rb-${card.rarity}">${card.rarity}</b></div><div><span>보유 수량</span><b>${qty}장</b></div><div><span>첫 획득일</span><b>${first}</b></div><div><span>카드 ID</span><b class="mono">${esc(card.id)}</b></div>${issuedCell}</div>${serialBlock}<div class="detail-actions">${extra?`<button class="cta sub" id="detailDismantle">중복 ${extra}장 분해 +${refund}P</button>`:''}</div>`;
+  $('#cardDetail').innerHTML=`<h2 id="detailTitle" style="font-size:18px;margin-bottom:14px">카드 상세</h2><div class="detail-card"><img src="${imgPath(card.file)}" alt="${esc(card.member)}"/><img class="card-frame" src="${framePath(card.rarity)}" alt=""/><div class="detail-name"><span>${esc(card.member)}</span>${raceTag(card)}</div></div><div class="detail-meta"><div><span>등급</span><b class="rb rb-${card.rarity}">${card.rarity}</b></div><div><span>종족</span><b>${esc(card.race||'-')}</b></div><div><span>보유 수량</span><b>${qty}장</b></div><div><span>첫 획득일</span><b>${first}</b></div><div><span>카드 ID</span><b class="mono">${esc(card.id)}</b></div>${issuedCell}</div>${serialBlock}<div class="detail-actions">${extra?`<button class="cta sub" id="detailDismantle">중복 ${extra}장 분해 +${refund}P</button>`:''}</div>`;
   const button=$('#detailDismantle');if(button)button.onclick=()=>dismantleCard(card.id,extra);$('#cardModal').classList.remove('hidden');
 }
 async function dismantleCard(cardId,count){try{const j=await apiPost('/api/dismantle',{key:state.key,cardId,count});state.collection=j.collection||{};setPoints(j.points);closeCardModal();sfx('rare');toast(`분해 완료. +${j.refund}P`);renderCollection();}catch(e){toast(e.message,true);}}
@@ -1220,7 +1234,7 @@ function renderFuseUI(){
     tile.innerHTML=`<span class="qty">재료 x${excess}</span>${sel?`<span class="selc">선택 ${sel}</span>`:''}
       <img class="card-art" src="${imgPath(c.file)}" alt="${esc(c.member)}" loading="lazy"/>
       <img class="card-frame" src="${framePath(c.rarity)}" alt="" aria-hidden="true"/>
-      <div class="cap"><span class="nm">${esc(c.member)}</span><span class="rb rb-${c.rarity}">${c.rarity}</span></div>`;
+      <div class="cap"><span class="cap-meta"><span class="nm">${esc(c.member)}</span>${raceTag(c)}</span><span class="rb rb-${c.rarity}">${c.rarity}</span></div>`;
     tile.style.cursor='pointer';
     tile.onclick=()=>{
       const cur=fuseSelCount(c.id);

@@ -31,7 +31,7 @@ module.exports = async function handler(req, res) {
       const isNew = !existing[c.id] && !seen.has(c.id);
       seen.add(c.id);
       if (isNew) newCardScore += DISMANTLE_REFUND[c.rarity] || 0;
-      return { id: c.id, member: c.member, file: c.file, rarity: c.rarity, isNew };
+      return { id: c.id, member: c.member, file: c.file, rarity: c.rarity, race: c.race, isNew };
     });
 
     const committed = await rpc('gacha_open_pack', {

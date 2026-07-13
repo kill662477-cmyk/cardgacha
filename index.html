@@ -80,6 +80,12 @@
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
     background-size:220% 100%;animation:holoslide 3s linear infinite}
   .ticker.reduce .ticker-track{animation:none;transform:none}
+  .ticker.leaderboard{background:#162019;color:#f8fbf3}
+  .ticker.leaderboard::before{content:attr(data-label);background:#e4ff5b;color:#18231b}
+  .rank-ti{display:inline-flex;align-items:center;gap:7px;min-width:220px;font-family:var(--font-mono);font-size:12px;font-weight:700;letter-spacing:0;flex:0 0 auto}
+  .rank-ti .rank-no{display:inline-flex;align-items:center;justify-content:center;width:24px;height:18px;border:1px solid currentColor;font-size:10px;font-weight:900}
+  .rank-ti .rank-name{color:#fff;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rank-ti .rank-score{margin-left:auto;color:#d7e1d4;font-size:11px}
+  .rank-ti.rank-1{color:#ffe36a}.rank-ti.rank-2{color:#d9e1e7}.rank-ti.rank-3{color:#e5a66e}
   .topbar .wrap{display:flex;align-items:center;justify-content:space-between;padding:13px 16px}
   .brand{font-family:var(--font-display);font-weight:900;font-size:19px;color:#fff;letter-spacing:-.03em}
   .brand span{color:var(--accent)}
@@ -1117,10 +1123,17 @@ function attachFoilTilt(ov){
 }
 
 /* ---- announcement ticker ---- */
-let ANN=[],annRotI=0;
+let ANN=[],annRotI=0,TICKER_RANKS=[],rankRotI=0,rankTickerLoading=false,rankTickerFetchedAt=0;
 function annKey(a){return (a.card_id||(a.member+a.rarity))+'|'+(a.nickname||'')+'|'+(a.created_at||'');}
 function annText(a){return `<span class="ti ti-${a.rarity}"><span class="who">${esc(a.nickname)}</span>님이 <b>${esc(a.member)} ${a.rarity}</b> 카드를 뽑으셨습니다!</span>`;}
+function rankTickerText(row){const rank=row.rank||1;return `<span class="rank-ti rank-${rank}"><span class="rank-no">${rank}위</span><span class="rank-name">${esc(row.nickname)}</span><span class="rank-score">${Number(row.score||0).toLocaleString()} P</span></span>`;}
 function pushLocalAnn(a){ANN.unshift(a);const seen=new Set();ANN=ANN.filter(x=>{const k=annKey(x);if(seen.has(k))return false;seen.add(k);return true;}).slice(0,20);renderTicker();}
+async function fetchTickerRanks(){
+  if(rankTickerLoading||Date.now()-rankTickerFetchedAt<30000)return;
+  rankTickerLoading=true;
+  try{const j=await apiGet('/api/ranking');TICKER_RANKS=(j.rankings||[]).slice(0,3);rankTickerFetchedAt=Date.now();renderTicker();}
+  catch(e){}finally{rankTickerLoading=false;}
+}
 async function fetchAnn(){
   try{const j=await apiGet('/api/announcements');
     const map=new Map();(j.items||[]).forEach(a=>map.set(annKey(a),a));ANN.forEach(a=>{if(!map.has(annKey(a)))map.set(annKey(a),a);});
@@ -1134,8 +1147,14 @@ function renderTicker(){
   const tenMinsAgo = Date.now() - 10 * 60 * 1000;
   ANN = ANN.filter(a => new Date(a.created_at || 0).getTime() > tenMinsAgo);
 
-  if(!ANN.length){bar.classList.add('hidden');return;}
+  if(!ANN.length){
+    bar.classList.remove('hidden');bar.classList.add('leaderboard');bar.dataset.label='TOP 3';
+    if(!TICKER_RANKS.length){track.innerHTML='<span class="ti">랭킹 집계 중...</span>';fetchTickerRanks();return;}
+    if(REDUCE){bar.classList.add('reduce');track.innerHTML=rankTickerText(TICKER_RANKS[rankRotI%TICKER_RANKS.length]);return;}
+    bar.classList.remove('reduce');const html=[...TICKER_RANKS,...TICKER_RANKS].map(rankTickerText).join('');track.innerHTML=html;track.style.animationDuration='18s';return;
+  }
   bar.classList.remove('hidden');
+  bar.classList.remove('leaderboard');delete bar.dataset.label;
   if(REDUCE){bar.classList.add('reduce');track.innerHTML=annText(ANN[annRotI%ANN.length]);return;}
   const html=ANN.map(annText).join('');
   track.innerHTML=html;
@@ -1393,7 +1412,7 @@ document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset
   fetchAnn();
   setInterval(()=>{if(!document.hidden)fetchAnn();},45000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)fetchAnn();});
-  if(REDUCE)setInterval(()=>{if(ANN.length){annRotI++;renderTicker();}},4500); // reduced-motion: 정적 로테이션
+  if(REDUCE)setInterval(()=>{if(ANN.length)annRotI++;else rankRotI++;renderTicker();},4500); // reduced-motion: 정적 로테이션
   // 숲 콜백 리다이렉트(#soop=KEY / #sooperr=1) 처리
   const auth=readAuthHash();
   if(auth&&auth.sooperr){show('auth');toast('숲 로그인에 실패했습니다. 다시 시도해주세요.',true);return;}

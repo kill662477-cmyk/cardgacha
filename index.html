@@ -546,6 +546,20 @@
   .rb-CHR{background:#087c75;color:#72fff2}.rb-HR{background:#ad382b;color:#ff9e8e}.rb-SR{background:#996300;color:#ffe06a}
   .rb-SAR{background:#c8520c;color:#ffbf72}.rb-UR{background:#9d244c;color:#ff91bd}.rb-MUR{background:#006f96;color:#72efff}
   .rb-FUR{background:linear-gradient(90deg,#9e247e,#e455c7,#634cb7,#e455c7,#9e247e);background-size:240% 100%;color:#fff2fd;animation:holoslide 2.2s linear infinite;box-shadow:0 0 9px #f15cd4,0 0 16px #626bff,inset 0 0 8px #ffffff70}
+
+  /* Idle ranking board: one spotlighted rank at a time, never a squeezed marquee. */
+  .ticker.leaderboard{height:52px!important;background:#061317!important;border-bottom:2px solid #f1cb66!important;box-shadow:inset 0 -1px 0 #42e0c0,0 3px 10px #0008;color:#fff}
+  .ticker.leaderboard::before{width:126px;justify-content:center;padding:0!important;background:#f1cb66!important;color:#142019!important;font-size:11px!important;font-weight:900!important;letter-spacing:.08em!important;box-shadow:5px 0 12px #0006}
+  .ticker.leaderboard .ticker-track{width:calc(100% - 126px);height:100%;margin-left:126px;display:flex;align-items:center;justify-content:center;gap:0!important;animation:none!important;transform:none!important}
+  .ticker.leaderboard .rank-ti{width:min(610px,calc(100vw - 148px));height:38px;min-width:0;padding:0 14px;display:flex;align-items:center;gap:11px;background:#0c2225;border:1px solid currentColor;box-shadow:inset 0 0 0 1px #ffffff18,0 0 15px currentColor;border-radius:2px;animation:rankSpotlight .42s ease both}
+  .ticker.leaderboard .rank-no{width:48px!important;height:30px!important;display:flex!important;flex-direction:column;gap:0;border:0!important;background:currentColor;color:#0c1718;font-family:var(--font-mono);line-height:1;text-align:center;box-shadow:0 0 13px currentColor}
+  .ticker.leaderboard .rank-no small{font-size:7px;font-weight:900;line-height:1.1;margin-top:4px}.ticker.leaderboard .rank-no b{font-size:17px;font-weight:900;line-height:.9}
+  .ticker.leaderboard .rank-copy{min-width:0;display:flex;align-items:baseline;gap:8px;flex:1}.ticker.leaderboard .rank-name{max-width:none!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff!important;font-family:var(--font-display);font-size:15px;font-weight:900;text-shadow:0 1px 5px #000}.ticker.leaderboard .rank-copy small{color:#9ec7c2;font-family:var(--font-mono);font-size:10px;font-weight:700;white-space:nowrap}
+  .ticker.leaderboard .rank-score{margin-left:auto!important;display:flex;align-items:baseline;gap:4px;color:#fff!important;font-family:var(--font-mono);font-size:16px!important;font-weight:900;text-shadow:0 0 8px currentColor;white-space:nowrap}.ticker.leaderboard .rank-score small{font-size:10px;color:inherit}
+  .ticker.leaderboard .rank-1{color:#ffd94c}.ticker.leaderboard .rank-2{color:#e7f4ff}.ticker.leaderboard .rank-3{color:#ffad70}
+  .ticker.leaderboard .rank-1 .rank-no{background:#ffd94c!important;color:#111b1a!important}.ticker.leaderboard .rank-2 .rank-no{background:#e7f4ff!important;color:#172126!important}.ticker.leaderboard .rank-3 .rank-no{background:#ffad70!important;color:#2a160c!important}
+  @keyframes rankSpotlight{from{opacity:.72;transform:translateY(4px) scale(.985);filter:brightness(.9)}to{opacity:1;transform:translateY(0) scale(1);filter:brightness(1)}}
+  @media(max-width:620px){.ticker.leaderboard{height:46px!important}.ticker.leaderboard::before{width:88px;font-size:9px!important}.ticker.leaderboard .ticker-track{width:calc(100% - 88px);margin-left:88px}.ticker.leaderboard .rank-ti{width:calc(100vw - 102px);height:34px;padding:0 7px;gap:7px}.ticker.leaderboard .rank-no{width:39px!important;height:26px!important}.ticker.leaderboard .rank-no small{font-size:6px;margin-top:3px}.ticker.leaderboard .rank-no b{font-size:14px}.ticker.leaderboard .rank-name{font-size:13px}.ticker.leaderboard .rank-copy small{display:none}.ticker.leaderboard .rank-score{font-size:12px!important}.ticker.leaderboard .rank-score small{font-size:8px}}
 </style>
 
 <div class="stickytop">
@@ -1137,7 +1151,7 @@ function attachFoilTilt(ov){
 let ANN=[],annRotI=0,TICKER_RANKS=[],rankRotI=0,rankTickerLoading=false,rankTickerFetchedAt=0;
 function annKey(a){return (a.card_id||(a.member+a.rarity))+'|'+(a.nickname||'')+'|'+(a.created_at||'');}
 function annText(a){return `<span class="ti ti-${a.rarity}"><span class="who">${esc(a.nickname)}</span>님이 <b>${esc(a.member)} ${a.rarity}</b> 카드를 뽑으셨습니다!</span>`;}
-function rankTickerText(row){const rank=row.rank||1;return `<span class="rank-ti rank-${rank}"><span class="rank-no">${rank}위</span><span class="rank-name">${esc(row.nickname)}</span><span class="rank-score">${Number(row.score||0).toLocaleString()} P</span></span>`;}
+function rankTickerText(row){const rank=row.rank||1;return `<span class="rank-ti rank-${rank}"><span class="rank-no"><small>RANK</small><b>0${rank}</b></span><span class="rank-copy"><span class="rank-name">${esc(row.nickname)}</span><small>TOP PLAYER</small></span><span class="rank-score">${Number(row.score||0).toLocaleString()}<small>P</small></span></span>`;}
 function pushLocalAnn(a){ANN.unshift(a);const seen=new Set();ANN=ANN.filter(x=>{const k=annKey(x);if(seen.has(k))return false;seen.add(k);return true;}).slice(0,20);renderTicker();}
 async function fetchTickerRanks(){
   if(rankTickerLoading||Date.now()-rankTickerFetchedAt<30000)return;
@@ -1159,10 +1173,9 @@ function renderTicker(){
   ANN = ANN.filter(a => new Date(a.created_at || 0).getTime() > tenMinsAgo);
 
   if(!ANN.length){
-    bar.classList.remove('hidden');bar.classList.add('leaderboard');bar.dataset.label='TOP 3';
+    bar.classList.remove('hidden');bar.classList.add('leaderboard','reduce');bar.dataset.label='RANKING';
     if(!TICKER_RANKS.length){track.innerHTML='<span class="ti">랭킹 집계 중...</span>';fetchTickerRanks();return;}
-    if(REDUCE){bar.classList.add('reduce');track.innerHTML=rankTickerText(TICKER_RANKS[rankRotI%TICKER_RANKS.length]);return;}
-    bar.classList.remove('reduce');const html=[...TICKER_RANKS,...TICKER_RANKS].map(rankTickerText).join('');track.innerHTML=html;track.style.animationDuration='18s';return;
+    track.innerHTML=rankTickerText(TICKER_RANKS[rankRotI%TICKER_RANKS.length]);return;
   }
   bar.classList.remove('hidden');
   bar.classList.remove('leaderboard');delete bar.dataset.label;
@@ -1423,7 +1436,7 @@ document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset
   fetchAnn();
   setInterval(()=>{if(!document.hidden)fetchAnn();},45000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)fetchAnn();});
-  if(REDUCE)setInterval(()=>{if(ANN.length)annRotI++;else rankRotI++;renderTicker();},4500); // reduced-motion: 정적 로테이션
+  setInterval(()=>{if(document.hidden)return;if(!ANN.length){rankRotI++;renderTicker();}else if(REDUCE){annRotI++;renderTicker();}},4200);
   // 숲 콜백 리다이렉트(#soop=KEY / #sooperr=1) 처리
   const auth=readAuthHash();
   if(auth&&auth.sooperr){show('auth');toast('숲 로그인에 실패했습니다. 다시 시도해주세요.',true);return;}

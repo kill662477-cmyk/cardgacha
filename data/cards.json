@@ -1170,6 +1170,24 @@
     "rarity": "FUR"
   },
   {
+    "id": "chiri-14",
+    "member": "치리",
+    "file": "chiri-14.avif",
+    "rarity": "FUR"
+  },
+  {
+    "id": "chiri-15",
+    "member": "치리",
+    "file": "chiri-15.avif",
+    "rarity": "UR"
+  },
+  {
+    "id": "chiri-16",
+    "member": "치리",
+    "file": "chiri-16.avif",
+    "rarity": "MUR"
+  },
+  {
     "id": "group-1",
     "member": "단체사진",
     "file": "group-1.avif",

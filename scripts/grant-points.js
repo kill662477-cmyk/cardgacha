@@ -16,8 +16,24 @@ async function grantOne(userId, amount) {
   throw new Error(`포인트 갱신 충돌이 반복되었습니다: ${userId}`);
 }
 
+async function getAllUsers() {
+  const pageSize = 1000;
+  const users = [];
+  let lastId = null;
+  while (true) {
+    const after = lastId ? `&id=gt.${encodeURIComponent(lastId)}` : '';
+    const rows = await sbFetch(
+      `${REST}/gacha_users?select=id&order=id.asc&limit=${pageSize}${after}`,
+      { headers: headers() }
+    );
+    users.push(...rows);
+    if (rows.length < pageSize) return users;
+    lastId = rows[rows.length - 1].id;
+  }
+}
+
 async function grantWithCompareAndSet(amount) {
-  const users = await sbFetch(`${REST}/gacha_users?select=id`, { headers: headers() });
+  const users = await getAllUsers();
   let cursor = 0;
   const workers = Array.from({ length: Math.min(6, users.length) }, async () => {
     while (cursor < users.length) {

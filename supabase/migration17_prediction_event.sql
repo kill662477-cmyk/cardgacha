@@ -32,7 +32,7 @@ values (
   '캄몬 시빌워 승자예측 이벤트',
   '["변현제팀","김민철팀"]'::jsonb,
   3000,
-  '2026-07-14 19:30:00+09'::timestamptz
+  '2100-01-01 00:00:00+09'::timestamptz
 )
 on conflict (id) do update
 set title = excluded.title,

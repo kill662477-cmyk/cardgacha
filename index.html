@@ -1120,10 +1120,6 @@ async function renderRanking(){
 }
 
 /* prediction event */
-function eventTimeText(iso){
-  const d=new Date(iso);
-  return d.toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false});
-}
 async function renderPrediction(){
   const wrap=$('#predictionWrap');
   wrap.innerHTML='<div class="empty">로딩 중...</div>';
@@ -1155,7 +1151,7 @@ function renderPredictionUI(j){
   wrap.innerHTML=`
     <div class="event-meta">
       <span class="event-pill ${ev.closed||settled?'closed':'hot'}">${status}</span>
-      <span class="event-pill">마감 ${eventTimeText(ev.closesAt)}</span>
+      <span class="event-pill">${ev.closed||settled?'마감 완료':'마감 미정'}</span>
       <span class="event-pill">정답자 +${Number(ev.rewardPoints||0).toLocaleString()}P</span>
     </div>
     <div class="prediction-options">

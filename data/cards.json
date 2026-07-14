@@ -1164,6 +1164,12 @@
     "rarity": "RRR"
   },
   {
+    "id": "sojuyang-13",
+    "member": "소주양",
+    "file": "sojuyang-13.avif",
+    "rarity": "FUR"
+  },
+  {
     "id": "group-1",
     "member": "단체사진",
     "file": "group-1.avif",

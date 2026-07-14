@@ -762,6 +762,15 @@
     </div>
   </div>
 
+  <div id="civilWarFunding123Modal" class="key-modal reward-modal hidden" role="dialog" aria-modal="true" aria-labelledby="civilWarFunding123Title">
+    <div class="panel auth-shell" style="border-color:#f1cb66;max-width:440px">
+      <h3 id="civilWarFunding123Title" style="color:#f1cb66;font-size:18px">시빌워 펀딩 123만개 돌파 기념</h3>
+      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">캄몬 시빌워 펀딩 123만개 돌파를 함께 축하해 주세요.</p>
+      <p style="font-size:15px;font-weight:800;margin:10px 0 0">기념 보상으로 <b class="reward-amount">+12,300P</b>가 추가 지급되었습니다.</p>
+      <button class="cta" id="civilWarFunding123CloseBtn" style="margin-top:16px">확인</button>
+    </div>
+  </div>
+
   <!-- SHOP -->
   <section id="view-shop" class="hidden">
     <div class="panel attend-bar">
@@ -981,8 +990,13 @@ function maybeShowNewCardAdditionNotice(){
   $('#newCardAdditionModal').classList.remove('hidden');
 }
 function maybeShowSubscriber1000Notice(){
-  if(!state.key||localStorage.getItem('cardgacha_subscriber_1000_notice_v1')==='1'||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden')||!$('#newCardsModal').classList.contains('hidden')||!$('#subscriber300Modal').classList.contains('hidden')||!$('#civilWarModal').classList.contains('hidden')||!$('#subscriber400Modal').classList.contains('hidden')||!$('#subscriber700Modal').classList.contains('hidden')||!$('#newCardAdditionModal').classList.contains('hidden'))return;
+  if(!state.key||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden')||!$('#newCardsModal').classList.contains('hidden')||!$('#subscriber300Modal').classList.contains('hidden')||!$('#civilWarModal').classList.contains('hidden')||!$('#subscriber400Modal').classList.contains('hidden')||!$('#subscriber700Modal').classList.contains('hidden')||!$('#newCardAdditionModal').classList.contains('hidden'))return;
+  if(localStorage.getItem('cardgacha_subscriber_1000_notice_v1')==='1'){maybeShowCivilWarFunding123Notice();return;}
   $('#subscriber1000Modal').classList.remove('hidden');
+}
+function maybeShowCivilWarFunding123Notice(){
+  if(!state.key||localStorage.getItem('cardgacha_civil_war_funding_123_notice_v1')==='1'||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden')||!$('#newCardsModal').classList.contains('hidden')||!$('#subscriber300Modal').classList.contains('hidden')||!$('#civilWarModal').classList.contains('hidden')||!$('#subscriber400Modal').classList.contains('hidden')||!$('#subscriber700Modal').classList.contains('hidden')||!$('#newCardAdditionModal').classList.contains('hidden')||!$('#subscriber1000Modal').classList.contains('hidden'))return;
+  $('#civilWarFunding123Modal').classList.remove('hidden');
 }
 function closeFuseFixNotice(){localStorage.setItem('cardgacha_fuse_fix_notice_v1','1');$('#fuseFixModal').classList.add('hidden');maybeShowPackReleaseNotice();}
 $('#fuseFixCloseBtn').onclick=closeFuseFixNotice;
@@ -1008,9 +1022,12 @@ $('#subscriber700Modal').onclick=(e)=>{if(e.target===$('#subscriber700Modal'))cl
 function closeNewCardAdditionNotice(){localStorage.setItem('cardgacha_new_card_addition_notice_v1','1');$('#newCardAdditionModal').classList.add('hidden');maybeShowSubscriber1000Notice();}
 $('#newCardAdditionCloseBtn').onclick=closeNewCardAdditionNotice;
 $('#newCardAdditionModal').onclick=(e)=>{if(e.target===$('#newCardAdditionModal'))closeNewCardAdditionNotice();};
-function closeSubscriber1000Notice(){localStorage.setItem('cardgacha_subscriber_1000_notice_v1','1');$('#subscriber1000Modal').classList.add('hidden');}
+function closeSubscriber1000Notice(){localStorage.setItem('cardgacha_subscriber_1000_notice_v1','1');$('#subscriber1000Modal').classList.add('hidden');maybeShowCivilWarFunding123Notice();}
 $('#subscriber1000CloseBtn').onclick=closeSubscriber1000Notice;
 $('#subscriber1000Modal').onclick=(e)=>{if(e.target===$('#subscriber1000Modal'))closeSubscriber1000Notice();};
+function closeCivilWarFunding123Notice(){localStorage.setItem('cardgacha_civil_war_funding_123_notice_v1','1');$('#civilWarFunding123Modal').classList.add('hidden');}
+$('#civilWarFunding123CloseBtn').onclick=closeCivilWarFunding123Notice;
+$('#civilWarFunding123Modal').onclick=(e)=>{if(e.target===$('#civilWarFunding123Modal'))closeCivilWarFunding123Notice();};
 $('#showKeyBtn').onclick=()=>{if(state.key)copyKey(state.key);else toast('로그인 후 이용하세요',true);};
 $('#loginBtn').onclick=async()=>{const key=$('#loginKey').value.trim();if(!key)return toast('KEY를 입력하세요',true);await doLogin(key);};
 async function doLogin(key){

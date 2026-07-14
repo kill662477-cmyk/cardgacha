@@ -45,7 +45,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'GET') return sendJson(res, 405, { error: 'method not allowed' });
   const session = sessionFrom(req);
   if (!session?.soopId) return redirect(res, '/donation-bridge.html?error=auth');
-  if (!await enforceRateLimit(req, res, 'soop-bridge-callback', 12, 300)) return;
+  if (!await enforceRateLimit(req, res, 'soop-bridge-callback', 12, 300, session.nonce)) return;
 
   const clientId = process.env.SOOP_DONATION_CLIENT_ID || process.env.SOOP_CLIENT_ID;
   const clientSecret = process.env.SOOP_DONATION_CLIENT_SECRET || process.env.SOOP_CLIENT_SECRET;
@@ -56,7 +56,10 @@ module.exports = async function handler(req, res) {
   try {
     const accessToken = await exchangeToken(clientId, clientSecret, redirectUri, code);
     const soopId = await fetchStationId(accessToken);
-    if (soopId !== session.soopId) return redirect(res, '/donation-bridge.html?error=mismatch');
+    if (soopId !== session.soopId) {
+      console.warn('soop bridge account mismatch', { expected: session.soopId, received: soopId });
+      return redirect(res, '/donation-bridge.html?error=mismatch');
+    }
     setSoopToken(res, accessToken, soopId);
     return redirect(res, '/donation-bridge.html?connected=1');
   } catch (error) {

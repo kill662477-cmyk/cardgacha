@@ -150,7 +150,7 @@
     $('soopAuth').addEventListener('click',()=>{location.href='/api/bridge/soop-start';});
     $('connect').addEventListener('click',connect);
     $('disconnect').addEventListener('click',disconnect);
-    const params=new URLSearchParams(location.search);if(params.has('connected')){history.replaceState(null,'',location.pathname);setNotice('SOOP 인증 완료. 수집을 시작하세요.','ok');}if(params.has('error')){history.replaceState(null,'',location.pathname);setNotice('SOOP 인증에 실패했습니다','bad');}refresh();render();
+    const params=new URLSearchParams(location.search);if(params.has('connected')){history.replaceState(null,'',location.pathname);setNotice('SOOP 인증 완료. 수집을 시작하세요.','ok');}if(params.has('error')){const reason=params.get('error');const messages={auth:'브리지 인증 세션이 만료되었습니다. 브리지 KEY부터 다시 인증하세요.',mismatch:'브리지 KEY와 로그인한 SOOP 계정이 일치하지 않습니다.',soop:'SOOP 인증 처리에 실패했습니다. 잠시 후 다시 시도하세요.'};history.replaceState(null,'',location.pathname);setNotice(messages[reason]||'SOOP 인증에 실패했습니다','bad');}refresh();render();
   </script>
 </body>
 </html>

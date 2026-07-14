@@ -1,4 +1,4 @@
-// POST /api/open-pack {key, packId}
+// POST /api/open-pack {key, packId, quantity?: 1|10}
 const { sendJson, readBody } = require('../lib/http');
 const { PACKS, openPack, RANK, DISMANTLE_REFUND } = require('../lib/gacha');
 const { getUserByKey, getCollectionCounts, insertAnnouncements, rpc } = require('../lib/supabase');
@@ -11,15 +11,18 @@ module.exports = async function handler(req, res) {
     const body = await readBody(req);
     const key = (body.key || '').toString().trim();
     const packId = (body.packId || '').toString().trim();
+    const quantity = Number(body.quantity || 1);
     if (!key) return sendJson(res, 400, { error: 'key를 입력하세요' });
     const pack = PACKS[packId];
     if (!pack) return sendJson(res, 400, { error: '잘못된 팩입니다' });
+    if (![1, 10].includes(quantity)) return sendJson(res, 400, { error: '구매 수량이 올바르지 않습니다' });
 
     const user = await getUserByKey(key);
     if (!user) return sendJson(res, 404, { error: '존재하지 않는 key입니다' });
     if (!await enforceRateLimit(req, res, 'open-user', 12, 60, user.id)) return;
 
-    const drawn = openPack(packId);
+    const drawn = [];
+    for (let i = 0; i < quantity; i++) drawn.push(...openPack(packId));
     const ids = drawn.map((c) => c.id);
     const existing = await getCollectionCounts(user.id, ids);
     const gain = {};
@@ -36,8 +39,8 @@ module.exports = async function handler(req, res) {
 
     const committed = await rpc('gacha_open_pack', {
       p_user_id: user.id,
-      p_price: pack.price,
-      p_score_gain: pack.price + newCardScore,
+      p_price: pack.price * quantity,
+      p_score_gain: pack.price * quantity + newCardScore,
       p_gains: gain,
     });
     const updated = committed?.[0];
@@ -65,7 +68,7 @@ module.exports = async function handler(req, res) {
       console.error('announcement insert failed', announcementError?.message || announcementError);
     }
 
-    return sendJson(res, 200, { cards, points: updated.points });
+    return sendJson(res, 200, { cards, points: updated.points, quantity });
   } catch (e) {
     if (e?.code === 'P0001') return sendJson(res, 409, { error: '포인트 상태가 변경되었습니다. 다시 시도해주세요.' });
     return serverError(res, 'open-pack', e, '개봉에 실패했습니다');

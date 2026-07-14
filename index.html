@@ -214,6 +214,9 @@
   .pack-hero::before{content:"";position:absolute;inset:0;pointer-events:none;
     background:radial-gradient(420px 260px at 78% -10%,rgba(51,204,255,.14),transparent 60%)}
   .pack .spacer{flex:1;min-height:6px}
+  .pack-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .pack-actions .cta{min-width:0;padding:10px 7px;font-size:12px;line-height:1.2;white-space:normal}
+  .pack-actions .cta small{display:block;margin-top:3px;font-family:var(--font-mono);font-size:10px;font-weight:800;opacity:.78}
   .pack-art{width:100%;max-height:172px;object-fit:contain;display:block;margin:8px auto 4px;
     filter:drop-shadow(0 12px 14px rgba(0,0,0,.38))}
 
@@ -383,6 +386,9 @@
   @keyframes awaitPulse{0%,100%{transform:rotateY(180deg) scale(1)}50%{transform:rotateY(180deg) scale(1.045)}}
   .awaitcard .revcard{box-shadow:0 0 30px rgba(51,204,255,.6),0 0 60px rgba(51,204,255,.25)}
   .awaitcard[data-rar="FUR"] .revcard{box-shadow:0 0 34px rgba(255,61,240,.6),0 0 64px rgba(255,207,74,.3)}
+  .opening.bulk-opening,.special.bulk-opening{overflow-y:auto;align-items:flex-start}
+  .opening.bulk-opening .revarea,.special.bulk-opening .revarea{margin:auto;padding:24px 0}
+  .opening.bulk-opening .rev,.special.bulk-opening .rev{width:96px}
   .particle{position:absolute;left:50%;top:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;z-index:4;pointer-events:none}
 
   /* fuse (card fusion) */
@@ -1094,7 +1100,7 @@ if(state.bgmOn){
 
 /* shop */
 const PACKS=[
-  {id:'luxury',name:'프리미엄팩',price:500,count:5,guar:'SR',hero:true,
+  {id:'luxury',name:'프리미엄팩',price:500,count:4,guar:'SR',hero:true,
    odds:{C:10,U:15,R:18,RR:15,RRR:12,AR:9,CHR:7,HR:5,SR:2,SAR:1.25,UR:0.75,MUR:0.35,FUR:0.15}},
   {id:'premium',name:'고급팩',price:150,count:4,guar:'R',hero:false,
    odds:{C:25,U:22,R:20,RR:12,RRR:8,AR:5,CHR:3,HR:2,SR:0.75,SAR:0.4,UR:0.2,MUR:0.1,FUR:0.05}},
@@ -1122,10 +1128,13 @@ function renderShop(){
       <img class="pack-art" src="assets/packs/${packArt[p.id]}" alt="${p.name} 카드팩" loading="lazy"/>
       <details class="odds"><summary>등급 확률 보기 ▾</summary><div class="oddsgrid">${oddsHtml(p.odds)}</div></details>
       <div class="spacer"></div>
-      <button class="cta" data-buy="${p.id}">${p.price} P로 뽑기</button>`;
+      <div class="pack-actions">
+        <button class="cta" data-buy="${p.id}" data-quantity="1">1개 구매<small>${p.price.toLocaleString()}P · ${p.count}장</small></button>
+        <button class="cta sub" data-buy="${p.id}" data-quantity="10">×10 구매<small>${(p.price*10).toLocaleString()}P · ${p.count*10}장</small></button>
+      </div>`;
     wrap.appendChild(card);
   });
-  wrap.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buyPack(b.dataset.buy));
+  wrap.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buyPack(b.dataset.buy,Number(b.dataset.quantity)));
 }
 $('#attendBtn').onclick=async()=>{
   try{const j=await apiPost('/api/attend',{key:state.key});setPoints(j.points);
@@ -1134,20 +1143,22 @@ $('#attendBtn').onclick=async()=>{
   }catch(e){toast(e.message,true);}
 };
 let isPackOpening = false;
-async function buyPack(id){
+async function buyPack(id,quantity=1){
   if(isPackOpening) return;
-  isPackOpening = true;
   const pack=PACKS.find(p=>p.id===id);
-  if(state.points<pack.price)return toast('포인트가 부족합니다',true);
-  const btn=document.querySelector(`[data-buy="${id}"]`);if(btn){btn.disabled=true;btn.textContent='개봉 중...';}
+  const totalPrice=pack.price*quantity;
+  if(state.points<totalPrice)return toast('포인트가 부족합니다',true);
+  isPackOpening = true;
+  const buttons=[...document.querySelectorAll('[data-buy]')];
+  buttons.forEach(button=>button.disabled=true);
+  const btn=document.querySelector(`[data-buy="${id}"][data-quantity="${quantity}"]`);if(btn)btn.textContent='개봉 중...';
   try{
-    const j=await apiPost('/api/open-pack',{key:state.key,packId:id});
+    const j=await apiPost('/api/open-pack',{key:state.key,packId:id,quantity});
     setPoints(j.points);
     j.cards.forEach(c=>{state.collection[c.id]=(state.collection[c.id]||0)+1;});
     sfx('open');playOpening(j.cards);
   }catch(e){toast(e.message,true);}
-  finally{isPackOpening=false;}
-  if(btn){btn.disabled=false;btn.textContent=pack.price+' P로 뽑기';}
+  finally{isPackOpening=false;renderShop();}
 }
 
 /* ranking */
@@ -1256,6 +1267,8 @@ function playOpening(cards){
   cards.filter(c=>RANK[c.rarity]>=RANK.UR).forEach(c=>pushLocalAnn({nickname:state.nickname,member:c.member,rarity:c.rarity,card_id:c.id,created_at:new Date().toISOString()}));
   const special=cards.filter(c=>RANK[c.rarity]>=RANK.MUR); // MUR/FUR 전용 2단계
   const normal=cards.filter(c=>RANK[c.rarity]<RANK.MUR);
+  $('#opening').classList.toggle('bulk-opening',normal.length>10);
+  $('#special').classList.toggle('bulk-opening',special.length>10);
   const hasNext=special.length>0;
   openStage1(normal,hasNext,()=>openStage2(special));
 }
@@ -1265,7 +1278,8 @@ function openStage1(cards,hasNext,next){
   const btn=$('#closeOpen');btn.classList.add('hidden');btn.textContent=hasNext?'다음':'확인';
   const hint=$('#tapHint');
   if(!cards.length){ov.classList.remove('show');next&&next();return;} // 전부 특별카드면 스킵
-  hint.classList.remove('hidden');hint.classList.add('pulse');hint.textContent='화면을 탭하면 바로 전체 공개';
+  const bulk=ov.classList.contains('bulk-opening');
+  hint.classList.remove('hidden');hint.classList.add('pulse');hint.textContent=bulk?`${cards.length}장 일괄 개봉 결과`:'화면을 탭하면 바로 전체 공개';
   const items=cards.map(c=>{const w=el('div','rev'+(c.group?' group-rev':''));
     w.innerHTML=revcardHTML(c)+`<div class="rtag"><span class="rb rb-${c.rarity}">${c.rarity}</span></div>`;
     row.appendChild(w);return {wrap:w,card:c};});
@@ -1281,7 +1295,7 @@ function openStage1(cards,hasNext,next){
     hint.classList.remove('pulse');hint.textContent='';btn.classList.remove('hidden');ov.onclick=null;}
   ov.onclick=e=>{if(e.target.id==='closeOpen')return;finish();};
   btn.onclick=()=>{ov.classList.remove('show');if(hasNext)setTimeout(()=>next&&next(),280);};
-  timer=setTimeout(reveal,REDUCE?0:340);
+  timer=setTimeout(bulk?finish:reveal,REDUCE?0:340);
 }
 /* stage 2: MUR/FUR 전용 - 직접 탭해서 한 장씩 오픈 */
 function openStage2(cards){

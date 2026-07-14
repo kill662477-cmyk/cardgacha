@@ -104,7 +104,7 @@
   {
     "id": "haetsal-2",
     "member": "햇살",
-    "file": "haetsal-2.avif",
+    "file": "haetsal-2.jpeg",
     "rarity": "AR"
   },
   {
@@ -734,7 +734,7 @@
   {
     "id": "haetsal-7",
     "member": "햇살",
-    "file": "haetsal-7.jpeg",
+    "file": "haetsal-7-v2.jpeg",
     "rarity": "SAR"
   },
   {
@@ -1114,6 +1114,12 @@
     "member": "햇살",
     "file": "haetsal-11.avif",
     "rarity": "HR"
+  },
+  {
+    "id": "haetsal-12",
+    "member": "햇살",
+    "file": "haetsal-12.jpeg",
+    "rarity": "FUR"
   },
   {
     "id": "group-1",

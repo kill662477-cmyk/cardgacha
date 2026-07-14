@@ -729,6 +729,15 @@
     </div>
   </div>
 
+  <div id="subscriber700Modal" class="key-modal reward-modal hidden" role="dialog" aria-modal="true" aria-labelledby="subscriber700Title">
+    <div class="panel auth-shell" style="border-color:#f1cb66;max-width:440px">
+      <h3 id="subscriber700Title" style="color:#f1cb66;font-size:18px">가입자 수 700명 돌파 기념</h3>
+      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">함께해 주신 모든 분께 감사드립니다.</p>
+      <p style="font-size:15px;font-weight:800;margin:10px 0 0">기념 보상으로 <b class="reward-amount">+3,000P</b>가 추가 지급되었습니다.</p>
+      <button class="cta" id="subscriber700CloseBtn" style="margin-top:16px">확인</button>
+    </div>
+  </div>
+
   <!-- SHOP -->
   <section id="view-shop" class="hidden">
     <div class="panel attend-bar">
@@ -933,8 +942,13 @@ function maybeShowCivilWarNotice(){
   $('#civilWarModal').classList.remove('hidden');
 }
 function maybeShowSubscriber400Notice(){
-  if(!state.key||localStorage.getItem('cardgacha_subscriber_400_notice_v1')==='1'||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden')||!$('#newCardsModal').classList.contains('hidden')||!$('#subscriber300Modal').classList.contains('hidden')||!$('#civilWarModal').classList.contains('hidden'))return;
+  if(!state.key||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden')||!$('#newCardsModal').classList.contains('hidden')||!$('#subscriber300Modal').classList.contains('hidden')||!$('#civilWarModal').classList.contains('hidden'))return;
+  if(localStorage.getItem('cardgacha_subscriber_400_notice_v1')==='1'){maybeShowSubscriber700Notice();return;}
   $('#subscriber400Modal').classList.remove('hidden');
+}
+function maybeShowSubscriber700Notice(){
+  if(!state.key||localStorage.getItem('cardgacha_subscriber_700_notice_v1')==='1'||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden')||!$('#newCardsModal').classList.contains('hidden')||!$('#subscriber300Modal').classList.contains('hidden')||!$('#civilWarModal').classList.contains('hidden')||!$('#subscriber400Modal').classList.contains('hidden'))return;
+  $('#subscriber700Modal').classList.remove('hidden');
 }
 function closeFuseFixNotice(){localStorage.setItem('cardgacha_fuse_fix_notice_v1','1');$('#fuseFixModal').classList.add('hidden');maybeShowPackReleaseNotice();}
 $('#fuseFixCloseBtn').onclick=closeFuseFixNotice;
@@ -951,9 +965,12 @@ $('#subscriber300Modal').onclick=(e)=>{if(e.target===$('#subscriber300Modal'))cl
 function closeCivilWarNotice(){localStorage.setItem('cardgacha_civil_war_notice_v1','1');$('#civilWarModal').classList.add('hidden');maybeShowSubscriber400Notice();}
 $('#civilWarCloseBtn').onclick=closeCivilWarNotice;
 $('#civilWarModal').onclick=(e)=>{if(e.target===$('#civilWarModal'))closeCivilWarNotice();};
-function closeSubscriber400Notice(){localStorage.setItem('cardgacha_subscriber_400_notice_v1','1');$('#subscriber400Modal').classList.add('hidden');}
+function closeSubscriber400Notice(){localStorage.setItem('cardgacha_subscriber_400_notice_v1','1');$('#subscriber400Modal').classList.add('hidden');maybeShowSubscriber700Notice();}
 $('#subscriber400CloseBtn').onclick=closeSubscriber400Notice;
 $('#subscriber400Modal').onclick=(e)=>{if(e.target===$('#subscriber400Modal'))closeSubscriber400Notice();};
+function closeSubscriber700Notice(){localStorage.setItem('cardgacha_subscriber_700_notice_v1','1');$('#subscriber700Modal').classList.add('hidden');}
+$('#subscriber700CloseBtn').onclick=closeSubscriber700Notice;
+$('#subscriber700Modal').onclick=(e)=>{if(e.target===$('#subscriber700Modal'))closeSubscriber700Notice();};
 $('#showKeyBtn').onclick=()=>{if(state.key)copyKey(state.key);else toast('로그인 후 이용하세요',true);};
 $('#loginBtn').onclick=async()=>{const key=$('#loginKey').value.trim();if(!key)return toast('KEY를 입력하세요',true);await doLogin(key);};
 async function doLogin(key){

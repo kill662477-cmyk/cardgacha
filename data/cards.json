@@ -1122,6 +1122,48 @@
     "rarity": "FUR"
   },
   {
+    "id": "byeonhyeonje-6",
+    "member": "변현제",
+    "file": "byeonhyeonje-6.avif",
+    "rarity": "MUR"
+  },
+  {
+    "id": "tomato-13",
+    "member": "토마토",
+    "file": "tomato-13.avif",
+    "rarity": "UR"
+  },
+  {
+    "id": "parkjuno-5",
+    "member": "박준오",
+    "file": "parkjuno-5.avif",
+    "rarity": "SAR"
+  },
+  {
+    "id": "vitaming-13",
+    "member": "비타밍",
+    "file": "vitaming-13.avif",
+    "rarity": "UR"
+  },
+  {
+    "id": "kimmincheol-6",
+    "member": "김민철",
+    "file": "kimmincheol-6.avif",
+    "rarity": "MUR"
+  },
+  {
+    "id": "kimmincheol-7",
+    "member": "김민철",
+    "file": "kimmincheol-7.avif",
+    "rarity": "FUR"
+  },
+  {
+    "id": "jidongwon-7",
+    "member": "지동원",
+    "file": "jidongwon-7.avif",
+    "rarity": "RRR"
+  },
+  {
     "id": "group-1",
     "member": "단체사진",
     "file": "group-1.avif",

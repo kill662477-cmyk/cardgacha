@@ -1188,6 +1188,12 @@
     "rarity": "MUR"
   },
   {
+    "id": "namdeokseon-12",
+    "member": "남덕선",
+    "file": "namdeokseon-12.avif",
+    "rarity": "FUR"
+  },
+  {
     "id": "group-1",
     "member": "단체사진",
     "file": "group-1.avif",

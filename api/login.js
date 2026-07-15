@@ -4,8 +4,10 @@ const { seoulToday } = require('../lib/gacha');
 const { getUserByKey, updateUser } = require('../lib/supabase');
 const { serverError } = require('../lib/security');
 const { isBridgeMember } = require('../lib/bridge-members');
+const { rejectDuringMaintenance } = require('../lib/maintenance');
 
 module.exports = async function handler(req, res) {
+  if (rejectDuringMaintenance(res, sendJson)) return;
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });
   try {
     const body = await readBody(req);

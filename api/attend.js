@@ -3,6 +3,7 @@ const { sendJson, readBody } = require('../lib/http');
 const { seoulToday } = require('../lib/gacha');
 const { getUserByKey, rpc } = require('../lib/supabase');
 const { enforceRateLimit, serverError } = require('../lib/security');
+const { rejectDuringMaintenance } = require('../lib/maintenance');
 
 const ATTEND_BASE = 400;
 const ATTEND_STREAK_BONUS = 800;
@@ -13,6 +14,7 @@ function seoulYesterday() {
 }
 
 module.exports = async function handler(req, res) {
+  if (rejectDuringMaintenance(res, sendJson)) return;
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });
   try {
     const body = await readBody(req);

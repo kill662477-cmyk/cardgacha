@@ -3,6 +3,7 @@ const { sendJson, readBody } = require('../lib/http');
 const { DISMANTLE_REFUND, cardById } = require('../lib/gacha');
 const { getUserByKey, getCollection, rpc } = require('../lib/supabase');
 const { enforceRateLimit, serverError } = require('../lib/security');
+const { rejectDuringMaintenance } = require('../lib/maintenance');
 
 function refundOf(cardId) {
   const card = cardById(cardId);
@@ -10,6 +11,7 @@ function refundOf(cardId) {
 }
 
 module.exports = async function handler(req, res) {
+  if (rejectDuringMaintenance(res, sendJson)) return;
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });
   try {
     const body = await readBody(req);

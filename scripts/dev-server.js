@@ -37,6 +37,7 @@ const API = {
   '/api/cards': require('../api/cards'),
   '/api/announcements': require('../api/announcements'),
   '/api/dismantle': require('../api/dismantle'),
+  '/api/fuse': require('../api/fuse'),
   '/api/claim-reward': require('../api/claim-reward'),
   '/api/claim-all-rewards': require('../api/claim-all-rewards'),
   '/api/public-config': require('../api/public-config'),

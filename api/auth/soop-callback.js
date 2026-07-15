@@ -11,7 +11,8 @@
 // login_key 를 URL fragment 로 전달하는 이유: fragment 는 서버로 전송되지 않고
 // (Referrer-Policy:no-referrer 와 함께) 서버 로그/리퍼러에 key 가 남지 않는다.
 const { loadEnv } = require('../../lib/env');
-const { getQuery } = require('../../lib/http');
+const { getQuery, sendJson } = require('../../lib/http');
+const { rejectDuringMaintenance } = require('../../lib/maintenance');
 const { newKey } = require('../../lib/gacha');
 const {
   getUserBySoopId,
@@ -75,6 +76,7 @@ async function fetchStationInfo(accessToken) {
 }
 
 module.exports = async function handler(req, res) {
+  if (rejectDuringMaintenance(res, sendJson)) return;
   if (req.method !== 'GET') {
     res.statusCode = 405;
     res.setHeader('Content-Type', 'application/json; charset=utf-8');

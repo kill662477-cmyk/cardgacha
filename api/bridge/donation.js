@@ -2,6 +2,7 @@ const { readBody, sendJson } = require('../../lib/http');
 const { rpc } = require('../../lib/supabase');
 const { enforceRateLimit, serverError } = require('../../lib/security');
 const { sessionFrom, tokenFrom } = require('../../lib/bridge-auth');
+const { rejectDuringMaintenance } = require('../../lib/maintenance');
 
 function value(input, max) {
   const text = String(input || '').trim();
@@ -9,6 +10,7 @@ function value(input, max) {
 }
 
 module.exports = async function handler(req, res) {
+  if (rejectDuringMaintenance(res, sendJson)) return;
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });
   const session = sessionFrom(req);
   const token = tokenFrom(req);

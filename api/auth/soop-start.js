@@ -3,12 +3,14 @@
 // (SOOP OpenAPI 는 state 파라미터를 지원하지 않는다.)
 const { loadEnv } = require('../../lib/env');
 const { sendJson } = require('../../lib/http');
+const { rejectDuringMaintenance } = require('../../lib/maintenance');
 
 loadEnv();
 
 const AUTH_URL = 'https://openapi.sooplive.com/auth/code';
 
 module.exports = async function handler(req, res) {
+  if (rejectDuringMaintenance(res, sendJson)) return;
   if (req.method !== 'GET') return sendJson(res, 405, { error: 'method not allowed' });
 
   const clientId = process.env.SOOP_CLIENT_ID;

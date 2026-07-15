@@ -5,8 +5,10 @@ const { sendJson, readBody } = require('../lib/http');
 const { RANK, FUSE_RATES, DISMANTLE_REFUND, cardById, resolveFuse } = require('../lib/gacha');
 const { getUserByKey, getCollection, insertAnnouncements, rpc } = require('../lib/supabase');
 const { enforceRateLimit, serverError } = require('../lib/security');
+const { rejectDuringMaintenance } = require('../lib/maintenance');
 
 module.exports = async function handler(req, res) {
+  if (rejectDuringMaintenance(res, sendJson)) return;
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });
   try {
     const body = await readBody(req);

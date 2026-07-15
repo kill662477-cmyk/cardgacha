@@ -589,7 +589,7 @@
     <p class="maintenance-copy">카드가챠 시즌 운영을 종료하고 새로운 콘텐츠를 준비하고 있습니다. 더 나은 모습으로 다시 찾아뵙겠습니다.</p>
     <div class="maintenance-time">
       <span>운영 종료</span>
-      <strong>2026.07.18 23:00 KST</strong>
+      <strong>2026.07.17 23:59 KST</strong>
     </div>
     <p class="maintenance-note">리뉴얼 일정과 다음 콘텐츠 소식은 추후 안내드리겠습니다.</p>
   </div>
@@ -926,7 +926,7 @@ function sfx(kind){if(!state.soundOn||REDUCE)return;const Ctx=window.AudioContex
 async function apiPost(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const j=await r.json().catch(()=>({error:'응답 오류'}));if(!r.ok)throw new Error(j.error||('오류 '+r.status));return j;}
 async function apiGet(p){const r=await fetch(p);const j=await r.json().catch(()=>({error:'응답 오류'}));if(!r.ok)throw new Error(j.error||('오류 '+r.status));return j;}
 
-const MAINTENANCE_FALLBACK_AT='2026-07-18T14:00:00.000Z';
+const MAINTENANCE_FALLBACK_AT='2026-07-17T14:59:00.000Z';
 let maintenanceTimer=null;
 function activateMaintenance(){
   if(maintenanceTimer)clearInterval(maintenanceTimer);

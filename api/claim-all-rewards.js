@@ -7,7 +7,6 @@ const { enforceRateLimit, serverError } = require('../lib/security');
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });
   try {
-    if (!await enforceRateLimit(req, res, 'reward-all-ip', 6, 60)) return;
     const body = await readBody(req);
     const key = String(body.key || '').trim();
     if (!key) return sendJson(res, 400, { error: 'key를 입력하세요' });

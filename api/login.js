@@ -2,13 +2,12 @@
 const { sendJson, readBody } = require('../lib/http');
 const { seoulToday } = require('../lib/gacha');
 const { getUserByKey, updateUser } = require('../lib/supabase');
-const { enforceRateLimit, serverError } = require('../lib/security');
+const { serverError } = require('../lib/security');
 const { isBridgeMember } = require('../lib/bridge-members');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'method not allowed' });
   try {
-    if (!await enforceRateLimit(req, res, 'login-ip', 12, 60)) return;
     const body = await readBody(req);
     const key = (body.key || '').toString().trim();
     if (!key) return sendJson(res, 400, { error: 'key를 입력하세요' });

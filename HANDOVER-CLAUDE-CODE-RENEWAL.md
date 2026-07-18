@@ -1,411 +1,424 @@
-# 카드가챠 시즌2 리뉴얼 - Claude Code 인수인계
+# 카드가챠 시즌2 리뉴얼 - Claude Code 상세 인수인계
 
-> 최종 갱신: 2026-07-18 KST
+> 갱신: 2026-07-18 KST (작업 5~8 로컬 검증 완료)
 > 작업 폴더: `C:\Users\silve\OneDrive\Desktop\card-gacha-renewal`
 > 브랜치: `renewal`
-> 현재 기준: 로컬 `renewal` 브랜치 최신 HEAD. 정확한 해시는 `git log -1 --oneline`으로 확인
-> 중요: 리뉴얼 저장소 정리본과 현재 DB 준비 작업은 로컬 `renewal` 브랜치에서 관리한다. 원격에는 올리지 않았다.
+> 현재 HEAD: `dce54f8 chore: local QA profile with full roster and no-cache dev server`
+> 직전 커밋: `d9e13e6 feat: add live ranking and SOOP bridge`
 
-## 1. 가장 먼저 지킬 것
+## 0. 사용자 지시
 
-1. 사용자 명시 전까지 push, PR, 배포 금지. 로컬 커밋만 허용.
-2. 사용자가 DB 작업 시작을 승인했다. Supabase migration·RPC·RLS의 로컬 작성과 검증은 허용되지만 운영 실행은 별도 확인 전 금지.
-3. 작업트리에 있던 변경을 임의로 삭제, checkout, reset, clean하지 말 것.
-4. 시즌1 운영 파일과 리뉴얼 파일을 혼동하지 말 것.
-5. 시즌1 과거 인수인계는 정리 완료. 이 문서가 시즌2 최신 인수인계다.
-6. 원본 사진 폴더 `C:\Users\silve\OneDrive\Desktop\card`는 읽기 전용으로 취급.
-7. 카드 ID, 파일명, 현재 등급 배치와 확률을 사용자 지시 없이 변경하지 말 것.
+- 현재 작업은 즉시 중단했다.
+- 로컬 개발 서버 3300/3301은 모두 종료했다.
+- 사용자가 다시 지시하기 전까지 push, 배포, 운영 Supabase migration, 운영 데이터 변경 금지.
+- 이번 범위는 작업 1~8까지다. 작업 9는 절대 시작하지 않는다.
+- 작업 9에는 백업, 실제 cutover, 배포, 시즌1 DB 삭제가 포함된다.
+- `supabase/renewal_migration_999_drop_season1.sql`은 특히 실행 금지.
+- 사용자 작업 또는 기존 변경을 reset/checkout/clean으로 제거하지 않는다.
 
-## 2. 실행과 검증
+## 1. 현재 Git 상태
+
+커밋된 최신 작업:
+
+```text
+d9e13e6 feat: add live ranking and SOOP bridge
+dbdc83a feat: route game UI through server commands
+c2c01f3 feat: bridge legacy login keys to Supabase Auth
+6b58d06 feat: add remaining economy and profile commands
+e66a9bf feat: add authenticated game command edge router
+751a482 feat: add world boss server RPCs
+5cfd608 feat: add adventure and minigame RPCs
+b07ec43 feat: add pack and enhancement RPCs
+398aaa6 feat: add server command foundation
+734e7af feat: add season 2 server card catalog
+72ffe07 feat: prepare season 1 database retirement
+220eef0 feat: prepare card gacha season 2 renewal
+```
+
+중단 시점 미커밋 파일은 2026-07-18 로컬 검증 후 커밋 `dce54f8`로 정리됨:
+
+```text
+scripts/dev-server.js                     (no-cache)
+src/renewal/local-test-profile.js         (MSTZ 전체 카드+도감 QA 프로필)
+tests/renewal-content.test.js             (기대값 정렬)
+tests/renewal-edge-command-router.test.js (edge TS admin cast 정규식, 핸드오버 원문엔 누락되어 있던 5번째 파일)
+```
+
+이 커밋은 로컬 전용이며 push하지 않았다. HANDOVER 문서 갱신분은 아직 미커밋 상태로, 다음 로컬 커밋에 포함하면 된다.
+
+미커밋 변경 의미:
+
+1. `scripts/dev-server.js`
+   - 모든 정적 파일 응답을 `Cache-Control: no-cache`로 변경했다.
+   - 로컬 UI 검증 중 JS/CSS 1시간 캐시 때문에 수정이 반영되지 않던 문제 대응이다.
+2. `src/renewal/local-test-profile.js`
+   - 최초 로컬 QA 계정 MSTZ에 전체 카드 1장씩, 전체 도감 등록을 넣었다.
+   - 포인트는 기존 요구대로 1,000,000P다.
+3. `tests/renewal-content.test.js`
+   - 위 로컬 QA 프로필 요구에 맞춰 테스트 기대값을 수정했다.
+
+이 3개 변경은 아직 최종 브라우저 검증도, 테스트도, 커밋도 하지 않았다. 먼저 diff를 확인하고 이어서 검증할 것.
+
+```powershell
+git status --short
+git diff -- scripts/dev-server.js src/renewal/local-test-profile.js tests/renewal-content.test.js
+```
+
+## 2. 작업 1~9 진행 상태
+
+| 번호 | 작업 | 상태 |
+|---:|---|---|
+| 1 | 누락 RPC 및 서버 권한 기반 명령 구현 | 완료 |
+| 2 | 시즌1 로그인 키를 Supabase Auth로 교환 | 완료 |
+| 3 | 게임 UI를 서버 명령 기반으로 전환 | 완료 |
+| 4 | 서버 랭킹, 월드보스 Realtime, SOOP 브릿지 | 완료 |
+| 5 | 로컬/프리뷰 UI 및 기능 검증 | 완료 (2026-07-18) |
+| 6 | 시즌1 이관 dry-run 검증 | 완료 (오프라인 fixture) |
+| 7 | 보안, 동시성, 부하 검증 | 완료 (정적+결정론 harness, 실부하 제외) |
+| 8 | 전체 UI/UX 플레이테스트 및 문서 최신화 | 완료 |
+| 9 | 백업, 실제 이관, 배포, 시즌1 DB 삭제 | 금지, 시작하지 말 것 |
+
+작업 5~8 검증 결과는 15절 참조. push·배포·운영 migration은 하지 않았다.
+
+## 3. 완료된 서버 기능
+
+### 작업 1: 서버 명령/RPC
+
+- 카드팩 구매 및 10회 구매
+- 강화 시도와 서버 확률 판정
+- 모험 시작/빠른 전투/보상
+- 미니게임 결과 검증 및 일일 한도
+- 월드보스 회차, 공격, 보상
+- 상점 아이템과 지원 아이템
+- 카드 경험치 포션
+- 모험 시작 초기화권, 빠른 전투 초기화권
+- 대표 카드와 프로필 관련 명령
+- 계정 revision 기반 동시 수정 충돌 처리
+- 서비스 역할 전용 RPC와 RLS 제한
+
+핵심 migration:
+
+```text
+renewal_migration_001_accounts_reset.sql
+renewal_migration_002_catalog_and_balance.sql
+renewal_migration_003_command_foundation.sql
+renewal_migration_004_pack_and_enhancement.sql
+renewal_migration_005_adventure_and_minigames.sql
+renewal_migration_006_world_boss.sql
+renewal_migration_007_economy_profile.sql
+renewal_migration_008_auth_bridge.sql
+renewal_migration_009_live_services.sql
+```
+
+### 작업 2: 로그인 전환
+
+- 시즌1 로그인 키 검증 후 Supabase Auth 세션으로 교환한다.
+- 로그인 키 원문은 DB에 저장하지 않고 기존 해시 검증을 사용한다.
+- 일회성 교환 코드를 사용한다.
+- 브라우저에 service role key나 SOOP client secret을 노출하지 않는다.
+- 주요 파일:
+  - `supabase/functions/session-exchange/index.ts`
+  - `src/renewal/remote-runtime.js`
+  - `supabase/renewal_migration_008_auth_bridge.sql`
+
+### 작업 3: UI 서버 명령 전환
+
+- 원격 모드에서 클라이언트가 포인트, 카드, 보상을 직접 확정하지 않는다.
+- `supabase/functions/game-command/index.ts`가 JWT 사용자를 고정한다.
+- `src/renewal/server-command-router.js`가 명령을 검증하고 service-role RPC를 호출한다.
+- `src/renewal/supabase-game-service.js`가 UI와 Edge 명령을 연결한다.
+- 로컬 모드는 QA용 `local-game-service`를 유지한다.
+
+### 작업 4: 라이브 서비스
+
+커밋 `d9e13e6`에 포함:
+
+- 서버 계산 전투력 랭킹 RPC `gacha_s2_get_power_ranking`
+- 월드보스 서버 상태와 실시간 랭킹
+- Supabase Realtime 구독과 10초 보조 새로고침
+- 스트리머 브릿지 상태 조회
+- 브릿지 키 인증과 IP-HMAC 제한: 15분당 8회
+- SOOP 후원 이벤트 중 다음만 인정:
+  - `BALLOON_GIFTED`
+  - `BATTLE_MISSION_GIFTED`
+- `FINISHED`, `SETTLED`는 제외
+- 별풍선 1개당 후원자와 방송인 각각 3P
+- 방송인 수령 계정은 활성 브릿지의 SOOP ID로 고정
+- event ID 멱등성, payload 충돌 탐지, advisory lock, revision 처리
+- SOOP 임시 토큰 AES-GCM 암호화
+- OAuth 교환 코드는 일회성 소비
+- 신규 파일:
+  - `bridge.html`
+  - `src/renewal/soop-bridge.js`
+  - `styles/renewal/bridge.css`
+  - `supabase/functions/soop-bridge/index.ts`
+  - `supabase/renewal_migration_009_live_services.sql`
+
+## 4. 마지막 검증 결과
+
+작업 4 완료 직후:
+
+- `npm.cmd test`: 전체 통과
+- 다음 Edge 함수 Deno typecheck 통과:
+  - `game-command`
+  - `session-exchange`
+  - `soop-bridge`
+- 사용 명령:
+
+```powershell
+npx.cmd -y deno-bin@2.2.7 check --config supabase/functions/game-command/deno.json supabase/functions/game-command/index.ts
+npx.cmd -y deno-bin@2.2.7 check --config supabase/functions/session-exchange/deno.json supabase/functions/session-exchange/index.ts
+npx.cmd -y deno-bin@2.2.7 check --config supabase/functions/soop-bridge/deno.json supabase/functions/soop-bridge/index.ts
+```
+
+주의:
+
+- 미커밋 QA 프로필/캐시 변경 후에는 아직 테스트를 다시 돌리지 않았다.
+- Docker가 설치되지 않아 로컬 Supabase Postgres 실행 검증은 못 했다.
+- 운영 DB에는 어떤 migration도 실행하지 않았다.
+- 실제 SOOP 자격증명이 없어 OAuth/ChatSDK 실연동은 하지 않았다.
+
+## 5. 작업 5 중단 지점과 재개 순서
+
+중단 직전 상태:
+
+- 인앱 브라우저로 `http://127.0.0.1:3300/#adventure`를 열었다.
+- 첫 데스크톱 화면은 렌더링 정상, 큰 겹침 없음.
+- MSTZ와 1,000,000P는 보였지만 전투력 0, 편성 없음으로 나왔다.
+- 원인은 로컬 QA 프로필이 카드 0장/도감 0으로 초기화되던 것이었다.
+- 전체 카드 1장/전체 도감으로 미커밋 수정했다.
+- 재로딩해도 기존 JS 캐시가 남아 `dev-server.js`를 no-cache로 수정했다.
+- 그 직후 사용자가 중단을 지시했다. 수정 반영 후 브라우저 재검증은 아직이다.
+
+재개 절차:
 
 ```powershell
 cd C:\Users\silve\OneDrive\Desktop\card-gacha-renewal
+npm.cmd test
 npm.cmd run dev
 ```
 
-현재 로컬 확인 주소:
+브라우저에서 `http://127.0.0.1:3300/?fresh#adventure` 접속 후 확인:
 
-```text
-http://127.0.0.1:3300/
-```
+1. 닉네임 `MSTZ`
+2. 포인트 `1,000,000P`
+3. 전체 카드 1장씩 보유
+4. 전체 도감 등록
+5. 자동 편성 5장과 전투력 0 초과
+6. 새로고침 후 현재 hash 메뉴 유지
+7. 편성 변경 버튼 작동
+8. 카드가 전투력 내림차순으로 표시
 
-필수 검증 명령:
+모든 메뉴 점검:
+
+- 상점: 상품 전체 노출, x1/x10, 투명 카드팩 이미지, 고등급 수동 오픈 흐름
+- 강화: 카드 EXP 조건, 재료, 성공률, 9성 난이도, 성공/실패 FX
+- 도감: 사람별 정렬, 미등록 카드백, 도감 50%/30% 전투 보너스
+- 랭킹: 전투력 랭킹만, 내 순위와 서버 값
+- 모험: 4시간당 3회, 매번 1단계부터, 실패 시 종료, 중앙 전투 카드
+- 월드보스: 17/18/19/20시, 30분 전투+30분 결과, 누적 보상
+- 미니게임: 카드짝맞추기와 캄몬사과게임, 각 일일 7,500P 한도
+- API: 원격 스트리머 계정에만 버튼 노출, 로컬 브릿지 페이지 오류 없이 표시
+
+화면 크기:
+
+- 데스크톱 1280x720 이상
+- 모바일 가로 844x390
+- 모바일 가로 740x360
+
+확인 항목:
+
+- 가로 overflow
+- 버튼/텍스트 겹침
+- 모달 잘림
+- 카드 비율 왜곡
+- 콘솔 error/warn
+- 새로고침 시 메뉴 유지
+
+작업 5 완료 후 미커밋 3파일을 테스트하고 별도 로컬 커밋하는 것이 안전하다. push는 금지다.
+
+## 6. 작업 6: 시즌1 이관 dry-run
+
+실제 운영 DB 연결 없이 fixture/익명화 데이터로 먼저 실행한다.
+
+관련 파일:
+
+- `scripts/dry-run-season1-import.js`
+- `tests/renewal-season1-import.test.js`
+- `docs/PDB-8-SEASON1-MIGRATION-SPEC.md`
+- `supabase/renewal_migration_001_accounts_reset.sql`
+
+검증 규칙:
+
+1. 카드 오픈 0회인 일반 계정은 삭제 대상
+2. 스트리머 계정은 카드 오픈 0회여도 유지
+3. 로그인 정보, UUID, 닉네임, SOOP ID, 브릿지 정보 유지
+4. 포인트, 카드, 도감, 강화, 편성, 모험, 미니게임, 월드보스 상태 초기화
+5. 기본 시작 포인트 5,000P
+6. 시즌1 스냅샷 보상:
+   - 1~10위 +30,000P
+   - 11~20위 +20,000P
+   - 21~30위 +15,000P
+   - 31~40위 +10,000P
+   - 41~50위 +5,000P
+7. 삭제/유지/스트리머/랭커/중복/누락 수량 보고
+8. 실제 import와 999 삭제는 실행하지 않음
+
+명령 확인:
 
 ```powershell
-npm.cmd run test:renewal
+npm.cmd run dry-run:season1-import
+node tests/renewal-season1-import.test.js
+```
+
+스크립트가 운영 환경변수를 자동으로 읽는지 먼저 소스 확인할 것. 운영 연결 가능성이 있으면 fixture 입력 전용 옵션을 추가한 뒤 실행한다.
+
+## 7. 작업 7: 보안·동시성·부하 검증
+
+보안:
+
+- 클라이언트 정적 파일에 service-role key, SOOP client secret, 브릿지 원문 키가 없는지 검색
+- RLS와 `GRANT/REVOKE` 검토
+- 모든 Edge 명령에서 JWT 사용자 ID 강제
+- CORS allowlist 검증
+- 브릿지 인증 제한, 후원 이벤트 제한, event ID 멱등성 검증
+- OAuth state와 일회성 교환 만료 검증
+- 만료된 OAuth exchange row 정리 전략 확인
+
+동시성:
+
+- 같은 pack purchase request ID 동시 요청
+- 같은 enhancement request ID 동시 요청
+- adventure/minigame 보상 중복 요청
+- 월드보스 동시 공격과 3회 제한
+- 월드보스 보상 중복 수령
+- SOOP 동일 event ID 중복 수신
+- 같은 event ID에 다른 payload 수신 시 거부
+- 다중 기기 revision 충돌
+
+부하:
+
+- 랭킹 조회
+- 월드보스 17시 집중 공격
+- Realtime 구독 증가
+- SOOP 이벤트 burst
+- 상점 x10 구매
+
+운영이나 프리뷰 자격증명이 없으면 정적 테스트와 결정론적 로컬 harness까지만 한다. 실제 부하를 운영에 보내면 안 된다. 제한 사항을 문서에 남긴다.
+
+## 8. 작업 8: 최종 플레이테스트와 문서화
+
+작업 5~7 수정이 끝난 뒤 전체 회귀 테스트:
+
+```powershell
+npm.cmd test
 npm.cmd run simulate:renewal-balance
 git diff --check
 ```
 
-2026-07-18 마지막 상태:
+Edge Deno check도 다시 실행한다.
 
-- 자동 테스트 31개 묶음 전부 통과
-- 밸런스 버전 `2026.07.18-random-loot-1` (SSS 고정, F~SS 전면 재배치, 월드보스 30분 전투·30분 결과, 모험·레이드 랜덤 드롭)
-- 성장 시뮬레이션 통과
-- 월드보스 KST 4회(17~20시) 스케줄 로컬 연결 완료 (슬롯 밖 대기/카운트다운, 회차 전환, 경계 가드)
-- 시즌1 운영 사이트(cardgacha.vercel.app) 조기 셧다운: 공사중 페이지 + API 전면 중지, 최종 톱50은 Supabase `gacha_season1_final_top50` 스냅샷 보존
-- PC 로컬 화면에서 주요 7개 메뉴 확인
-- 모바일 기준은 세로가 아니라 가로 `844x390`, `740x360`
+최신화 대상:
 
-## 3. 문서 우선순위
+- `HANDOVER-CLAUDE-CODE-RENEWAL.md`
+- `RENEWAL-PLAN-2-IDLE-RPG.md`
+- `docs/PDB-8-SEASON1-MIGRATION-SPEC.md`
+- `docs/PDB-15-SUPABASE-GAME-SERVICE.md`
+- `production/session-state/active.md`
+- 필요한 migration/runbook 문서
 
-서로 다른 수치가 보이면 다음 순서로 신뢰한다.
+문서에 반드시 기록:
 
-1. `src/renewal/config.js`
-2. `docs/PDB-2-BALANCE-LOCK-2026-07-17.md`
-3. `production/session-state/active.md`의 가장 아래 최신 항목
-4. `RENEWAL-PLAN-2-IDLE-RPG.md`
-5. `docs/RENEWAL-PRE-DATABASE-WORKLIST.md`
+- migration 실행 순서 001~009
+- 999는 최종 백업·복구 검증·전환 완료 뒤에만 실행
+- push/배포/운영 migration을 하지 않았다는 사실
+- Docker 부재로 로컬 Postgres 실행 검증을 못 한 경우 그 제한
+- SOOP 실자격증명 부재로 live OAuth를 못 한 경우 그 제한
+- 작업 9에 필요한 정확한 체크리스트
 
-`RENEWAL-IMPLEMENTATION-ROADMAP.md`는 초기 계획 문서라 완료된 작업과 옛 수치가 섞여 있다. 현재 수치의 단일 원본으로 사용하지 말 것.
-
-## 4. 현재 구현 완료 범위
-
-### 콘텐츠
-
-- 전투 카드 204장 + 전시용 EX 단체사진 8장 = 총 212장
-- 지역 5개, 스테이지 50개, 지역별 보스 5개
-- 편성 카드 5장
-- 등급 `F, E, D, C, B, A, S, SS, SSS`, 전시 전용 `EX`
-- 시즌1 FUR 일반 인물 카드는 SSS로 배치
-- 김윤환 기존 상위 배치 유지
-- 단체사진은 EX, 편성·전투·강화·도감 스탯에서 제외
-- SSS 14장은 사용자 지정 고정. F~S 각 24장, SS 22장
-- 2026-07-18 삭제 사진 8장은 데이터·도감·팩 풀에서 제거, 신규 사진 10장은 A~SS로 추가
-
-### 화면
-
-- 메뉴 순서: 상점, 강화, 도감, 랭킹, 모험, 월드보스, 미니게임
-- 대표카드 프로필
-- 카드팩 상점, 작전 지원 보급팩, 보유 아이템
-- 9성 강화, 카드 EXP, 강화 촉진제, 파괴 차단제
-- 인물별 도감 정렬, 미등록 카드백, 컬렉션 보너스
-- 자동 모험, 오프라인 보상, 빠른 전투, 편성 변경
-- 카드 짝맞추기, 캄몬사과게임
-- 로컬 월드보스 전투와 누적 피해 보상
-- 전투력 랭킹 로컬 화면
-- 카드팩·강화 FX, S·SS·SSS 영상·효과음과 수동 카드 공개
-- 강화 성공 FX 4단계·약 3.12초. 이중 충격파, 회전 링, 방사 광선, 카드 승급 펄스와 강화 구간별 입자·효과음 차등
-
-### 로컬 테스트 계정
-
-`src/renewal/local-test-profile.js`가 localhost에서 **새 세이브(revision 0)일 때 1회만** 다음 상태를 만든다 (2026-07-18 개편).
-
-- 닉네임 `MSTZ`. 계정 레벨·계정 EXP 필드 없음
-- 카드뽑기 포인트 `1,000,000P`만 지급
-- 카드 0장, 도감 0, 편성 빈칸, 지원 아이템 0 — 뽑기부터 시작하는 완전 신규 상태
-- 진행 중 세이브(revision>0)는 건드리지 않음
-- 재초기화: `index.html?fresh` 접속 또는 콘솔 `localStorage.clear()` 후 새로고침
-
-과거의 "207장 도감+아이템 강제 주입"은 제거됨. 신규 UX 가림 문제 해소 (PDB-1 무안내 플레이테스트 가능, 100만P 지급만 차이).
-
-## 5. 최신 확정 밸런스
-
-### 카드팩
-
-| 팩 | 가격 | 장수 | S | SS | SSS |
-|---|---:|---:|---:|---:|---:|
-| 일반 | 50P | 3 | 0.12% | 0.018% | 0.006% |
-| 정예 | 150P | 4 | 0.42% | 0.09% | 0.012% |
-| 프리미엄 | 500P | 4 | 1.5% | 0.42% | 0.06% |
-| 종족 | 100P | 3 | 0.03% | 0.0036% | 0.0006% |
-
-2026-07-18 `pdb2.13`: 전 팩 S·SS·SSS 원본(pdb2.10) 대비 ×0.6 너프, 감소분은 A 슬롯 흡수.
-
-- 확정 등급, 천장, 10회 보장 없음.
-- 종족팩은 저그·테란·프로토스 중 선택한 종족만 등장.
-- 정확한 전체 확률은 `PACKS`를 볼 것.
-- 사진 staging 동기화·재배치는 `npm.cmd run sync:renewal-card-staging` 사용. SSS는 건드리지 않는다.
-
-### 전투·등급
-
-- 등급·강화 배율은 유지. 저등급 고강이 고등급 저강을 역전할 수 있다.
-- F~SSS 각 등급에 속공·강타·연타·광역·보스·증폭·약화·생존 8유형을 모두 균등 배치했다.
-- 표시 전투력에 공격속도, 치명타, 일반·보스 패시브, 회복과 약화 가치를 반영한다.
-- 동일 종족 3~4장은 공격·체력 5%, 5장은 12%. 공격 시너지는 방어력에 적용하지 않는다.
-- 광역은 일반 웨이브에만 적용. 증폭형은 장당 편성 공격 4% 증가.
-- 카드 ID 편차는 ±3%. 같은 유형·같은 성급의 인접 등급 역전은 없음.
-- 0성 동일 등급 도달 단계: F 3, E 5, D 8, C 10, B 11, A 18, S 24, SS 33, SSS 40.
-- 30일 시뮬레이션: 하위 16단계 미완주, 중위 28일 완주, 상위 13일 완주.
-
-### 모험
-
-- 모든 새 런은 1단계부터 시작.
-- 실패 또는 50단계 완료 시 런 종료.
-- 첫 런 시작부터 4시간 동안 최대 3회.
-- 진행 중 런 일시 정지·재개는 추가 차감 없음.
-- 포인트는 `45n + 5n(n+1)`P, 50단계에서 15,000P 상한.
-- 계정 EXP 보상 없음. 클리어 단계당 편성 카드 EXP 1.
-- 모험 시작 초기화권 사용 시 현재 시작 횟수를 3회 복구.
-
-### 빠른 전투 (2026-07-18 재정의)
-
-- 스테이지 전투 연출을 생략한 "즉시 모험 런"이다. 현재 편성으로 1단계부터 순차 전투를 즉시 시뮬레이션해 클리어 단계 수만큼 모험 런 보상(포인트·카드 EXP)을 지급한다.
-- 소모: 행동력 20 + 당일 빠른 전투 횟수 1(하루 3회) + **모험 런 1회(모험과 공유하는 4시간당 3회 풀에서 차감)**.
-- 최고기록(clearedStage)과 EX 마일스톤도 즉시 반영. 편성이 1단계도 못 깨면 소모 없이 차단.
-- 보상 다이얼로그가 실제 포인트를 표시(과거 항상 0P 표기 문제 해결).
-- 빠른 전투 초기화권 사용 시 당일 빠른 전투 횟수를 3회 복구(모험 런 풀과는 별개).
-- 주의: `누적 보상`(오프라인) 버튼은 여전히 포인트 0 — `pendingPoints`가 미구현 스텁이라 방치 포인트 생산 시스템이 없다. 별도 과제.
-
-### 강화
-
-- 1~3성 확정 성공.
-- 4~9성 기본 성공률 `80, 70, 60, 50, 40, 30%`.
-- 7~9성 파괴율 `3, 8, 15%`.
-- 등급이 높을수록 성공률 페널티.
-- SSS 9성 기본 12%, 고순도 촉진제 사용 시 22%.
-- 9성 시도 5,000P.
-- 카드 EXP가 현재 단계 최대치여야 시도 가능.
-- 강화 재료는 등급 규칙에 맞는 중복 카드. 별도 성장 재료는 없음.
-- 강화 능력치 배율은 0성 1배에서 9성 3배.
-- 파괴 판정은 원본 카드 소멸이 아니라 강화 단계와 카드 EXP를 0으로 초기화. 재료·아이템·포인트는 소모.
-
-### 도감
-
-- 전투 보너스 합계 상한 100%. 현재 전체 도감 완성값 78.75%.
-- 방치 보너스 최대 30%.
-- EX는 스탯 보너스에서 제외.
-
-### 미니게임
-
-- 보상 모드 1회 행동력 10.
-- 카드 짝맞추기 하루 5,000P.
-- 캄몬사과게임 하루 5,000P.
-- 두 한도는 독립. 합계 최대 10,000P.
-- 카드 짝맞추기: 4x4 완료 500P, 6x6 완료 1,500P.
-- 캄몬사과게임: 기본 40P + 제거 점수, 1회 최대 240P.
-- 기존 통합 포인트 저장값은 `pointsEarnedByGame.memory`로 보존하고 `sumTen`은 0으로 변환.
-
-### 월드보스 보상
-
-| 개인 누적 피해 | 성공 | 실패 |
-|---:|---:|---:|
-| 참여 | 1,000P | 250P |
-| 200만 | 2,000P | 500P |
-| 500만 | 3,500P | 1,000P |
-| 1,000만 | 5,500P | 2,000P |
-| 1,500만 | 8,000P | 3,000P |
-| 2,000만 | 10,000P | 5,000P |
-
-- 회차당 무료 도전 3회.
-- 시도당 편성 카드 EXP 25.
-- 공동 HP 50억, 30분 서버 자동 피해 초당 2,766,667. 개인 누적 2,000만이 성공 경계다.
-- 샘플 편성 첫 피해 약 946만, 3회 누적으로 10,000P 도달.
-- 전투 중 수령 불가. 결과 공개 30분 동안 회차 보상을 한 번 수령한다.
-
-### 모험·월드보스 추가 드롭
-
-- 일반 모험런과 빠른 전투 모두 완료 단계에 따라 상점 아이템 또는 카드팩 교환권 1개를 추가 획득할 수 있다. 오프라인 보상은 제외한다.
-- 모험 드롭률: 1·10·20·30·40·50단계에서 각각 18%·24%·30%·36%·43%·50%.
-- 50단계 드롭 중 카드팩 비중은 30%이므로 실제 카드팩 획득률은 15%.
-- 월드보스 결과 보상 수령 시 실패 35%, 성공 60% 확률로 추가 드롭. 실제 카드팩 확률은 실패 5.25%, 성공 15%.
-- 카드팩 교환권 내부 비중: 일반 55%, 정예 27%, 종족 15%, 프리미엄 3%.
-- 드롭은 기존 `supportItems`에 바로 누적된다. 운영 서버에서는 보상 수령 명령의 서버 난수와 멱등성 키로 확정해야 한다.
-
-## 6. 월드보스 운영 시간 신규 확정
-
-사용자가 확정한 운영 시간:
+필요 환경변수:
 
 ```text
-KST 매일 17:00, 18:00, 19:00, 20:00
-총 4회
+GAME_ALLOWED_ORIGINS
+AUTH_RATE_LIMIT_PEPPER
+SOOP_BRIDGE_SESSION_SECRET
+SOOP_BRIDGE_RATE_LIMIT_PEPPER
+SOOP_BRIDGE_ENCRYPTION_KEY
+SOOP_DONATION_CLIENT_ID
+SOOP_DONATION_CLIENT_SECRET
+SOOP_DONATION_REDIRECT_URI
+SOOP_BRIDGE_PAGE_URL
+SUPABASE_URL
+SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
 ```
 
-현재 해석과 확정 규칙:
+## 9. 금지된 다음 단계
 
-- 각 회차는 30분 전투 + 30분 결과·보상 수령.
-- `17:00~17:30` 전투, `17:30~18:00` 결과. 이후 회차도 같은 구조.
-- 회차마다 공동 HP, 개인 도전 3회, 개인 누적 피해와 보상 수령을 독립 관리.
-- 설정은 `WORLD_BOSS_RULES.timeZone = 'Asia/Seoul'`, `scheduleHours = [17,18,19,20]`에 추가됨.
+아래는 사용자 명시 허가 전 실행 금지:
 
-2026-07-18 로컬 스케줄 연결 완료:
+1. 운영 Supabase 백업/복원 시험
+2. 운영 migration 001~009 실행
+3. 실제 시즌1 계정 import
+4. DNS/환경변수/cutover 변경
+5. Git push
+6. GitHub/Vercel/Sites 배포
+7. 점검 페이지 해제
+8. `renewal_migration_999_drop_season1.sql` 실행
+9. 시즌1 테이블/파일/DB 삭제
 
-- 순수 모듈 `src/renewal/worldboss-schedule.js`: `resolveWorldBossSlot(now)` = `{live, slot, nextSlot}`, KST 고정 UTC+9 산술, 회차 ID `noise-zero-YYYYMMDD-HH`
-- 슬롯 밖 대기 상태(`NEXT RAID STANDBY` + 다음 출현 카운트다운 + 공격 차단), 회차별 독립 진행, 정시 전환
-- 잔여 60초 미만 신규 도전 차단(`canStartAttempt`), 경계 걸친 전투는 횟수·보상 소모 없이 무효 처리
-- 경계 테스트 커버: `16:59:59`, `17:00:00`, `17:29:00`, `17:30:00`, `17:59:59`, `18:00:00`, `20:59:59`, `21:00:00`, 익일 `17:00`
-- 결과 시간 안에 미수령한 보상은 다음 정각 회차 전환 시 소멸.
+## 10. 알려진 위험과 확인점
 
-여전히 미완료(운영 단계):
+- migration 009는 정적 테스트만 통과했고 실제 Postgres에서 실행하지 않았다.
+- SOOP OAuth는 실제 client 자격증명 없이 E2E 검증하지 않았다.
+- 후원 이벤트 count 조회 오류 처리와 만료 OAuth exchange 정리 여부를 작업 7에서 재검토한다.
+- 전투력 랭킹 동률 정렬이 안정적인지 부하/동시성 테스트에서 확인한다.
+- Realtime은 표시 갱신용이다. 보상과 순위 판정 근거는 서버 RPC만 사용한다.
+- 브라우저 시계나 localStorage 값으로 포인트/보상/월드보스 결과를 확정하면 안 된다.
+- 로컬 QA 프로필 변경은 신규 revision 0 저장에만 적용된다. `?fresh`로 초기화해 확인한다.
 
-- 현재 UI의 공동 HP, 전체 참가자와 랭킹은 가짜 로컬 값이다.
-- 회차 DB·tick 함수·Edge 라우터는 로컬 작성됐지만 운영 Supabase에 실행·연결되지 않았다.
-- 운영에서는 브라우저 시간이 아니라 서버 KST 시각만 신뢰해야 한다.
+## 11. 바로 재개할 첫 명령
 
-## 7. 현재 구조에서 서버처럼 보이지만 서버가 아닌 부분
+```powershell
+cd C:\Users\silve\OneDrive\Desktop\card-gacha-renewal
+git status --short
+git diff --check
+npm.cmd test
+npm.cmd run dev
+```
 
-아래는 로컬 프로토타입이다. 공개 서비스 보안 완료로 착각하지 말 것.
+작업 5~8은 2026-07-18 완료되었다(15절). 다음 세션의 남은 작업은 작업 9 진입 준비뿐이며, 사용자 명시 허가 전에는 시작하지 않는다.
 
-- `createLocalGameService()`는 변경된 전체 스냅숏을 localStorage에 저장한다.
-- UI가 포인트, 아이템, 카드 수량과 보상 결과를 먼저 직접 변경한다.
-- 이름이 붙은 서비스 메서드도 현재는 대부분 동일한 `commit()` 호출이다.
-- `service-contract.js`와 in-memory gateway는 서버 계약 테스트용 골격이다.
-- Supabase 게임 서비스·Edge 라우터·RPC는 로컬 구현됐다. 시즌1 로그인→Supabase Auth와 UI 전환은 아직이다.
-- 월드보스 공동 HP·참가자·기여 랭킹은 로컬 시뮬레이션.
-- 전투력 랭킹은 로컬 샘플 데이터.
-- 헤더의 SOOP API 버튼은 시즌2 운영 연동 완료 상태가 아니다.
+## 15. 작업 5~8 검증 결과 (2026-07-18)
 
-공개 전에는 서버가 포인트·확률·전투·보상을 최종 판정해야 한다.
+푸시·배포·운영 migration 없이 로컬에서만 진행했다.
 
-## 8. 남은 작업 우선순위
+### 작업 5 — 로컬 UI/기능 검증
 
-### A. DB 전 로컬 필수
+- dev 서버 `scripts/dev-server.js` 포트 3300, 인앱 브라우저로 `?fresh` 접속.
+- QA 프로필 정상: MSTZ, 카드 212종 보유, 도감 212 등록, 1,000,000P, 편성 전투력 269,297.
+- 7개 메뉴(상점·강화·도감·랭킹·모험·월드보스·미니게임) 전부 렌더, 콘솔 error/warn 0.
+- 가로 overflow 0: 데스크톱 1280, 모바일 가로 844x390·740x360 전 화면.
+- 편성 다이얼로그 정상, 인벤토리 전투력 내림차순. 상점 일반/정예/프리미엄/종족 팩 x1·x10 노출.
 
-1. ~~월드보스 KST 4회 스케줄 로컬 연결과 경계 테스트.~~ (2026-07-18 완료)
-2. PDB-0 UI·UX·브랜드 최종 승인.
-3. PDB-1 완전 신규 상태 15~20분 무안내 플레이테스트.
-4. 심각도 1·2 UX 버그 0건 확인.
-5. ~~로컬 테스트 프로필을 끌 수 있는 안전한 옵션 추가.~~ (2026-07-18 완료: 신규 세이브 1회만 100만P 지급, 강제 주입 제거)
-6. 모바일 가로 `844x390`, `740x360` 7개 화면 재검수.
-7. 카드팩 10회, 강화 반복, 모험 장시간, 미니게임, 월드보스 메모리·입력 검수.
+### 작업 6 — 시즌1 이관 dry-run
 
-### B. 서비스 계약 보완
+- `scripts/dry-run-season1-import.js`는 완전 오프라인이다. 로컬 JSON `--input`만 읽고 `http(s)` 입력은 거부한다. Supabase 연결·env 사용 없음.
+- 합성(익명) fixture로 실행: 미개봉 비스트리머 삭제, 스트리머 유지, 기본 5,000P, top50 랭크 보상(30k/20k/15k/10k/5k), 카드 상태 초기화, 시리얼 폐기, 브릿지 유지, 중복 SOOP ID·잘못된 키 해시·미등록 카드 차단을 모두 확인.
+- 클린 fixture: `ok:true`, 유지 66 / 삭제 54 / 스트리머 6 / 5,000×66=330,000 기본 + 570,000 랭크보너스. 불량 fixture: 에러로 차단.
+- `tests/renewal-season1-import.test.js` 통과.
 
-PDB-13·14에서 모험·미니게임·월드보스 명령을 보완했다. 남은 서버 명령:
+### 작업 7 — 보안·동시성·부하 (정적)
 
-- 지원 보급품 사용
-- 모험·빠른 전투 초기화권 사용
-- 카드 EXP 포션 사용
-- 대표카드 설정과 카드 잠금
-- EX 마일스톤 수령
+- 클라이언트 제공 파일(index.html, bridge.html, src/renewal, styles) 비밀키 스캔 0건. service-role/SOOP secret/암호화키/브릿지 원문키/JWT 리터럴 없음.
+- Edge 3함수(game-command, session-exchange, soop-bridge) 전부 `auth: 'user'` + `userClaims.id` 강제, 미인증 401. CORS는 `GAME_ALLOWED_ORIGINS` allowlist로 게이트(미허용 origin에 `Access-Control-Allow-Origin` 미부여).
+- 동시성/멱등성: 결정론 테스트가 double-click lock, idempotency replay, revision conflict, 원자 경제, 월드보스 원자 공유 HP, SOOP event ID 멱등성을 커버(전부 통과).
+- 실부하 테스트는 운영/프리뷰 자격증명 부재로 미실시(정적+결정론 harness까지). 운영 부하 검증은 작업 9 이후 별도.
 
-`persistSnapshot`을 공개 클라이언트가 자유롭게 호출하는 구조는 제거해야 한다.
+### 작업 8 — 회귀·문서
 
-### C. Supabase 작업
+- `npm test` 전체 통과, `npm run simulate:renewal-balance` 정상(완주 상위 13일·중위 28일·하위 미완주로 분리), `git diff --check` 클린.
+- Edge 3함수 Deno typecheck 통과(`deno-bin@2.2.7 check`).
+- 본 문서와 `production/session-state/active.md` 최신화.
 
-DB 진입 승인 완료. 계정·브릿지 이관, 서버 카드·밸런스 카탈로그, 명령 기반·편성 RPC, 카드팩·강화·모험·미니게임·월드보스 RPC, 시즌1 DB 최종 삭제 SQL은 로컬 작성·정적 검증까지 완료했고 운영 Supabase에는 실행하지 않았다.
-
-권장 구현 순서:
-
-1. ~~계정·브릿지·초기 상태·카드 인벤토리·멱등성·import batch 1차 migration 작성과 로컬 검토.~~
-2. ~~212장 서버 카드 카탈로그·활성 밸런스 스냅샷·카드 FK 2차 migration 생성과 검증.~~
-3. 전체 시즌1 export로 preview 수량 대사 후 운영 실행 여부 확인.
-4. ~~멱등성·revision 공통 명령 기반, 영구 도감·감사 로그와 편성 RPC.~~
-5. ~~카드팩 구매·강화 원자 RPC.~~
-6. ~~모험·미니게임 일일 기록과 검증 로그.~~
-7. ~~월드보스 회차, 개인 시도, 공동 HP, 보상 수령 테이블.~~
-8. 나머지 보상·아이템 사용을 원자 RPC로 구현.
-9. RLS는 본인 읽기와 제한된 RPC만 허용. 클라이언트 직접 UPDATE 금지.
-10. ~~`supabase-game-service`와 인증 Edge 명령 라우터 추가.~~ UI 전환은 계정 인증과 누락 RPC 뒤 진행.
-11. 합성 계정으로 전체 플로우 검증 후 시즌1 dry-run.
-12. 사용자 승인 후에만 실제 migration 실행과 운영 import.
-13. 시즌2 API 전환·로그인/브릿지/후원 smoke test·최종 백업 뒤 `renewal_migration_999_drop_season1.sql`로 시즌1 DB 제거.
-
-현재 `gacha_s2_accounts`, `gacha_s2_player_states`, `gacha_s2_player_cards`, `gacha_s2_streamer_bridges`, `gacha_s2_card_catalog`, `gacha_s2_balance_versions`, `gacha_s2_pack_draws`, `gacha_s2_enhancement_results`, `gacha_s2_adventure_runs`, `gacha_s2_minigame_daily`, `gacha_s2_minigame_runs`, `gacha_s2_world_boss_events`, `gacha_s2_world_boss_players`, `gacha_s2_world_boss_attempts`는 migration과 테스트에 고정됐다. 이후 테이블은 구현 전 명세를 확정할 것.
-
-### D. 시즌1 계정·SOOP 이관
-
-- 기준 명세: `docs/PDB-8-SEASON1-MIGRATION-SPEC.md`.
-- 로그인 키 해시, SOOP ID, 닉네임, 기존 UUID와 가입 시각 보존.
-- 브릿지 키 SHA-256 해시, 활성 상태, 생성·최근 사용 시각을 `gacha_s2_streamer_bridges`로 이관. 키 원문 저장 금지.
-- 기존 포인트·카드·도감·시리얼·강화·아이템·편성·진행 기록 전부 초기화.
-- 시작 포인트 5,000P. 시즌1 1~10위 +30,000P, 11~20위 +20,000P, 21~30위 +15,000P, 31~40위 +10,000P, 41~50위 +5,000P.
-- 카드 보유 합계 0인 비스트리머는 시즌2 이관 제외.
-- `gacha_soop_bridge_keys` 등록 스트리머는 카드 0장이어도 계정 보존·초기화.
-- 시즌1 원본은 이관·API 전환·백업 검증 때까지만 읽기 전용. 이후 검증형 `999` SQL로 전용 테이블·RPC·스냅샷 삭제.
-- import 실패나 삭제 전 검증 실패 시 트랜잭션 전체 롤백. 삭제 SQL은 `CASCADE` 미사용.
-- 별풍선 1개당 3P 규칙은 서버에서만 계산.
-
-### E. 운영 월드보스
-
-- 서버 KST 스케줄러가 하루 4개 회차를 미리 생성.
-- 회차 ID, 시작·종료, 공동 HP와 상태를 DB에서 권위 관리.
-- 공격 RPC가 편성 스냅숏으로 피해 계산, 시도 차감과 공동 HP 감소를 단일 트랜잭션 처리.
-- 동일 요청은 멱등성 키로 한 번만 반영.
-- 공동 HP는 원자 감소 또는 행 잠금 사용.
-- 보상은 결과시간에 성공·실패와 개인 누적 피해로 판정하고 회차당 한 번만 지급.
-- Realtime은 표시 갱신용. 보상 판정 근거로 클라이언트 이벤트를 신뢰하지 않음.
-- 17·18·19·20시 동시 접속과 회차 경계 부하 테스트 필요.
-
-### F. 공개 전 검증
-
-- 클라이언트 번들 비밀키 0건.
-- 브라우저 시간·localStorage 조작으로 서버 보상 변화 없음.
-- 같은 계정 다중 탭·다중 기기 revision 충돌 처리.
-- 카드팩·강화·미니게임·월드보스 요청 연타 방지.
-- 월드보스 회차 시작 직후 동시 공격 부하 테스트.
-- 시즌1 원본·유지·제외·카드 0장 스트리머 수, 브릿지 수·해시·상태, top50 50행과 시작 포인트 총액 대사.
-- 점검 모드에서 운영 smoke test 후 사용자 승인 시에만 전환.
-
-## 9. PDB 게이트 현재 상태
-
-| 게이트 | 상태 | 비고 |
-|---|---|---|
-| PDB-0 UI·브랜드 | 미승인 | 기능은 많지만 최종 시각 승인 필요 |
-| PDB-1 무안내 플레이테스트 | 미완료 | 신규 상태 사용자 무안내 15~20분 테스트 필요 |
-| PDB-2 밸런스 | 완료 | `2026.07.18-random-loot-1` |
-| PDB-3 상태 스키마 | 완료 | v2, v1의 계정 레벨·EXP 제거 변환 포함 |
-| PDB-4 로컬 서비스 경계 | 프로토타입 완료 | 운영 서버 명령 보완 필요 |
-| PDB-5 API 계약 | 골격 완료 | 누락 명령 추가 필요 |
-| PDB-6 요청 상태 UX | 완료 | 서버 연결 후 재검증 필요 |
-| PDB-7 사전 보안·성능 | 로컬 완료 | 운영 부하 검증 별도 |
-| PDB-8 시즌1 이관 명세 | 완료 | 계정·브릿지 이관, 게임상태 초기화, 랭커 보상·최종 시즌1 DB 삭제 확정 |
-| PDB-9 DB 진입 승인 | 승인 | 1~6차 migration 로컬 작성 완료, 운영 DB 미실행 |
-| PDB-10 서버 카탈로그 | 완료 | 카드 212장·밸런스 해시·활성 버전·인벤토리 FK |
-| PDB-11 명령 기반·편성 | 완료 | 멱등 재생·revision 잠금·보유/EX 검증·영구 도감·감사 로그 |
-| PDB-12 팩 구매·강화 | 완료 | 서버 난수·활성 확률표·원자 차감/지급·파괴 초기화·service role 제한 |
-| PDB-13 모험·미니게임 | 완료 | 서버 전투 검증 경계·런 제한·원자 정산·서버 보드·입력 로그 재검산 |
-| PDB-14 월드보스 | 완료 | KST 회차·공동 HP·개인 3회·공격 감사·결과 보상·Realtime 공개 경계 |
-| PDB-15 Supabase 서비스·Edge | 로컬 완료 | JWT 사용자 ID 고정·공용 전투 검증·service-role RPC 라우팅. 운영 연결·UI 전환 미실행 |
-
-## 10. 주요 파일 지도
-
-| 역할 | 파일 |
-|---|---|
-| 전체 밸런스 단일 원본 | `src/renewal/config.js` |
-| 앱 화면·상호작용 | `src/renewal/app.js` |
-| 로컬 저장 | `src/renewal/storage.js` |
-| 상태 검증·이전 | `src/renewal/state-schema.js` |
-| 로컬 서비스 | `src/renewal/local-game-service.js` |
-| API 명령 계약 | `src/renewal/service-contract.js` |
-| 요청 상태·재시도 | `src/renewal/request-coordinator.js` |
-| 모험 런 | `src/renewal/adventure.js` |
-| 전투 계산 | `src/renewal/battle.js` |
-| 보상·행동력 | `src/renewal/rewards.js` |
-| 상점·아이템 | `src/renewal/shop.js` |
-| 강화 | `src/renewal/enhancement.js` |
-| 미니게임 규칙 | `src/renewal/minigames.js` |
-| 미니게임 UI | `src/renewal/minigame-controller.js` |
-| 월드보스 규칙 | `src/renewal/worldboss.js` |
-| 월드보스 UI | `src/renewal/worldboss-controller.js` |
-| 카드·FX | `src/renewal/card-visual.js`, `src/renewal/fx-controller.js` |
-| 카드 데이터 | `data/renewal-cards.json` |
-| 메인 HTML | `index.html` |
-| 메인 CSS | `styles/renewal/main.css` |
-| DB 전 체크리스트 | `docs/RENEWAL-PRE-DATABASE-WORKLIST.md` |
-| 밸런스 잠금 | `docs/PDB-2-BALANCE-LOCK-2026-07-17.md` |
-| 상태 스키마 v2 | `docs/PDB-3-GAME-STATE-SCHEMA-V2.md` |
-| 시즌1 계정 이관 명세 | `docs/PDB-8-SEASON1-MIGRATION-SPEC.md` |
-| 시즌2 1차 migration | `supabase/renewal_migration_001_accounts_reset.sql` |
-| 시즌2 카드·밸런스 migration | `supabase/renewal_migration_002_catalog_and_balance.sql` |
-| 시즌2 명령 기반·편성 migration | `supabase/renewal_migration_003_command_foundation.sql` |
-| 시즌2 카드팩·강화 migration | `supabase/renewal_migration_004_pack_and_enhancement.sql` |
-| 시즌2 모험·미니게임 migration | `supabase/renewal_migration_005_adventure_and_minigames.sql` |
-| 시즌2 월드보스 migration | `supabase/renewal_migration_006_world_boss.sql` |
-| 월드보스 RPC 명세 | `docs/PDB-14-WORLD-BOSS-RPC.md` |
-| Supabase 원격 어댑터 | `src/renewal/supabase-game-service.js` |
-| Edge 명령 라우터 | `supabase/functions/game-command/index.ts`, `src/renewal/server-command-router.js` |
-| PDB-15 명세 | `docs/PDB-15-SUPABASE-GAME-SERVICE.md` |
-| 시즌1 DB 최종 삭제 | `supabase/renewal_migration_999_drop_season1.sql` |
-| 최신 작업 로그 | `production/session-state/active.md` |
-
-## 11. 알려진 위험과 함정
-
-1. working tree가 매우 크고 untracked 파일이 많다. `git clean`, `reset --hard`, checkout 복구 금지.
-2. 기존 시즌1 문서의 카드 수, 등급, 포인트, 배포 상태는 시즌2에 적용되지 않는다.
-3. (2026-07-18 해소) `?fresh`가 이제 진짜 신규 상태를 만든다. localhost 프로필은 새 세이브에 100만P만 1회 지급.
-4. 월드보스 6차 migration과 Edge 전투 검증은 작성됐지만 운영 DB·UI에 연결하지 않았다. 5~10초 tick 연결 전까지 브라우저 표시는 로컬 데이터다.
-5. 월드보스 이벤트 행은 공격마다 잠긴다. 운영 전 회차 시작 집중 부하 테스트가 필요하다.
-6. 밸런스 시뮬레이션은 SOOP 후원과 실제 뽑은 카드의 편성 개선을 제외한다. 카드 EXP·중복 재료 기대량·성공률·+9 비용은 반영한다.
-7. EX는 전시 전용이다. 카드팩이나 전투 보상에 섞지 말 것.
-8. 확률표는 합계 100% 테스트가 있다. 변경 시 `BALANCE_VERSION` 증가와 전체 시뮬레이션 필수.
-9. 월드보스 운영 시간은 운영 조정 값이므로 보상 확률과 달리 밸런스 버전 증가 없이 변경 가능하지만 테스트는 필수.
-10. 모바일은 가로모드 기준이다. 세로 모바일에 맞추며 데스크톱 카드 비율을 훼손하지 말 것.
-
-## 12. Claude Code 권장 첫 작업 (2026-07-18 갱신)
-
-1. 이 문서와 `src/renewal/config.js`를 읽는다. (월드보스 스케줄·확률 개편·테스트 프로필 개편은 완료됨)
-2. 전체 시즌1 export를 확보해 계정 이관 dry-run. 유지·제외·카드 0장 스트리머 수를 승인받는다.
-3. 다음 DB 작업은 누락 원자 RPC와 시즌1 로그인→Supabase Auth 연동 명세다. 이후 `app.js`의 로컬 선계산을 서버 명령 결과로 교체한다.
-4. `npm.cmd run test:renewal`, 시뮬레이션, `git diff --check`를 실행한다.
-5. push·배포 없이 사용자에게 로컬 결과만 보고한다. (시즌1 cardgacha 레포는 셧다운 배포 완료 상태 — 재배포 금지)
+남은 제한: 실제 Postgres 실행 검증(Docker 부재), 실 SOOP OAuth E2E, 운영 부하 — 전부 작업 9 이후.

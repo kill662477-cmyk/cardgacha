@@ -629,3 +629,12 @@
 - 허용 Origin 환경변수, POST 전용, 128KiB 제한, `no-store` 적용. secret/service-role key는 브라우저에 없음
 - 자동 테스트 31묶음과 30일 성장 시뮬레이션 통과. Supabase CLI/Deno 실행·운영 DB·push·배포·UI 전환 안 함
 - 다음 작업: 누락 원자 RPC, 시즌1 로그인→Supabase Auth 연동 명세, 이후 UI 원격 명령 전환
+
+## 2026-07-18 작업 5~8 로컬 검증 (push/배포 없음)
+
+- 인수: 이 저장소가 시즌2 서버 마이그레이션 정본(HEAD d9e13e6, 작업 1~4 완료, 작업 5 중단). 이전에 다른 사본에서 진행하던 게임밸런스 작업과는 별개.
+- 작업 5: dev 서버(3300) `?fresh` 검증. MSTZ/212카드/도감212/100만P/전투력269K. 7메뉴 렌더+콘솔에러0, 데스크톱1280·모바일가로844x390/740x360 overflow0. 편성 전투력내림차순, 상점 팩 x1/x10. 미커밋 QA 4파일 로컬 커밋 dce54f8
+- 작업 6: dry-run 완전 오프라인(http 입력 거부, DB 연결 없음). 합성 fixture로 유지66/삭제54/스트리머6/기본330K+랭크보너스570K, 카드상태 초기화, 중복SOOP·잘못된해시·미등록카드 차단 확인. 클린 fixture ok:true
+- 작업 7: 클라이언트 비밀키 스캔 0건. edge 3함수 JWT강제+CORS allowlist 게이트. 멱등성/리비전/원자성은 결정론 테스트 커버. 실부하는 운영자격 부재로 제외
+- 작업 8: npm test 통과, 시뮬 완주 상13/중28/하미완주, diff clean, edge 3함수 Deno check 통과. HANDOVER 15절 + 본 파일 최신화
+- 금지 유지: push, 배포, 운영 migration, renewal_migration_999_drop_season1.sql, 작업 9 일체. 999 스크립트 디스크 존재 확인, 미실행

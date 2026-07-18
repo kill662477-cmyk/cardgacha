@@ -1,4 +1,4 @@
-import { createSupabaseContext } from '@supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import cards from '../_shared/generated/cards.json' with { type: 'json' };
 import { createServerCommandRouter } from '../_shared/generated/server-command-router.js';
 
@@ -41,6 +41,14 @@ function statusFor(body: Record<string, unknown>) {
   return 200;
 }
 
+function adminClient() {
+  return createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+}
+
 async function readLimitedText(req: Request) {
   if (!req.body) return '';
   const reader = req.body.getReader();
@@ -68,8 +76,13 @@ Deno.serve(async (req: Request) => {
   const contentLength = Number(req.headers.get('content-length') ?? 0);
   if (contentLength > MAX_BODY_BYTES) return json(req, { ok: false, code: 'VALIDATION_FAILED', message: '요청이 너무 큽니다.' }, 413);
 
-  const { data: context, error: authError } = await createSupabaseContext(req, { auth: 'user' });
-  if (authError || !context?.userClaims?.id) {
+  const jwt = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
+  if (!jwt) return json(req, { ok: false, code: 'AUTH_REQUIRED', message: '로그인이 필요합니다.' }, 401);
+  
+  const supabaseAdmin = adminClient();
+  const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(jwt);
+
+  if (userError || !user?.id) {
     return json(req, { ok: false, code: 'AUTH_REQUIRED', message: '로그인이 필요합니다.' }, 401);
   }
 
@@ -83,12 +96,12 @@ Deno.serve(async (req: Request) => {
 
   const gateway = {
     rpc: async (name: string, args: Record<string, unknown>) => {
-      const { data, error } = await (context.supabaseAdmin as any).rpc(name, args);
+      const { data, error } = await supabaseAdmin.rpc(name, args);
       if (error) throw new Error(`RPC_FAILED:${name}:${error.code ?? 'unknown'}`);
       return data;
     },
     activeBalanceVersion: async () => {
-      const { data, error } = await (context.supabaseAdmin as any)
+      const { data, error } = await supabaseAdmin
         .from('gacha_s2_balance_versions')
         .select('version')
         .eq('active', true)
@@ -97,8 +110,8 @@ Deno.serve(async (req: Request) => {
       return data?.version ?? null;
     },
   };
-  const { data: accountId, error: accountError } = await (context.supabaseAdmin as any).rpc('gacha_s2_resolve_auth_account', {
-    p_auth_user_id: context.userClaims.id,
+  const { data: accountId, error: accountError } = await supabaseAdmin.rpc('gacha_s2_resolve_auth_account', {
+    p_auth_user_id: user.id,
   });
   if (accountError || !accountId) {
     return json(req, { ok: false, code: 'AUTH_REQUIRED', message: '게임 계정 연결이 필요합니다.' }, 401);

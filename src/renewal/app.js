@@ -163,6 +163,15 @@ const SYSTEM_STATES = {
     retry: true,
     retryLabel: '안전하게 재시도',
   },
+  // Phase 1: 점검 모드 보조 상태. runtime-config.js에서 이미 본문을 가리므로
+  // 여기까지 도달하면 안 되지만, 혹시 모를 경로를 위해 정의해 둔다.
+  maintenance: {
+    eyebrow: 'MAINTENANCE',
+    title: '시즌2 점검 중',
+    message: 'SOOP 숲 로그인 복구 작업을 진행하고 있습니다. 잠시 후 다시 접속해 주세요.',
+    code: 'MAINTENANCE // SOOP AUTH RESTORE',
+    retry: false,
+  },
 };
 
 function imagePath(card) {
@@ -2118,7 +2127,7 @@ async function init() {
     });
     if (!remoteMode) {
       ensureCardProgress();
-      applyLocalTestProfile(state, cards);
+      applyLocalTestProfile(state, cards, window.location.hostname);
       ensureValidAdventureProgress();
       ensureValidFormation();
       ensureValidRepresentativeCard();
@@ -2138,4 +2147,13 @@ async function init() {
   }
 }
 
-init();
+// Phase 1 점검 가드: runtime-config.js가 점검 모드를 켰으면 앱 초기화를 중단한다.
+// 점검 오버레이는 runtime-config.js에서 이미 DOM에 주입했다.
+const __runtimeConfig = globalThis.__CARD_GACHA_CONFIG__;
+if (__runtimeConfig?.maintenanceActive) {
+  // 점검 중: 게임 셸 숨김 처리(혹시 runtime-config보다 늦게 실행된 경우 대비)
+  const shell = document.getElementById('gameShell');
+  if (shell) shell.style.display = 'none';
+} else {
+  init();
+}

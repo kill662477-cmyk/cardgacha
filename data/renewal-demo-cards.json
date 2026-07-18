@@ -1,0 +1,22 @@
+[
+  { "id": "kimyunhwan-2", "member": "김윤환", "file": "kimyunhwan-2.webp", "rarity": "SSS", "race": "저그", "archetype": "boss", "enhancement": 3, "exp": 62, "copies": 2 },
+  { "id": "kimyunhwan-1", "member": "김윤환", "file": "kimyunhwan-1.avif", "rarity": "SS", "race": "저그", "archetype": "heavy", "enhancement": 2, "exp": 41, "copies": 3 },
+  { "id": "tomato-1", "member": "토마토", "file": "tomato-1.avif", "rarity": "SS", "race": "프로토스", "archetype": "amplify", "enhancement": 1, "exp": 78, "copies": 2 },
+  { "id": "jidudu-2", "member": "지두두", "file": "jidudu-2.avif", "rarity": "S", "race": "테란", "archetype": "combo", "enhancement": 2, "exp": 35, "copies": 3 },
+  { "id": "byeonhyeonje-1", "member": "변현제", "file": "byeonhyeonje-1.avif", "rarity": "S", "race": "프로토스", "archetype": "quick", "enhancement": 1, "exp": 88, "copies": 2 },
+  { "id": "kimmincheol-3", "member": "김민철", "file": "kimmincheol-3.webp", "rarity": "A", "race": "저그", "archetype": "sustain", "enhancement": 2, "exp": 26, "copies": 3 },
+  { "id": "haetsal-2", "member": "햇살", "file": "haetsal-2.jpeg", "rarity": "A", "race": "테란", "archetype": "area", "enhancement": 1, "exp": 55, "copies": 2 },
+  { "id": "meonjin-3", "member": "먼진", "file": "meonjin-3.avif", "rarity": "B", "race": "저그", "archetype": "weaken", "enhancement": 3, "exp": 12, "copies": 3 },
+  { "id": "arisongi-2", "member": "아리송이", "file": "arisongi-2.avif", "rarity": "B", "race": "프로토스", "archetype": "amplify", "enhancement": 1, "exp": 69, "copies": 2 },
+  { "id": "sate-2", "member": "사테", "file": "sate-2.avif", "rarity": "B", "race": "테란", "archetype": "heavy", "enhancement": 0, "exp": 100, "copies": 1 },
+  { "id": "baeseongheum-1", "member": "배성흠", "file": "baeseongheum-1.avif", "rarity": "C", "race": "저그", "archetype": "heavy", "enhancement": 2, "exp": 38, "copies": 3 },
+  { "id": "sojuyang-2", "member": "소주양", "file": "sojuyang-2.avif", "rarity": "C", "race": "테란", "archetype": "area", "enhancement": 1, "exp": 77, "copies": 2 },
+  { "id": "chiri-4", "member": "치리", "file": "chiri-4.avif", "rarity": "C", "race": "저그", "archetype": "quick", "enhancement": 0, "exp": 48 },
+  { "id": "arisongi-3", "member": "아리송이", "file": "arisongi-3.avif", "rarity": "D", "race": "프로토스", "archetype": "combo", "enhancement": 2, "exp": 20, "copies": 3 },
+  { "id": "kimmincheol-4", "member": "김민철", "file": "kimmincheol-4.avif", "rarity": "D", "race": "저그", "archetype": "boss", "enhancement": 1, "exp": 64, "copies": 2 },
+  { "id": "juharang-3", "member": "주하랑", "file": "juharang-3.webp", "rarity": "D", "race": "프로토스", "archetype": "sustain", "enhancement": 0, "exp": 31 },
+  { "id": "chiri-3", "member": "치리", "file": "chiri-3.webp", "rarity": "E", "race": "저그", "archetype": "quick", "enhancement": 1, "exp": 43, "copies": 3 },
+  { "id": "haetsal-1", "member": "햇살", "file": "haetsal-1.avif", "rarity": "E", "race": "테란", "archetype": "area", "enhancement": 0, "exp": 85, "copies": 2 },
+  { "id": "parkjuno-3", "member": "박준오", "file": "parkjuno-3.avif", "rarity": "F", "race": "저그", "archetype": "boss", "enhancement": 2, "exp": 300, "copies": 2 },
+  { "id": "parksubeom-4", "member": "박수범", "file": "parksubeom-4.avif", "rarity": "F", "race": "프로토스", "archetype": "weaken", "enhancement": 1, "exp": 58, "copies": 2 }
+]

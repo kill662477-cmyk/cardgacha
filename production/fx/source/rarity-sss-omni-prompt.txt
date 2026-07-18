@@ -1,0 +1,11 @@
+Create a 6-second premium SSS-rarity reveal animation from <FIRST_FRAME>.
+
+Single continuous unbroken shot. No scene cuts. Perfectly centered front-facing camera. The camera moves only straight forward into the exact center with a slow controlled push-in; absolutely no diagonal drift, pan, tilt, orbit, or shake.
+
+[0-2s] Preserve the exact industrial reactor design and composition. The outer cyan diagnostic ring rotates clockwise while the inner acid-lime segmented ring rotates counterclockwise. Thin cyan and acid-lime electrical filaments race continuously around the circular rails. Small precision sparks travel along the metal grooves. Steam jets pulse symmetrically.
+
+[2-4.8s] Energy builds progressively. Electrical arcs jump between the three mechanical iris layers, always following the circular machinery. The lime core rails brighten in rhythmic waves. The central aperture stays perfectly dark, empty, circular, and stable for a portrait card overlay. Mechanical iris segments subtly lock inward without closing the aperture.
+
+[4.8-6s] Critical signal lock. Rotation accelerates, radial light rays sharpen, and the near-white inner ring overloads in two powerful flashes. At 5.6 seconds deliver one hard synchronized white-green energy impact, then settle immediately to the same centered dark aperture for transition to the live card.
+
+Premium Korean broadcast-tech game cinematic, realistic gunmetal machinery, rich temporal motion, crisp electrical detail, restrained industrial spectacle. Preserve all geometry from the reference image. No fantasy portal, no organic deformation, no new objects, no people, no card, no text, no logo, no letters, no numbers, no UI, no dialogue, no music. Sound design only: low reactor hum, rotating servo machinery, electric crackle rising in intensity, one deep metallic energy impact at 5.6 seconds.

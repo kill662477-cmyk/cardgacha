@@ -1,0 +1,28 @@
+{
+  "portrait": {
+    "master": {
+      "width": 2000,
+      "height": 2800,
+      "photoOpening": {
+        "x": 68,
+        "y": 68,
+        "width": 1864,
+        "height": 2664,
+        "cornerCut": 16
+      }
+    },
+    "runtime": {
+      "width": 1000,
+      "height": 1400,
+      "photoOpening": {
+        "x": 34,
+        "y": 34,
+        "width": 932,
+        "height": 1332,
+        "cornerCut": 8
+      }
+    },
+    "photoFit": "cover",
+    "photoPosition": "center 22%"
+  }
+}

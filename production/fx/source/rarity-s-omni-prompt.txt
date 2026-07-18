@@ -1,0 +1,11 @@
+Create a 5-second premium S-rarity reveal animation from <FIRST_FRAME>.
+
+Single continuous unbroken shot. No scene cuts. Perfectly centered front-facing camera. Move only straight forward into the exact center with a restrained slow push-in. No diagonal drift, pan, tilt, orbit, or shake.
+
+[0-2s] Preserve the exact orange industrial broadcast gate. The segmented mechanical ring rotates slowly clockwise. Thin amber electrical currents travel around the circular rails. Small sparks trace the metal grooves and light smoke breathes symmetrically from the machinery.
+
+[2-4.2s] The amber energy gathers toward the inner ring in clean rhythmic pulses. Mechanical locks engage one after another around the circle. Keep the central aperture perfectly dark, empty, circular, and stable for a portrait card overlay.
+
+[4.2-5s] Deliver one crisp orange-white signal flash and a compact metallic impact, then settle immediately back to the centered dark aperture.
+
+Premium Korean broadcast-tech game cinematic, realistic dark gunmetal machinery, controlled industrial energy. Preserve all geometry from the reference image. This is S rarity: impressive but clearly below the SS gold-cyan double seal and the SSS acid-lime reactor. No fantasy portal, no organic deformation, no new objects, no people, no card, no text, no logo, no letters, no numbers, no UI, no dialogue, no music. Sound design only: low machinery hum, restrained servo rotation, amber electric crackle, one compact metallic energy impact.

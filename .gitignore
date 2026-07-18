@@ -6,3 +6,5 @@ node_modules
 *.log
 .env*
 .bridge-keys/
+.zcode/
+trailer-output/

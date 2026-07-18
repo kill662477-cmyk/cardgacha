@@ -1,11 +1,17 @@
 {
-  "name": "card-gacha",
-  "version": "1.0.0",
+  "name": "card-gacha-season-2",
+  "version": "2.0.0",
   "private": true,
-  "description": "캄몬스타즈 크루 카드뽑기(가챠) 웹앱",
+  "description": "카드가챠 시즌2 웹 게임",
   "scripts": {
-    "build-cards": "node scripts/build-cards.js",
-    "dev": "node scripts/dev-server.js"
+    "sync:renewal-card-staging": "node scripts/sync-renewal-card-staging.js && node scripts/assign-renewal-rarities.js && node scripts/build-renewal-content.js",
+    "build:renewal-content": "node scripts/build-renewal-content.js",
+    "start": "node scripts/dev-server.js",
+    "dev": "node scripts/dev-server.js",
+    "simulate:renewal-balance": "node --no-warnings scripts/simulate-renewal-growth.js",
+    "dry-run:season1-import": "node scripts/dry-run-season1-import.js",
+    "test": "npm run test:renewal",
+    "test:renewal": "node tests/renewal-config.test.js && node tests/renewal-state-schema.test.js && node tests/renewal-game-service.test.js && node tests/renewal-service-contract.test.js && node tests/renewal-request-coordinator.test.js && node tests/renewal-security.test.js && node tests/renewal-season1-import.test.js && node tests/renewal-database-migration.test.js && node tests/renewal-repository-hygiene.test.js && node tests/renewal-battle.test.js && node tests/renewal-adventure.test.js && node tests/renewal-bonus-loot.test.js && node tests/renewal-balance.test.js && node tests/renewal-rewards.test.js && node tests/renewal-enhancement.test.js && node tests/renewal-collection.test.js && node tests/renewal-shop.test.js && node tests/renewal-content.test.js && node tests/renewal-minigames.test.js && node tests/renewal-worldboss.test.js && node tests/renewal-rankings.test.js && node tests/renewal-card-visual.test.js && node tests/renewal-fx.test.js"
   },
   "engines": {
     "node": ">=18"

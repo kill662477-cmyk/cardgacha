@@ -1,9 +1,0 @@
-{
-  "redirects": [
-    {
-      "source": "/:path((?!maintenance\\.html|assets/).*)",
-      "destination": "/maintenance.html",
-      "permanent": false
-    }
-  ]
-}

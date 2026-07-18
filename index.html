@@ -1,1716 +1,559 @@
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>캄몬스타즈 카드뽑기</title>
-<meta name="description" content="캄몬스타즈 크루 카드를 뽑고 도감을 완성하세요." />
-<!-- 파비콘 -->
-<link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png" />
-<link rel="apple-touch-icon" href="assets/favicon-192.png" />
-<!-- OG / 트위터 카드. 배포 후 아래 도메인을 실제 도메인으로 교체하세요 (og:image 는 절대 URL 이어야 미리보기가 뜹니다). -->
-<meta property="og:type" content="website" />
-<meta property="og:title" content="Calm MonstarZ 카드뽑기" />
-<meta property="og:description" content="캄몬스타즈 크루 카드를 뽑고 도감을 완성하세요." />
-<meta property="og:image" content="https://card-gacha.vercel.app/assets/card-back.jpg" />
-<meta property="og:url" content="https://card-gacha.vercel.app/" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Calm MonstarZ 카드뽑기" />
-<meta name="twitter:description" content="캄몬스타즈 크루 카드를 뽑고 도감을 완성하세요." />
-<meta name="twitter:image" content="https://card-gacha.vercel.app/assets/card-back.jpg" />
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.20/400.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.20/700.css" />
-<style>
-  :root{
-    /* dark theme lock - near-black navy/zinc base, single electric-blue accent */
-    --bg0:#080b16; --bg1:#0b0f20; --bg2:#111631;
-    --panel:#0f1428; --panel-2:#141a34;
-    --brd:rgba(70,120,220,.18); --brd-2:rgba(90,150,255,.34);
-    --accent:#33ccff; --accent-ink:#04141d; --accent-soft:rgba(51,204,255,.12);
-    --txt:#eef3ff; --muted:#93a1c9; --dim:#5a6690;
-    --ok:#3df0a6; --warn:#ffcf4a; --bad:#ff5d72;
-    --radius:12px;
-    --font-display:'Pretendard Variable','Pretendard',system-ui,-apple-system,sans-serif;
-    --font-body:'Pretendard Variable','Pretendard',system-ui,sans-serif;
-    --font-mono:'JetBrains Mono',ui-monospace,'Cascadia Code',Consolas,monospace;
-    /* rarity ramp: gray -> blue -> gold -> magenta -> holo */
-    --r-C:#8b93a7; --r-U:#57d98a; --r-R:#41a6ff; --r-RR:#6f8dff; --r-RRR:#9d7bff;
-    --r-AR:#c15bff; --r-CHR:#ff6fd6; --r-HR:#ff6b6b; --r-SR:#ffcf4a; --r-SAR:#ffab2e;
-    --r-UR:#ff4fa3; --r-MUR:#22e6ff; --r-FUR:#ff3df0;
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;padding:0}
-  body{
-    font-family:var(--font-body);
-    background:
-      radial-gradient(1100px 640px at 12% -8%, rgba(51,204,255,.10), transparent 60%),
-      radial-gradient(900px 620px at 96% 2%, rgba(51,204,255,.06), transparent 55%),
-      linear-gradient(180deg,var(--bg0),var(--bg1) 45%,var(--bg0));
-    background-attachment:fixed; color:var(--txt); min-height:100vh; line-height:1.45;
-    padding-bottom:86px; letter-spacing:-.01em;
-  }
-  h1,h2,h3{font-family:var(--font-display);font-weight:800;letter-spacing:-.02em;margin:0}
-  .wrap{max-width:980px;margin:0 auto;padding:16px}
-  .hidden{display:none!important}
-  a{color:var(--accent)}
-  button{font-family:inherit;cursor:pointer;color:inherit}
-  .mono{font-family:var(--font-mono)}
-  .muted{color:var(--muted)} .dim{color:var(--dim)} .center{text-align:center}
-
-  /* sticky top (ticker + topbar) */
-  .stickytop{position:sticky;top:0;z-index:30}
-  .topbar{backdrop-filter:blur(12px);
-    background:linear-gradient(180deg,rgba(8,11,22,.94),rgba(8,11,22,.62));
-    border-bottom:1px solid var(--brd)}
-
-  /* announcement ticker (functional MMO-style rare drop feed) */
-  .ticker{overflow:hidden;white-space:nowrap;background:#0a0f22;border-bottom:1px solid var(--brd-2);
-    height:34px;display:flex;align-items:center;position:relative}
-  .ticker::before{content:"RARE DROP";position:absolute;left:0;top:0;bottom:0;z-index:2;display:flex;align-items:center;
-    padding:0 12px;font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--accent-ink);
-    background:var(--accent)}
-  .ticker-track{display:inline-flex;gap:34px;will-change:transform;
-    animation:marquee 25s linear infinite}
-  .ticker:hover .ticker-track{animation-play-state:paused}
-  @keyframes marquee{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
-  .ti{font-size:13px;font-weight:600;color:var(--muted);flex:0 0 auto}
-  .ti b{font-weight:800}
-  .ti .who{color:var(--txt)}
-  .ti-UR b{color:var(--r-UR)} .ti-MUR b{color:var(--r-MUR)}
-  .ti-FUR b{background:linear-gradient(90deg,#ff3df0,#ffcf4a,#3df0a6,#33ccff,#9d7bff);
-    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
-    background-size:220% 100%;animation:holoslide 3s linear infinite}
-  .ticker.reduce .ticker-track{animation:none;transform:none}
-  .ticker.leaderboard{background:#162019;color:#f8fbf3}
-  .ticker.leaderboard::before{content:attr(data-label);background:#e4ff5b;color:#18231b}
-  .rank-ti{display:inline-flex;align-items:center;gap:7px;min-width:220px;font-family:var(--font-mono);font-size:12px;font-weight:700;letter-spacing:0;flex:0 0 auto}
-  .rank-ti .rank-no{display:inline-flex;align-items:center;justify-content:center;width:24px;height:18px;border:1px solid currentColor;font-size:10px;font-weight:900}
-  .rank-ti .rank-name{color:#fff;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rank-ti .rank-score{margin-left:auto;color:#d7e1d4;font-size:11px}
-  .rank-ti.rank-1{color:#ffe36a}.rank-ti.rank-2{color:#d9e1e7}.rank-ti.rank-3{color:#e5a66e}
-  .topbar .wrap{display:flex;align-items:center;justify-content:space-between;padding:13px 16px}
-  .brand{font-family:var(--font-display);font-weight:900;font-size:19px;color:#fff;letter-spacing:-.03em}
-  .brand span{color:var(--accent)}
-  .points{display:flex;align-items:center;gap:7px;font-family:var(--font-mono);font-weight:700;
-    background:var(--accent-soft);border:1px solid var(--brd-2);padding:7px 14px;border-radius:999px}
-  .points b{color:var(--accent);font-size:15px}
-  .points i{font-style:normal;color:var(--muted);font-size:12px}
-  .user-nick{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:800;color:var(--txt)}
-  .icon-btn{background:transparent;border:1px solid var(--brd);color:var(--muted);
-    border-radius:var(--radius);padding:7px 12px;font-weight:600;font-size:13px;transition:border-color .15s,color .15s}
-  .icon-btn:hover{border-color:var(--brd-2);color:var(--txt)}
-  /* ===== BGM 풀 플레이어 (헤더 인라인 / 모바일 접힘) — 헤더 디자인 토큰 그대로 사용 ===== */
-  .bgm{position:relative;display:flex;align-items:center}
-  .bgm-fold{display:none;width:34px;padding:7px 0;justify-content:center}
-  .bgm-fold.on{border-color:var(--brd-2);color:var(--accent)}
-  .bgm-panel{display:flex;align-items:center;gap:8px}
-  .bgm-pp{background:transparent;border:1px solid var(--brd);color:var(--muted);border-radius:var(--radius);
-    width:30px;height:30px;font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
-    transition:border-color .15s,color .15s;flex:0 0 auto}
-  .bgm-pp:hover{border-color:var(--brd-2);color:var(--txt)}
-  .bgm-pp.playing{color:var(--accent);border-color:var(--brd-2)}
-  .bgm-sel{max-width:158px;background:var(--panel-2);border:1px solid var(--brd);color:var(--txt);border-radius:var(--radius);
-    padding:6px 8px;font-size:12px;font-family:inherit;cursor:pointer;outline:none;transition:border-color .15s}
-  .bgm-sel option{background:var(--panel-2);color:var(--txt)}
-  .bgm-sel:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-  .bgm-vol{display:flex;align-items:center;gap:6px}
-  .bgm-vol-ico{font-size:12px;opacity:.75}
-  #bgmVol{width:84px;accent-color:var(--accent);cursor:pointer;height:4px}
-  @media(max-width:768px){
-    .bgm-fold{display:flex;align-items:center}
-    .bgm-panel{position:absolute;top:calc(100% + 10px);right:0;flex-direction:column;align-items:stretch;gap:12px;
-      background:var(--panel-2);border:1px solid var(--brd-2);border-radius:var(--radius);padding:14px;min-width:210px;
-      box-shadow:0 14px 34px rgba(0,0,0,.55);z-index:60;display:none}
-    .bgm.open .bgm-panel{display:flex}
-    .bgm-panel .bgm-pp{width:100%;height:32px}
-    .bgm-sel{max-width:none;width:100%}
-    .bgm-vol{justify-content:space-between}
-    #bgmVol{flex:1;width:auto}
-  }
-
-  /* surfaces */
-  .panel{background:var(--panel);border:1px solid var(--brd);border-radius:var(--radius);padding:18px}
-  .grid{display:grid;gap:14px}
-  input[type=text]{width:100%;background:#0a0e1e;border:1px solid var(--brd);color:var(--txt);
-    border-radius:var(--radius);padding:13px 14px;font-size:16px;font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s}
-  input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-  label.fld{display:block;font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:600}
-  /* accent CTA - AA contrast: dark ink on bright cyan */
-  .cta{width:100%;border:none;border-radius:var(--radius);padding:14px;font-weight:800;font-size:16px;
-    font-family:var(--font-display);letter-spacing:-.01em;color:var(--accent-ink);background:var(--accent);
-    transition:transform .12s,filter .15s}
-  .cta:hover{filter:brightness(1.08)} .cta:active{transform:scale(.985)}
-  .cta:disabled{filter:grayscale(.6) brightness(.55);cursor:not-allowed}
-  .cta.sub{background:transparent;color:var(--txt);border:1px solid var(--brd-2)}
-  .cta.sub:hover{filter:none;background:var(--panel-2)}
-  .divider{display:flex;align-items:center;gap:12px;color:var(--dim);margin:20px 0;font-size:12px}
-  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--brd)}
-
-  .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);z-index:120;
-    background:#0c1124;border:1px solid var(--brd-2);color:var(--txt);padding:12px 18px;border-radius:var(--radius);
-    font-weight:600;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;max-width:88vw;text-align:center}
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(-8px)}
-  .toast.err{border-color:var(--bad);color:#ffd7dc}
-
-  /* rarity badge (mono, semantic multi-color allowed) */
-  .rb{display:inline-block;font-family:var(--font-mono);font-weight:700;font-size:11px;
-    padding:2px 7px;border-radius:6px;color:#06101a;line-height:1.3}
-  .rb-C{background:var(--r-C)} .rb-U{background:var(--r-U)} .rb-R{background:var(--r-R)}
-  .rb-RR{background:var(--r-RR)} .rb-RRR{background:var(--r-RRR)} .rb-AR{background:var(--r-AR)}
-  .rb-CHR{background:var(--r-CHR)} .rb-HR{background:var(--r-HR)} .rb-SR{background:var(--r-SR)}
-  .rb-SAR{background:var(--r-SAR)} .rb-UR{background:var(--r-UR)} .rb-MUR{background:var(--r-MUR)}
-  .rb-FUR{color:#fff;background:linear-gradient(90deg,#ff3df0,#ffcf4a,#3df0a6,#33ccff,#9d7bff);
-    background-size:280% 100%;animation:holoslide 3s linear infinite}
-  @keyframes holoslide{to{background-position:280% 0}}
-
-  /* auth */
-  .auth-shell{max-width:440px;margin:7vh auto 0}
-  .auth-shell h2{font-size:23px;margin:0 0 4px}
-  /* SOOP(숲) 브랜드 로그인 버튼 - 숲=forest green, 사이트 시안 액센트와 구분 */
-  .soop-cta{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:6px;
-    background:linear-gradient(135deg,#00c473,#0aa757);color:#04140b;text-decoration:none;
-    box-shadow:0 6px 20px rgba(0,196,115,.28)}
-  .soop-cta:hover{filter:brightness(1.06);transform:translateY(-1px)}
-  .soop-cta:active{transform:scale(.985)}
-  .soop-mark{font-family:var(--font-mono);font-weight:800;letter-spacing:.06em;font-size:13px;
-    background:rgba(4,20,11,.22);padding:2px 8px;border-radius:6px}
-  .key-login{margin-top:22px;border-top:1px solid var(--brd);padding-top:14px}
-  .key-login>summary{cursor:pointer;color:var(--dim);font-size:13px;list-style:none;user-select:none}
-  .key-login>summary::-webkit-details-marker{display:none}
-  .key-login>summary:hover{color:var(--muted)}
-  .key-login[open]>summary{color:var(--txt);margin-bottom:10px}
-  .key-modal{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
-    padding:20px;background:rgba(2,8,14,.72);backdrop-filter:blur(4px)}
-  .key-modal .auth-shell{margin:0;width:100%}
-  /* 안내 모달 본문 */
-  .guide-body .guide-row{margin:0 0 12px;padding-bottom:12px;border-bottom:1px solid var(--brd)}
-  .guide-body .guide-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
-  .guide-body .guide-row>b{display:block;font-size:14px;margin-bottom:4px}
-  .guide-body .guide-row>p{font-size:13px;line-height:1.6;color:var(--muted);margin:0}
-  .guide-body ul{margin:4px 0 0;padding-left:18px}
-  .guide-body ul li{font-size:12.5px;line-height:1.7;color:var(--muted)}
-  .guide-dismiss{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);margin-top:8px;cursor:pointer;user-select:none}
-  .guide-dismiss input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
-
-  /* shop - asymmetric bento */
-  .attend-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
-  .attend-bar .lbl{font-size:13px;color:var(--muted)}
-  .attend-bar .amt{font-family:var(--font-mono);font-weight:700;font-size:18px;color:var(--accent)}
-  .sec-title{font-size:18px;margin:8px 2px 12px}
-  .bento{display:grid;gap:14px;grid-template-columns:1fr}
-  @media(min-width:760px){.bento{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));grid-auto-rows:1fr}}
-  .pack{position:relative;overflow:hidden;background:var(--panel);border:1px solid var(--brd);
-    border-radius:var(--radius);padding:18px;display:flex;flex-direction:column}
-  .pack .kname{font-size:19px;font-weight:800}
-  .pack .kprice{font-family:var(--font-mono);font-weight:700;color:var(--accent);font-size:14px;margin-top:2px}
-  .pack .guar{align-self:flex-start;font-family:var(--font-mono);font-size:11px;font-weight:700;
-    padding:3px 9px;border-radius:999px;border:1px solid var(--warn);color:var(--warn);margin:10px 0}
-  .pack .guar-placeholder{visibility:hidden}
-  details.odds{margin:6px 0 14px;font-size:12px}
-  details.odds summary{cursor:pointer;color:var(--dim);list-style:none;user-select:none}
-  details.odds summary::-webkit-details-marker{display:none}
-  .oddsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:5px;margin-top:9px}
-  .oddsgrid span{display:flex;justify-content:space-between;gap:4px;background:#0a0e1e;border-radius:6px;
-    padding:3px 6px;font-family:var(--font-mono);font-size:11px}
-  .pack-hero{border-color:var(--brd-2)}
-  .pack-hero::before{content:"";position:absolute;inset:0;pointer-events:none;
-    background:radial-gradient(420px 260px at 78% -10%,rgba(51,204,255,.14),transparent 60%)}
-  .pack .spacer{flex:1;min-height:6px}
-  .pack-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .pack-actions .cta{min-width:0;padding:10px 7px;font-size:12px;line-height:1.2;white-space:normal}
-  .pack-actions .cta small{display:block;margin-top:3px;font-family:var(--font-mono);font-size:10px;font-weight:800;opacity:.78}
-  .pack-art{width:100%;max-height:172px;object-fit:contain;display:block;margin:8px auto 4px;
-    filter:drop-shadow(0 12px 14px rgba(0,0,0,.38))}
-
-  /* TCG tile 5:7 */
-  .tile{position:relative;border-radius:var(--radius);overflow:hidden;background:#0a0e1e;
-    border:1.5px solid var(--brd);aspect-ratio:5/7}
-  .tile .card-art,.revface .card-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-  .tile .card-art:is([src$="amharang-1.avif"],[src$="amjjiking-1.png"],[src$="amtaming-1.avif"],[src$="amnangni-1.avif"]),
-  .revface .card-art:is([src$="amharang-1.avif"],[src$="amjjiking-1.png"],[src$="amtaming-1.avif"],[src$="amnangni-1.avif"]),
-  .detail-card img:is([src$="amharang-1.avif"],[src$="amjjiking-1.png"],[src$="amtaming-1.avif"],[src$="amnangni-1.avif"]){object-fit:contain;background:#080b16}
-  .tile .card-art[src$="amjuyang-1.avif"],.revface .card-art[src$="amjuyang-1.avif"],.detail-card img[src$="amjuyang-1.avif"]{
-    object-fit:contain;background:#080b16;transform:rotate(90deg) scale(.74);transform-origin:center}
-  .card-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;z-index:2;pointer-events:none}
-  .tile .cap{position:absolute;left:0;right:0;bottom:0;padding:6px 8px;
-    background:linear-gradient(180deg,transparent,rgba(4,6,16,.94));
-    display:flex;align-items:center;justify-content:space-between;gap:4px;z-index:3}
-  .cap-meta{display:flex;align-items:center;gap:4px;min-width:0}
-  .race-tag{display:inline-flex;align-items:center;justify-content:center;flex:none;border:1px solid currentColor;border-radius:2px;padding:1px 3px;font-family:var(--font-mono);font-size:9px;font-weight:800;line-height:1.15;white-space:nowrap}
-  .race-zerg{color:#c73657;background:#fff3f5}.race-terran{color:#227c78;background:#effcfa}.race-protoss{color:#8a6113;background:#fff7d8}
-  .tile .nm{font-weight:700;font-size:13px;text-shadow:0 1px 3px #000}
-  .tile .qty{position:absolute;top:6px;right:6px;z-index:4;background:rgba(4,6,16,.82);border:1px solid var(--brd-2);
-    border-radius:999px;font-family:var(--font-mono);font-size:11px;font-weight:700;padding:1px 8px}
-  .tile .newb{position:absolute;top:6px;left:6px;z-index:4;background:var(--accent);color:var(--accent-ink);font-weight:800;
-    font-family:var(--font-mono);font-size:10px;padding:2px 7px;border-radius:6px}
-  .glow-SR,.glow-SAR{border-color:var(--r-SR);box-shadow:0 0 16px rgba(255,207,74,.5)}
-  .glow-UR{border-color:var(--r-UR);box-shadow:0 0 16px rgba(255,79,163,.55)}
-  .glow-MUR{border-color:var(--r-MUR);box-shadow:0 0 18px rgba(34,230,255,.55)}
-  .glow-FUR{border-color:#fff;box-shadow:0 0 24px rgba(255,61,240,.5),0 0 40px rgba(51,204,255,.34)}
-
-  /* ranking */
-  .rank-item{display:flex;align-items:center;padding:14px;border-radius:12px;background:rgba(10,14,30,.6);border:1px solid var(--brd);margin-bottom:10px;backdrop-filter:blur(10px);transition:all .2s}
-  .rank-item:hover{transform:translateY(-2px);background:rgba(10,14,30,.8);border-color:var(--brd-2)}
-  .rank-num{font-family:var(--font-mono);font-size:22px;font-weight:900;width:40px;text-align:center;color:var(--dim)}
-  .rank-nick{flex:1;font-size:16px;font-weight:700;margin-left:12px}
-  .rank-score{font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--accent)}
-  .rank-1{border-color:rgba(255,215,0,.6);box-shadow:0 0 15px rgba(255,215,0,.15);background:linear-gradient(90deg,rgba(255,215,0,.08),transparent)}
-  .rank-1 .rank-num{color:#ffd700;text-shadow:0 0 8px rgba(255,215,0,.5)}
-  .rank-2{border-color:rgba(192,192,192,.5);background:linear-gradient(90deg,rgba(192,192,192,.06),transparent)}
-  .rank-2 .rank-num{color:#c0c0c0}
-  .rank-3{border-color:rgba(205,127,50,.5);background:linear-gradient(90deg,rgba(205,127,50,.06),transparent)}
-  .rank-3 .rank-num{color:#cd7f32}
-  .rank-me{display:flex;align-items:center;gap:12px;padding:14px;margin:0 0 14px;border:1px solid var(--accent);background:var(--accent-soft);border-radius:var(--radius)}
-  .rank-me .rank-num{color:var(--accent);width:auto;min-width:48px}.rank-me .rank-score{font-size:16px}.rank-me-label{font-size:11px;color:var(--muted);font-weight:700}
-
-  @media(max-width:620px){.topbar .wrap{flex-wrap:wrap;gap:8px}.topbar .brand{width:100%}#userbar{width:100%;justify-content:space-between}.user-nick{max-width:120px}.points{padding:6px 10px}.icon-btn{padding:6px 9px}}
-
-  /* collection */
-  .col-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
-  .col-head .stat{font-family:var(--font-mono);font-weight:700}
-  .col-head .stat b{color:var(--accent)}
-  .filters{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
-  .chip{border:1px solid var(--brd);background:#0a0e1e;color:var(--muted);border-radius:999px;
-    padding:5px 12px;font-size:12px;font-weight:700;font-family:var(--font-mono);transition:all .15s}
-  .chip.on{color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
-  .col-section{display:flex;align-items:center;gap:14px;margin:34px 0 6px}
-  .col-section:first-child{margin-top:8px}
-  .col-section h2{font-size:15px;font-weight:800;letter-spacing:.14em;white-space:nowrap;font-family:var(--font-mono);text-transform:uppercase}
-  .col-section .cs-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,currentColor,transparent);opacity:.5}
-  .col-section-crew{color:var(--accent)}
-  .memhead{display:flex;align-items:center;gap:10px;margin:22px 0 10px}
-  .memhead h3{font-size:16px}
-  .memhead .mc{font-family:var(--font-mono);font-size:12px;color:var(--dim)}
-  .colgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-  @media(min-width:560px){.colgrid{grid-template-columns:repeat(4,1fr)}}
-  @media(min-width:860px){.colgrid{grid-template-columns:repeat(6,1fr)}}
-  .tile.locked img{filter:grayscale(1) brightness(.26)}
-  .tile.locked .card-art{filter:none}
-  .tile.locked::after{content:"";position:absolute;inset:0;z-index:1;background:rgba(3,6,14,.38);pointer-events:none}
-  .tile.locked .nm{color:var(--dim)}
-  .empty{padding:36px 16px;text-align:center;color:var(--dim);font-size:14px}
-  .col-actions{display:flex;gap:8px;align-items:center;margin-top:12px}
-  .small-btn{border:1px solid var(--brd-2);border-radius:6px;background:transparent;color:var(--muted);padding:6px 9px;font-size:12px;font-weight:700}
-  .small-btn:hover{color:var(--txt);border-color:var(--accent)}
-  .small-btn:disabled{opacity:.45;cursor:not-allowed}
-  .memhead .small-btn{margin-left:auto}
-  .detail-modal{position:fixed;inset:0;z-index:130;display:flex;align-items:center;justify-content:center;padding:16px}
-  .detail-backdrop{position:absolute;inset:0;background:rgba(1,3,10,.78);backdrop-filter:blur(8px)}
-  .detail-panel{position:relative;width:min(520px,100%);max-height:calc(100vh - 32px);overflow:auto;background:var(--panel);border:1px solid var(--brd-2);border-radius:var(--radius);padding:18px}
-  .detail-close{position:absolute;right:12px;top:12px;width:34px;height:34px;border:1px solid var(--brd);border-radius:6px;background:#0a0e1e;color:var(--muted);font-size:20px;line-height:1}
-  .detail-card{width:min(210px,58vw);aspect-ratio:5/7;position:relative;overflow:hidden;border-radius:var(--radius);margin:0 auto 16px;background:#090d1d}
-  .detail-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-  .detail-card .card-frame{z-index:2}.detail-card .detail-name{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:10px;background:linear-gradient(transparent,rgba(3,5,12,.94));font-weight:800}
-  .detail-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.detail-meta div{background:#0a0e1e;border:1px solid var(--brd);border-radius:6px;padding:9px}.detail-meta span{display:block;font-size:11px;color:var(--dim);margin-bottom:3px}
-  .detail-actions{display:grid;gap:8px;margin-top:14px}
-
-  /* skeleton */
-  .sk{background:linear-gradient(90deg,#0e1430 25%,#151d3d 37%,#0e1430 63%);background-size:400% 100%;
-    animation:shimmer 1.3s ease infinite;border-radius:var(--radius)}
-  @keyframes shimmer{to{background-position:-140% 0}}
-  .sk-tile{aspect-ratio:5/7}
-
-  /* pack opening - the signature */
-  .opening{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;
-    background:radial-gradient(circle at 50% 38%,rgba(14,20,52,.97),rgba(4,6,16,.99));padding:18px}
-  .opening.show{display:flex}
-  .fx-intro{position:fixed;inset:0;z-index:120;display:none;background:#03030a;overflow:hidden}
-  .fx-intro.show{display:block;animation:fxFade .22s ease both}
-  .fx-intro video{width:100%;height:100%;object-fit:cover;display:block}
-  @keyframes fxFade{from{opacity:0}to{opacity:1}}
-  .opening.shake,.special.shake{animation:shake .5s ease}
-  @keyframes shake{0%,100%{transform:translate(0,0)}20%{transform:translate(-7px,4px)}40%{transform:translate(6px,-5px)}
-    60%{transform:translate(-5px,-3px)}80%{transform:translate(4px,4px)}}
-  .revarea{width:100%;max-width:860px;text-align:center;perspective:1200px}
-  .revrow{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-bottom:22px;min-height:230px;align-items:center}
-  .rev{width:132px;display:flex;flex-direction:column;align-items:center;gap:7px}
-  .revcard{width:100%;aspect-ratio:5/7;border-radius:var(--radius);position:relative;transform-style:preserve-3d;
-    transform:rotateY(180deg);opacity:.001;transition:transform .55s cubic-bezier(.2,.7,.2,1),opacity .2s}
-  .rev.flip .revcard{transform:rotateY(0);opacity:1}
-  .revface,.revback{position:absolute;inset:0;border-radius:var(--radius);overflow:hidden;backface-visibility:hidden}
-  .revback{transform:rotateY(180deg);overflow:hidden;
-    background:
-      radial-gradient(circle at 50% 42%, rgba(51,204,255,.30), transparent 64%),
-      repeating-linear-gradient(135deg, rgba(255,255,255,.035) 0 8px, transparent 8px 16px),
-      linear-gradient(160deg,#182247,#0d1330);
-    border:1.5px solid rgba(120,175,255,.55);display:flex;align-items:center;justify-content:center}
-  .revback .backlogo{width:66%;height:auto;object-fit:contain;
-    filter:drop-shadow(0 0 12px rgba(51,204,255,.7));opacity:1}
-  .revback .backshine{position:absolute;inset:0;pointer-events:none;
-    background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.16) 50%,transparent 62%);
-    background-size:250% 100%;animation:backsweep 3.4s ease-in-out infinite}
-  @keyframes backsweep{0%{background-position:130% 0}100%{background-position:-130% 0}}
-  .revface{border:1.5px solid var(--brd)}
-  .revface .cap{position:absolute;left:0;right:0;bottom:0;padding:5px 7px;
-    background:linear-gradient(180deg,transparent,rgba(4,6,16,.94));display:flex;justify-content:space-between;align-items:center;z-index:3}
-  .revface .cap .nm{font-weight:700;font-size:12px}
-  .newb2{position:absolute;top:6px;left:6px;z-index:4;background:var(--accent);color:var(--accent-ink);
-    font-family:var(--font-mono);font-weight:800;font-size:10px;padding:2px 7px;border-radius:6px}
-  .serialb{position:absolute;top:6px;right:6px;z-index:4;background:rgba(3,5,12,.72);color:var(--txt);
-    font-family:var(--font-mono);font-weight:700;font-size:9px;padding:2px 6px;border-radius:6px;border:1px solid var(--brd)}
-  /* holographic foil (FUR) */
-  .foil{position:absolute;inset:0;z-index:2;pointer-events:none;mix-blend-mode:color-dodge;opacity:.55;
-    background:conic-gradient(from var(--fa,0deg),#ff3df0,#ffcf4a,#3df0a6,#33ccff,#9d7bff,#ff3df0)}
-  .shine{position:absolute;inset:0;z-index:2;pointer-events:none;mix-blend-mode:overlay;opacity:.5;
-    background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.7) 48%,transparent 62%);
-    background-size:220% 220%;background-position:var(--sx,10%) var(--sy,10%)}
-  /* gold ray burst (SR+) */
-  .burst{position:absolute;left:50%;top:50%;width:10px;height:10px;z-index:1;transform:translate(-50%,-50%) scale(.2);
-    border-radius:50%;pointer-events:none;opacity:0;
-    background:radial-gradient(circle,rgba(255,207,74,.9),rgba(255,207,74,0) 62%)}
-  .rev.flip .burst{animation:burst .8s ease-out forwards}
-  @keyframes burst{0%{opacity:.9;transform:translate(-50%,-50%) scale(.2)}
-    100%{opacity:0;transform:translate(-50%,-50%) scale(9)}}
-  .rev .rtag{min-height:20px}
-  .tap-hint{color:var(--muted);font-size:13px;letter-spacing:.06em}
-  .tap-hint.pulse{animation:blink 1.3s infinite}
-  @keyframes blink{50%{opacity:.4}}
-
-  /* special stage (MUR / FUR only) */
-  .special{position:fixed;inset:0;z-index:110;display:none;align-items:center;justify-content:center;padding:18px;
-    background:radial-gradient(circle at 50% 34%,rgba(10,14,40,.9),rgba(2,3,10,.99) 70%)}
-  .special.show{display:flex}
-  .special .spot{position:absolute;left:50%;top:34%;width:120vmax;height:120vmax;transform:translate(-50%,-50%);
-    pointer-events:none;background:radial-gradient(circle,rgba(255,255,255,.06),transparent 22%)}
-  .special .sp-aura{position:absolute;left:50%;top:34%;width:380px;height:380px;transform:translate(-50%,-50%);
-    pointer-events:none;border-radius:50%;opacity:.55;filter:blur(18px);will-change:transform,opacity;
-    animation:auraPulse 2.6s ease-in-out infinite}
-  .sp-aura.mur{background:radial-gradient(circle,rgba(34,230,255,.55),transparent 62%)}
-  .sp-aura.fur{background:conic-gradient(from 0deg,#ff3df0,#ffcf4a,#3df0a6,#33ccff,#9d7bff,#ff3df0);animation:auraSpin 6s linear infinite,auraPulse 2.6s ease-in-out infinite}
-  @keyframes auraPulse{50%{opacity:.85;transform:translate(-50%,-50%) scale(1.08)}}
-  @keyframes auraSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
-  .special .revarea{position:relative;z-index:2}
-  .sp-title{font-family:var(--font-display);font-weight:800;font-size:15px;letter-spacing:.02em;margin-bottom:16px;color:var(--txt)}
-  .sp-title .mono{color:var(--muted)}
-  .awaitcard{cursor:pointer}
-  .awaitcard .revcard{animation:awaitPulse 1.5s ease-in-out infinite}
-  .awaitcard.done .revcard{animation:none}
-  @keyframes awaitPulse{0%,100%{transform:rotateY(180deg) scale(1)}50%{transform:rotateY(180deg) scale(1.045)}}
-  .awaitcard .revcard{box-shadow:0 0 30px rgba(51,204,255,.6),0 0 60px rgba(51,204,255,.25)}
-  .awaitcard[data-rar="FUR"] .revcard{box-shadow:0 0 34px rgba(255,61,240,.6),0 0 64px rgba(255,207,74,.3)}
-  .opening.bulk-opening,.special.bulk-opening{overflow-y:auto;align-items:flex-start}
-  .opening.bulk-opening .revarea,.special.bulk-opening .revarea{margin:auto;padding:24px 0}
-  .opening.bulk-opening .rev,.special.bulk-opening .rev{width:96px}
-  .particle{position:absolute;left:50%;top:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;z-index:4;pointer-events:none}
-
-  /* fuse (card fusion) */
-  .chip:disabled{opacity:.35;cursor:not-allowed}
-  .fuse-note{font-size:13px;color:var(--muted);margin:6px 0 0;line-height:1.55}
-  .fuse-note b{color:var(--txt)}
-  .fuse-bench{margin-bottom:14px}
-  .fuse-slots{display:flex;gap:12px;justify-content:center;margin:6px 0 12px}
-  .fslot{width:min(104px,26vw);aspect-ratio:5/7;border:1.5px dashed var(--brd-2);border-radius:var(--radius);
-    position:relative;overflow:hidden;background:#0a0e1e;padding:0;cursor:pointer;transition:border-color .15s,box-shadow .15s}
-  .fslot .card-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-  .fslot .card-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none}
-  .fslot.empty::after{content:"+";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    font-size:30px;color:var(--dim)}
-  .fslot.filled{border-style:solid;border-color:var(--accent);box-shadow:0 0 10px rgba(51,204,255,.3)}
-  .fslot .rm{position:absolute;top:4px;right:4px;z-index:3;background:rgba(4,6,16,.85);border:1px solid var(--brd-2);
-    border-radius:6px;color:var(--muted);font-size:11px;padding:1px 5px;pointer-events:none}
-  .fuse-meta{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 0 12px;font-family:var(--font-mono);font-size:12px}
-  .fuse-meta span{background:#0a0e1e;border:1px solid var(--brd);border-radius:6px;padding:5px 10px}
-  .fuse-meta b{color:var(--accent)}
-  .fuse-meta .fail b{color:var(--warn)}
-  .tile.selmat{border-color:var(--accent);box-shadow:0 0 12px rgba(51,204,255,.4)}
-  .tile .selc{position:absolute;top:6px;left:6px;z-index:4;background:var(--accent);color:var(--accent-ink);
-    font-family:var(--font-mono);font-weight:800;font-size:10px;padding:2px 7px;border-radius:6px}
-  /* fuse stage (합성 연출 오버레이) */
-  .fusing{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:18px;
-    background:radial-gradient(circle at 50% 40%,rgba(14,20,52,.97),rgba(4,6,16,.99))}
-  .fusing.show{display:flex}
-  .fuse-stage{position:relative;height:280px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
-  .fmat{position:absolute;width:112px;aspect-ratio:5/7;border-radius:var(--radius);overflow:hidden;
-    border:1.5px solid var(--brd-2);background:#0a0e1e;will-change:transform,opacity}
-  .fmat .card-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-  .fmat .card-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
-  .fuse-orb{position:absolute;width:26px;height:26px;border-radius:50%;pointer-events:none;opacity:0;
-    background:radial-gradient(circle,#fff,rgba(51,204,255,.85) 40%,transparent 70%);
-    box-shadow:0 0 30px rgba(51,204,255,.8),0 0 90px rgba(51,204,255,.4);will-change:transform,opacity}
-  .fuse-failmark{font-family:var(--font-mono);font-weight:700;font-size:15px;color:var(--muted);letter-spacing:.06em}
-  @media(max-width:420px){.fuse-slots{gap:8px}.fmat{width:92px}}
-
-  /* bottom nav */
-  .nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:500px;z-index:40;display:flex;
-    background:rgba(8,11,22,.94);backdrop-filter:blur(12px);border-top:1px solid var(--brd);border-radius:16px 16px 0 0}
-  .nav button{flex:1;background:none;border:none;color:var(--dim);padding:11px 0 15px;font-weight:700;
-    font-size:12px;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .15s}
-  .nav button .ic{font-size:19px;line-height:1}
-  .nav button.on{color:var(--accent)}
-
-  @media (prefers-reduced-motion: reduce){
-    *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
-    .revcard{transform:none!important;opacity:1!important}
-  }
-
-  /* 2026 archive redesign: light print surfaces, dense catalogue rhythm. */
-  :root{
-    --bg0:#e5ebe2; --bg1:#f3f5ef; --bg2:#d8e1d7;
-    --panel:#fbfcf8; --panel-2:#eef2eb;
-    --brd:#c9d2c5; --brd-2:#53645a;
-    --accent:#c7f23d; --accent-ink:#152016; --accent-soft:#e7f8b7;
-    --txt:#18231b; --muted:#526258; --dim:#7b897e;
-    --ok:#278356; --warn:#b77b11; --bad:#bc3e3e;
-    --radius:4px;
-    --r-C:#69746d; --r-U:#27885d; --r-R:#2376a5; --r-RR:#4267bb; --r-RRR:#7059ac;
-    --r-AR:#ad4e93; --r-CHR:#087f7b; --r-HR:#c5553a; --r-SR:#b58218; --r-SAR:#d9671c;
-    --r-UR:#b53d62; --r-MUR:#147b9d; --r-FUR:#853879;
-  }
-  body{
-    min-height:100dvh;
-    color:var(--txt);
-    background-color:var(--bg0);
-    background-image:linear-gradient(#ffffff80 1px,transparent 1px),linear-gradient(90deg,#ffffff80 1px,transparent 1px);
-    background-size:24px 24px;
-    background-attachment:fixed;
-    padding-bottom:76px;
-    letter-spacing:0;
-  }
-  h1,h2,h3{letter-spacing:0;color:var(--txt)}
-  .wrap{max-width:1180px;padding:20px}
-  .stickytop{position:sticky;top:0;border-bottom:2px solid var(--txt);background:var(--bg1)}
-  .topbar{background:transparent;backdrop-filter:none;border:0}
-  .topbar .wrap{min-height:72px;padding:13px 20px}
-  .brand{font-family:var(--font-mono);font-size:17px;color:var(--txt);letter-spacing:0;text-transform:uppercase}
-  .brand span{display:inline-block;background:var(--accent);color:var(--accent-ink);padding:3px 6px;margin-left:3px}
-  .ticker{height:28px;background:var(--txt);border:0;color:#f8fbf3}
-  .ticker::before{background:var(--accent);color:var(--accent-ink);font-size:9px;letter-spacing:0}
-  .ti,.ti .who{color:#f8fbf3}.ti-UR b,.ti-MUR b{color:var(--accent)}
-  .points{gap:6px;padding:7px 10px;border:1px solid var(--txt);border-radius:2px;background:var(--accent-soft);box-shadow:3px 3px 0 var(--txt)}
-  .points b{color:var(--txt)}.points i{color:var(--muted)}
-  .user-nick{color:var(--txt)}
-  .icon-btn{border-color:var(--txt);border-radius:2px;color:var(--txt);background:transparent;padding:7px 9px;white-space:nowrap;flex-shrink:0}
-  .icon-btn:hover{border-color:var(--txt);color:var(--accent-ink);background:var(--accent)}
-  .panel{background:var(--panel);border:1px solid var(--txt);border-radius:var(--radius);padding:18px;box-shadow:4px 4px 0 #b9c4b7}
-  input[type=text]{background:#fff;border-color:var(--txt);border-radius:2px;color:var(--txt);box-shadow:none}
-  input[type=text]:focus{border-color:var(--txt);box-shadow:3px 3px 0 var(--accent)}
-  .cta{border:1px solid var(--txt);border-radius:2px;color:var(--accent-ink);background:var(--accent);box-shadow:3px 3px 0 var(--txt);letter-spacing:0}
-  .cta:hover{filter:none;transform:translate(1px,1px);box-shadow:2px 2px 0 var(--txt)}
-  .cta:active{transform:translate(3px,3px);box-shadow:none}
-  .cta.sub{border-color:var(--txt);color:var(--txt);background:transparent;box-shadow:none}
-  .cta.sub:hover{background:var(--panel-2)}
-  .toast{bottom:90px;background:var(--txt);border:0;border-radius:2px;color:#fff;box-shadow:4px 4px 0 var(--accent)}
-  .auth-shell{margin-top:9vh}.auth-shell h2{font-size:26px}
-  .key-modal{background:#18231bd8;backdrop-filter:none}.key-login{border-color:var(--brd)}
-
-  .attend-bar{border-left:8px solid var(--accent)}
-  .attend-bar .amt,.col-head .stat b{color:var(--txt)}
-  .sec-title{font-family:var(--font-mono);font-size:14px;text-transform:uppercase;border-bottom:1px solid var(--txt);padding-bottom:8px;margin:26px 0 14px}
-  .bento{grid-template-columns:1fr;gap:12px}
-  @media(min-width:760px){.bento{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:1fr}}
-  .pack{min-height:350px;background:var(--panel);border:1px solid var(--txt);border-radius:var(--radius);padding:16px;box-shadow:none}
-  .pack:first-child{background:var(--accent);border-width:2px}
-  .pack .kname{font-family:var(--font-mono);font-size:18px;letter-spacing:0;text-transform:uppercase}
-  .pack .kprice{color:var(--txt);font-size:13px}.pack .guar{border:1px solid var(--txt);border-radius:2px;color:var(--txt);padding:3px 6px}
-  details.odds summary{color:var(--muted)}.oddsgrid span{background:#ffffffaa;border:1px solid var(--brd);border-radius:2px;color:var(--txt)}
-  .pack-hero::before{display:none}.pack-art{max-height:170px;filter:drop-shadow(7px 9px 0 #18231b28)}
-
-  .tile,.detail-card,.revcard,.revface,.revback,.fslot,.fmat{border-radius:2px}
-  .tile{border:1px solid var(--txt);background:#dfe6db;box-shadow:2px 2px 0 #18231b;isolation:isolate}
-  .tile:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 #18231b}
-  .tile .card-art,.revface .card-art,.detail-card img,.fslot .card-art,.fmat .card-art{object-position:center;clip-path:inset(0)}
-  .tile .card-art[src$="parkjuno-3.avif"],.revface .card-art[src$="parkjuno-3.avif"],.detail-card img[src$="parkjuno-3.avif"],.fslot .card-art[src$="parkjuno-3.avif"],.fmat .card-art[src$="parkjuno-3.avif"]{object-position:center top}
-  .tile .card-art:is([src$="arisongi-7.avif"],[src$="arisongi-8.avif"],[src$="arisongi-9.avif"],[src$="arisongi-10.avif"]),.revface .card-art:is([src$="arisongi-7.avif"],[src$="arisongi-8.avif"],[src$="arisongi-9.avif"],[src$="arisongi-10.avif"]),.detail-card img:is([src$="arisongi-7.avif"],[src$="arisongi-8.avif"],[src$="arisongi-9.avif"],[src$="arisongi-10.avif"]),.fslot .card-art:is([src$="arisongi-7.avif"],[src$="arisongi-8.avif"],[src$="arisongi-9.avif"],[src$="arisongi-10.avif"]),.fmat .card-art:is([src$="arisongi-7.avif"],[src$="arisongi-8.avif"],[src$="arisongi-9.avif"],[src$="arisongi-10.avif"]){object-position:center top}
-  .card-frame{inset:0;width:100%;height:100%;object-fit:fill;overflow:hidden}
-  /* Group photos keep the full landscape composition inside their own archive window. */
-  .tile.group-tile{grid-column:span 2;aspect-ratio:16/9}
-  .detail-card.group-detail-card{width:min(560px,92vw);aspect-ratio:16/9}
-  .rev.group-rev{width:252px}.rev.group-rev .revcard{aspect-ratio:16/9}
-  .fslot.group-fslot{width:min(156px,42vw);aspect-ratio:16/9}
-  .fmat.group-fmat{width:160px;aspect-ratio:16/9}
-  .tile .group-card-art,.revface .group-card-art,.detail-card .group-card-art,.fslot .group-card-art,.fmat .group-card-art{
-    position:absolute;inset:12px;width:calc(100% - 24px);height:calc(100% - 24px);object-fit:cover!important;object-position:center;background:#05090d;z-index:1
-  }
-  @media(max-width:560px){.rev.group-rev{width:min(88vw,350px)}.fmat.group-fmat{width:132px}}
-  .tile .cap,.revface .cap,.detail-card .detail-name{padding:7px 8px;background:rgba(8,18,15,.9);border-top:1px solid rgba(255,255,255,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
-  .tile .nm,.revface .cap .nm{color:#fff;font-size:12px;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.92)}.detail-card .detail-name{color:#fff;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.92)}.tile .qty,.tile .newb,.newb2,.serialb{border-radius:2px;border-color:var(--txt)}
-  .tile .qty,.serialb{background:#fbfcf8e8;color:var(--txt)}.tile .newb,.newb2{background:var(--accent);color:var(--accent-ink)}
-  .glow-SR,.glow-SAR,.glow-UR,.glow-MUR,.glow-FUR{box-shadow:2px 2px 0 var(--txt)}
-  .tile.locked::after{background:#18231b8c}.tile.locked img{filter:grayscale(1) contrast(.6) brightness(.64)}
-  .rb{border-radius:1px;color:#fff;letter-spacing:0}.rb-FUR{background:#853879}
-
-  .rank-item{background:var(--panel);border:1px solid var(--txt);border-radius:2px;margin-bottom:7px;backdrop-filter:none;box-shadow:none}
-  .rank-item:hover{transform:translateX(3px);background:var(--accent-soft);border-color:var(--txt)}
-  .rank-num{font-size:18px;color:var(--muted)}.rank-score{color:var(--txt)}
-  .rank-1,.rank-2,.rank-3{background:var(--panel);box-shadow:none}.rank-1{border-left:8px solid #b58218}.rank-2{border-left:8px solid #80918a}.rank-3{border-left:8px solid #bd6d40}
-  .rank-1 .rank-num{color:#a16f10;text-shadow:none}.rank-me{border:2px solid var(--txt);border-radius:2px;background:var(--accent);box-shadow:4px 4px 0 var(--txt)}.rank-me .rank-num{color:var(--txt)}
-  .chip{border-color:var(--txt);border-radius:2px;background:#fff;color:var(--txt)}.chip.on{background:var(--accent);border-color:var(--txt);color:var(--txt)}
-  .col-section h2{letter-spacing:0}.col-section .cs-line{background:var(--txt)}.col-section-crew{color:var(--txt)}
-  .small-btn{border-color:var(--txt);border-radius:2px;color:var(--txt);background:#fff}.small-btn:hover{background:var(--accent);border-color:var(--txt)}
-  .detail-backdrop{background:#18231bd8;backdrop-filter:none}.detail-panel{background:var(--panel);border:2px solid var(--txt);border-radius:2px;box-shadow:7px 7px 0 var(--accent)}.detail-close{border-color:var(--txt);border-radius:2px;background:#fff;color:var(--txt)}
-  .detail-meta div{background:#fff;border-color:var(--brd);border-radius:2px;color:var(--txt)}
-
-  .opening,.special,.fusing{background:#e5ebe2;isolation:isolate}.opening::before,.special::before,.fusing::before{content:"";position:absolute;inset:0;background-image:linear-gradient(#ffffff80 1px,transparent 1px),linear-gradient(90deg,#ffffff80 1px,transparent 1px);background-size:24px 24px;z-index:-1}
-  .special .spot,.special .sp-aura,.fuse-orb{display:none}.sp-title{color:var(--txt);text-shadow:none}.tap-hint,.fuse-note{color:var(--muted)}
-  .revback{border:1px solid var(--txt);background:#17221a}.revback .backlogo{filter:grayscale(1) contrast(1.4);opacity:.9}.revback .backshine{display:none}.revface{border:1px solid var(--txt)}
-  .fslot,.fmat{border-color:var(--txt);background:#fff}.fslot.filled,.tile.selmat{border-color:var(--txt);box-shadow:3px 3px 0 var(--accent)}.fuse-meta span{background:#fff;border-color:var(--brd);border-radius:2px;color:var(--txt)}
-  .nav{max-width:680px;background:var(--panel);backdrop-filter:none;border:2px solid var(--txt);border-bottom:0;border-radius:4px 4px 0 0;box-shadow:0 -3px 0 var(--accent)}
-  .nav button{color:var(--muted);padding:9px 0 12px}.nav button.on{background:var(--accent);color:var(--txt)}
-  @media(max-width:620px){.wrap{padding:14px}.topbar .wrap{padding:10px 14px}.brand{font-size:14px}.user-nick{max-width:105px;min-width:0}.points{box-shadow:none}.icon-btn{font-size:10px;padding:6px 7px}.pack{min-height:320px}.nav{max-width:none}}
-  /* Rarity badges keep the old neon reward feeling over the new archive frame. */
-  .rb{border:1px solid currentColor;border-radius:1px;color:#fff;letter-spacing:0;text-shadow:0 0 5px currentColor;box-shadow:0 0 7px currentColor,inset 0 0 7px #ffffff40}
-  .rb-C{background:#46515e;color:#dce5ee}.rb-U{background:#087951;color:#83ffc6}.rb-R{background:#096b9f;color:#69d2ff}
-  .rb-RR{background:#3b52b5;color:#9eafff}.rb-RRR{background:#6243a8;color:#d3b0ff}.rb-AR{background:#993477;color:#ff9de4}
-  .rb-CHR{background:#087c75;color:#72fff2}.rb-HR{background:#ad382b;color:#ff9e8e}.rb-SR{background:#996300;color:#ffe06a}
-  .rb-SAR{background:#c8520c;color:#ffbf72}.rb-UR{background:#9d244c;color:#ff91bd}.rb-MUR{background:#006f96;color:#72efff}
-  .rb-FUR{background:linear-gradient(90deg,#9e247e,#e455c7,#634cb7,#e455c7,#9e247e);background-size:240% 100%;color:#fff2fd;animation:holoslide 2.2s linear infinite;box-shadow:0 0 9px #f15cd4,0 0 16px #626bff,inset 0 0 8px #ffffff70}
-
-  /* Idle ranking board: one spotlighted rank at a time, never a squeezed marquee. */
-  .ticker.leaderboard{height:52px!important;background:#061317!important;border-bottom:2px solid #f1cb66!important;box-shadow:inset 0 -1px 0 #42e0c0,0 3px 10px #0008;color:#fff}
-  .ticker.leaderboard::before{width:126px;justify-content:center;padding:0!important;background:#f1cb66!important;color:#142019!important;font-size:11px!important;font-weight:900!important;letter-spacing:.08em!important;box-shadow:5px 0 12px #0006}
-  .ticker.leaderboard .ticker-track{width:calc(100% - 126px);height:100%;margin-left:126px;display:flex;align-items:center;justify-content:center;gap:0!important;animation:none!important;transform:none!important}
-  .ticker.leaderboard .rank-ti{width:min(610px,calc(100vw - 148px));height:38px;min-width:0;padding:0 14px;display:flex;align-items:center;gap:11px;background:#0c2225;border:1px solid currentColor;box-shadow:inset 0 0 0 1px #ffffff18,0 0 15px currentColor;border-radius:2px;animation:rankSpotlight .42s ease both}
-  .ticker.leaderboard .rank-no{width:48px!important;height:30px!important;display:flex!important;flex-direction:column;gap:0;border:0!important;background:currentColor;color:#0c1718;font-family:var(--font-mono);line-height:1;text-align:center;box-shadow:0 0 13px currentColor}
-  .ticker.leaderboard .rank-no small{font-size:7px;font-weight:900;line-height:1.1;margin-top:4px}.ticker.leaderboard .rank-no b{font-size:17px;font-weight:900;line-height:.9}
-  .ticker.leaderboard .rank-copy{min-width:0;display:flex;align-items:baseline;gap:8px;flex:1}.ticker.leaderboard .rank-name{max-width:none!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff!important;font-family:var(--font-display);font-size:15px;font-weight:900;text-shadow:0 1px 5px #000}.ticker.leaderboard .rank-copy small{color:#9ec7c2;font-family:var(--font-mono);font-size:10px;font-weight:700;white-space:nowrap}
-  .ticker.leaderboard .rank-score{margin-left:auto!important;display:flex;align-items:baseline;gap:4px;color:#fff!important;font-family:var(--font-mono);font-size:16px!important;font-weight:900;text-shadow:0 0 8px currentColor;white-space:nowrap}.ticker.leaderboard .rank-score small{font-size:10px;color:inherit}
-  .ticker.leaderboard .rank-1{color:#ffd94c}.ticker.leaderboard .rank-2{color:#e7f4ff}.ticker.leaderboard .rank-3{color:#ffad70}
-  .ticker.leaderboard .rank-1 .rank-no{background:#ffd94c!important;color:#111b1a!important}.ticker.leaderboard .rank-2 .rank-no{background:#e7f4ff!important;color:#172126!important}.ticker.leaderboard .rank-3 .rank-no{background:#ffad70!important;color:#2a160c!important}
-  @keyframes rankSpotlight{from{opacity:.72;transform:translateY(4px) scale(.985);filter:brightness(.9)}to{opacity:1;transform:translateY(0) scale(1);filter:brightness(1)}}
-  @media(max-width:620px){.ticker.leaderboard{height:46px!important}.ticker.leaderboard::before{width:88px;font-size:9px!important}.ticker.leaderboard .ticker-track{width:calc(100% - 88px);margin-left:88px}.ticker.leaderboard .rank-ti{width:calc(100vw - 102px);height:34px;padding:0 7px;gap:7px}.ticker.leaderboard .rank-no{width:39px!important;height:26px!important}.ticker.leaderboard .rank-no small{font-size:6px;margin-top:3px}.ticker.leaderboard .rank-no b{font-size:14px}.ticker.leaderboard .rank-name{font-size:13px}.ticker.leaderboard .rank-copy small{display:none}.ticker.leaderboard .rank-score{font-size:12px!important}.ticker.leaderboard .rank-score small{font-size:8px}}
-  .reward-modal .reward-amount{display:inline-flex;align-items:center;margin-left:4px;padding:3px 8px;background:#f1cb66!important;border:1px solid #fff0ad;color:#12201d!important;font-family:var(--font-mono);font-size:18px;font-weight:900;line-height:1;text-shadow:none!important;box-shadow:0 0 12px #f1cb6680}
-  html.maintenance-lock,html.maintenance-lock body{overflow:hidden}
-  .maintenance-page{position:fixed;inset:0;z-index:1000;min-height:100dvh;overflow-y:auto;display:grid;place-items:center;padding:48px 20px;background:#101311;color:#f6f4ea}
-  .maintenance-page::before,.maintenance-page::after{content:"";position:fixed;left:0;right:0;height:18px;background:repeating-linear-gradient(135deg,#f5cc3d 0 18px,#151713 18px 36px);z-index:2}
-  .maintenance-page::before{top:0}.maintenance-page::after{bottom:0}
-  .maintenance-shell{width:min(820px,100%);border:2px solid #f5cc3d;border-radius:4px;background:#191d19;box-shadow:10px 10px 0 #050605;padding:clamp(26px,6vw,58px);position:relative;overflow:hidden}
-  .maintenance-shell::before{content:"CARD GACHA / RENOVATION";display:block;margin-bottom:28px;padding-bottom:14px;border-bottom:1px solid #5d645b;color:#f5cc3d;font-family:var(--font-mono);font-size:11px;font-weight:900;letter-spacing:0}
-  .maintenance-status{display:inline-block;margin-bottom:16px;padding:6px 9px;border:1px solid #f5cc3d;color:#f5cc3d;font-family:var(--font-mono);font-size:10px;font-weight:900;letter-spacing:0}
-  .maintenance-page h1{max-width:720px;font-size:clamp(38px,8vw,78px);line-height:1.02;letter-spacing:0;color:#fff;word-break:keep-all}
-  .maintenance-copy{max-width:560px;margin:22px 0 0;color:#c4cbc1;font-size:clamp(15px,2.5vw,18px);line-height:1.75;word-break:keep-all}
-  .maintenance-time{display:grid;grid-template-columns:auto 1fr;gap:10px 18px;align-items:center;margin-top:34px;padding-top:20px;border-top:1px solid #5d645b;font-family:var(--font-mono)}
-  .maintenance-time span{color:#8f998c;font-size:10px;font-weight:800;letter-spacing:0}.maintenance-time strong{color:#f5cc3d;font-size:clamp(16px,3.2vw,24px);letter-spacing:0}
-  .maintenance-note{margin:20px 0 0;color:#8f998c;font-size:12px;line-height:1.6}
-  @media(max-width:520px){.maintenance-page{padding:34px 14px}.maintenance-shell{padding:26px 20px;box-shadow:6px 6px 0 #050605}.maintenance-page h1{font-size:42px}.maintenance-time{grid-template-columns:1fr;gap:6px}.maintenance-shell::before{margin-bottom:22px}}
-</style>
-
-<main id="maintenancePage" class="maintenance-page hidden" aria-labelledby="maintenanceTitle">
-  <div class="maintenance-shell">
-    <span class="maintenance-status">SERVICE PAUSED</span>
-    <h1 id="maintenanceTitle">대규모 리뉴얼 공사 중</h1>
-    <p class="maintenance-copy">카드가챠 시즌 운영을 종료하고 새로운 콘텐츠를 준비하고 있습니다. 더 나은 모습으로 다시 찾아뵙겠습니다.</p>
-    <div class="maintenance-time">
-      <span>운영 종료</span>
-      <strong>2026.07.17 23:59 KST</strong>
-    </div>
-    <p class="maintenance-note">리뉴얼 일정과 다음 콘텐츠 소식은 추후 안내드리겠습니다.</p>
-  </div>
-</main>
-
-<div class="stickytop">
-  <div class="ticker hidden" id="ticker"><div class="ticker-track" id="tickerTrack"></div></div>
-  <div class="topbar"><div class="wrap">
-    <div class="brand">Calm <span>MonstarZ</span> 카드뽑기</div>
-    <div id="userbar" class="hidden" style="display:flex;gap:10px;align-items:center">
-      <div class="user-nick" id="userNick"></div>
-      <div class="points"><i>P</i><b id="ptval">0</b></div>
-      <button class="icon-btn" id="showKeyBtn">KEY 복사</button>
-      <a class="icon-btn hidden" id="bridgeBtn" title="후원 API 연동" href="/donation-bridge.html" target="_blank" rel="noopener">API 연동</a>
-      <button class="icon-btn" id="soundBtn" aria-pressed="false">SFX OFF</button>
-      <div class="bgm" id="bgmPlayer">
-        <button class="icon-btn bgm-fold" id="bgmFold" aria-label="배경음악 플레이어" aria-expanded="false" title="배경음악">♪</button>
-        <div class="bgm-panel" id="bgmPanel">
-          <button class="bgm-pp" id="bgmPlayPause" aria-pressed="false" aria-label="재생/정지" title="재생/정지">▶</button>
-          <select class="bgm-sel" id="bgmSelect" aria-label="배경음악 곡 선택" title="곡 선택"></select>
-          <span class="bgm-vol"><span class="bgm-vol-ico" aria-hidden="true">🔊</span><input type="range" id="bgmVol" min="0" max="100" step="1" aria-label="배경음악 볼륨" title="볼륨"/></span>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#070a09">
+  <title>카드가챠 시즌2</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/renewal/brand/card-gacha-s2-favicon-32.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="assets/renewal/brand/card-gacha-s2-icon-192.png">
+  <link rel="stylesheet" href="styles/renewal/tokens.css">
+  <link rel="stylesheet" href="styles/renewal/main.css">
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
+</head>
+<body>
+  <div class="game-shell" id="gameShell">
+    <header class="topbar">
+      <div class="profile-block">
+        <button class="profile-mark" id="profileCardButton" type="button" aria-label="대표카드 상세 보기" title="대표카드">
+          <img id="profileCardImage" alt="" hidden>
+          <span id="profileCardFallback">카드가챠 시즌2</span>
+        </button>
+        <div class="profile-copy">
+          <strong id="nickname">방송국장_세린</strong>
+          <div class="profile-stats">
+            <span class="profile-power">전투력 <b id="combatPower">0</b></span>
+          </div>
         </div>
       </div>
-      <button class="icon-btn" id="logoutBtn">로그아웃</button>
-    </div>
-  </div></div>
-</div>
 
-<div class="wrap">
-  <!-- AUTH -->
-  <section id="view-auth" class="hidden">
-    <div class="panel auth-shell">
-      <h2>환영합니다</h2>
-      <p class="muted" style="margin:0 0 18px;font-size:14px">캄몬스타즈 크루 카드를 모아보세요. <b>숲(SOOP) 계정</b>으로 시작하면 <b style="color:var(--accent)" class="mono">5000P</b> 지급.</p>
-      <a class="cta soop-cta" href="/api/auth/soop-start" id="soopBtn">
-        <span class="soop-mark">SOOP</span> 숲 계정으로 시작하기
-      </a>
-      <p class="muted" style="text-align:center;font-size:12px;margin:12px 0 0">숲 로그인 후 자동으로 계정이 만들어져요.</p>
-      <details class="key-login">
-        <summary>KEY로 로그인 (백업 · 기기 이동)</summary>
-        <label class="fld">발급받은 KEY로 로그인</label>
-        <input type="text" id="loginKey" placeholder="KEY 붙여넣기" />
-        <button class="cta sub" style="margin-top:10px" id="loginBtn">로그인</button>
-      </details>
+      <div class="currency-bar">
+        <div class="currency energy"><i data-lucide="zap"></i><strong id="energyValue">64 / 120</strong></div>
+        <div class="currency points"><i data-lucide="sparkles"></i><strong id="pointValue">8,450 P</strong></div>
+        <button class="icon-button sound-toggle active" id="soundToggleButton" type="button" aria-label="효과음 끄기" aria-pressed="true" title="효과음 끄기"><i data-lucide="volume-2"></i></button>
+        <button class="icon-button" type="button" aria-label="우편함" title="우편함"><i data-lucide="mail"></i></button>
+        <button class="api-link-button" id="apiLinkButton" type="button" aria-label="SOOP API 연동" title="SOOP API 연동"><i data-lucide="key-round"></i><span>API</span></button>
+      </div>
+    </header>
+
+    <aside class="side-nav" aria-label="게임 메뉴">
+      <div class="brand-lockup">
+        <img src="assets/renewal/brand/card-gacha-s2-symbol.png" alt="">
+        <div><strong>카드가챠</strong><span>SEASON 2</span></div>
+      </div>
+      <nav>
+        <button class="nav-item" type="button" data-screen="shop"><i data-lucide="shopping-bag"></i><span>상점</span></button>
+        <button class="nav-item" type="button" data-screen="enhance"><i data-lucide="chevrons-up"></i><span>강화</span></button>
+        <button class="nav-item" type="button" data-screen="collection"><i data-lucide="book-open"></i><span>도감</span></button>
+        <button class="nav-item" type="button" data-screen="ranking"><i data-lucide="trophy"></i><span>랭킹</span></button>
+        <button class="nav-item active" type="button" data-screen="adventure"><i data-lucide="compass"></i><span>모험</span></button>
+        <button class="nav-item" type="button" data-screen="worldboss"><i data-lucide="radio-tower"></i><span>월드보스</span></button>
+        <button class="nav-item" type="button" data-screen="minigame"><i data-lucide="gamepad-2"></i><span>미니게임</span></button>
+      </nav>
+    </aside>
+
+    <main class="adventure-screen" id="adventureScreen">
+      <section class="battlefield" id="battlefield" aria-label="자동 전투 화면">
+        <div class="stage-heading">
+          <span id="regionLabel">지역 1 · 끊어진 전파도시</span>
+          <h1>스테이지 <b id="stageLabel">1-1</b></h1>
+          <div class="stage-meter"><span id="stageMeter"></span></div>
+        </div>
+
+        <div class="battle-status">
+          <span class="live-dot"></span>
+          <b id="battleState">전투 준비</b>
+          <span id="battleClock">00.0</span>
+        </div>
+
+        <div class="enemy-zone" id="enemyZone">
+          <div class="enemy-readout"><span>현재 타깃</span><b id="enemyName">신호 침식체 편대</b></div>
+          <div class="enemy-hp"><span id="enemyHpBar"></span><b id="enemyHpText">0 / 0</b></div>
+          <div class="enemy-row" id="enemyRow"></div>
+        </div>
+
+        <div class="signal-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="attack-echo" id="attackEcho" aria-hidden="true"></div>
+        <div class="result-banner" id="resultBanner" aria-live="polite"></div>
+
+        <div class="party-dock">
+          <div class="synergy-chip" id="synergyChip">종족 시너지 없음</div>
+          <div class="party-grid" id="partyGrid"></div>
+        </div>
+      </section>
+
+      <aside class="mission-panel">
+        <section class="panel-section region-progress">
+          <div class="section-title"><span>지역 진행</span><i data-lucide="activity"></i></div>
+          <div class="stage-nodes" id="stageNodes"></div>
+        </section>
+
+        <section class="panel-section production-panel">
+          <div class="section-title"><span>현재 생산</span><i data-lucide="cpu"></i></div>
+          <dl>
+            <div><dt>분당 카드 EXP</dt><dd id="cardExpPerMinute">0.16</dd></div>
+            <div><dt>이번 런 카드 P</dt><dd id="runPointReward">0 / 30,000 P</dd></div>
+          </dl>
+        </section>
+
+        <section class="panel-section offline-panel">
+          <span>오프라인 보상</span>
+          <strong id="offlineTime">02:00:00</strong>
+          <small id="offlineSummary">카드 EXP</small>
+        </section>
+
+        <section class="panel-section collection-panel">
+          <span>도감 보너스</span>
+          <strong id="collectionPanelBonus">+0.00%</strong>
+        </section>
+
+        <div class="mission-actions">
+          <button class="toggle-button active" id="autoBattleButton" type="button"><i data-lucide="repeat-2"></i><span>자동 진행 ON</span></button>
+          <button class="secondary-button" id="formationButton" type="button"><i data-lucide="users"></i><span>편성 변경</span></button>
+          <button class="quick-button" id="quickBattleButton" type="button"><i data-lucide="fast-forward"></i><span>빠른 전투</span><b id="quickBattleCount">0/3</b></button>
+          <button class="reward-button" id="claimButton" type="button"><i data-lucide="gift"></i><span>보상 받기</span><b id="pendingReward">0 P</b></button>
+        </div>
+      </aside>
+    </main>
+
+    <main class="shop-screen" id="shopScreen" hidden>
+      <aside class="shop-sidebar">
+        <header><span>SUPPLY DEPOT</span><h1>보급 상점</h1></header>
+        <nav id="shopTabs">
+          <button class="active" type="button" data-shop-tab="cards"><i data-lucide="package-open"></i><span>카드팩</span></button>
+          <button type="button" data-shop-tab="support"><i data-lucide="briefcase-medical"></i><span>지원 보급</span></button>
+          <button type="button" data-shop-tab="inventory"><i data-lucide="backpack"></i><span>보유 아이템</span></button>
+        </nav>
+        <section class="shop-status-block">
+          <span>사용 가능 포인트</span><strong id="shopPointValue">0 P</strong>
+          <small>모든 확률은 실제 추첨값과 동일하게 공개됨.</small>
+        </section>
+        <section class="shop-buff-status" id="shopBuffStatus"></section>
+      </aside>
+
+      <section class="shop-content">
+        <header class="shop-content-head">
+          <div><span id="shopEyebrow">CARD SUPPLY</span><h2 id="shopTitle">카드팩</h2></div>
+          <div class="shop-race-selector" id="shopRaceSelector" hidden>
+            <button class="active" type="button" data-shop-race="저그">저그</button>
+            <button type="button" data-shop-race="테란">테란</button>
+            <button type="button" data-shop-race="프로토스">프로토스</button>
+          </div>
+        </header>
+        <div class="shop-product-grid" id="shopProductGrid"></div>
+        <div class="shop-inventory-grid" id="shopInventoryGrid" hidden></div>
+      </section>
+
+      <aside class="shop-detail">
+        <header><span>DROP INFORMATION</span><h2 id="shopDetailTitle">일반 보급팩</h2></header>
+        <div class="shop-detail-summary" id="shopDetailSummary"></div>
+        <div class="shop-probability-list" id="shopProbabilityList"></div>
+        <p class="shop-detail-note" id="shopDetailNote"></p>
+      </aside>
+    </main>
+
+    <main class="enhance-screen" id="enhanceScreen" hidden>
+      <section class="enhance-catalog">
+        <header class="enhance-section-head">
+          <div><span>OWNED CARDS</span><h1>강화 대상</h1></div>
+          <b id="enhanceOwnedCount">0</b>
+        </header>
+        <div class="enhance-filters" role="group" aria-label="강화 카드 필터">
+          <button class="active" type="button" data-enhance-filter="all">전체</button>
+          <button type="button" data-enhance-filter="ready">준비 완료</button>
+        </div>
+        <div class="enhance-target-list" id="enhanceTargetList"></div>
+      </section>
+
+      <section class="enhance-focus">
+        <header class="enhance-section-head">
+          <div><span>SELECTED UNIT</span><h2 id="enhanceCardName">카드를 선택하세요</h2></div>
+          <button class="icon-button" id="enhanceLockButton" type="button" aria-label="카드 잠금" title="카드 잠금"><i data-lucide="lock-open"></i></button>
+        </header>
+        <div class="enhance-card-stage" id="enhanceCardPreview"></div>
+        <div class="enhance-card-meta" id="enhanceCardMeta"></div>
+        <div class="enhance-exp-block">
+          <div><span>강화 경험치</span><b id="enhanceExpText">0 / 0</b></div>
+          <div class="enhance-exp-track"><i id="enhanceExpBar"></i></div>
+          <button class="card-exp-potion-button" id="cardExpPotionButton" type="button" disabled><i data-lucide="flask-conical"></i><span>EXP 포션 +300</span><b id="cardExpPotionCount">0</b></button>
+        </div>
+        <dl class="enhance-stat-compare" id="enhanceStatCompare"></dl>
+      </section>
+
+      <section class="enhance-console">
+        <header class="enhance-section-head">
+          <div><span>UPGRADE CONTROL</span><h2 id="enhanceTargetLevel">+0 → +1</h2></div>
+          <b class="enhance-status" id="enhanceStatus">대기</b>
+        </header>
+        <dl class="enhance-odds">
+          <div class="success"><dt>성공</dt><dd id="enhanceSuccessRate">100%</dd></div>
+          <div class="fail"><dt>실패</dt><dd id="enhanceFailRate">0%</dd></div>
+          <div class="destroy"><dt>파괴</dt><dd id="enhanceDestroyRate">0%</dd></div>
+        </dl>
+        <section class="enhance-material-section">
+          <div class="enhance-label-row"><span>중복 카드 재료</span><b id="enhanceMaterialRule">-</b></div>
+          <div class="enhance-material-options" id="enhanceMaterialOptions"></div>
+          <div class="enhance-materials" id="enhanceMaterials"></div>
+        </section>
+        <section class="enhance-support-section">
+          <div class="enhance-label-row"><span>강화 보조제</span><small>1개만 선택</small></div>
+          <div class="enhance-supports" id="enhanceSupports">
+            <button class="active" type="button" data-booster="none"><i data-lucide="circle-slash-2"></i><span>사용 안 함</span></button>
+            <button type="button" data-booster="enhance5"><i data-lucide="chevron-up"></i><span>성공 +5%</span><b id="enhance5Count">0</b></button>
+            <button type="button" data-booster="enhance10"><i data-lucide="chevrons-up"></i><span>성공 +10%</span><b id="enhance10Count">0</b></button>
+            <button type="button" data-booster="destructionGuard"><i data-lucide="shield-check"></i><span>파괴 차단</span><b id="destructionGuardCount">0</b></button>
+          </div>
+        </section>
+        <div class="enhance-cost-row"><span>필요 포인트</span><strong id="enhancePointCost">0 P</strong></div>
+        <p class="enhance-warning" id="enhanceWarning">강화할 카드를 선택하세요.</p>
+        <button class="enhance-attempt-button" id="enhanceAttemptButton" type="button" disabled><i data-lucide="zap"></i><span>강화 시도</span></button>
+        <div class="enhance-result" id="enhanceResult" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <main class="collection-screen" id="collectionScreen" hidden>
+      <aside class="collection-summary">
+        <header class="collection-heading"><span>ARCHIVE STATUS</span><h1>카드 도감</h1></header>
+        <div class="collection-ring" id="collectionRing"><strong id="collectionPercent">0%</strong><span id="collectionCount">전투 카드 0 / 0</span></div>
+        <div class="collection-ex-progress"><span>EX 전시 아카이브</span><strong id="collectionExCount">0 / 0</strong></div>
+        <dl class="collection-bonus-list">
+          <div><dt>전체 공격력</dt><dd id="collectionAttackBonus">+0.00%</dd></div>
+          <div><dt>전체 체력</dt><dd id="collectionHpBonus">+0.00%</dd></div>
+          <div><dt>전체 방어력</dt><dd id="collectionDefenseBonus">+0.00%</dd></div>
+          <div><dt>보스 피해</dt><dd id="collectionBossBonus">+0.00%</dd></div>
+          <div class="idle"><dt>방치 보상 효율</dt><dd id="collectionIdleBonus">+0.00%</dd></div>
+        </dl>
+        <p class="collection-cap-note">전투 보너스 누적 최대 50%. EX 카드는 전투 보너스 제외.</p>
+      </aside>
+
+      <section class="collection-library">
+        <header class="collection-toolbar">
+          <div><span>COLLECTION LIBRARY</span><h2>등록 카드</h2></div>
+          <div class="collection-ownership-filter" id="collectionOwnershipFilter">
+            <button class="active" type="button" data-collection-owned="all">전체</button>
+            <button type="button" data-collection-owned="owned">보유</button>
+            <button type="button" data-collection-owned="unowned">미보유</button>
+          </div>
+        </header>
+        <div class="collection-filter-row" id="collectionRaceFilter">
+          <button class="active" type="button" data-collection-race="all">전체 종족</button>
+          <button type="button" data-collection-race="저그">저그</button>
+          <button type="button" data-collection-race="테란">테란</button>
+          <button type="button" data-collection-race="프로토스">프로토스</button>
+        </div>
+        <div class="collection-rarity-filter" id="collectionRarityFilter"></div>
+        <div class="collection-card-grid" id="collectionCardGrid"></div>
+      </section>
+
+      <aside class="collection-detail">
+        <section class="collection-selected" id="collectionSelected"></section>
+        <section class="collection-sets">
+          <header><div><span>SET PROGRESS</span><h2>컬렉션</h2></div><b id="collectionCompletedSets">0 완료</b></header>
+          <div class="collection-set-tabs" id="collectionSetTabs">
+            <button class="active" type="button" data-collection-set="members">인물</button>
+            <button type="button" data-collection-set="races">종족</button>
+            <button type="button" data-collection-set="rarities">등급</button>
+            <button type="button" data-collection-set="overall">전체</button>
+          </div>
+          <div class="collection-set-list" id="collectionSetList"></div>
+        </section>
+      </aside>
+    </main>
+
+    <main class="worldboss-screen" id="worldBossScreen" hidden>
+      <section class="worldboss-stage">
+        <header class="worldboss-heading">
+          <div><span id="worldBossEventState">SERVER RAID LIVE</span><h1>거대 악플 코어 <b>NOISE//ZERO</b></h1><small class="worldboss-schedule" id="worldBossSchedule">매일 17·18·19·20시 KST</small></div>
+          <div class="worldboss-clock"><span id="worldBossClockLabel">종료까지</span><strong id="worldBossTimer">00:52:00</strong><em class="worldboss-next-slot" id="worldBossNextSlot" hidden></em></div>
+        </header>
+        <div class="worldboss-hp-block">
+          <div><span id="worldBossPhase">PHASE 1</span><strong id="worldBossHpText">40,000,000,000 / 40,000,000,000</strong></div>
+          <div class="worldboss-hp-track"><i id="worldBossHpBar"></i></div>
+        </div>
+        <div class="worldboss-arena">
+          <div class="worldboss-scanline"></div>
+          <div class="worldboss-core" id="worldBossCore" data-phase="1">
+            <i class="core-ring outer"></i><i class="core-ring middle"></i><i class="core-ring inner"></i><b>NOISE//ZERO</b><span id="worldBossCorePhase">PHASE 1 · 악성 신호 활성</span>
+          </div>
+          <div class="worldboss-current-damage"><span>이번 도전 피해</span><strong id="worldBossAttemptDamage">0</strong></div>
+        </div>
+        <div class="worldboss-party" id="worldBossParty"></div>
+      </section>
+
+      <aside class="worldboss-control">
+        <header><span>RAID OPERATION</span><h2>공동 작전 현황</h2></header>
+        <dl class="worldboss-stats">
+          <div><dt>서버 참가자</dt><dd id="worldBossParticipants">0</dd></div>
+          <div><dt>내 최고 피해</dt><dd id="worldBossBestDamage">0</dd></div>
+          <div><dt>내 누적 피해</dt><dd id="worldBossTotalDamage">0</dd></div>
+          <div><dt>남은 도전</dt><dd id="worldBossAttempts">3 / 3</dd></div>
+          <div><dt>개인 백분위</dt><dd id="worldBossPercentile">미참여</dd></div>
+        </dl>
+        <div class="worldboss-actions">
+          <button id="worldBossAttackButton" type="button"><i data-lucide="swords"></i><span>보스 교전 시작</span><small>60초 · 행동력 소모 없음</small></button>
+          <button id="worldBossRewardButton" type="button" disabled><i data-lucide="gift"></i><span>누적 보상 받기</span><small id="worldBossRewardText">1회 참여 후 활성화</small></button>
+        </div>
+        <section class="worldboss-rank-block">
+          <header><span>LIVE CONTRIBUTION</span><b>누적 피해</b></header>
+          <ol id="worldBossRanking"></ol>
+        </section>
+        <section class="worldboss-recent-block">
+          <header><span>최근 교전</span><i data-lucide="radio"></i></header>
+          <ul id="worldBossRecent"></ul>
+        </section>
+      </aside>
+    </main>
+
+    <main class="ranking-screen" id="rankingScreen" hidden>
+      <section class="ranking-board">
+        <header class="ranking-heading">
+          <div><span>COMBAT POWER RANKING</span><h1>전투력 랭킹</h1></div>
+          <div><small>PRE-SEASON</small><strong id="rankingPopulation">1,500명 집계</strong></div>
+        </header>
+        <div class="ranking-podium" id="rankingPodium"></div>
+        <div class="ranking-table-head"><span>순위</span><span>방송국명</span><span>전투력</span></div>
+        <ol class="ranking-list" id="rankingList"></ol>
+      </section>
+
+      <aside class="ranking-profile">
+        <header><span>MY RANKING</span><h2 id="rankingNickname">방송국장_세린</h2></header>
+        <section class="ranking-rank-number">
+          <span>전체 순위</span><strong><b id="rankingMyRank">0</b>위</strong><small id="rankingMyPercentile">상위 100%</small>
+        </section>
+        <section class="ranking-power-block">
+          <span>현재 편성 전투력</span><strong><b id="rankingMyPower">0</b> CP</strong>
+          <div><i id="rankingProgressBar"></i></div>
+          <small id="rankingTopFiftyGap">TOP 50 계산 중</small>
+        </section>
+        <section class="ranking-formation-block">
+          <header><span>현재 편성</span><small>5 CARDS</small></header>
+          <div id="rankingFormation"></div>
+        </section>
+        <p class="ranking-note">현재 편성 카드의 등급, 강화 단계, 종족 시너지와 도감 전투 보너스를 합산한 전투력 기준.</p>
+      </aside>
+    </main>
+
+    <main class="minigame-screen" id="minigameScreen" hidden>
+      <aside class="minigame-picker">
+        <header><span>SIGNAL ARCADE</span><h1>미니게임</h1></header>
+        <nav id="miniGamePicker">
+          <button class="active" type="button" data-minigame-select="memory">
+            <i data-lucide="copy"></i><span>카드 짝맞추기</span><small>MEMORY</small>
+          </button>
+          <button type="button" data-minigame-select="sumTen">
+            <i data-lucide="grid-3x3"></i><span>캄몬사과게임</span><small>APPLE</small>
+          </button>
+        </nav>
+        <div class="minigame-daily-block">
+          <span>오늘 획득</span><strong id="miniGameDaily">0 / 3,000 P</strong>
+          <div><i id="miniGameDailyBar"></i></div>
+        </div>
+      </aside>
+
+      <section class="minigame-play">
+        <header class="minigame-play-head">
+          <div><span id="miniGameEyebrow">MEMORY SIGNAL</span><h2 id="miniGameTitle">카드 짝맞추기</h2></div>
+          <div class="minigame-live-stats">
+            <div><span>TIME</span><b id="miniGameTimer">01:30</b></div>
+            <div><span>SCORE</span><b id="miniGameScore">0</b></div>
+          </div>
+        </header>
+        <div class="minigame-stage" id="miniGameStage">
+          <div class="minigame-ready" id="miniGameEmpty">
+            <div class="minigame-ready-visual" id="miniGameReadyVisual" data-game="memory"></div>
+            <strong id="miniGameReadyTitle">같은 카드 신호를 찾아라</strong>
+            <p id="miniGameReadyCopy">카드 2장을 뒤집어 같은 인물의 짝을 완성합니다.</p>
+            <span id="miniGameStatus">4×4 · 8 PAIRS</span>
+            <b class="minigame-ready-mode" id="miniGameReadyMode">보상 모드 · 행동력 10</b>
+          </div>
+          <div class="memory-board" id="memoryBoard" hidden></div>
+          <div class="sum-ten-shell" id="sumTenShell" hidden>
+            <div class="sum-ten-board" id="sumTenBoard"></div>
+            <div class="sum-selection-readout"><span>SELECT</span><b id="miniGameSelectionSum">0</b><small>/ 10</small></div>
+          </div>
+          <div class="minigame-result-panel" id="miniGameResult" hidden>
+            <span>RESULT</span><h3 id="miniGameResultTitle">작전 완료</h3>
+            <strong id="miniGameResultScore">0 SCORE</strong>
+            <b id="miniGameResultReward">+0 P</b>
+          </div>
+        </div>
+      </section>
+
+      <aside class="minigame-control">
+        <header><span>PLAY MODE</span><h2>작전 설정</h2></header>
+        <div class="minigame-mode" id="miniGameMode">
+          <button class="active" type="button" data-mini-mode="reward"><i data-lucide="zap"></i><span>보상</span><small>-10 행동력</small></button>
+          <button type="button" data-mini-mode="practice"><i data-lucide="infinity"></i><span>연습</span><small>무료</small></button>
+        </div>
+        <section class="minigame-difficulty" id="miniGameDifficulty">
+          <span>BOARD SIZE</span>
+          <div>
+            <button class="active" type="button" data-memory-difficulty="basic">4×4</button>
+            <button type="button" data-memory-difficulty="advanced">6×6</button>
+          </div>
+        </section>
+        <dl class="minigame-records">
+          <div><dt>최고 기록</dt><dd id="miniGameBest">0</dd></div>
+          <div><dt>오늘 플레이</dt><dd id="miniGamePlays">0회</dd></div>
+          <div><dt>보상 잔여</dt><dd id="miniGameRemaining">3,000 P</dd></div>
+        </dl>
+        <button class="minigame-start-button" id="miniGameStartButton" type="button"><i data-lucide="play"></i><span>게임 시작</span></button>
+        <button class="minigame-stop-button" id="miniGameStopButton" type="button" hidden><i data-lucide="square"></i><span>게임 종료</span></button>
+      </aside>
+    </main>
+  </div>
+
+  <section class="system-state-layer" id="systemStateLayer" data-state="loading" role="status" aria-live="polite" aria-label="게임 데이터 로딩 중">
+    <div class="system-state-panel">
+      <div class="system-state-visual" aria-hidden="true">
+        <i class="outer"></i><i class="inner"></i>
+        <img src="assets/renewal/brand/card-gacha-s2-symbol.png" alt="">
+        <span><i data-lucide="radio-tower"></i></span>
+      </div>
+      <div class="system-state-copy">
+        <span id="systemStateEyebrow">SYSTEM BOOT</span>
+        <h2 id="systemStateTitle">카드 데이터 동기화 중</h2>
+        <p id="systemStateMessage">시즌2 작전 기록과 카드 정보를 불러오고 있습니다.</p>
+        <b id="systemStateCode">SYNC // LOCAL DATA</b>
+      </div>
+      <button class="system-state-retry" id="systemStateRetry" type="button" hidden><i data-lucide="refresh-cw"></i><span>다시 연결</span></button>
     </div>
   </section>
 
-  <!-- KEY 표시 모달 (숲 최초 로그인 후 & '내 KEY' 버튼에서 재사용) -->
-  <div id="keyModal" class="key-modal hidden">
-    <div class="panel auth-shell" style="border-color:var(--accent)">
-      <h3 id="keyModalTitle" style="color:var(--accent);font-size:17px">KEY 발급 완료</h3>
-      <p class="muted" style="font-size:14px;margin:8px 0 10px">이 KEY는 숲 로그인이 어려울 때 쓰는 <b style="color:var(--warn)">백업 로그인 수단</b>입니다. 복사해서 안전하게 보관하세요. <span style="color:var(--dim)">(다음 숲 로그인 시 새 KEY로 갱신됩니다)</span></p>
-      <input type="hidden" id="issuedKey" />
-      <button class="cta" id="copyKeyBtn">KEY 복사</button>
-      <button class="cta" style="margin-top:12px" id="goShopBtn">확인</button>
-    </div>
-  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <!-- 안내 모달 (첫 화면 · 다시 보지 않기) -->
-  <div id="guideModal" class="key-modal hidden">
-    <div class="panel auth-shell" style="border-color:var(--accent);max-width:440px">
-      <h3 style="color:var(--accent);font-size:18px;margin-bottom:14px">처음이신가요? 🎴</h3>
-      <div class="guide-body">
-        <div class="guide-row">
-          <b>① 숲(SOOP) 로그인 = 자동 가입</b>
-          <p>SOOP 숲 계정으로 로그인하면 계정이 자동으로 만들어지고 <b class="mono" style="color:var(--accent)">5000P</b>가 지급됩니다.</p>
-        </div>
-        <div class="guide-row">
-          <b>② 백업 KEY 안전 보관</b>
-          <p>가입 시 발급되는 KEY는 기기 이동·숲 로그인 불가 시의 <b style="color:var(--warn)">백업 수단</b>입니다. 메모·비밀노트 등 <b>다른 곳에 따로 저장</b>해 두세요. <span class="dim">(숲 재로그인 시 새 KEY로 갱신됩니다)</span></p>
-        </div>
-        <div class="guide-row">
-          <b>③ 스트리머 전용 · 별풍선 후원 연동</b>
-          <p>크루 스트리머에게는 SOOP 별풍선 후원이 포인트로 연동되는 <b>후원 브리지</b>가 제공됩니다. <span class="dim">(일반 유저에게는 노출되지 않습니다)</span></p>
-        </div>
-        <div class="guide-row">
-          <b>④ 포인트 획득 방법</b>
-          <ul>
-            <li>출석: 매일 <b class="mono">+400P</b> · 연속 출석 <b class="mono">+800P</b> · 신규 첫 출석 <b class="mono">+100P</b></li>
-            <li>중복 카드 분해: 등급별 환급 (<b class="mono">C 5P</b> ~ <b class="mono">FUR 250P</b>)</li>
-            <li>합성 실패 위로금: 재료 등급 분해가 × 3의 50%</li>
-            <li>후원자·스트리머: 별풍선 후원 1개당 각각 3P 연동</li>
-          </ul>
-          <p class="dim" style="margin-top:6px">모은 포인트로 카드팩을 구매해 크루 카드를 수집하세요.</p>
-        </div>
-      </div>
-      <label class="guide-dismiss"><input type="checkbox" id="guideDismiss" /> 다시 보지 않기</label>
-      <button class="cta" id="guideCloseBtn" style="margin-top:14px">확인</button>
+  <section class="fx-layer" id="fxLayer" data-phase="idle" aria-hidden="true" hidden>
+    <div class="fx-vignette"></div>
+    <video class="fx-rarity-video" data-fx-rarity-video playsinline preload="metadata" hidden></video>
+    <canvas class="fx-particles" aria-hidden="true"></canvas>
+    <div class="fx-flash" aria-hidden="true"></div>
+    <div class="fx-success-assembly" aria-hidden="true">
+      <i class="outer"></i>
+      <i class="middle"></i>
+      <i class="inner"></i>
+      <span class="vertical"></span>
+      <span class="horizontal"></span>
+      <span class="sweep"></span>
+      <span class="pedestal"></span>
     </div>
-  </div>
-
-  <!-- 합성 오류 보상 안내 (로그인 후 기기당 1회) -->
-  <div id="fuseFixModal" class="key-modal hidden" role="dialog" aria-modal="true" aria-labelledby="fuseFixTitle">
-    <div class="panel auth-shell" style="border-color:var(--accent);max-width:440px">
-      <h3 id="fuseFixTitle" style="color:var(--accent);font-size:18px">합성 시스템 오류 수정 완료</h3>
-      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">카드 합성 과정의 오류를 수정했습니다.</p>
-      <p style="font-size:15px;font-weight:800;margin:8px 0 0">불편 보상으로 <b class="mono" style="color:var(--accent)">500P</b>가 지급되었습니다.</p>
-      <button class="cta" id="fuseFixCloseBtn" style="margin-top:16px">확인</button>
+    <div class="fx-success-burst" aria-hidden="true">
+      <i class="ring ring-a"></i>
+      <i class="ring ring-b"></i>
+      <i class="ring ring-c"></i>
+      <span class="ray ray-a"></span>
+      <span class="ray ray-b"></span>
+      <span class="ray ray-c"></span>
+      <span class="ray ray-d"></span>
     </div>
-  </div>
-
-  <!-- 신규 카드팩 출시 보상 안내 (로그인 후 기기당 1회) -->
-  <div id="packReleaseModal" class="key-modal hidden" role="dialog" aria-modal="true" aria-labelledby="packReleaseTitle">
-    <div class="panel auth-shell" style="border-color:var(--accent);max-width:440px">
-      <h3 id="packReleaseTitle" style="color:var(--accent);font-size:18px">신규 카드팩 출시 기념</h3>
-      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">저그 · 테란 · 프로토스 종족팩이 출시되었습니다.</p>
-      <p style="font-size:15px;font-weight:800;margin:8px 0 0">출시 기념 선물로 <b class="mono" style="color:var(--accent)">1,000P</b>가 지급되었습니다.</p>
-      <button class="cta" id="packReleaseCloseBtn" style="margin-top:16px">확인</button>
+    <div class="fx-failure-wave" aria-hidden="true"></div>
+    <div class="fx-destroy-crack" aria-hidden="true"></div>
+    <div class="fx-pack-stage" data-fx-pack-stage aria-hidden="true">
+      <div class="fx-pack-glow"></div>
+      <div class="fx-pack-half left"><img data-fx-pack-image src="" alt=""></div>
+      <div class="fx-pack-half right"><img data-fx-pack-image src="" alt=""></div>
+      <div class="fx-pack-seal"></div>
+      <strong data-fx-pack-name></strong>
     </div>
-  </div>
-
-  <!-- 신규 카드 추가 보상 안내 (로그인 후 기기당 1회) -->
-  <div id="newCardsModal" class="key-modal hidden" role="dialog" aria-modal="true" aria-labelledby="newCardsTitle">
-    <div class="panel auth-shell" style="border-color:var(--accent);max-width:440px">
-      <h3 id="newCardsTitle" style="color:var(--accent);font-size:18px">신규 카드 47종 추가 기념</h3>
-      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">신규 카드 47종이 도감에 추가되었습니다.</p>
-      <p style="font-size:15px;font-weight:800;margin:8px 0 0">기념 선물로 <b class="mono" style="color:var(--accent)">1,000P</b>가 추가 지급되었습니다.</p>
-      <button class="cta" id="newCardsCloseBtn" style="margin-top:16px">확인</button>
+    <div class="fx-pack-reveal">
+      <div class="fx-reveal-grid" data-fx-reveal-grid></div>
+      <strong class="fx-reveal-summary" data-fx-reveal-summary></strong>
+      <button class="fx-reveal-all" data-fx-reveal-all type="button" hidden>한번에 오픈하기</button>
     </div>
-  </div>
-
-  <div id="subscriber300Modal" class="key-modal reward-modal hidden" role="dialog" aria-modal="true" aria-labelledby="subscriber300Title">
-    <div class="panel auth-shell" style="border-color:#f1cb66;max-width:440px">
-      <h3 id="subscriber300Title" style="color:#f1cb66;font-size:18px">가입자 수 300명 돌파 기념</h3>
-      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">함께해 주신 모든 분께 감사드립니다.</p>
-      <p style="font-size:15px;font-weight:800;margin:10px 0 0">기념 보상으로 <b class="reward-amount">+2,000P</b>가 추가 지급되었습니다.</p>
-      <button class="cta" id="subscriber300CloseBtn" style="margin-top:16px">확인</button>
-    </div>
-  </div>
-
-  <div id="civilWarModal" class="key-modal reward-modal hidden" role="dialog" aria-modal="true" aria-labelledby="civilWarTitle">
-    <div class="panel auth-shell" style="border-color:#f1cb66;max-width:440px">
-      <h3 id="civilWarTitle" style="color:#f1cb66;font-size:18px">시빌워 기념 지급</h3>
-      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">시빌워를 기념해 모든 계정에 보상을 지급했습니다.</p>
-      <p style="font-size:15px;font-weight:800;margin:10px 0 0">기념 보상 <b class="reward-amount">+2,000P</b>가 추가 지급되었습니다.</p>
-      <button class="cta" id="civilWarCloseBtn" style="margin-top:16px">확인</button>
-    </div>
-  </div>
-
-  <div id="subscriber400Modal" class="key-modal reward-modal hidden" role="dialog" aria-modal="true" aria-labelledby="subscriber400Title">
-    <div class="panel auth-shell" style="border-color:#f1cb66;max-width:440px">
-      <h3 id="subscriber400Title" style="color:#f1cb66;font-size:18px">가입자 수 400명 돌파 기념</h3>
-      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">함께해 주신 모든 분께 감사드립니다.</p>
-      <p style="font-size:15px;font-weight:800;margin:10px 0 0">기념 보상으로 <b class="reward-amount">+1,000P</b>가 추가 지급되었습니다.</p>
-      <button class="cta" id="subscriber400CloseBtn" style="margin-top:16px">확인</button>
-    </div>
-  </div>
-
-  <div id="subscriber700Modal" class="key-modal reward-modal hidden" role="dialog" aria-modal="true" aria-labelledby="subscriber700Title">
-    <div class="panel auth-shell" style="border-color:#f1cb66;max-width:440px">
-      <h3 id="subscriber700Title" style="color:#f1cb66;font-size:18px">가입자 수 700명 돌파 기념</h3>
-      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">함께해 주신 모든 분께 감사드립니다.</p>
-      <p style="font-size:15px;font-weight:800;margin:10px 0 0">기념 보상으로 <b class="reward-amount">+3,000P</b>가 추가 지급되었습니다.</p>
-      <button class="cta" id="subscriber700CloseBtn" style="margin-top:16px">확인</button>
-    </div>
-  </div>
-
-  <div id="newCardAdditionModal" class="key-modal reward-modal hidden" role="dialog" aria-modal="true" aria-labelledby="newCardAdditionTitle">
-    <div class="panel auth-shell" style="border-color:#f1cb66;max-width:440px">
-      <h3 id="newCardAdditionTitle" style="color:#f1cb66;font-size:18px">신규 카드 7종 추가 기념</h3>
-      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">새로운 카드가 도감에 추가되었습니다.</p>
-      <p style="font-size:15px;font-weight:800;margin:10px 0 0">기념 보상으로 <b class="reward-amount">+2,000P</b>가 추가 지급되었습니다.</p>
-      <button class="cta" id="newCardAdditionCloseBtn" style="margin-top:16px">확인</button>
-    </div>
-  </div>
-
-  <div id="subscriber1000Modal" class="key-modal reward-modal hidden" role="dialog" aria-modal="true" aria-labelledby="subscriber1000Title">
-    <div class="panel auth-shell" style="border-color:#f1cb66;max-width:440px">
-      <h3 id="subscriber1000Title" style="color:#f1cb66;font-size:18px">가입자 수 1,000명 돌파 기념</h3>
-      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">함께해 주신 모든 분께 감사드립니다.</p>
-      <p style="font-size:15px;font-weight:800;margin:10px 0 0">기념 보상으로 <b class="reward-amount">+3,000P</b>가 추가 지급되었습니다.</p>
-      <button class="cta" id="subscriber1000CloseBtn" style="margin-top:16px">확인</button>
-    </div>
-  </div>
-
-  <div id="civilWarFunding123Modal" class="key-modal reward-modal hidden" role="dialog" aria-modal="true" aria-labelledby="civilWarFunding123Title">
-    <div class="panel auth-shell" style="border-color:#f1cb66;max-width:440px">
-      <h3 id="civilWarFunding123Title" style="color:#f1cb66;font-size:18px">시빌워 펀딩 123만개 돌파 기념</h3>
-      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">캄몬 시빌워 펀딩 123만개 돌파를 함께 축하해 주세요.</p>
-      <p style="font-size:15px;font-weight:800;margin:10px 0 0">기념 보상으로 <b class="reward-amount">+12,300P</b>가 추가 지급되었습니다.</p>
-      <button class="cta" id="civilWarFunding123CloseBtn" style="margin-top:16px">확인</button>
-    </div>
-  </div>
-
-  <div id="premiumPackApologyModal" class="key-modal reward-modal hidden" role="dialog" aria-modal="true" aria-labelledby="premiumPackApologyTitle">
-    <div class="panel auth-shell" style="border-color:#f1cb66;max-width:440px">
-      <h3 id="premiumPackApologyTitle" style="color:#f1cb66;font-size:18px">프리미엄팩 수량 변경 사과 안내</h3>
-      <p class="muted" style="font-size:14px;line-height:1.65;margin:10px 0 0">실수로 프리미엄팩 카드 수량이 5장에서 4장으로 변경되었습니다. 카드 수량은 4장으로 유지하겠습니다.</p>
-      <p style="font-size:15px;font-weight:800;margin:10px 0 0">사과 보상으로 <b class="reward-amount">+10,000P</b>가 추가 지급되었습니다.</p>
-      <button class="cta" id="premiumPackApologyCloseBtn" style="margin-top:16px">확인</button>
-    </div>
-  </div>
-
-  <div id="seasonEndNoticeModal" class="key-modal reward-modal hidden" role="dialog" aria-modal="true" aria-labelledby="seasonEndNoticeTitle">
-    <div class="panel auth-shell" style="border-color:#f1cb66;max-width:560px;max-height:calc(100vh - 32px);overflow-y:auto">
-      <h3 id="seasonEndNoticeTitle" style="color:#f1cb66;font-size:20px">카드가챠 운영 일정 안내</h3>
-      <p style="font-size:15px;font-weight:800;line-height:1.65;margin:12px 0 0">캄몬 카드가챠를 사랑해 주신 스트리머와 캄몬 팬 여러분께 진심으로 감사드립니다.</p>
-      <p class="muted" style="font-size:14px;line-height:1.75;margin:10px 0 0">현재 카드가챠는 <b style="color:#f1cb66">7월 18일까지</b> 운영됩니다.</p>
-      <p class="muted" style="font-size:14px;line-height:1.75;margin:10px 0 0">모두가 함께 즐길 수 있는 새로운 콘텐츠를 고민하고 있습니다. 새로운 API 연동 콘텐츠를 제작하게 된다면, 현 카드가챠 시즌 종료 시점의 랭커분들께 새 콘텐츠에서 별도 보상을 지급하겠습니다.</p>
-      <p class="muted" style="font-size:14px;line-height:1.75;margin:10px 0 0">시즌 2 카드가챠가 될지, 완전히 새로운 콘텐츠가 탄생할지는 조금 더 고민해 보겠습니다. 보내주신 많은 관심과 사랑에 다시 한번 감사드립니다.</p>
-      <p style="font-size:15px;font-weight:800;margin:12px 0 0">감사의 마음을 담아 <b class="reward-amount">+50,000P</b>를 지급했습니다.</p>
-      <p class="muted" style="font-size:12px;line-height:1.6;margin:12px 0 0">아이디어가 있으신 분은 <b style="color:#f1cb66">MSTZ_손실바</b>에게 쪽지 부탁드립니다.</p>
-      <label class="guide-dismiss" style="margin-top:14px"><input type="checkbox" id="seasonEndNoticeDismiss" /> 다시 보지 않기</label>
-      <button class="cta" id="seasonEndNoticeCloseBtn" style="margin-top:14px">확인</button>
-    </div>
-  </div>
-
-  <!-- SHOP -->
-  <section id="view-shop" class="hidden">
-    <div class="panel attend-bar">
-      <div><div class="lbl">매일 출석 보너스 <span id="streakText">연속 출석 준비 중</span></div><div class="amt">+500 P</div></div>
-      <button class="cta" style="width:auto;padding:12px 22px" id="attendBtn">출석하기</button>
-    </div>
-    <h2 class="sec-title">카드팩 상점</h2>
-    <div id="packWrap" class="bento"></div>
+    <article class="fx-card card-visual" aria-live="polite">
+      <img class="card-photo" data-fx-card-image src="" alt="">
+      <div class="fx-card-shade"></div>
+      <img class="card-frame-overlay" data-fx-frame src="assets/renewal/card-frames/card-frame-common.webp" alt="" aria-hidden="true">
+      <span class="card-rarity-mark" data-fx-rarity></span>
+      <strong data-fx-card-name></strong>
+      <span class="card-star-mark" data-fx-level><img src="assets/renewal/ui/enhancement-star.webp" alt=""><b></b><i></i></span>
+    </article>
+    <div class="fx-level-up" data-fx-level-burst aria-hidden="true"><span>STAR UP</span><strong></strong></div>
+    <div class="fx-verdict" data-fx-verdict role="status"></div>
+    <button class="fx-skip" data-fx-skip type="button" hidden><i data-lucide="fast-forward"></i><span>연출 건너뛰기</span></button>
   </section>
 
-  <!-- COLLECTION -->
-  <section id="view-col" class="hidden">
-    <div class="panel" style="margin-bottom:14px">
-      <div class="col-head">
-        <h2 style="font-size:18px">도감</h2>
-        <div class="stat"><b id="colOwned">0</b> <span class="dim">/ <span id="colTotal">0</span></span></div>
-      </div>
-      <div class="col-actions"><button class="small-btn" id="batchDismantleBtn">중복 일괄 분해</button><button class="small-btn" id="claimAllRewardsBtn">도감 보상 일괄 받기</button></div>
-      <div class="filters" id="rarFilters"></div>
+  <dialog class="formation-dialog" id="formationDialog">
+    <form method="dialog" class="dialog-shell">
+      <header>
+        <div><span>전투 편성</span><h2>출전 카드 5장</h2></div>
+        <div class="formation-head-actions">
+          <span id="selectionCount">5 / 5</span>
+          <button class="clear-formation-button" id="clearFormation" type="button">일괄 해제</button>
+          <button class="confirm-button" id="confirmFormation" value="default" type="button">편성 확정</button>
+          <button class="icon-button" value="cancel" aria-label="닫기" title="닫기"><i data-lucide="x"></i></button>
+        </div>
+      </header>
+      <div class="selected-formation" id="selectedFormation"></div>
+      <div class="inventory-grid" id="inventoryGrid"></div>
+    </form>
+  </dialog>
+
+  <dialog class="reward-dialog" id="rewardDialog">
+    <form method="dialog" class="reward-shell">
+      <header>
+        <div><span id="rewardEyebrow">누적 작전 결과</span><h2 id="rewardTitle">오프라인 보상</h2></div>
+        <button class="icon-button" value="cancel" aria-label="보상창 닫기" title="닫기"><i data-lucide="x"></i></button>
+      </header>
+      <div class="reward-duration" id="rewardDurationBlock"><i data-lucide="clock-3"></i><span>정산 시간</span><strong id="rewardDuration">00:00:00</strong></div>
+      <dl class="reward-breakdown" id="rewardBreakdown">
+        <div><dt>카드 EXP</dt><dd id="rewardCardExp">+0 × 5</dd></div>
+        <div><dt>카드뽑기 포인트</dt><dd id="rewardPoints">+0 P</dd></div>
+      </dl>
+      <div class="reward-party" id="rewardParty"></div>
+      <p class="reward-note" id="rewardNote">편성된 카드 5장에 동일한 카드 경험치가 지급됨.</p>
+      <section class="ui-empty-state reward-empty-state" id="rewardEmptyState" data-state="reward" hidden>
+        <div class="ui-state-mark" aria-hidden="true"><img src="assets/renewal/brand/card-gacha-s2-symbol.png" alt=""><i data-lucide="package-open"></i></div>
+        <div><span>REWARD BUFFER</span><strong>받을 보상 없음</strong><p>자동 전투가 진행되면 누적 보상이 생성됩니다.</p></div>
+      </section>
+      <footer>
+        <button class="cancel-button" value="cancel">취소</button>
+        <button class="confirm-button" id="confirmReward" value="default" type="button">보상 수령</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog class="enhance-confirm-dialog" id="enhanceConfirmDialog">
+    <form method="dialog" class="enhance-confirm-shell">
+      <header><span>HIGH RISK UPGRADE</span><h2 id="enhanceConfirmTitle">고강화 확인</h2></header>
+      <p id="enhanceConfirmSummary"></p>
+      <dl>
+        <div><dt>성공 확률</dt><dd id="enhanceConfirmSuccess">0%</dd></div>
+        <div><dt>파괴 확률</dt><dd id="enhanceConfirmDestroy">0%</dd></div>
+        <div><dt>소모 재료</dt><dd id="enhanceConfirmMaterials">-</dd></div>
+        <div><dt>필요 포인트</dt><dd id="enhanceConfirmPoints">0 P</dd></div>
+      </dl>
+      <footer>
+        <button class="cancel-button" value="cancel">취소</button>
+        <button class="danger-confirm-button" id="confirmEnhanceAttempt" value="default" type="button">위험 확인 · 강화</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog class="shop-result-dialog" id="shopResultDialog">
+    <div class="shop-result-shell">
+      <header>
+        <div><span>SUPPLY OPENED</span><h2 id="shopResultTitle">보급 결과</h2></div>
+      </header>
+      <div class="shop-result-summary" id="shopResultSummary"></div>
+      <div class="shop-result-grid" id="shopResultGrid"></div>
     </div>
-    <div id="colWrap"></div>
-  </section>
+  </dialog>
 
-  <!-- FUSE -->
-  <section id="view-fuse" class="hidden">
-    <div class="panel" style="margin-bottom:14px">
-      <div class="col-head">
-        <h2 style="font-size:18px">카드 합성</h2>
-        <div class="stat"><b id="fuseAvail">0</b> <span class="dim">재료 가능</span></div>
-      </div>
-      <p class="fuse-note">동일 등급 카드 <b>3장</b>을 재료로 소모해, 성공 시 <b>한 단계 위 등급</b>의 랜덤 카드 1장을 획득합니다.
-        각 카드 1장은 항상 보존되며 <b>초과 보유분만</b> 재료로 쓸 수 있습니다.
-        실패 시 재료 3장은 소멸되고 <b>위로 포인트</b>(해당 등급 분해가 ×3의 50%)를 드립니다. FUR은 최상위 등급이라 합성할 수 없습니다.</p>
-      <div class="filters" id="fuseGrades"></div>
-    </div>
-    <div class="panel fuse-bench">
-      <div class="fuse-slots" id="fuseSlots"></div>
-      <div class="fuse-meta" id="fuseMeta"></div>
-      <button class="cta" id="fuseBtn" disabled>재료 3장을 선택하세요</button>
-    </div>
-    <div id="fuseMatWrap"></div>
-  </section>
+  <dialog class="card-detail-dialog" id="cardDetailDialog">
+    <form method="dialog" class="card-detail-shell">
+      <header>
+        <div><span>CARD ARCHIVE</span><h2 id="cardDetailTitle">카드 상세</h2></div>
+        <button class="icon-button" value="cancel" aria-label="카드 상세 닫기" title="닫기"><i data-lucide="x"></i></button>
+      </header>
+      <div class="card-detail-body" id="cardDetailBody"></div>
+      <footer>
+        <button class="card-detail-representative" id="cardDetailRepresentativeButton" type="button"><i data-lucide="star"></i><span>대표카드 설정</span></button>
+        <button class="card-detail-lock" id="cardDetailLockButton" type="button"><i data-lucide="lock-open"></i><span>카드 잠금</span></button>
+        <button class="confirm-button" value="cancel">닫기</button>
+      </footer>
+    </form>
+  </dialog>
 
-  <!-- RANKING -->
-  <section id="view-rank" class="hidden">
-    <h2 class="sec-title" style="text-align:center;margin:10px 0 20px;font-size:22px;text-shadow:0 0 10px var(--accent)">명예의 전당</h2>
-    <div id="rankWrap" style="display:flex;flex-direction:column"></div>
-  </section>
-</div>
-
-<!-- pack opening -->
-<div class="opening" id="opening">
-  <div class="revarea">
-    <div class="revrow" id="revrow"></div>
-    <div class="tap-hint pulse" id="tapHint">화면을 탭하면 바로 전체 공개</div>
-    <button class="cta hidden" id="closeOpen" style="max-width:300px;margin:10px auto 0">확인</button>
-  </div>
-</div>
-
-<div class="fx-intro" id="fxIntro" aria-hidden="true"><video id="fxVideo" playsinline preload="metadata"></video></div>
-
-<!-- special stage: MUR / FUR only -->
-<div class="special" id="special">
-  <div class="spot"></div>
-  <div class="sp-aura" id="spAura"></div>
-  <div class="revarea">
-    <div class="sp-title" id="spTitle"></div>
-    <div class="revrow" id="sprow"></div>
-    <button class="cta hidden" id="closeSpecial" style="max-width:300px;margin:10px auto 0">확인</button>
-  </div>
-</div>
-
-<!-- fuse stage: 합성 연출 -->
-<div class="fusing" id="fusing">
-  <div class="revarea">
-    <div class="sp-title" id="fuseTitle"><span class="mono">CARD FUSION</span></div>
-    <div class="fuse-stage" id="fuseStage"></div>
-    <div class="tap-hint" id="fuseHint"></div>
-    <button class="cta hidden" id="closeFuse" style="max-width:300px;margin:10px auto 0">확인</button>
-  </div>
-</div>
-
-<div class="nav hidden" id="nav">
-  <button data-nav="shop" class="on"><span class="ic">◈</span>상점</button>
-  <button data-nav="col"><span class="ic">▤</span>도감</button>
-  <button data-nav="fuse"><span class="ic">◆</span>합성</button>
-  <button data-nav="rank"><span class="ic">👑</span>랭킹</button>
-</div>
-<div class="toast" id="toast"></div>
-<!-- BGM: monstarznew 펀딩 플레이어에서 이식한 유튜브 IFrame 백그라운드 플레이어 (숨김 마운트) -->
-<div id="bgmMount" aria-hidden="true" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;pointer-events:none;opacity:0"></div>
-<div class="detail-modal hidden" id="cardModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
-  <div class="detail-backdrop" id="cardModalBackdrop"></div>
-  <div class="detail-panel"><button class="detail-close" id="cardModalClose" aria-label="닫기">×</button><div id="cardDetail"></div></div>
-</div>
-
-<script>
-const RAR=['C','U','R','RR','RRR','AR','CHR','HR','SR','SAR','UR','MUR','FUR'];
-const RANK=Object.fromEntries(RAR.map((r,i)=>[r,i]));
-const framePath=card=>`assets/frames/${(card.group?'group':card.rarity).toLowerCase()}.svg`;
-const artClass=card=>`card-art${card.group?' group-card-art':''}`;
-const packArt={normal:'normal.png',premium:'rare.png',luxury:'premium.png',zerg:'zerg.avif',terran:'terran.avif',protoss:'protoss.avif'};
-const MEMBER_ORDER=['김윤환','소주양','지두두','남덕선','토마토','햇살','찌킹','치리','주하랑','임조이','비타밍','먼진','아리송이','낭니','변현제','김민철','사테','박준오','박수범','지동원','배성흠'];
-const DISMANTLE_REFUND={C:5,U:8,R:12,RR:20,RRR:30,AR:45,CHR:60,HR:80,SR:100,SAR:130,UR:160,MUR:200,FUR:250};
-const MEMBER_REWARDS={'김윤환':900,'지두두':600,'치리':580,'토마토':750,'비타밍':510,'주하랑':490,'임조이':430,'낭니':450,'햇살':450,'소주양':550,'먼진':450,'찌킹':450,'아리송이':450,'남덕선':450,'변현제':260,'김민철':250,'박수범':160,'박준오':150,'사테':150,'배성흠':150,'지동원':150};
-const FUSE_RATES={C:90,U:85,R:80,RR:75,RRR:70,AR:60,CHR:55,HR:50,SR:40,SAR:35,UR:25,MUR:1};
-const FUSE_GRADES=RAR.filter(r=>FUSE_RATES[r]!=null); // FUR 제외
-const COLLECTION_CACHE_MS=30000;
-function fuseConsolation(r){return Math.floor((DISMANTLE_REFUND[r]||0)*3/2);}
-const COLLECTIONS=[{key:'crew',label:'크루',members:MEMBER_ORDER}];
-const state={key:null,nickname:null,points:0,canAttend:false,canUseDonationBridge:false,streak:null,cards:[],byId:{},collection:{},first:{},claimed:[],serials:{},issued:{},filter:'ALL',collectionLoaded:false,collectionDetailsLoaded:false,collectionLoadedAt:0,collectionLoadPromise:null,cardsLoaded:false,soundOn:localStorage.getItem('cardgacha_sound')==='on',bgmOn:localStorage.getItem('cardgacha_bgm')==='on',fuseGrade:null,fuseSel:[]};
-const REDUCE=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-const $=s=>document.querySelector(s);
-const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
-function toast(m,err){const t=$('#toast');t.textContent=m;t.className='toast show'+(err?' err':'');clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast'+(err?' err':''),2600);}
-function glowClass(r){return RANK[r]>=RANK.SR?'glow-'+r:'';}
-function imgPath(f){return 'assets/cards/'+f;}
-const RACE_CLASS={저그:'zerg',테란:'terran',프로토스:'protoss'};
-function raceTag(card){return card.race?`<span class="race-tag race-${RACE_CLASS[card.race]||'other'}">${esc(card.race)}</span>`:'';}
-function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
-function updateStreak(v){state.streak=v==null?null:v;$('#streakText').textContent=v==null?'연속 출석 준비 중':`연속 ${v}일`}
-function updateSoundBtn(){const b=$('#soundBtn');b.textContent=state.soundOn?'SFX ON':'SFX OFF';b.setAttribute('aria-pressed',String(state.soundOn));}
-let audioContext=null;
-function sfx(kind){if(!state.soundOn||REDUCE)return;const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;audioContext=audioContext||new Ctx();const ctx=audioContext,t=ctx.currentTime;ctx.resume();const spec={open:[110,.10,.08],flip:[250,.06,.06],rare:[520,.13,.08],fur:[880,.22,.11],fail:[220,.30,.07]}[kind]||[180,.06,.05];const o=ctx.createOscillator(),g=ctx.createGain();o.type=kind==='fur'?'triangle':'sine';o.frequency.setValueAtTime(spec[0],t);o.frequency.exponentialRampToValueAtTime(spec[0]*(kind==='fail'?0.45:1.6),t+spec[1]);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(spec[2],t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+spec[1]);o.connect(g).connect(ctx.destination);o.start(t);o.stop(t+spec[1]+.02)}
-
-async function apiPost(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});const j=await r.json().catch(()=>({error:'응답 오류'}));if(!r.ok)throw new Error(j.error||('오류 '+r.status));return j;}
-async function apiGet(p){const r=await fetch(p);const j=await r.json().catch(()=>({error:'응답 오류'}));if(!r.ok)throw new Error(j.error||('오류 '+r.status));return j;}
-
-const MAINTENANCE_FALLBACK_AT='2026-07-17T14:59:00.000Z';
-let maintenanceTimer=null;
-function activateMaintenance(){
-  if(maintenanceTimer)clearInterval(maintenanceTimer);
-  document.documentElement.classList.add('maintenance-lock');
-  document.body.classList.add('maintenance-active');
-  $('#maintenancePage').classList.remove('hidden');
-  document.title='대규모 리뉴얼 공사 중 | Calm MonstarZ 카드가챠';
-}
-async function initializeMaintenance(){
-  let maintenanceAt=MAINTENANCE_FALLBACK_AT,serverNow=new Date().toISOString(),active=false;
-  try{
-    const status=await apiGet('/api/public-config');
-    maintenanceAt=status.maintenanceAt||maintenanceAt;serverNow=status.serverNow||serverNow;active=Boolean(status.maintenance);
-  }catch(e){console.warn('maintenance status fallback',e?.message||e);}
-  const target=Date.parse(maintenanceAt),offset=Date.parse(serverNow)-Date.now();
-  if(active||Date.now()+offset>=target){activateMaintenance();return true;}
-  maintenanceTimer=setInterval(()=>{if(Date.now()+offset>=target)activateMaintenance();},30000);
-  return false;
-}
-
-function show(v){
-  ['auth','shop','col','fuse','rank'].forEach(x=>$('#view-'+x).classList.toggle('hidden',x!==v));
-  $('#nav').classList.toggle('hidden',v==='auth');
-  $('#userbar').classList.toggle('hidden',v==='auth');
-  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.nav===v));
-  if(v==='col')renderCollection();
-  if(v==='shop')renderShop();
-  if(v==='fuse')renderFuse();
-  if(v==='rank')renderRanking();
-  if(v==='auth')maybeShowGuide();
-  window.scrollTo(0,0);
-}
-function setPoints(p){state.points=p;$('#ptval').textContent=p.toLocaleString();}
-function setNickname(nickname){state.nickname=nickname||'';$('#userNick').textContent=state.nickname;}
-function setDonationBridgeAccess(allowed){state.canUseDonationBridge=Boolean(allowed);$('#bridgeBtn').classList.toggle('hidden',!state.canUseDonationBridge);}
-function resetCollectionCache(){
-  state.collection={};state.first={};state.claimed=[];state.serials={};state.issued={};
-  state.collectionLoaded=false;state.collectionDetailsLoaded=false;state.collectionLoadedAt=0;state.collectionLoadPromise=null;
-  state.fuseGrade=null;state.fuseSel=[];
-}
-
-/* auth */
-function openKeyModal(key,first){
-  $('#issuedKey').value=key;
-  $('#keyModalTitle').textContent=first?'KEY 발급 완료':'내 백업 KEY';
-  $('#keyModal').classList.remove('hidden');
-}
-function closeKeyModal(){$('#keyModal').classList.add('hidden');setTimeout(maybeShowFuseFixNotice,0);}
-async function copyKey(value){
-  try{await navigator.clipboard.writeText(value);toast('KEY 복사됨');}
-  catch(e){
-    const input=document.createElement('textarea');input.value=value;input.setAttribute('readonly','');
-    input.style.cssText='position:fixed;opacity:0;pointer-events:none';document.body.appendChild(input);input.select();
-    document.execCommand('copy');input.remove();toast('KEY 복사됨');
-  }
-}
-$('#copyKeyBtn').onclick=()=>copyKey($('#issuedKey').value);
-$('#goShopBtn').onclick=closeKeyModal;
-$('#keyModal').onclick=(e)=>{if(e.target===$('#keyModal'))closeKeyModal();};
-/* 안내 모달 (첫 화면 · 다시 보지 않기) */
-function maybeShowGuide(){if(localStorage.getItem('cardgacha_guide_dismissed')==='1')return;$('#guideModal').classList.remove('hidden');}
-function closeGuide(){if($('#guideDismiss').checked)localStorage.setItem('cardgacha_guide_dismissed','1');$('#guideModal').classList.add('hidden');}
-$('#guideCloseBtn').onclick=closeGuide;
-$('#guideModal').onclick=(e)=>{if(e.target===$('#guideModal'))closeGuide();};
-function maybeShowFuseFixNotice(){
-  if(!state.key||!$('#keyModal').classList.contains('hidden'))return;
-  if(localStorage.getItem('cardgacha_fuse_fix_notice_v1')==='1'){maybeShowPackReleaseNotice();return;}
-  $('#fuseFixModal').classList.remove('hidden');
-}
-function maybeShowPackReleaseNotice(){
-  if(!state.key||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden'))return;
-  if(localStorage.getItem('cardgacha_pack_release_notice_v1')==='1'){maybeShowNewCardsNotice();return;}
-  $('#packReleaseModal').classList.remove('hidden');
-}
-function maybeShowNewCardsNotice(){
-  if(!state.key||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden'))return;
-  if(localStorage.getItem('cardgacha_new_cards_notice_v1')==='1'){maybeShowSubscriber300Notice();return;}
-  $('#newCardsModal').classList.remove('hidden');
-}
-function maybeShowSubscriber300Notice(){
-  if(!state.key||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden')||!$('#newCardsModal').classList.contains('hidden'))return;
-  if(localStorage.getItem('cardgacha_subscriber_300_notice_v1')==='1'){maybeShowCivilWarNotice();return;}
-  $('#subscriber300Modal').classList.remove('hidden');
-}
-function maybeShowCivilWarNotice(){
-  if(!state.key||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden')||!$('#newCardsModal').classList.contains('hidden')||!$('#subscriber300Modal').classList.contains('hidden'))return;
-  if(localStorage.getItem('cardgacha_civil_war_notice_v1')==='1'){maybeShowSubscriber400Notice();return;}
-  $('#civilWarModal').classList.remove('hidden');
-}
-function maybeShowSubscriber400Notice(){
-  if(!state.key||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden')||!$('#newCardsModal').classList.contains('hidden')||!$('#subscriber300Modal').classList.contains('hidden')||!$('#civilWarModal').classList.contains('hidden'))return;
-  if(localStorage.getItem('cardgacha_subscriber_400_notice_v1')==='1'){maybeShowSubscriber700Notice();return;}
-  $('#subscriber400Modal').classList.remove('hidden');
-}
-function maybeShowSubscriber700Notice(){
-  if(!state.key||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden')||!$('#newCardsModal').classList.contains('hidden')||!$('#subscriber300Modal').classList.contains('hidden')||!$('#civilWarModal').classList.contains('hidden')||!$('#subscriber400Modal').classList.contains('hidden'))return;
-  if(localStorage.getItem('cardgacha_subscriber_700_notice_v1')==='1'){maybeShowNewCardAdditionNotice();return;}
-  $('#subscriber700Modal').classList.remove('hidden');
-}
-function maybeShowNewCardAdditionNotice(){
-  if(!state.key||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden')||!$('#newCardsModal').classList.contains('hidden')||!$('#subscriber300Modal').classList.contains('hidden')||!$('#civilWarModal').classList.contains('hidden')||!$('#subscriber400Modal').classList.contains('hidden')||!$('#subscriber700Modal').classList.contains('hidden'))return;
-  if(localStorage.getItem('cardgacha_new_card_addition_notice_v1')==='1'){maybeShowSubscriber1000Notice();return;}
-  $('#newCardAdditionModal').classList.remove('hidden');
-}
-function maybeShowSubscriber1000Notice(){
-  if(!state.key||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden')||!$('#newCardsModal').classList.contains('hidden')||!$('#subscriber300Modal').classList.contains('hidden')||!$('#civilWarModal').classList.contains('hidden')||!$('#subscriber400Modal').classList.contains('hidden')||!$('#subscriber700Modal').classList.contains('hidden')||!$('#newCardAdditionModal').classList.contains('hidden'))return;
-  if(localStorage.getItem('cardgacha_subscriber_1000_notice_v1')==='1'){maybeShowCivilWarFunding123Notice();return;}
-  $('#subscriber1000Modal').classList.remove('hidden');
-}
-function maybeShowCivilWarFunding123Notice(){
-  if(!state.key||!$('#keyModal').classList.contains('hidden')||!$('#fuseFixModal').classList.contains('hidden')||!$('#packReleaseModal').classList.contains('hidden')||!$('#newCardsModal').classList.contains('hidden')||!$('#subscriber300Modal').classList.contains('hidden')||!$('#civilWarModal').classList.contains('hidden')||!$('#subscriber400Modal').classList.contains('hidden')||!$('#subscriber700Modal').classList.contains('hidden')||!$('#newCardAdditionModal').classList.contains('hidden')||!$('#subscriber1000Modal').classList.contains('hidden'))return;
-  if(localStorage.getItem('cardgacha_civil_war_funding_123_notice_v1')==='1'){maybeShowPremiumPackApologyNotice();return;}
-  $('#civilWarFunding123Modal').classList.remove('hidden');
-}
-function maybeShowPremiumPackApologyNotice(){
-  if(!state.key||!$('#civilWarFunding123Modal').classList.contains('hidden'))return;
-  if(localStorage.getItem('cardgacha_premium_pack_apology_notice_v1')==='1'){maybeShowSeasonEndNotice();return;}
-  $('#premiumPackApologyModal').classList.remove('hidden');
-}
-function maybeShowSeasonEndNotice(){
-  if(!state.key||localStorage.getItem('cardgacha_season_end_notice_v2')==='1'||!$('#premiumPackApologyModal').classList.contains('hidden'))return;
-  $('#seasonEndNoticeModal').classList.remove('hidden');
-}
-function closeFuseFixNotice(){localStorage.setItem('cardgacha_fuse_fix_notice_v1','1');$('#fuseFixModal').classList.add('hidden');maybeShowPackReleaseNotice();}
-$('#fuseFixCloseBtn').onclick=closeFuseFixNotice;
-$('#fuseFixModal').onclick=(e)=>{if(e.target===$('#fuseFixModal'))closeFuseFixNotice();};
-function closePackReleaseNotice(){localStorage.setItem('cardgacha_pack_release_notice_v1','1');$('#packReleaseModal').classList.add('hidden');maybeShowNewCardsNotice();}
-$('#packReleaseCloseBtn').onclick=closePackReleaseNotice;
-$('#packReleaseModal').onclick=(e)=>{if(e.target===$('#packReleaseModal'))closePackReleaseNotice();};
-function closeNewCardsNotice(){localStorage.setItem('cardgacha_new_cards_notice_v1','1');$('#newCardsModal').classList.add('hidden');maybeShowSubscriber300Notice();}
-$('#newCardsCloseBtn').onclick=closeNewCardsNotice;
-$('#newCardsModal').onclick=(e)=>{if(e.target===$('#newCardsModal'))closeNewCardsNotice();};
-function closeSubscriber300Notice(){localStorage.setItem('cardgacha_subscriber_300_notice_v1','1');$('#subscriber300Modal').classList.add('hidden');maybeShowCivilWarNotice();}
-$('#subscriber300CloseBtn').onclick=closeSubscriber300Notice;
-$('#subscriber300Modal').onclick=(e)=>{if(e.target===$('#subscriber300Modal'))closeSubscriber300Notice();};
-function closeCivilWarNotice(){localStorage.setItem('cardgacha_civil_war_notice_v1','1');$('#civilWarModal').classList.add('hidden');maybeShowSubscriber400Notice();}
-$('#civilWarCloseBtn').onclick=closeCivilWarNotice;
-$('#civilWarModal').onclick=(e)=>{if(e.target===$('#civilWarModal'))closeCivilWarNotice();};
-function closeSubscriber400Notice(){localStorage.setItem('cardgacha_subscriber_400_notice_v1','1');$('#subscriber400Modal').classList.add('hidden');maybeShowSubscriber700Notice();}
-$('#subscriber400CloseBtn').onclick=closeSubscriber400Notice;
-$('#subscriber400Modal').onclick=(e)=>{if(e.target===$('#subscriber400Modal'))closeSubscriber400Notice();};
-function closeSubscriber700Notice(){localStorage.setItem('cardgacha_subscriber_700_notice_v1','1');$('#subscriber700Modal').classList.add('hidden');maybeShowNewCardAdditionNotice();}
-$('#subscriber700CloseBtn').onclick=closeSubscriber700Notice;
-$('#subscriber700Modal').onclick=(e)=>{if(e.target===$('#subscriber700Modal'))closeSubscriber700Notice();};
-function closeNewCardAdditionNotice(){localStorage.setItem('cardgacha_new_card_addition_notice_v1','1');$('#newCardAdditionModal').classList.add('hidden');maybeShowSubscriber1000Notice();}
-$('#newCardAdditionCloseBtn').onclick=closeNewCardAdditionNotice;
-$('#newCardAdditionModal').onclick=(e)=>{if(e.target===$('#newCardAdditionModal'))closeNewCardAdditionNotice();};
-function closeSubscriber1000Notice(){localStorage.setItem('cardgacha_subscriber_1000_notice_v1','1');$('#subscriber1000Modal').classList.add('hidden');maybeShowCivilWarFunding123Notice();}
-$('#subscriber1000CloseBtn').onclick=closeSubscriber1000Notice;
-$('#subscriber1000Modal').onclick=(e)=>{if(e.target===$('#subscriber1000Modal'))closeSubscriber1000Notice();};
-function closeCivilWarFunding123Notice(){localStorage.setItem('cardgacha_civil_war_funding_123_notice_v1','1');$('#civilWarFunding123Modal').classList.add('hidden');maybeShowPremiumPackApologyNotice();}
-$('#civilWarFunding123CloseBtn').onclick=closeCivilWarFunding123Notice;
-$('#civilWarFunding123Modal').onclick=(e)=>{if(e.target===$('#civilWarFunding123Modal'))closeCivilWarFunding123Notice();};
-function closePremiumPackApologyNotice(){localStorage.setItem('cardgacha_premium_pack_apology_notice_v1','1');$('#premiumPackApologyModal').classList.add('hidden');maybeShowSeasonEndNotice();}
-$('#premiumPackApologyCloseBtn').onclick=closePremiumPackApologyNotice;
-$('#premiumPackApologyModal').onclick=(e)=>{if(e.target===$('#premiumPackApologyModal'))closePremiumPackApologyNotice();};
-function closeSeasonEndNotice(){if($('#seasonEndNoticeDismiss').checked)localStorage.setItem('cardgacha_season_end_notice_v2','1');$('#seasonEndNoticeModal').classList.add('hidden');}
-$('#seasonEndNoticeCloseBtn').onclick=closeSeasonEndNotice;
-$('#seasonEndNoticeModal').onclick=(e)=>{if(e.target===$('#seasonEndNoticeModal'))closeSeasonEndNotice();};
-$('#showKeyBtn').onclick=()=>{if(state.key)copyKey(state.key);else toast('로그인 후 이용하세요',true);};
-$('#loginBtn').onclick=async()=>{const key=$('#loginKey').value.trim();if(!key)return toast('KEY를 입력하세요',true);await doLogin(key);};
-async function doLogin(key){
-  try{const j=await apiPost('/api/login',{key});
-    resetCollectionCache();state.key=key;setNickname(j.user.nickname);setPoints(j.user.points);state.canAttend=j.user.canAttend;setDonationBridgeAccess(j.user.canUseDonationBridge);updateStreak(j.user.streak);
-    localStorage.setItem('cardgacha_key',key);show('shop');setTimeout(maybeShowFuseFixNotice,0);
-  }catch(e){toast(e.message,true);localStorage.removeItem('cardgacha_key');show('auth');}
-}
-$('#logoutBtn').onclick=()=>{localStorage.removeItem('cardgacha_key');state.key=null;resetCollectionCache();setNickname('');setDonationBridgeAccess(false);show('auth');};
-$('#soundBtn').onclick=()=>{state.soundOn=!state.soundOn;localStorage.setItem('cardgacha_sound',state.soundOn?'on':'off');updateSoundBtn();if(state.soundOn)sfx('flip');};
-
-/* ===== BGM 풀 플레이어 (monstarznew 펀딩 뮤직플레이어 이식: 유튜브 IFrame 백그라운드 재생) =====
-   재생/정지 + 5곡 선택 + 볼륨(0~100). 원본 펀딩 플레이어의 5곡 ID/곡명 그대로.
-   유튜브 IFrame 은 WebAudio SFX 와 별도 iframe 이라 충돌 없음. 볼륨 기본 35 로 SFX 안 묻히게.
-   상태 저장: cardgacha_bgm(on/off) + cardgacha_bgm_track(곡 인덱스) + cardgacha_bgm_vol(볼륨). */
-const BGM_TRACKS=[
-  {id:'b5pmzCNLSpg',title:'이원석 - 여전히 푸르다'},
-  {id:'9V3dCGjupXU',title:'Spence - Right Here Beside You (또르르르)'},
-  {id:'aQb6q-ma0u0',title:'이원석 - MONSTERS'},
-  {id:'x2o1zxTWrh4',title:'Hashigeaszy - Unstoppable'},
-  {id:'Dh7enXPvFMI',title:'The Amazing Digital Circus - Your New Home'},
-];
-let bgmVol=(()=>{const v=parseInt(localStorage.getItem('cardgacha_bgm_vol'),10);return isNaN(v)?35:Math.max(0,Math.min(100,v));})();
-let bgmIdx=(()=>{const i=parseInt(localStorage.getItem('cardgacha_bgm_track'),10);return (isNaN(i)||i<0||i>=BGM_TRACKS.length)?0:i;})();
-let bgmPlayer=null,bgmReady=false,bgmWantCreate=false,bgmWantAutoplay=false;
-function bgmCurrent(){return BGM_TRACKS[bgmIdx];}
-function updateBgmUI(){
-  const pp=$('#bgmPlayPause');if(pp){pp.textContent=state.bgmOn?'⏸':'▶';pp.classList.toggle('playing',state.bgmOn);pp.setAttribute('aria-pressed',String(state.bgmOn));}
-  const sel=$('#bgmSelect');if(sel&&sel.selectedIndex!==bgmIdx)sel.selectedIndex=bgmIdx;
-  const vol=$('#bgmVol');if(vol&&String(vol.value)!==String(bgmVol))vol.value=bgmVol;
-  const fold=$('#bgmFold');if(fold){fold.classList.toggle('on',state.bgmOn);fold.setAttribute('aria-pressed',String(state.bgmOn));}
-}
-function createBgmPlayer(autoplay){
-  if(bgmPlayer)return;
-  if(typeof YT==='undefined'||!YT.Player){bgmWantCreate=true;bgmWantAutoplay=autoplay;return;} // API 아직 로드 전 → 대기
-  bgmPlayer=new YT.Player('bgmMount',{width:'1',height:'1',videoId:bgmCurrent().id,
-    playerVars:{autoplay:autoplay?1:0,controls:0,loop:1,playlist:bgmCurrent().id,playsinline:1,disablekb:1,fs:0,modestbranding:1},
-    events:{
-      onReady:e=>{bgmReady=true;e.target.setVolume(bgmVol);if(state.bgmOn){e.target.playVideo();}},
-      onStateChange:e=>{if(e.data===YT.PlayerState.ENDED)e.target.playVideo();} // 무한 루프 보강 (현재 곡 재생)
-    }});
-}
-// 유튜브 IFrame API 준비되면 대기중이던 생성 요청 처리 (전역 콜백)
-function onYouTubeIframeAPIReady(){if(bgmWantCreate){bgmWantCreate=false;createBgmPlayer(bgmWantAutoplay);}}
-function bgmPlay(){if(bgmPlayer&&bgmReady){bgmPlayer.setVolume(bgmVol);bgmPlayer.playVideo();}else{createBgmPlayer(true);}}
-function bgmPause(){if(bgmPlayer&&bgmReady&&bgmPlayer.pauseVideo)bgmPlayer.pauseVideo();}
-function bgmToggle(){
-  state.bgmOn=!state.bgmOn;
-  localStorage.setItem('cardgacha_bgm',state.bgmOn?'on':'off');
-  updateBgmUI();
-  if(state.bgmOn)bgmPlay();else bgmPause();
-}
-function bgmSetTrack(idx){ // 곡 변경 → 즉시 해당 곡 재생 + ON 상태로
-  bgmIdx=Math.max(0,Math.min(BGM_TRACKS.length-1,idx|0));
-  localStorage.setItem('cardgacha_bgm_track',String(bgmIdx));
-  state.bgmOn=true;localStorage.setItem('cardgacha_bgm','on');
-  if(bgmPlayer&&bgmReady&&bgmPlayer.loadVideoById){bgmPlayer.loadVideoById(bgmCurrent().id);bgmPlayer.setVolume(bgmVol);}
-  else{createBgmPlayer(true);}
-  updateBgmUI();
-}
-function bgmSetVol(v){
-  bgmVol=Math.max(0,Math.min(100,parseInt(v,10)||0));
-  localStorage.setItem('cardgacha_bgm_vol',String(bgmVol));
-  if(bgmPlayer&&bgmReady&&bgmPlayer.setVolume)bgmPlayer.setVolume(bgmVol);
-}
-(function initBgmPlayer(){
-  const sel=$('#bgmSelect');
-  if(sel){sel.innerHTML=BGM_TRACKS.map((t,i)=>`<option value="${i}">${t.title}</option>`).join('');sel.selectedIndex=bgmIdx;sel.onchange=()=>bgmSetTrack(parseInt(sel.value,10));}
-  const vol=$('#bgmVol');if(vol){vol.value=bgmVol;vol.oninput=()=>bgmSetVol(vol.value);}
-  const pp=$('#bgmPlayPause');if(pp)pp.onclick=bgmToggle;
-  const wrap=$('#bgmPlayer'),fold=$('#bgmFold');
-  if(fold&&wrap){
-    fold.onclick=(e)=>{e.stopPropagation();const open=wrap.classList.toggle('open');fold.setAttribute('aria-expanded',String(open));};
-    document.addEventListener('click',(e)=>{if(wrap.classList.contains('open')&&!wrap.contains(e.target)){wrap.classList.remove('open');fold.setAttribute('aria-expanded','false');}});
-  }
-  updateBgmUI();
-})();
-// 자동재생 정책: 저장상태가 ON 이면 즉시 재생 시도하되, 브라우저가 막으면(제스처 필요)
-// 첫 유저 상호작용에서 재생. 유튜브 IFrame 은 playVideo 가 프라미스가 아니라 예외를 안 던지므로
-// 제스처 리스너로 확실히 보강 (try/catch 대신 gesture-fallback).
-if(state.bgmOn){
-  createBgmPlayer(true);
-  ['pointerdown','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,function _once(){
-    if(state.bgmOn){bgmPlay();}
-  },{once:true,passive:true}));
-}
-
-/* shop */
-const PACKS=[
-  {id:'luxury',name:'프리미엄팩',price:500,count:4,guar:'SR',hero:true,
-   odds:{C:10,U:15,R:18,RR:15,RRR:12,AR:9,CHR:7,HR:5,SR:2,SAR:1.25,UR:0.75,MUR:0.35,FUR:0.15}},
-  {id:'premium',name:'고급팩',price:150,count:4,guar:'R',hero:false,
-   odds:{C:25,U:22,R:20,RR:12,RRR:8,AR:5,CHR:3,HR:2,SR:0.75,SAR:0.4,UR:0.2,MUR:0.1,FUR:0.05}},
-  {id:'normal',name:'일반팩',price:50,count:3,guar:null,hero:false,
-   odds:{C:45,U:25,R:14,RR:7,RRR:4,AR:2,CHR:1.2,HR:0.8,SR:0.25,SAR:0.125,UR:0.075,MUR:0.035,FUR:0.015}},
-  {id:'zerg',name:'저그 종족팩',price:100,count:3,guar:null,hero:false,race:'저그',
-   odds:{C:49.36,U:27,R:14,RR:6,RRR:2,AR:1,CHR:0.35,HR:0.15,SR:0.07,SAR:0.04,UR:0.02,MUR:0.008,FUR:0.002}},
-  {id:'terran',name:'테란 종족팩',price:100,count:3,guar:null,hero:false,race:'테란',
-   odds:{C:49.36,U:27,R:14,RR:6,RRR:2,AR:1,CHR:0.35,HR:0.15,SR:0.07,SAR:0.04,UR:0.02,MUR:0.008,FUR:0.002}},
-  {id:'protoss',name:'프로토스 종족팩',price:100,count:3,guar:null,hero:false,race:'프로토스',
-   odds:{C:49.36,U:27,R:14,RR:6,RRR:2,AR:1,CHR:0.35,HR:0.15,SR:0.07,SAR:0.04,UR:0.02,MUR:0.008,FUR:0.002}},
-];
-function oddsHtml(o){return Object.entries(o).map(([r,v])=>`<span><b class="rb rb-${r}" style="padding:0 5px">${r}</b>${v}%</span>`).join('');}
-
-function renderShop(){
-  $('#attendBtn').disabled=!state.canAttend;
-  $('#attendBtn').textContent=state.canAttend?'출석하기':'출석 완료';
-  const wrap=$('#packWrap');wrap.innerHTML='';
-  PACKS.forEach(p=>{
-    const card=el('div','pack'+(p.hero?' pack-hero':''));
-    card.innerHTML=`
-      <div class="kname">${p.name}</div>
-      <div class="kprice">${p.price} P · ${p.count}장</div>
-      <span class="guar${p.guar?'':' guar-placeholder'}"${p.guar?'':' aria-hidden="true"'}>${p.guar?`${p.guar} 이상 확정`:'확정 등급'}</span>
-      <img class="pack-art" src="assets/packs/${packArt[p.id]}" alt="${p.name} 카드팩" loading="lazy"/>
-      <details class="odds"><summary>등급 확률 보기 ▾</summary><div class="oddsgrid">${oddsHtml(p.odds)}</div></details>
-      <div class="spacer"></div>
-      <div class="pack-actions">
-        <button class="cta" data-buy="${p.id}" data-quantity="1">1개 구매<small>${p.price.toLocaleString()}P · ${p.count}장</small></button>
-        <button class="cta sub" data-buy="${p.id}" data-quantity="10">×10 구매<small>${(p.price*10).toLocaleString()}P · ${p.count*10}장</small></button>
-      </div>`;
-    wrap.appendChild(card);
-  });
-  wrap.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buyPack(b.dataset.buy,Number(b.dataset.quantity)));
-}
-$('#attendBtn').onclick=async()=>{
-  try{const j=await apiPost('/api/attend',{key:state.key});setPoints(j.points);
-    if(j.attended){state.canAttend=false;updateStreak(j.streak);sfx('rare');toast(`출석 완료. +${j.bonus}P`);}else {updateStreak(j.streak);toast(j.message||'오늘은 이미 출석했습니다');}
-    renderShop();
-  }catch(e){toast(e.message,true);}
-};
-let isPackOpening = false;
-async function buyPack(id,quantity=1){
-  if(isPackOpening) return;
-  const pack=PACKS.find(p=>p.id===id);
-  const totalPrice=pack.price*quantity;
-  if(state.points<totalPrice)return toast('포인트가 부족합니다',true);
-  isPackOpening = true;
-  const buttons=[...document.querySelectorAll('[data-buy]')];
-  buttons.forEach(button=>button.disabled=true);
-  const btn=document.querySelector(`[data-buy="${id}"][data-quantity="${quantity}"]`);if(btn)btn.textContent='개봉 중...';
-  try{
-    const j=await apiPost('/api/open-pack',{key:state.key,packId:id,quantity});
-    setPoints(j.points);
-    j.cards.forEach(c=>{state.collection[c.id]=(state.collection[c.id]||0)+1;});
-    state.collectionLoaded=false;state.collectionDetailsLoaded=false;state.collectionLoadedAt=0;
-    sfx('open');playOpening(j.cards);
-  }catch(e){toast(e.message,true);}
-  finally{isPackOpening=false;renderShop();}
-}
-
-/* ranking */
-async function renderRanking(){
-  const wrap=$('#rankWrap'); wrap.innerHTML='<div class="empty">로딩 중...</div>';
-  try {
-    const j=await apiPost('/api/ranking',{key:state.key});
-    if(!j.rankings||!j.rankings.length){ wrap.innerHTML='<div class="empty">아직 랭킹 데이터가 없습니다</div>'; return; }
-    const mine=j.me?`<div class="rank-me"><div class="rank-num">${j.me.rank}</div><div class="rank-nick"><span class="rank-me-label">내 현재 순위</span>${esc(j.me.nickname)}</div><div class="rank-score">${j.me.score.toLocaleString()}</div></div>`:'';
-    wrap.innerHTML=mine+j.rankings.map((r,i)=>{
-      const rankClass = r.rank===1 ? 'rank-1' : r.rank===2 ? 'rank-2' : r.rank===3 ? 'rank-3' : '';
-      return `<div class="rank-item ${rankClass}">
-        <div class="rank-num">${r.rank}</div>
-        <div class="rank-nick">${esc(r.nickname)}</div>
-        <div class="rank-score">${r.score.toLocaleString()}</div>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    wrap.innerHTML=`<div class="empty">${esc(e.message)}</div>`;
-  }
-}
-
-/* ---- pack opening: the signature ---- */
-function revcardHTML(c){
-  const hi=RANK[c.rarity]>=RANK.SR;
-  return `<div class="revcard ${c.group?'group-revcard ':''}${glowClass(c.rarity)}" data-rar="${c.rarity}">
-      ${hi?'<div class="burst"></div>':''}
-      <div class="revback"><img class="backlogo" src="assets/card-back.jpg" alt="Calm MonstarZ"/><div class="backshine"></div></div>
-      <div class="revface">
-        ${c.isNew?'<span class="newb2">NEW</span>':''}
-        ${c.serial!=null?`<span class="serialb">No. ${c.serial}</span>`:''}
-        ${c.rarity==='FUR'?'<div class="foil"></div><div class="shine"></div>':''}
-        <img class="${artClass(c)}" src="${imgPath(c.file)}" alt="${esc(c.member)}"/>
-        <img class="card-frame" src="${framePath(c)}" alt="" aria-hidden="true"/>
-        <div class="cap"><span class="cap-meta"><span class="nm">${esc(c.member)}</span>${raceTag(c)}</span></div>
-      </div>
-    </div>`;
-}
-function playOpening(cards){
-  // UR 이상은 즉시 로컬 티커 반영
-  cards.filter(c=>RANK[c.rarity]>=RANK.UR).forEach(c=>pushLocalAnn({nickname:state.nickname,member:c.member,rarity:c.rarity,card_id:c.id,created_at:new Date().toISOString()}));
-  const special=cards.filter(c=>RANK[c.rarity]>=RANK.MUR); // MUR/FUR 전용 2단계
-  const normal=cards.filter(c=>RANK[c.rarity]<RANK.MUR);
-  $('#opening').classList.toggle('bulk-opening',normal.length>10);
-  $('#special').classList.toggle('bulk-opening',special.length>10);
-  const hasNext=special.length>0;
-  openStage1(normal,hasNext,()=>openStage2(special));
-}
-/* stage 1: C~UR 자동 플립 공개 */
-function openStage1(cards,hasNext,next){
-  const ov=$('#opening'),row=$('#revrow');row.innerHTML='';
-  const btn=$('#closeOpen');btn.classList.add('hidden');btn.textContent=hasNext?'다음':'확인';
-  const hint=$('#tapHint');
-  if(!cards.length){ov.classList.remove('show');next&&next();return;} // 전부 특별카드면 스킵
-  const bulk=ov.classList.contains('bulk-opening');
-  hint.classList.remove('hidden');hint.classList.add('pulse');hint.textContent=bulk?`${cards.length}장 일괄 개봉 결과`:'화면을 탭하면 바로 전체 공개';
-  const items=cards.map(c=>{const w=el('div','rev'+(c.group?' group-rev':''));
-    w.innerHTML=revcardHTML(c)+`<div class="rtag"><span class="rb rb-${c.rarity}">${c.rarity}</span></div>`;
-    row.appendChild(w);return {wrap:w,card:c};});
-  ov.classList.add('show');
-  let i=0,done=false,timer=null;
-  function dwell(r){if(REDUCE)return 60;return RANK[r]>=RANK.SR?1050:RANK[r]>=RANK.RRR?620:RANK[r]>=RANK.R?430:320;}
-  function reveal(){if(i>=items.length){finish();return;}
-    const it=items[i];it.wrap.classList.add('flip');sfx(RANK[it.card.rarity]>=RANK.SR?'rare':'flip');
-    if(RANK[it.card.rarity]>=RANK.UR&&!REDUCE){ov.classList.remove('shake');void ov.offsetWidth;ov.classList.add('shake');}
-    i++;timer=setTimeout(reveal,dwell(it.card.rarity));}
-  function finish(){if(done)return;done=true;clearTimeout(timer);
-    items.forEach(it=>it.wrap.classList.add('flip'));
-    hint.classList.remove('pulse');hint.textContent='';btn.classList.remove('hidden');ov.onclick=null;}
-  ov.onclick=e=>{if(e.target.id==='closeOpen')return;finish();};
-  btn.onclick=()=>{ov.classList.remove('show');if(hasNext)setTimeout(()=>next&&next(),280);};
-  timer=setTimeout(bulk?finish:reveal,REDUCE?0:340);
-}
-/* stage 2: MUR/FUR 전용 - 직접 탭해서 한 장씩 오픈 */
-function openStage2(cards){
-  const topRar=cards.reduce((m,c)=>RANK[c.rarity]>RANK[m]?c.rarity:m,cards[0].rarity);
-  if(playSpecialIntro(topRar,()=>openStage2Cards(cards)))return;
-  openStage2Cards(cards);
-}
-function playSpecialIntro(rarity,done){
-  if(REDUCE)return false;
-  const intro=$('#fxIntro'),video=$('#fxVideo'),base=`assets/fx/${rarity==='FUR'?'fur':'mur'}-intro`;let settled=false,usedFallback=false;
-  video.muted=false;video.volume=.58;
-  const finish=()=>{if(settled)return;settled=true;clearTimeout(video._introTimer);video.pause();video.removeAttribute('src');video.load();intro.classList.remove('show');done();};
-  const play=()=>{const result=video.play();if(result&&result.catch)result.catch(()=>{video.muted=true;video.play().catch(finish);});};
-  video.onended=finish;video.onerror=()=>{if(usedFallback)return finish();usedFallback=true;video.src=base+'.mp4';play();};
-  video.src=base+'.webm';intro.classList.add('show');video._introTimer=setTimeout(finish,7400);play();
-  return true;
-}
-function openStage2Cards(cards){
-  const ov=$('#special'),row=$('#sprow'),aura=$('#spAura'),title=$('#spTitle'),btn=$('#closeSpecial');
-  row.innerHTML='';btn.classList.add('hidden');
-  const topRar=cards.reduce((m,c)=>RANK[c.rarity]>RANK[m]?c.rarity:m,cards[0].rarity);
-  aura.className='sp-aura '+(topRar==='FUR'?'fur':'mur');
-  title.innerHTML=topRar==='FUR'?'<span class="mono">FINAL ULTRA</span> 카드 등장':'<span class="mono">MEGA ULTRA</span> 카드 등장';
-  const items=cards.map(c=>{const w=el('div','rev awaitcard'+(c.group?' group-rev':''));w.dataset.rar=c.rarity;
-    w.innerHTML=revcardHTML(c)+`<div class="rtag"></div>`;row.appendChild(w);return {wrap:w,card:c,flipped:false};});
-  ov.classList.add('show');
-  if(cards.some(c=>c.rarity==='FUR'))attachFoilTilt(ov);
-  let remaining=items.length;
-  function flipOne(it){
-    if(it.flipped)return;it.flipped=true;remaining--;sfx(it.card.rarity==='FUR'?'fur':'rare');
-    it.wrap.classList.remove('awaitcard');it.wrap.classList.add('flip','done');
-    it.wrap.querySelector('.rtag').innerHTML=`<span class="rb rb-${it.card.rarity}">${it.card.rarity}</span>`;
-    if(!REDUCE)burstParticles(it.wrap,it.card.rarity);
-    if(it.card.rarity==='FUR'&&!REDUCE){ov.classList.remove('shake');void ov.offsetWidth;ov.classList.add('shake');}
-    if(remaining<=0)btn.classList.remove('hidden');
-  }
-  items.forEach(it=>{it.wrap.style.cursor='pointer';it.wrap.onclick=()=>flipOne(it);});
-  btn.onclick=()=>{ov.classList.remove('show');ov.onpointermove=null;};
-}
-/* 파티클 버스트 (SR+ 골드/FUR 레인보우) */
-function burstParticles(wrap,rarity){
-  const host=wrap.querySelector('.revcard');if(!host)return;
-  const colors=rarity==='FUR'?['#ff3df0','#ffcf4a','#3df0a6','#33ccff','#9d7bff']:['#22e6ff','#7ff0ff','#ffffff'];
-  const n=rarity==='FUR'?20:12;
-  for(let k=0;k<n;k++){
-    const p=el('span','particle');const col=colors[k%colors.length];
-    p.style.background=col;p.style.boxShadow='0 0 8px '+col;host.appendChild(p);
-    const ang=Math.random()*Math.PI*2,dist=55+Math.random()*95;
-    const dx=Math.cos(ang)*dist,dy=Math.sin(ang)*dist;
-    p.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${dx}px,${dy}px) scale(0)`,opacity:0}],
-      {duration:620+Math.random()*420,easing:'cubic-bezier(.1,.7,.3,1)'}).onfinish=()=>p.remove();
-  }
-}
-/* 홀로그래픽 포일: 뒤집힌 카드만 포인터 추적 (rAF, scroll listener 없음) */
-function attachFoilTilt(ov){
-  if(REDUCE)return;
-  let raf=null,px=.5,py=.5;
-  function apply(){raf=null;
-    ov.querySelectorAll('.rev.flip .revcard').forEach(rc=>{
-      const rx=(py-.5)*-10,ry=(px-.5)*12;
-      rc.style.transform=`rotateY(0deg) rotateX(${rx}deg) rotateY(${ry}deg)`;
-      const foil=rc.querySelector('.foil'),shine=rc.querySelector('.shine');
-      if(foil)foil.style.setProperty('--fa',(px*360).toFixed(0)+'deg');
-      if(shine){shine.style.setProperty('--sx',(px*100).toFixed(0)+'%');shine.style.setProperty('--sy',(py*100).toFixed(0)+'%');}
-    });
-  }
-  ov.onpointermove=e=>{const r=ov.getBoundingClientRect();px=(e.clientX-r.left)/r.width;py=(e.clientY-r.top)/r.height;if(!raf)raf=requestAnimationFrame(apply);};
-}
-
-/* ---- announcement ticker ---- */
-let ANN=[],annRotI=0,TICKER_RANKS=[],rankRotI=0,rankTickerLoading=false,rankTickerFetchedAt=0;
-function annKey(a){return (a.card_id||(a.member+a.rarity))+'|'+(a.nickname||'')+'|'+(a.created_at||'');}
-function annText(a){return `<span class="ti ti-${a.rarity}"><span class="who">${esc(a.nickname)}</span>님이 <b>${esc(a.member)} ${a.rarity}</b> 카드를 뽑으셨습니다!</span>`;}
-function rankTickerText(row){const rank=row.rank||1;return `<span class="rank-ti rank-${rank}"><span class="rank-no"><small>RANK</small><b>0${rank}</b></span><span class="rank-copy"><span class="rank-name">${esc(row.nickname)}</span><small>TOP PLAYER</small></span><span class="rank-score">${Number(row.score||0).toLocaleString()}<small>P</small></span></span>`;}
-function pushLocalAnn(a){ANN.unshift(a);const seen=new Set();ANN=ANN.filter(x=>{const k=annKey(x);if(seen.has(k))return false;seen.add(k);return true;}).slice(0,20);renderTicker();}
-async function fetchTickerRanks(){
-  if(rankTickerLoading||Date.now()-rankTickerFetchedAt<30000)return;
-  rankTickerLoading=true;
-  try{const j=await apiGet('/api/ranking');TICKER_RANKS=(j.rankings||[]).slice(0,3);rankTickerFetchedAt=Date.now();renderTicker();}
-  catch(e){}finally{rankTickerLoading=false;}
-}
-async function fetchAnn(){
-  try{const j=await apiGet('/api/announcements');
-    const map=new Map();(j.items||[]).forEach(a=>map.set(annKey(a),a));ANN.forEach(a=>{if(!map.has(annKey(a)))map.set(annKey(a),a);});
-    ANN=[...map.values()].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,20);
-    renderTicker();
-  }catch(e){}
-}
-function renderTicker(){
-  const bar=$('#ticker'),track=$('#tickerTrack');
-  // 10분이 지난 오래된 로컬 항목들도 지워줌 (새로고침 안했을때 대비)
-  const tenMinsAgo = Date.now() - 10 * 60 * 1000;
-  ANN = ANN.filter(a => new Date(a.created_at || 0).getTime() > tenMinsAgo);
-
-  if(!ANN.length){
-    bar.classList.remove('hidden');bar.classList.add('leaderboard','reduce');bar.dataset.label='RANKING';
-    if(!TICKER_RANKS.length){track.innerHTML='<span class="ti">랭킹 집계 중...</span>';fetchTickerRanks();return;}
-    track.innerHTML=rankTickerText(TICKER_RANKS[rankRotI%TICKER_RANKS.length]);return;
-  }
-  bar.classList.remove('hidden');
-  bar.classList.remove('leaderboard');delete bar.dataset.label;
-  if(REDUCE){bar.classList.add('reduce');track.innerHTML=annText(ANN[annRotI%ANN.length]);return;}
-  const html=ANN.map(annText).join('');
-  track.innerHTML=html;
-  // 글자 수에 비례해서 속도 조절 (대략 50px 당 1초)
-  const duration = Math.max(15, track.scrollWidth / 50);
-  track.style.animationDuration = duration + 's';
-}
-
-/* ---- collection ---- */
-function skeletonCollection(){
-  const wrap=$('#colWrap');wrap.innerHTML='';
-  for(let m=0;m<2;m++){
-    wrap.appendChild(el('div','memhead','<div class="sk" style="height:18px;width:120px"></div>'));
-    const g=el('div','colgrid');
-    for(let k=0;k<6;k++)g.appendChild(el('div','sk sk-tile'));
-    wrap.appendChild(g);
-  }
-}
-async function loadCollection(includeDetails=false){
-  const isLoaded=()=>Date.now()-state.collectionLoadedAt<COLLECTION_CACHE_MS&&(includeDetails?state.collectionDetailsLoaded:state.collectionLoaded);
-  if(isLoaded())return;
-  if(state.collectionLoadPromise){
-    await state.collectionLoadPromise;
-    if(isLoaded())return;
-  }
-  state.collectionLoadPromise=(async()=>{
-    const j=await apiPost('/api/collection',{key:state.key,includeDetails});
-    state.collection=j.cards||{};state.first=j.first||{};state.collectionLoaded=true;state.collectionLoadedAt=Date.now();
-    if(includeDetails){
-      state.claimed=j.claimed||[];state.serials=j.serials||{};state.issued=j.issued||{};
-      state.collectionDetailsLoaded=true;
-    }else{state.collectionDetailsLoaded=false;state.serials={};state.issued={};}
-  })();
-  try{await state.collectionLoadPromise;}finally{state.collectionLoadPromise=null;}
-}
-async function renderCollection(){
-  if(!state.cardsLoaded){$('#colWrap').innerHTML='<div class="empty">카드 정보를 불러오지 못했습니다.</div>';return;}
-  if(!state.collectionLoaded)skeletonCollection();
-  try{await loadCollection(false);}
-  catch(e){/* existing collection stays visible */}
-  renderCollectionUI();
-}
-function renderCollectionUI(){
-  const owned=state.cards.filter(c=>state.collection[c.id]>0).length,total=state.cards.length;
-  $('#colOwned').textContent=owned;$('#colTotal').textContent=total;
-  $('#batchDismantleBtn').disabled=!state.cards.some(c=>(state.collection[c.id]||0)>1);
-  const fw=$('#rarFilters');fw.innerHTML='';
-  const filters=[
-    {id:'ALL',label:'전체'},
-    {id:'RACE:저그',label:'저그반'},
-    {id:'RACE:프로토스',label:'토스반'},
-    {id:'RACE:테란',label:'테란반'},
-    ...RAR.map(r=>({id:r,label:r})),
-  ];
-  filters.forEach(filter=>{const button=el('button','chip'+(state.filter===filter.id?' on':''),filter.label);button.onclick=()=>{state.filter=filter.id;renderCollectionUI();};fw.appendChild(button);});
-  const wrap=$('#colWrap');wrap.innerHTML='';const byMember={};state.cards.forEach(c=>{(byMember[c.member]=byMember[c.member]||[]).push(c);});
-  const claimable=Object.entries(byMember).some(([member,cards])=>!state.claimed.includes(member)&&(MEMBER_REWARDS[member]||0)>0&&cards.every(card=>(state.collection[card.id]||0)>0));
-  $('#claimAllRewardsBtn').disabled=!claimable;
-  const assigned=new Set();COLLECTIONS.forEach(s=>s.members.forEach(m=>assigned.add(m)));
-  let shown=0;
-  const renderMember=(member)=>{
-    if(!byMember[member])return false;
-    let list=byMember[member].slice().sort((a,b)=>RANK[b.rarity]-RANK[a.rarity]);
-    if(state.filter.startsWith('RACE:'))list=list.filter(c=>c.race===state.filter.slice(5));
-    else if(state.filter!=='ALL')list=list.filter(c=>c.rarity===state.filter);
-    if(!list.length)return false;shown++;
-    const ownedMember=byMember[member].filter(c=>state.collection[c.id]>0).length,complete=ownedMember===byMember[member].length,claimed=state.claimed.includes(member);
-    const rewardAmt=MEMBER_REWARDS[member]||0;
-    const reward=complete&&!claimed?`<button class="small-btn" data-claim="${esc(member)}">보상 받기 +${rewardAmt}P</button>`:(claimed?'<span class="mc">보상 수령 완료</span>':`<span class="mc">완성 보상 ${rewardAmt}P</span>`);
-    wrap.appendChild(el('div','memhead',`<h3>${esc(member)}</h3><span class="mc">${ownedMember}/${byMember[member].length}</span>${reward}`));
-    const grid=el('div','colgrid');list.forEach(card=>{
-      const qty=state.collection[card.id]||0,hasCard=qty>0,tile=el('div','tile '+(card.group?'group-tile ':'')+(hasCard?glowClass(card.rarity):'locked'));
-      tile.innerHTML=`${hasCard?`<span class="qty">x${qty}</span>`:''}<img class="${hasCard?artClass(card):'card-art'}" src="${hasCard?imgPath(card.file):'assets/card-back.jpg'}" alt="${esc(card.member)}" loading="lazy"/><img class="card-frame" src="${framePath(card)}" alt="" aria-hidden="true"/><div class="cap"><span class="cap-meta"><span class="nm">${esc(card.member)}</span>${raceTag(card)}</span><span class="rb rb-${card.rarity}">${card.rarity}</span></div>`;
-      if(hasCard){enableTilt(tile);tile.onclick=()=>openCardDetail(card);}grid.appendChild(tile);
-    });wrap.appendChild(grid);return true;
-  };
-  COLLECTIONS.forEach(sec=>{
-    let members=sec.members.filter(m=>byMember[m]);
-    members=members.concat(Object.keys(byMember).filter(m=>!assigned.has(m)));
-    const anchor=wrap.childElementCount;let any=false;
-    members.forEach(m=>{if(renderMember(m))any=true;});
-    if(any){
-      const head=`<span class="cs-line"></span><h2>${sec.label}</h2><span class="cs-line"></span>`;
-      const hd=el('div','col-section col-section-'+sec.key,head);
-      wrap.insertBefore(hd,wrap.children[anchor]||null);
-    }
-  });
-  if(!shown)wrap.appendChild(el('div','empty','해당 등급 카드가 없습니다.'));
-  wrap.querySelectorAll('[data-claim]').forEach(button=>button.onclick=()=>claimMemberReward(button.dataset.claim));
-}
-function closeCardModal(){$('#cardModal').classList.add('hidden');}
-function openCardDetail(card){
-  const qty=state.collection[card.id]||0,extra=Math.max(0,qty-1),refund=DISMANTLE_REFUND[card.rarity]*extra,first=state.first[card.id]?new Date(state.first[card.id]).toLocaleDateString('ko-KR'):'-';
-  const mySerials=(state.serials&&state.serials[card.id])||[],issuedTotal=state.issued&&state.issued[card.id];
-  const issuedCell=issuedTotal!=null?`<div><span>총 발행</span><b>${issuedTotal}장</b></div>`:'';
-  const serialBlock=mySerials.length?`<div style="background:#0a0e1e;border:1px solid var(--brd);border-radius:6px;padding:9px;margin:0 0 12px"><span style="display:block;font-size:11px;color:var(--dim);margin-bottom:4px">내 시리얼</span><b class="mono" style="line-height:1.6">${mySerials.map(s=>'No. '+s).join(' · ')}</b></div>`:'';
-  $('#cardDetail').innerHTML=`<h2 id="detailTitle" style="font-size:18px;margin-bottom:14px">카드 상세</h2><div class="detail-card ${card.group?'group-detail-card':''}"><img class="${card.group?'group-card-art':''}" src="${imgPath(card.file)}" alt="${esc(card.member)}"/><img class="card-frame" src="${framePath(card)}" alt=""/><div class="detail-name"><span>${esc(card.member)}</span>${raceTag(card)}</div></div><div class="detail-meta"><div><span>등급</span><b class="rb rb-${card.rarity}">${card.rarity}</b></div><div><span>종족</span><b>${esc(card.race||'-')}</b></div><div><span>보유 수량</span><b>${qty}장</b></div><div><span>첫 획득일</span><b>${first}</b></div><div><span>카드 ID</span><b class="mono">${esc(card.id)}</b></div>${issuedCell}</div>${serialBlock}<div class="detail-actions">${extra?`<button class="cta sub" id="detailDismantle">중복 ${extra}장 분해 +${refund}P</button>`:''}</div>`;
-  const button=$('#detailDismantle');if(button)button.onclick=()=>dismantleCard(card.id,extra);$('#cardModal').classList.remove('hidden');
-}
-async function dismantleCard(cardId,count){try{const j=await apiPost('/api/dismantle',{key:state.key,cardId,count});state.collection=j.collection||{};state.collectionLoaded=true;state.collectionDetailsLoaded=false;state.collectionLoadedAt=Date.now();state.serials={};state.issued={};setPoints(j.points);closeCardModal();sfx('rare');toast(`분해 완료. +${j.refund}P`);renderCollectionUI();}catch(e){toast(e.message,true);}}
-async function dismantleAll(){if(!confirm('모든 중복 카드를 분해합니다. 카드별 1장은 보존됩니다.'))return;try{const j=await apiPost('/api/dismantle',{key:state.key,mode:'all'});state.collection=j.collection||{};state.collectionLoaded=true;state.collectionDetailsLoaded=false;state.collectionLoadedAt=Date.now();state.serials={};state.issued={};setPoints(j.points);sfx('rare');toast(`중복 분해 완료. +${j.refund}P`);renderCollectionUI();}catch(e){toast(e.message,true);}}
-async function claimMemberReward(member){try{const j=await apiPost('/api/claim-reward',{key:state.key,member});if(!j.ok)return toast(j.message||'보상 수령이 아직 준비되지 않았습니다',true);state.claimed.push(member);setPoints(j.points);sfx('fur');toast(`${member} 완성 보상 +${j.reward}P`);renderCollectionUI();}catch(e){toast(e.message,true);}}
-async function claimAllRewards(){const button=$('#claimAllRewardsBtn');button.disabled=true;try{const j=await apiPost('/api/claim-all-rewards',{key:state.key});if(!j.ok)return toast(j.message||'받을 수 있는 도감 보상이 없습니다',true);state.claimed=[...new Set([...state.claimed,...j.claimed])];setPoints(j.points);sfx('fur');toast(`도감 보상 ${j.claimed.length}개 수령. +${j.total}P`);renderCollectionUI();}catch(e){toast(e.message,true);renderCollectionUI();}}
-$('#cardModalClose').onclick=closeCardModal;$('#cardModalBackdrop').onclick=closeCardModal;$('#batchDismantleBtn').onclick=dismantleAll;$('#claimAllRewardsBtn').onclick=claimAllRewards;
-
-/* ---- fuse (카드 합성) ---- */
-function fuseExcess(id){return Math.max(0,(state.collection[id]||0)-1);}
-function fuseSelCount(id){return state.fuseSel.filter(x=>x===id).length;}
-function fuseGradeAvail(r){return state.cards.filter(c=>c.rarity===r).reduce((s,c)=>s+fuseExcess(c.id),0);}
-function fuseNextGrade(r){return RAR[RANK[r]+1]||null;}
-async function renderFuse(){
-  if(!state.cardsLoaded){$('#fuseMatWrap').innerHTML='<div class="empty">카드 정보를 불러오지 못했습니다.</div>';return;}
-  if(!state.collectionDetailsLoaded)$('#fuseMatWrap').innerHTML='<div class="empty">도감 불러오는 중...</div>';
-  try{await loadCollection(true);}
-  catch(e){/* 기존 값 유지 */}
-  state.fuseSel=[];
-  if(!state.fuseGrade||fuseGradeAvail(state.fuseGrade)<3)state.fuseGrade=FUSE_GRADES.find(r=>fuseGradeAvail(r)>=3)||null;
-  renderFuseUI();
-}
-function renderFuseUI(){
-  const grade=state.fuseGrade;
-  $('#fuseAvail').textContent=FUSE_GRADES.reduce((s,r)=>s+fuseGradeAvail(r),0);
-  // 등급 칩 (재료 부족 등급은 비활성)
-  const fw=$('#fuseGrades');fw.innerHTML='';
-  FUSE_GRADES.forEach(r=>{
-    const avail=fuseGradeAvail(r);
-    const b=el('button','chip'+(grade===r?' on':''),`${r} <span style="opacity:.75">${FUSE_RATES[r]}%</span>`);
-    if(avail<3){b.disabled=true;b.title=`재료 부족 (초과 보유분 ${avail}장, 3장 필요)`;}
-    else b.onclick=()=>{state.fuseGrade=r;state.fuseSel=[];renderFuseUI();};
-    fw.appendChild(b);
-  });
-  // 선택 슬롯 3칸
-  const slots=$('#fuseSlots');slots.innerHTML='';
-  for(let i=0;i<3;i++){
-    const id=state.fuseSel[i];
-    const s=el('button','fslot'+(id&&state.byId[id].group?' group-fslot':'')+(id?' filled':' empty'));
-    if(id){const c=state.byId[id];
-      s.innerHTML=`<img class="${artClass(c)}" src="${imgPath(c.file)}" alt="${esc(c.member)}"/><img class="card-frame" src="${framePath(c)}" alt=""/><span class="rm">✕</span>`;
-      s.title='클릭하여 해제';s.onclick=()=>{state.fuseSel.splice(i,1);renderFuseUI();};
-    }else{s.setAttribute('aria-label','빈 재료 슬롯');s.onclick=()=>toast('아래에서 재료 카드를 선택하세요');}
-    slots.appendChild(s);
-  }
-  // 성공률/실패 보상 안내 (투명성)
-  const meta=$('#fuseMeta');
-  meta.innerHTML=grade
-    ?`<span>성공률 <b>${FUSE_RATES[grade]}%</b></span><span>성공 시 <b>${fuseNextGrade(grade)}</b> 랜덤 1장</span><span class="fail">실패 시 재료 소멸 · 위로 <b>+${fuseConsolation(grade)}P</b></span>`
-    :'<span class="dim">합성 가능한 등급이 없습니다</span>';
-  const btn=$('#fuseBtn');
-  btn.disabled=state.fuseSel.length!==3;
-  btn.textContent=state.fuseSel.length===3?`합성하기 (성공률 ${FUSE_RATES[grade]}%)`:`재료 ${state.fuseSel.length}/3 선택`;
-  // 재료 그리드: 선택 등급 중 초과분 보유 카드만
-  const wrap=$('#fuseMatWrap');wrap.innerHTML='';
-  if(!grade){wrap.appendChild(el('div','empty','같은 등급 카드를 4장 이상(보존 1장 + 재료 3장) 모으면 합성할 수 있습니다.'));return;}
-  const list=state.cards.filter(c=>c.rarity===grade&&fuseExcess(c.id)>0)
-    .sort((a,b)=>MEMBER_ORDER.indexOf(a.member)-MEMBER_ORDER.indexOf(b.member));
-  if(!list.length){wrap.appendChild(el('div','empty','이 등급에는 재료로 쓸 초과 보유 카드가 없습니다.'));return;}
-  const grid=el('div','colgrid');
-  list.forEach(c=>{
-    const excess=fuseExcess(c.id),sel=fuseSelCount(c.id);
-    const tile=el('div','tile'+(c.group?' group-tile':'')+(sel?' selmat':''));
-    tile.innerHTML=`<span class="qty">재료 x${excess}</span>${sel?`<span class="selc">선택 ${sel}</span>`:''}
-      <img class="card-art" src="${imgPath(c.file)}" alt="${esc(c.member)}" loading="lazy"/>
-      <img class="card-frame" src="${framePath(c)}" alt="" aria-hidden="true"/>
-      <div class="cap"><span class="cap-meta"><span class="nm">${esc(c.member)}</span>${raceTag(c)}</span><span class="rb rb-${c.rarity}">${c.rarity}</span></div>`;
-    tile.style.cursor='pointer';
-    tile.onclick=()=>{
-      const cur=fuseSelCount(c.id);
-      if(state.fuseSel.length<3&&cur<excess){state.fuseSel.push(c.id);sfx('flip');}
-      else if(cur>0){state.fuseSel.splice(state.fuseSel.lastIndexOf(c.id),1);}
-      else if(state.fuseSel.length>=3)return toast('재료는 3장까지입니다. 슬롯이나 선택 카드를 눌러 해제하세요',true);
-      else return toast('이 카드는 더 이상 재료로 쓸 초과분이 없습니다',true);
-      renderFuseUI();
-    };
-    grid.appendChild(tile);
-  });
-  wrap.appendChild(grid);
-}
-let isFusing=false;
-async function doFuse(){
-  if(isFusing||state.fuseSel.length!==3)return;
-  isFusing=true;
-  const btn=$('#fuseBtn');btn.disabled=true;btn.textContent='합성 중...';
-  const mats=state.fuseSel.map(id=>state.byId[id]).filter(Boolean);
-  try{
-    const j=await apiPost('/api/fuse',{key:state.key,cardIds:state.fuseSel.slice()});
-    setPoints(j.points);
-    if(j.collection)state.collection=j.collection;
-    state.collectionLoaded=!j.success;state.collectionDetailsLoaded=false;state.collectionLoadedAt=j.success?0:Date.now();state.serials={};state.issued={};
-    state.fuseSel=[];
-    playFuseAnim(mats,j);
-  }catch(e){toast(e.message,true);renderFuseUI();}
-  finally{isFusing=false;}
-}
-$('#fuseBtn').onclick=doFuse;
-function playFuseAnim(mats,j){
-  const ov=$('#fusing'),stage=$('#fuseStage'),btn=$('#closeFuse'),hint=$('#fuseHint');
-  stage.innerHTML='';hint.textContent='';btn.classList.add('hidden');
-  ov.classList.add('show');
-  btn.onclick=()=>{ov.classList.remove('show');renderFuseUI();};
-  const showResult=()=>{
-    stage.innerHTML='';
-    if(j.success){
-      const c=j.card;
-      if(RANK[c.rarity]>=RANK.UR)pushLocalAnn({nickname:state.nickname,member:c.member,rarity:c.rarity,card_id:c.id,created_at:new Date().toISOString()});
-      const w=el('div','rev');
-      w.innerHTML=revcardHTML(c)+`<div class="rtag"><span class="rb rb-${c.rarity}">${c.rarity}</span></div>`;
-      stage.appendChild(w);
-      sfx(RANK[c.rarity]>=RANK.MUR?'fur':'rare');
-      if(REDUCE)w.classList.add('flip');
-      else{
-        setTimeout(()=>w.classList.add('flip'),60);
-        if(RANK[c.rarity]>=RANK.SR)setTimeout(()=>burstParticles(w,c.rarity),400);
-        if(RANK[c.rarity]>=RANK.UR){ov.classList.remove('shake');void ov.offsetWidth;ov.classList.add('shake');}
-      }
-      hint.textContent=c.isNew?'합성 성공! 새로운 카드를 획득했습니다':'합성 성공!';
-    }else{
-      sfx('fail');
-      stage.appendChild(el('div','fuse-failmark','합성 실패...'));
-      if(!REDUCE)fuseAshBurst(stage);
-      hint.textContent=`재료가 소멸되었습니다. 위로 포인트 +${j.consolation}P`;
-      toast(`합성 실패. 위로 포인트 +${j.consolation}P`);
-    }
-    btn.classList.remove('hidden');
-  };
-  if(REDUCE){showResult();return;}
-  sfx('open');
-  const offs=[-125,0,125];
-  mats.forEach((c,i)=>{
-    const d=el('div','fmat'+(c.group?' group-fmat':''));
-    d.innerHTML=`<img class="${artClass(c)}" src="${imgPath(c.file)}" alt=""/><img class="card-frame" src="${framePath(c)}" alt=""/>`;
-    d.style.transform=`translateX(${offs[i]}px)`;
-    stage.appendChild(d);
-    d.animate([
-      {transform:`translateX(${offs[i]}px) rotate(0deg) scale(1)`,opacity:1,offset:0},
-      {transform:'translateX(0px) rotate(300deg) scale(.6)',opacity:.9,offset:.72},
-      {transform:'translateX(0px) rotate(420deg) scale(.12)',opacity:0,offset:1}
-    ],{duration:1150,delay:150+i*70,easing:'cubic-bezier(.55,0,.3,1)',fill:'forwards'});
-  });
-  const orb=el('div','fuse-orb');stage.appendChild(orb);
-  orb.animate([
-    {transform:'scale(.2)',opacity:0,offset:0},
-    {transform:'scale(1)',opacity:0,offset:.5},
-    {transform:'scale(3.2)',opacity:1,offset:.82},
-    {transform:'scale(9)',opacity:0,offset:1}
-  ],{duration:1900,easing:'ease-in-out',fill:'forwards'});
-  setTimeout(showResult,1950);
-}
-/* 실패: 재가 흩어지는 담백한 연출 */
-function fuseAshBurst(stage){
-  for(let k=0;k<16;k++){
-    const p=el('span','particle');const g=100+Math.floor(Math.random()*70);
-    p.style.background=`rgb(${g},${g},${g+8})`;stage.appendChild(p);
-    const dx=(Math.random()-.5)*220,dy=30+Math.random()*140;
-    p.animate([{transform:'translate(0,-40px) scale(1)',opacity:.9},{transform:`translate(${dx}px,${dy}px) scale(.2)`,opacity:0}],
-      {duration:900+Math.random()*500,easing:'cubic-bezier(.2,.6,.4,1)'}).onfinish=()=>p.remove();
-  }
-}
-
-/* card 3D tilt on hover (rAF + transform only) */
-function enableTilt(tile){
-  if(REDUCE)return;
-  let raf=null,px=.5,py=.5,active=false;
-  const apply=()=>{raf=null;const rx=(py-.5)*-9,ry=(px-.5)*11;
-    tile.style.transform=active?`perspective(600px) rotateX(${rx}deg) rotateY(${ry}deg) scale(1.04)`:'';};
-  tile.style.transition='transform .18s ease';
-  tile.onpointermove=e=>{const r=tile.getBoundingClientRect();px=(e.clientX-r.left)/r.width;py=(e.clientY-r.top)/r.height;active=true;if(!raf)raf=requestAnimationFrame(apply);};
-  tile.onpointerleave=()=>{active=false;if(!raf)raf=requestAnimationFrame(apply);};
-}
-
-document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset.nav));
-
-/* boot */
-(async function(){
-  if(await initializeMaintenance())return;
-  updateSoundBtn();
-  try{const j=await apiGet('/api/cards');state.cards=j.cards;state.byId=Object.fromEntries(j.cards.map(c=>[c.id,c]));state.cardsLoaded=true;}
-  catch(e){console.error('cards load fail',e);}
-  fetchAnn();
-  setInterval(()=>{if(!document.hidden)fetchAnn();},45000);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)fetchAnn();});
-  setInterval(()=>{if(document.hidden)return;if(!ANN.length){rankRotI++;renderTicker();}else if(REDUCE){annRotI++;renderTicker();}},4200);
-  // 숲 콜백 리다이렉트(#soop=KEY / #sooperr=1) 처리
-  const auth=readAuthHash();
-  if(auth&&auth.sooperr){show('auth');toast('숲 로그인에 실패했습니다. 다시 시도해주세요.',true);return;}
-  if(auth&&auth.soop){
-    const key=auth.soop;
-    localStorage.setItem('cardgacha_key',key);
-    await doLogin(key);
-    if(state.key&&auth.new)openKeyModal(key,true); // 신규 계정: 백업 KEY 안내
-    return;
-  }
-  const saved=localStorage.getItem('cardgacha_key');
-  if(saved)await doLogin(saved);else show('auth');
-})();
-// location.hash 에서 숲 인증 결과 파싱 후, key 가 로그/히스토리에 남지 않도록 hash 제거
-function readAuthHash(){
-  const h=location.hash||'';
-  if(h.indexOf('soop=')<0&&h.indexOf('sooperr=')<0)return null;
-  const params={};
-  h.replace(/^#/,'').split('&').forEach(p=>{const i=p.indexOf('=');const k=i<0?p:p.slice(0,i);const v=i<0?'':p.slice(i+1);if(k)params[k]=decodeURIComponent(v);});
-  history.replaceState(null,'',location.pathname+location.search);
-  return params;
-}
-</script>
-<!-- BGM 유튜브 IFrame API (onYouTubeIframeAPIReady 전역 콜백 사용) -->
-<script src="https://www.youtube.com/iframe_api"></script>
+  <script type="module" src="src/renewal/app.js"></script>
+</body>
+</html>

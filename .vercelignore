@@ -1,7 +1,10 @@
-.claude/
-.bridge-keys/
-tmp/
-tools/
-HANDOVER-NEXT-SESSION.md
 .env*
-node_modules/
+.zcode/
+docs/
+production/
+scripts/
+supabase/
+tests/
+trailer-output/
+*.md
+*.log

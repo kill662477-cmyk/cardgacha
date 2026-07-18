@@ -1,0 +1,383 @@
+import { RARITIES } from './config.js';
+import {
+  MINI_GAME_RULES,
+  applySumSelection,
+  calculateMiniGameReward,
+  capMiniGameReward,
+  createMemoryDeck,
+  createSumTenBoard,
+  evaluateSumSelection,
+  normalizeMiniGameProgress,
+} from './minigames.js';
+
+const number = new Intl.NumberFormat('ko-KR');
+
+function formatTime(seconds) {
+  const value = Math.max(0, Math.ceil(seconds));
+  return `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
+}
+
+function imagePath(card) {
+  return `assets/cards/${encodeURIComponent(card.file)}`;
+}
+
+export function createMiniGameController({ cards, getState, persist, showToast, clock }) {
+  const elements = Object.fromEntries([
+    'minigameScreen', 'miniGamePicker', 'miniGameDaily', 'miniGameDailyBar',
+    'miniGameEyebrow', 'miniGameTitle', 'miniGameTimer', 'miniGameScore',
+    'miniGameStage', 'miniGameEmpty', 'miniGameReadyVisual', 'miniGameReadyTitle',
+    'miniGameReadyCopy', 'miniGameReadyMode', 'miniGameStatus', 'memoryBoard', 'sumTenShell',
+    'sumTenBoard', 'miniGameSelectionSum', 'miniGameResult', 'miniGameResultTitle',
+    'miniGameResultScore', 'miniGameResultReward', 'miniGameMode', 'miniGameDifficulty',
+    'miniGameBest', 'miniGamePlays', 'miniGameRemaining', 'miniGameStartButton',
+    'miniGameStopButton',
+  ].map((id) => [id, document.getElementById(id)]));
+
+  let selectedGame = 'memory';
+  let selectedMode = 'reward';
+  let memoryDifficulty = 'basic';
+  let session = null;
+  let timer = 0;
+  let resolvingMemory = false;
+  let sumDrag = null;
+  let result = null;
+  let sequence = 0;
+
+  function progress() {
+    const state = getState();
+    state.miniGames = normalizeMiniGameProgress(state.miniGames, clock.now());
+    return state.miniGames;
+  }
+
+  function sessionRemaining() {
+    return session ? Math.max(0, Math.ceil((session.endAt - clock.now()) / 1000)) : 0;
+  }
+
+  function currentScore() {
+    return session?.score ?? result?.score ?? 0;
+  }
+
+  function renderHeader() {
+    const memory = selectedGame === 'memory';
+    elements.miniGameEyebrow.textContent = memory ? 'MEMORY SIGNAL' : 'CAMMON APPLE';
+    elements.miniGameTitle.textContent = memory ? '카드 짝맞추기' : MINI_GAME_RULES.sumTen.label;
+    elements.miniGameTimer.textContent = formatTime(session ? sessionRemaining() : (
+      memory ? MINI_GAME_RULES.memory[memoryDifficulty].timeLimit : MINI_GAME_RULES.sumTen.timeLimit
+    ));
+    elements.miniGameScore.textContent = number.format(currentScore());
+  }
+
+  function renderControls() {
+    const daily = progress();
+    const earned = daily.pointsEarnedByGame[selectedGame] ?? 0;
+    const remaining = Math.max(0, MINI_GAME_RULES.dailyPointCapPerGame - earned);
+    const busy = Boolean(session);
+    elements.miniGameDaily.textContent = `${number.format(earned)} / ${number.format(MINI_GAME_RULES.dailyPointCapPerGame)} P`;
+    elements.miniGameDailyBar.style.width = `${earned / MINI_GAME_RULES.dailyPointCapPerGame * 100}%`;
+    elements.miniGameBest.textContent = number.format(selectedGame === 'memory' ? daily.bestMemory : daily.bestSumTen);
+    elements.miniGamePlays.textContent = `${number.format(daily.plays)}회`;
+    elements.miniGameRemaining.textContent = `${number.format(remaining)} P`;
+    elements.miniGameDifficulty.hidden = selectedGame !== 'memory';
+    elements.miniGameStartButton.hidden = busy;
+    elements.miniGameStopButton.hidden = !busy;
+    elements.miniGameStartButton.disabled = selectedMode === 'reward' && (
+      getState().actionEnergy < MINI_GAME_RULES.energyCost || remaining <= 0
+    );
+    elements.miniGameStartButton.querySelector('span').textContent = selectedMode === 'reward' ? '보상 게임 시작' : '연습 시작';
+    elements.miniGameStartButton.dataset.mode = selectedMode;
+    elements.miniGamePicker.querySelectorAll('[data-minigame-select]').forEach((button) => {
+      button.classList.toggle('active', button.dataset.minigameSelect === selectedGame);
+      button.disabled = busy;
+    });
+    elements.miniGameMode.querySelectorAll('[data-mini-mode]').forEach((button) => {
+      button.classList.toggle('active', button.dataset.miniMode === selectedMode);
+      button.disabled = busy;
+    });
+    elements.miniGameDifficulty.querySelectorAll('[data-memory-difficulty]').forEach((button) => {
+      button.classList.toggle('active', button.dataset.memoryDifficulty === memoryDifficulty);
+      button.disabled = busy;
+    });
+  }
+
+  function renderReady() {
+    const rules = MINI_GAME_RULES.memory[memoryDifficulty];
+    const previewCard = cards.find((card) => card.id === 'kimyunhwan-2') ?? cards.find((card) => card.rarity !== 'EX');
+    elements.miniGameEmpty.hidden = false;
+    elements.memoryBoard.hidden = true;
+    elements.sumTenShell.hidden = true;
+    elements.miniGameResult.hidden = true;
+    elements.miniGameReadyVisual.dataset.game = selectedGame;
+    elements.miniGameReadyVisual.innerHTML = selectedGame === 'memory'
+      ? `<div class="memory-ready-preview"><i class="back"></i><figure style="--rarity:${RARITIES[previewCard.rarity].color}"><img src="${imagePath(previewCard)}" alt=""><b>${previewCard.rarity}</b></figure><figure style="--rarity:${RARITIES[previewCard.rarity].color}"><img src="${imagePath(previewCard)}" alt=""><b>${previewCard.rarity}</b></figure></div>`
+      : `<div class="sum-ready-preview">${[1, 9, 4, 6, 3, 7, 8, 2, 5].map((value, index) => `<i style="--index:${index}"><b>${value}</b></i>`).join('')}<span>10</span></div>`;
+    elements.miniGameReadyTitle.textContent = selectedGame === 'memory' ? '같은 카드 신호를 찾아라' : '합계 10 카드백을 지워라';
+    elements.miniGameReadyCopy.textContent = selectedGame === 'memory'
+      ? `카드 2장을 뒤집어 같은 인물의 짝을 완성합니다. 클리어 보상 ${number.format(rules.completionReward)}P.`
+      : `드래그한 사각형 안의 숫자 합이 10이면 카드백 조각이 제거됩니다. 최대 ${number.format(MINI_GAME_RULES.sumTen.maxReward)}P.`;
+    elements.miniGameStatus.textContent = selectedGame === 'memory'
+      ? `${rules.label} · ${rules.pairs} PAIRS · ${rules.timeLimit} SEC`
+      : `${MINI_GAME_RULES.sumTen.columns}×${MINI_GAME_RULES.sumTen.rows} · ${MINI_GAME_RULES.sumTen.timeLimit} SEC`;
+    elements.miniGameReadyMode.textContent = selectedMode === 'reward'
+      ? `보상 모드 · 행동력 ${MINI_GAME_RULES.energyCost} · 게임별 일일 최대 ${number.format(MINI_GAME_RULES.dailyPointCapPerGame)} P`
+      : '연습 모드 · 행동력 소모 없음 · 포인트 보상 없음';
+    elements.miniGameReadyMode.dataset.mode = selectedMode;
+  }
+
+  function renderResult() {
+    elements.miniGameEmpty.hidden = true;
+    elements.memoryBoard.hidden = true;
+    elements.sumTenShell.hidden = true;
+    elements.miniGameResult.hidden = false;
+    elements.miniGameResultTitle.textContent = result.title;
+    elements.miniGameResultScore.textContent = `${number.format(result.score)} SCORE`;
+    elements.miniGameResultReward.textContent = result.mode === 'practice' ? 'PRACTICE' : `+${number.format(result.reward)} P`;
+  }
+
+  function renderMemory() {
+    elements.miniGameEmpty.hidden = true;
+    elements.miniGameResult.hidden = true;
+    elements.sumTenShell.hidden = true;
+    elements.memoryBoard.hidden = false;
+    elements.memoryBoard.style.setProperty('--columns', session.columns);
+    elements.memoryBoard.innerHTML = session.deck.map((card, index) => {
+      const revealed = session.open.includes(index);
+      const matched = session.matched.has(index);
+      return `<button class="memory-card${revealed ? ' revealed' : ''}${matched ? ' matched' : ''}" type="button" data-memory-index="${index}" aria-label="${matched ? '완료된 카드' : '뒤집힌 카드'}">
+        <span class="memory-card-inner">
+          <span class="memory-card-face memory-card-back"></span>
+          <span class="memory-card-face memory-card-front" style="--rarity:${RARITIES[card.rarity].color}"><img src="${imagePath(card)}" alt=""><b>${card.rarity}</b><span>${card.member}</span></span>
+        </span>
+      </button>`;
+    }).join('');
+  }
+
+  function tilePosition(value, total) {
+    return total <= 1 ? 0 : value / (total - 1) * 100;
+  }
+
+  function renderSumTen() {
+    elements.miniGameEmpty.hidden = true;
+    elements.miniGameResult.hidden = true;
+    elements.memoryBoard.hidden = true;
+    elements.sumTenShell.hidden = false;
+    elements.sumTenBoard.style.setProperty('--columns', session.columns);
+    elements.sumTenBoard.style.setProperty('--rows', session.rows);
+    elements.sumTenBoard.innerHTML = session.tiles.map((tile) => `<div class="sum-tile${tile.active ? '' : ' inactive'}" data-sum-index="${tile.index}" style="--tile-x:${tilePosition(tile.column, session.columns)}%;--tile-y:${tilePosition(tile.row, session.rows)}%"><span>${tile.active ? tile.value : ''}</span></div>`).join('');
+    elements.miniGameSelectionSum.textContent = '0';
+    elements.miniGameSelectionSum.parentElement.classList.remove('invalid');
+  }
+
+  function render() {
+    renderHeader();
+    renderControls();
+    if (session?.game === 'memory') renderMemory();
+    else if (session?.game === 'sumTen') renderSumTen();
+    else if (result) renderResult();
+    else renderReady();
+    window.lucide?.createIcons();
+  }
+
+  function stopTimer() {
+    if (timer) window.clearInterval(timer);
+    timer = 0;
+  }
+
+  function saveResult(game, score, reward) {
+    const state = getState();
+    const daily = progress();
+    daily.plays += 1;
+    daily.pointsEarned += reward;
+    daily.pointsEarnedByGame[game] += reward;
+    if (game === 'memory') daily.bestMemory = Math.max(daily.bestMemory, score);
+    else daily.bestSumTen = Math.max(daily.bestSumTen, score);
+    state.points += reward;
+    persist('finishMinigame');
+  }
+
+  function finishGame({ completed = false, aborted = false } = {}) {
+    if (!session) return;
+    stopTimer();
+    const finished = session;
+    const remainingSeconds = sessionRemaining();
+    const rawReward = selectedMode === 'reward' && !aborted ? calculateMiniGameReward(finished.game, {
+      completed,
+      difficulty: finished.difficulty,
+      matches: finished.matches ?? 0,
+      remainingSeconds,
+      score: finished.score,
+    }) : 0;
+    const reward = capMiniGameReward(progress(), finished.game, rawReward);
+    saveResult(finished.game, finished.score, reward);
+    result = {
+      mode: finished.mode,
+      score: finished.score,
+      reward,
+      title: aborted ? '게임 종료' : completed ? '퍼즐 완료' : '시간 종료',
+    };
+    session = null;
+    resolvingMemory = false;
+    sumDrag = null;
+    render();
+  }
+
+  function tick() {
+    if (!session) return;
+    elements.miniGameTimer.textContent = formatTime(sessionRemaining());
+    if (sessionRemaining() <= 0) finishGame();
+  }
+
+  function startGame() {
+    const state = getState();
+    const daily = progress();
+    if (selectedMode === 'reward') {
+      if ((daily.pointsEarnedByGame[selectedGame] ?? 0) >= MINI_GAME_RULES.dailyPointCapPerGame) {
+        return showToast(`오늘 ${selectedGame === 'memory' ? '카드 짝맞추기' : MINI_GAME_RULES.sumTen.label} 보상 한도 도달`);
+      }
+      if (state.actionEnergy < MINI_GAME_RULES.energyCost) return showToast('행동력 부족');
+      state.actionEnergy -= MINI_GAME_RULES.energyCost;
+      state.lastEnergyAt = clock.now();
+      persist('startMinigame');
+    }
+    result = null;
+    sequence += 1;
+    const now = clock.now();
+    const seed = `${now}:${sequence}:${selectedGame}:${memoryDifficulty}`;
+    if (selectedGame === 'memory') {
+      const created = createMemoryDeck(cards, memoryDifficulty, seed);
+      session = {
+        id: sequence, game: 'memory', mode: selectedMode, difficulty: memoryDifficulty,
+        ...created, startAt: now, endAt: now + created.timeLimit * 1000,
+        open: [], matched: new Set(), matches: 0, attempts: 0, streak: 0, score: 0,
+      };
+    } else {
+      const created = createSumTenBoard(seed);
+      session = {
+        id: sequence, game: 'sumTen', mode: selectedMode,
+        ...created, startAt: now, endAt: now + created.timeLimit * 1000,
+        score: 0, combinations: 0,
+      };
+    }
+    render();
+    stopTimer();
+    timer = window.setInterval(tick, 1000);
+  }
+
+  function flipMemoryCard(index) {
+    if (!session || session.game !== 'memory' || resolvingMemory || session.matched.has(index) || session.open.includes(index)) return;
+    session.open.push(index);
+    renderMemory();
+    if (session.open.length < 2) return;
+    resolvingMemory = true;
+    session.attempts += 1;
+    const [left, right] = session.open;
+    const matched = session.deck[left].pairId === session.deck[right].pairId;
+    const sessionId = session.id;
+    window.setTimeout(() => {
+      if (!session || session.id !== sessionId) return;
+      if (matched) {
+        session.matched.add(left);
+        session.matched.add(right);
+        session.matches += 1;
+        session.streak += 1;
+        session.score += 100 + session.streak * 20;
+      } else {
+        session.streak = 0;
+        session.score = Math.max(0, session.score - 10);
+      }
+      session.open = [];
+      resolvingMemory = false;
+      elements.miniGameScore.textContent = number.format(session.score);
+      if (session.matches >= session.pairs) finishGame({ completed: true });
+      else renderMemory();
+    }, matched ? 320 : 650);
+  }
+
+  function sumTileFromPoint(event) {
+    const element = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-sum-index]');
+    if (!element || !elements.sumTenBoard.contains(element)) return null;
+    return session?.tiles[Number(element.dataset.sumIndex)] ?? null;
+  }
+
+  function currentSumEvaluation() {
+    if (!session || !sumDrag) return null;
+    return evaluateSumSelection(session.tiles, session.columns, sumDrag.start, sumDrag.end);
+  }
+
+  function updateSumSelection() {
+    const evaluation = currentSumEvaluation();
+    if (!evaluation) return;
+    const selected = new Set(evaluation.indices);
+    elements.sumTenBoard.querySelectorAll('[data-sum-index]').forEach((tile) => {
+      tile.classList.toggle('selected', selected.has(Number(tile.dataset.sumIndex)));
+    });
+    elements.miniGameSelectionSum.textContent = evaluation.sum;
+    elements.miniGameSelectionSum.parentElement.classList.toggle('invalid', evaluation.sum > 10);
+  }
+
+  function beginSumDrag(event) {
+    if (!session || session.game !== 'sumTen') return;
+    const tile = sumTileFromPoint(event);
+    if (!tile) return;
+    event.preventDefault();
+    sumDrag = { pointerId: event.pointerId, start: tile, end: tile };
+    elements.sumTenBoard.setPointerCapture?.(event.pointerId);
+    updateSumSelection();
+  }
+
+  function moveSumDrag(event) {
+    if (!sumDrag || event.pointerId !== sumDrag.pointerId) return;
+    const tile = sumTileFromPoint(event);
+    if (!tile || tile.index === sumDrag.end.index) return;
+    sumDrag.end = tile;
+    updateSumSelection();
+  }
+
+  function endSumDrag(event) {
+    if (!sumDrag || event.pointerId !== sumDrag.pointerId || !session) return;
+    const evaluation = currentSumEvaluation();
+    if (evaluation?.valid) {
+      session.tiles = applySumSelection(session.tiles, evaluation);
+      session.score += evaluation.count;
+      session.combinations += 1;
+      elements.miniGameScore.textContent = number.format(session.score);
+    }
+    sumDrag = null;
+    if (session.tiles.every((tile) => !tile.active)) finishGame({ completed: true });
+    else renderSumTen();
+  }
+
+  elements.miniGamePicker.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-minigame-select]');
+    if (!button || session) return;
+    selectedGame = button.dataset.minigameSelect;
+    result = null;
+    render();
+  });
+  elements.miniGameMode.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-mini-mode]');
+    if (!button || session) return;
+    selectedMode = button.dataset.miniMode;
+    result = null;
+    render();
+  });
+  elements.miniGameDifficulty.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-memory-difficulty]');
+    if (!button || session) return;
+    memoryDifficulty = button.dataset.memoryDifficulty;
+    result = null;
+    render();
+  });
+  elements.miniGameStartButton.addEventListener('click', startGame);
+  elements.miniGameStopButton.addEventListener('click', () => finishGame({ aborted: true }));
+  elements.memoryBoard.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-memory-index]');
+    if (button) flipMemoryCard(Number(button.dataset.memoryIndex));
+  });
+  elements.sumTenBoard.addEventListener('pointerdown', beginSumDrag);
+  elements.sumTenBoard.addEventListener('pointermove', moveSumDrag);
+  elements.sumTenBoard.addEventListener('pointerup', endSumDrag);
+  elements.sumTenBoard.addEventListener('pointercancel', endSumDrag);
+
+  progress();
+  return { render, tick };
+}

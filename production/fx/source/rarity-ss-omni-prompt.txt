@@ -1,0 +1,11 @@
+Create a 6-second premium SS-rarity reveal animation from <FIRST_FRAME>.
+
+Single continuous unbroken shot. No scene cuts. Perfectly centered front-facing camera. Move only straight forward into the exact center with a smooth controlled push-in. No diagonal drift, pan, tilt, orbit, or shake.
+
+[0-2s] Preserve the exact gold and cyan double mechanical seal. The outer cyan diagnostic ring rotates clockwise while the inner gold ring rotates counterclockwise. Blue electrical streams race around the outer rails and warm gold current travels around the inner rails. Symmetrical vapor pulses from the side machinery.
+
+[2-4.8s] Energy transfer begins between both rings. Cyan arcs bridge into the gold inner seal in precise circular sequences, the mechanical clamps lock one by one, and short gold rays pulse outward. Keep the central aperture perfectly dark, empty, circular, and stable for a portrait card overlay.
+
+[4.8-6s] The double seal reaches full synchronization. Rotation accelerates, cyan and gold currents cross in a clean radial pattern, then one strong gold-white lock flash lands at 5.6 seconds with a deep metallic impact. Settle immediately to the same centered dark aperture.
+
+Premium Korean broadcast-tech game cinematic, realistic gunmetal machinery, rich moving electricity, strong temporal coherence. Preserve all geometry from the reference image. This is SS rarity: clearly stronger than the orange S gate, but below the acid-lime triple-reactor SSS spectacle. No fantasy portal, no organic deformation, no new objects, no people, no card, no text, no logo, no letters, no numbers, no UI, no dialogue, no music. Sound design only: deep reactor hum, counter-rotating servo machinery, cyan and gold electrical crackle, one powerful metallic energy impact.

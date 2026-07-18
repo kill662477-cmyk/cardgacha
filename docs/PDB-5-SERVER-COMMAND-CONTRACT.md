@@ -5,7 +5,7 @@
 - 클라이언트는 행동 의도와 선택값만 전송한다.
 - 포인트, 카드, 보상, 강화 결과, 전투 피해와 랭킹은 서버가 현재 상태로 다시 계산한다.
 - 성공 응답의 `snapshot`과 `result`만 저장·FX 재생의 근거로 사용한다.
-- 실제 Supabase 함수, RPC, 테이블과 RLS는 PDB-9 승인 뒤 구현한다.
+- Supabase 함수, RPC, 테이블과 RLS는 승인된 PDB-9 범위에서 로컬 작성하며 운영 실행은 별도 승인 뒤 진행한다.
 
 ## 전송
 
@@ -42,10 +42,13 @@
 |---|---|---|
 | `updateFormation` | `formation: cardId[1..5]` | 보유·중복·EX 제외·편성 제한 |
 | `claimAdventureRewards` | `mode: offline/quick/run` | 경과 시각·행동력·런 결과·보상 |
+| `startAdventureRun` | 없음 | 서버 편성·밸런스로 전투 재현, 4시간 3회, 실행 생성 |
+| `finishAdventureRun` | `runId` | 저장된 검증 결과로 포인트·EXP·드롭·EX 정산 |
+| `claimQuickBattle` | 없음 | 행동력·당일 횟수·모험 런 횟수, 서버 전투와 즉시 정산 |
 | `purchasePack` | `productId`, `quantity: 1/10`, `race` | 가격·확률·시드·포인트·카드 지급 |
 | `enhanceCard` | `cardId`, `targetEnhancement`, `materialCardIds[1..3]`, `boosterId` | 경험치 게이트·재료·확률·파괴·비용 |
-| `startMinigame` | `game: memory/sumTen` | 일일 상한·행동력·runId·시드·제한시간 |
-| `finishMinigame` | `runId`, `inputDigest`, `score` | 시드 기반 보드·입력 순서·시간·점수·보상 |
+| `startMinigame` | `game: memory/sumTen`, 메모리 `difficulty` | 일일 상한·행동력·runId·서버 보드·제한시간 |
+| `finishMinigame` | `runId`, `inputLog`, `score` | 서버 보드에 입력 로그 재적용·시간·점수·보상 |
 | `attackWorldBoss` | `eventId` | 회차·횟수·편성 스냅숏·피해·공동 HP |
 | `claimWorldBossReward` | `eventId`, `tier` | 달성 피해·중복 수령·보상 |
 
@@ -101,6 +104,9 @@
 
 - 카드팩: 포인트 차감 + 추첨 기록 + 카드 지급 + revision
 - 강화: 재료·아이템·포인트 차감 + 결과 + 카드 상태 + revision
+- 모험 시작: 실행 횟수 차감 + 편성 스냅샷 + 검증 결과 저장 + revision
+- 모험 정산: 실행 소비 + 포인트·카드 EXP·드롭·EX + revision
+- 빠른 전투: 행동력·당일/런 횟수 차감 + 즉시 정산 + revision
 - 미니게임 완료: run 소비 + 입력 검증 + 일일 상한 + 포인트 + revision
 - 월드보스 공격: 시도 차감 + 개인 피해 + 공동 HP + revision
 - 보상 수령: 달성 검증 + 중복 수령 잠금 + 지급 + revision

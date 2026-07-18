@@ -39,6 +39,18 @@ run = advanceAdventureRun(run);
 assert.equal(run.currentStage, 3);
 assert.equal(run.clearedStages, 2);
 assert.equal(normalizeAdventureRun(null).currentStage, 1);
+const resumedRun = normalizeAdventureRun({
+  active: true,
+  currentStage: 3,
+  clearedStages: 2,
+  startedAt: now,
+  runId: 'server-run-1',
+  verifiedClearedStages: 7,
+  verificationDigest: 'A'.repeat(64),
+});
+assert.equal(resumedRun.runId, 'server-run-1');
+assert.equal(resumedRun.verifiedClearedStages, 7);
+assert.equal(resumedRun.verificationDigest, 'a'.repeat(64));
 assert.deepEqual(calculateAdventureRunReward(3), {
   clearedStages: 3,
   points: 195,

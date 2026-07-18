@@ -31,12 +31,22 @@ export function recordAdventureRun(progress, now = Date.now()) {
 
 export function normalizeAdventureRun(run) {
   if (!run?.active) return { active: false, currentStage: 1, clearedStages: 0, startedAt: 0 };
-  return {
+  const normalized = {
     active: true,
     currentStage: Math.max(1, Math.floor(Number(run.currentStage) || 1)),
     clearedStages: Math.max(0, Math.floor(Number(run.clearedStages) || 0)),
     startedAt: Math.max(0, Number(run.startedAt) || 0),
   };
+  if (typeof run.runId === 'string' && run.runId.trim()) normalized.runId = run.runId;
+  if (Number.isInteger(run.verifiedClearedStages)
+    && run.verifiedClearedStages >= 0
+    && run.verifiedClearedStages <= 50) {
+    normalized.verifiedClearedStages = run.verifiedClearedStages;
+  }
+  if (typeof run.verificationDigest === 'string' && /^[0-9a-f]{64}$/i.test(run.verificationDigest)) {
+    normalized.verificationDigest = run.verificationDigest.toLowerCase();
+  }
+  return normalized;
 }
 
 export function createAdventureRun(now = Date.now()) {

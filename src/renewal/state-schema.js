@@ -86,9 +86,23 @@ function validateAdventure(issues, state) {
   if (!isIntegerBetween(run.currentStage, 1, REWARD_RULES.maxStage)) issue(issues, 'adventureRun.currentStage', '1~50 정수 필요');
   if (!isIntegerBetween(run.clearedStages, 0, REWARD_RULES.maxStage)) issue(issues, 'adventureRun.clearedStages', '0~50 정수 필요');
   if (!isIntegerBetween(run.startedAt, 0)) issue(issues, 'adventureRun.startedAt', '0 이상 정수 필요');
+  if (run.runId !== undefined && (typeof run.runId !== 'string' || !run.runId.trim() || run.runId.length > 100)) {
+    issue(issues, 'adventureRun.runId', '유효한 서버 실행 ID 필요');
+  }
+  if (run.verifiedClearedStages !== undefined
+    && !isIntegerBetween(run.verifiedClearedStages, 0, REWARD_RULES.maxStage)) {
+    issue(issues, 'adventureRun.verifiedClearedStages', '0~50 정수 필요');
+  }
+  if (run.verificationDigest !== undefined
+    && (typeof run.verificationDigest !== 'string' || !/^[0-9a-f]{64}$/i.test(run.verificationDigest))) {
+    issue(issues, 'adventureRun.verificationDigest', '64자리 검증 해시 필요');
+  }
   if (run.active && run.currentStage !== run.clearedStages + 1) issue(issues, 'adventureRun', '진행 단계와 클리어 수 불일치');
   if (!run.active && (run.currentStage !== 1 || run.clearedStages !== 0 || run.startedAt !== 0)) {
     issue(issues, 'adventureRun', '비활성 런은 초기 상태 필요');
+  }
+  if (!run.active && ['runId', 'verifiedClearedStages', 'verificationDigest'].some((field) => run[field] !== undefined)) {
+    issue(issues, 'adventureRun', '비활성 런에 서버 실행 정보 사용 불가');
   }
 }
 
@@ -140,13 +154,25 @@ function validateReservedServerState(issues, state, cardIds) {
   else state.miniGameRuns.forEach((run, index) => {
     const path = `miniGameRuns.${index}`;
     if (!isRecord(run)) return issue(issues, path, '객체 필요');
-    if (typeof run.runId !== 'string' || !run.runId) issue(issues, `${path}.runId`, '실행 ID 필요');
+    if (typeof run.runId !== 'string' || !run.runId.trim() || run.runId.length > 100) issue(issues, `${path}.runId`, '실행 ID 필요');
     if (!['memory', 'sumTen'].includes(run.game)) issue(issues, `${path}.game`, '게임 종류 오류');
-    if (!isIntegerBetween(run.seed, 0)) issue(issues, `${path}.seed`, '0 이상 정수 시드 필요');
-    if (!isIntegerBetween(run.startedAt, 0) || !isIntegerBetween(run.finishedAt, 0)) issue(issues, path, '실행 시각 오류');
-    if (run.finishedAt < run.startedAt) issue(issues, `${path}.finishedAt`, '시작 이전 종료 불가');
-    if (typeof run.inputDigest !== 'string' || !run.inputDigest) issue(issues, `${path}.inputDigest`, '입력 요약 필요');
-    if (!['accepted', 'rejected'].includes(run.status)) issue(issues, `${path}.status`, '검증 상태 오류');
+    if (run.game === 'memory' && !['basic', 'advanced'].includes(run.difficulty)) issue(issues, `${path}.difficulty`, '메모리 난이도 오류');
+    if (run.game === 'sumTen' && run.difficulty !== null) issue(issues, `${path}.difficulty`, '합계 10은 난이도 없음');
+    if (!isIntegerBetween(run.seed, 0, 0xffffffff)) issue(issues, `${path}.seed`, '32비트 정수 시드 필요');
+    if (run.status !== 'active') issue(issues, `${path}.status`, '진행 중 실행만 스냅샷 허용');
+    if (!Array.isArray(run.board)) issue(issues, `${path}.board`, '서버 보드 배열 필요');
+    else if (run.game === 'memory') {
+      const expected = run.difficulty === 'advanced' ? 36 : 16;
+      if (run.board.length !== expected || run.board.some((cardId) => typeof cardId !== 'string' || !cardId)) {
+        issue(issues, `${path}.board`, `${expected}장 카드 ID 배열 필요`);
+      }
+    } else if (run.game === 'sumTen'
+      && (run.board.length !== 170 || run.board.some((value) => !isIntegerBetween(value, 1, 9)))) {
+      issue(issues, `${path}.board`, '1~9 숫자 170개 필요');
+    }
+    if (!isIntegerBetween(run.timeLimit, 1, 300)) issue(issues, `${path}.timeLimit`, '1~300초 제한 필요');
+    if (!isIntegerBetween(run.startedAt, 0) || !isIntegerBetween(run.expiresAt, 0)) issue(issues, path, '실행 시각 오류');
+    if (run.expiresAt <= run.startedAt) issue(issues, `${path}.expiresAt`, '시작 이후 만료 시각 필요');
   });
 
   const ranking = state.powerRanking;

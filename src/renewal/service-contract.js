@@ -3,6 +3,9 @@ export const GAME_API_CONTRACT_VERSION = 1;
 export const GAME_COMMAND_TYPES = Object.freeze({
   UPDATE_FORMATION: 'updateFormation',
   CLAIM_ADVENTURE_REWARDS: 'claimAdventureRewards',
+  START_ADVENTURE_RUN: 'startAdventureRun',
+  FINISH_ADVENTURE_RUN: 'finishAdventureRun',
+  CLAIM_QUICK_BATTLE: 'claimQuickBattle',
   PURCHASE_PACK: 'purchasePack',
   ENHANCE_CARD: 'enhanceCard',
   START_MINIGAME: 'startMinigame',
@@ -43,6 +46,23 @@ function validateString(issues, value, path, maximum = 128) {
 
 function validatePayload(type, payload, issues) {
   if (!isRecord(payload)) return addIssue(issues, 'payload', '객체 필요');
+  const allowedFields = {
+    [GAME_COMMAND_TYPES.UPDATE_FORMATION]: ['formation'],
+    [GAME_COMMAND_TYPES.CLAIM_ADVENTURE_REWARDS]: ['mode'],
+    [GAME_COMMAND_TYPES.START_ADVENTURE_RUN]: [],
+    [GAME_COMMAND_TYPES.FINISH_ADVENTURE_RUN]: ['runId'],
+    [GAME_COMMAND_TYPES.CLAIM_QUICK_BATTLE]: [],
+    [GAME_COMMAND_TYPES.PURCHASE_PACK]: ['productId', 'quantity', 'race'],
+    [GAME_COMMAND_TYPES.ENHANCE_CARD]: ['cardId', 'targetEnhancement', 'materialCardIds', 'boosterId'],
+    [GAME_COMMAND_TYPES.START_MINIGAME]: ['game', 'difficulty'],
+    [GAME_COMMAND_TYPES.FINISH_MINIGAME]: ['runId', 'inputLog', 'score'],
+    [GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS]: ['eventId'],
+    [GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD]: ['eventId', 'tier'],
+  };
+  const allowed = new Set(allowedFields[type] ?? []);
+  Object.keys(payload).forEach((field) => {
+    if (!allowed.has(field)) addIssue(issues, `payload.${field}`, '계약에 없는 필드');
+  });
   switch (type) {
     case GAME_COMMAND_TYPES.UPDATE_FORMATION:
       if (!Array.isArray(payload.formation) || payload.formation.length < 1 || payload.formation.length > 5) {
@@ -54,6 +74,12 @@ function validatePayload(type, payload, issues) {
       break;
     case GAME_COMMAND_TYPES.CLAIM_ADVENTURE_REWARDS:
       if (!['offline', 'quick', 'run'].includes(payload.mode)) addIssue(issues, 'payload.mode', 'offline, quick 또는 run 필요');
+      break;
+    case GAME_COMMAND_TYPES.START_ADVENTURE_RUN:
+    case GAME_COMMAND_TYPES.CLAIM_QUICK_BATTLE:
+      break;
+    case GAME_COMMAND_TYPES.FINISH_ADVENTURE_RUN:
+      validateString(issues, payload.runId, 'payload.runId', 100);
       break;
     case GAME_COMMAND_TYPES.PURCHASE_PACK:
       validateString(issues, payload.productId, 'payload.productId', 80);
@@ -74,10 +100,26 @@ function validatePayload(type, payload, issues) {
       break;
     case GAME_COMMAND_TYPES.START_MINIGAME:
       if (!['memory', 'sumTen'].includes(payload.game)) addIssue(issues, 'payload.game', 'memory 또는 sumTen 필요');
+      if (payload.game === 'memory' && !['basic', 'advanced'].includes(payload.difficulty)) {
+        addIssue(issues, 'payload.difficulty', 'basic 또는 advanced 필요');
+      }
+      if (payload.game === 'sumTen' && payload.difficulty !== null && payload.difficulty !== undefined) {
+        addIssue(issues, 'payload.difficulty', 'sumTen은 난이도 없음');
+      }
       break;
     case GAME_COMMAND_TYPES.FINISH_MINIGAME:
       validateString(issues, payload.runId, 'payload.runId', 100);
-      validateString(issues, payload.inputDigest, 'payload.inputDigest', 256);
+      if (!Array.isArray(payload.inputLog) || payload.inputLog.length > 500) {
+        addIssue(issues, 'payload.inputLog', '최대 500개 입력 배열 필요');
+      } else payload.inputLog.forEach((action, index) => {
+        if (!isRecord(action) || !isNonNegativeInteger(action.atMs)) {
+          addIssue(issues, `payload.inputLog.${index}`, 'atMs가 있는 입력 객체 필요');
+          return;
+        }
+        const memoryAction = isNonNegativeInteger(action.index);
+        const sumAction = isNonNegativeInteger(action.start) && isNonNegativeInteger(action.end);
+        if (!memoryAction && !sumAction) addIssue(issues, `payload.inputLog.${index}`, '카드 index 또는 선택 start/end 필요');
+      });
       if (!isNonNegativeInteger(payload.score)) addIssue(issues, 'payload.score', '0 이상 정수 필요');
       break;
     case GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS:

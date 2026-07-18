@@ -83,6 +83,33 @@ const invalidMiniGameTotal = clone(state);
 invalidMiniGameTotal.miniGames.pointsEarnedByGame.memory = 500;
 assert.ok(validateGameState(invalidMiniGameTotal).issues.some(({ path }) => path === 'miniGames.pointsEarned'));
 
+const resumedServerState = clone(state);
+resumedServerState.adventureRun = {
+  active: true,
+  currentStage: 1,
+  clearedStages: 0,
+  startedAt: now,
+  runId: '8c2c2960-2c69-4c79-b73b-feb57f00ac14',
+  verifiedClearedStages: 8,
+  verificationDigest: 'a'.repeat(64),
+};
+resumedServerState.miniGameRuns = [{
+  runId: '1f45a925-8181-45b9-b06c-f22f58be747d',
+  game: 'memory',
+  difficulty: 'basic',
+  status: 'active',
+  seed: 123,
+  board: Array.from({ length: 16 }, (_, index) => `card-${Math.floor(index / 2)}`),
+  timeLimit: 90,
+  startedAt: now,
+  expiresAt: now + 90000,
+}];
+assert.equal(validateGameState(resumedServerState).valid, true, 'active server runs must survive snapshot validation');
+
+const invalidInactiveRun = clone(state);
+invalidInactiveRun.adventureRun.runId = 'stale-run';
+assert.ok(validateGameState(invalidInactiveRun).issues.some(({ path }) => path === 'adventureRun'));
+
 const invalidProgress = clone(state);
 invalidProgress.cardProgress.bad = { enhancement: 10, exp: 0 };
 const invalidProgressResult = validateGameState(invalidProgress, { cardIds });

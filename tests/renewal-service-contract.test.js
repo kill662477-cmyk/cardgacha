@@ -76,6 +76,31 @@ const invalid = validateGameCommand({ ...purchase, commandId: 'mismatch' });
 assert.equal(invalid.valid, false);
 assert.ok(invalid.issues.some((entry) => entry.path === 'idempotencyKey'));
 
+const minigameStart = createGameCommand({
+  type: GAME_COMMAND_TYPES.START_MINIGAME,
+  payload: { game: 'memory', difficulty: 'advanced' },
+  expectedRevision: 6,
+  idempotencyKey: 'minigame-start-0001',
+  clientSentAt: clock.now(),
+});
+assert.equal(validateGameCommand(minigameStart).valid, true);
+const minigameFinish = createGameCommand({
+  type: GAME_COMMAND_TYPES.FINISH_MINIGAME,
+  payload: { runId: 'run-00000001', inputLog: [{ index: 2, atMs: 120 }], score: 0 },
+  expectedRevision: 7,
+  idempotencyKey: 'minigame-finish-001',
+  clientSentAt: clock.now(),
+});
+assert.equal(validateGameCommand(minigameFinish).valid, true);
+assert.equal(validateGameCommand({
+  ...minigameFinish,
+  payload: { ...minigameFinish.payload, inputDigest: 'client-forged' },
+}).valid, false, 'client-computed minigame digest must be rejected');
+assert.equal(validateGameCommand({
+  ...minigameStart,
+  payload: { ...minigameStart.payload, verifiedScore: 99999 },
+}).valid, false, 'server verdict fields must be rejected');
+
 assert.equal(isRetryableGameError({ ok: false, retryable: true, code: GAME_ERROR_CODES.OFFLINE }), true);
 assert.equal(isRetryableGameError(conflict), false);
 assert.equal(validateGameResponse({ ...first, snapshot: { ...first.snapshot, revision: 999 } }).valid, false);

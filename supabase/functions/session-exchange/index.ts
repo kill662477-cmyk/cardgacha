@@ -6,7 +6,7 @@ function allowedOrigins() {
   return new Set((Deno.env.get('GAME_ALLOWED_ORIGINS') ?? '').split(',').map((value) => value.trim()).filter(Boolean));
 }
 
-function headers(req: Request) {
+function headers(req: Request): Record<string, string> {
   const origin = req.headers.get('origin');
   const allowed = allowedOrigins();
   return {
@@ -61,7 +61,7 @@ Deno.serve(async (req: Request) => {
   const forwarded = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
   const clientAddress = forwarded || req.headers.get('cf-connecting-ip') || 'unknown';
   const [keyHash, rateKey] = await Promise.all([sha256(loginKey), hmac(clientAddress, pepper)]);
-  const { data, error } = await context.supabaseAdmin.rpc('gacha_s2_bind_auth_session', {
+  const { data, error } = await (context.supabaseAdmin as any).rpc('gacha_s2_bind_auth_session', {
     p_auth_user_id: context.userClaims.id,
     p_login_key_hash: keyHash,
     p_rate_key: rateKey,

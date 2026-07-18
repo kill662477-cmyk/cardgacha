@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>카드가챠 시즌2 · SOOP API</title>
+  <link rel="stylesheet" href="styles/renewal/bridge.css">
+</head>
+<body>
+  <main class="bridge-shell">
+    <header>
+      <div><span>STREAMER CONSOLE</span><h1>SOOP API 연동</h1></div>
+      <strong id="bridgeState" data-state="offline">OFFLINE</strong>
+    </header>
+    <div class="bridge-grid">
+      <section class="bridge-control">
+        <div class="section-heading"><span>01</span><div><b>방송인 인증</b><small>발급받은 KEY는 브라우저에 저장되지 않습니다.</small></div></div>
+        <form id="bridgeAuthForm">
+          <label for="bridgeKey">BRIDGE KEY</label>
+          <div><input id="bridgeKey" type="password" autocomplete="off" maxlength="256" required><button type="submit">인증</button></div>
+        </form>
+        <div class="bridge-actions">
+          <button id="soopAuthButton" type="button" disabled>SOOP 계정 연결</button>
+          <button id="collectButton" class="primary" type="button" disabled>후원 수집 시작</button>
+          <button id="stopButton" type="button" disabled>수집 중지</button>
+        </div>
+        <p id="bridgeNotice">방송인 KEY 인증 대기 중</p>
+      </section>
+      <section class="bridge-monitor">
+        <div class="monitor-stats">
+          <div><span>처리 이벤트</span><b id="eventCount">0</b></div>
+          <div><span>계정당 지급</span><b id="pointCount">0 P</b></div>
+          <div><span>중복·제외</span><b id="skipCount">0</b></div>
+        </div>
+        <div class="event-log" id="eventLog" aria-live="polite">
+          <article><time>대기</time><span>SOOP 연결 후 별풍선 이벤트를 수집합니다.</span><b>-</b></article>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script src="runtime-config.js"></script>
+  <script type="module" src="src/renewal/soop-bridge.js"></script>
+</body>
+</html>

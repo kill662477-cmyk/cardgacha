@@ -11,7 +11,7 @@ function allowedOrigins() {
     .filter(Boolean));
 }
 
-function corsHeaders(req: Request) {
+function corsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get('origin');
   const allowed = allowedOrigins();
   if (!origin || !allowed.has(origin)) return { Vary: 'Origin' };
@@ -83,12 +83,12 @@ Deno.serve(async (req: Request) => {
 
   const gateway = {
     rpc: async (name: string, args: Record<string, unknown>) => {
-      const { data, error } = await context.supabaseAdmin.rpc(name, args);
+      const { data, error } = await (context.supabaseAdmin as any).rpc(name, args);
       if (error) throw new Error(`RPC_FAILED:${name}:${error.code ?? 'unknown'}`);
       return data;
     },
     activeBalanceVersion: async () => {
-      const { data, error } = await context.supabaseAdmin
+      const { data, error } = await (context.supabaseAdmin as any)
         .from('gacha_s2_balance_versions')
         .select('version')
         .eq('active', true)
@@ -97,7 +97,7 @@ Deno.serve(async (req: Request) => {
       return data?.version ?? null;
     },
   };
-  const { data: accountId, error: accountError } = await context.supabaseAdmin.rpc('gacha_s2_resolve_auth_account', {
+  const { data: accountId, error: accountError } = await (context.supabaseAdmin as any).rpc('gacha_s2_resolve_auth_account', {
     p_auth_user_id: context.userClaims.id,
   });
   if (accountError || !accountId) {
@@ -123,6 +123,22 @@ Deno.serve(async (req: Request) => {
       return json(req, { ok: true, serverTime: Date.now(), status });
     } catch {
       return json(req, { ok: false, code: 'INTERNAL_ERROR', message: '월드보스 상태를 불러오지 못했습니다.' }, 500);
+    }
+  }
+  if (body.kind === 'powerRanking') {
+    try {
+      const ranking = await router.getPowerRanking(userId);
+      return json(req, { ok: true, serverTime: Date.now(), ranking });
+    } catch {
+      return json(req, { ok: false, code: 'INTERNAL_ERROR', message: '전투력 랭킹을 불러오지 못했습니다.' }, 500);
+    }
+  }
+  if (body.kind === 'bridgeStatus') {
+    try {
+      const status = await gateway.rpc('gacha_s2_get_bridge_status', { p_user_id: userId });
+      return json(req, { ok: true, serverTime: Date.now(), status });
+    } catch {
+      return json(req, { ok: false, code: 'INTERNAL_ERROR', message: 'API 연동 권한을 확인하지 못했습니다.' }, 500);
     }
   }
   if (body.kind !== 'command' || !body.command) {

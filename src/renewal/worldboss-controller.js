@@ -44,6 +44,10 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
   let running = false;
   let sequence = 0;
   let displayedDamage = 0;
+  let serverStatus = null;
+  let serverStatusFetchedAt = 0;
+  let serverStatusRequest = null;
+  let unsubscribeWorldBoss = null;
 
   function imagePath(card) {
     return `assets/cards/${encodeURIComponent(card.file)}`;
@@ -53,6 +57,40 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
     const state = getState();
     state.worldBoss = normalizeWorldBossProgress(state.worldBoss, now);
     return state.worldBoss;
+  }
+
+  function serverProgress() {
+    const event = serverStatus?.event;
+    const player = serverStatus?.player;
+    if (!event || !player) return null;
+    return {
+      eventId: event.eventId,
+      startedAt: event.startsAt,
+      endsAt: event.endsAt,
+      attempts: Number(player.attempts ?? 0),
+      bestDamage: Number(player.bestDamage ?? 0),
+      totalDamage: Number(player.totalDamage ?? 0),
+      claimedTier: Number(player.claimedTier ?? -1),
+      lastDamage: Number(player.lastDamage ?? 0),
+    };
+  }
+
+  async function refreshServerStatus(force = false) {
+    if (!serverCommands?.getWorldBossStatus) return null;
+    if (!force && serverStatus && clock.now() - serverStatusFetchedAt < 10_000) return serverStatus;
+    if (serverStatusRequest) return serverStatusRequest;
+    serverStatusRequest = serverCommands.getWorldBossStatus()
+      .then((response) => {
+        if (response?.ok === false || !response?.status) return serverStatus;
+        serverStatus = response.status;
+        serverStatusFetchedAt = clock.now();
+        const current = serverProgress();
+        if (current) getState().worldBoss = current;
+        if (active) render();
+        return serverStatus;
+      })
+      .finally(() => { serverStatusRequest = null; });
+    return serverStatusRequest;
   }
 
   function renderParty() {
@@ -86,7 +124,85 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
     elements.worldBossRecent.innerHTML = entries.slice(0, 3).map(([name, damage]) => `<li><i></i><span>${escapeHtml(name)}</span><b>+${number.format(damage)}</b></li>`).join('');
   }
 
+  function earnedRewardTier(totalDamage) {
+    let tier = -1;
+    WORLD_BOSS_RULES.rewardTiers.forEach((rule, index) => {
+      if (totalDamage >= rule.damage) tier = index;
+    });
+    return tier;
+  }
+
+  function renderServerStatus(now) {
+    const event = serverStatus?.event;
+    const current = serverProgress();
+    if (!event || !current) return false;
+    const status = event.resultsOpen
+      ? event.defeated ? 'result-success' : 'result-failure'
+      : event.active ? 'live' : event.defeated ? 'closed' : 'standby';
+    const nextStartsAt = Number(serverStatus.schedule?.nextSlot?.startsAt ?? event.startsAt);
+    const remainingMs = status === 'standby'
+      ? nextStartsAt - now
+      : (event.resultsOpen ? event.endsAt : event.raidEndsAt) - now;
+    const hpRatio = event.maxHp > 0 ? event.currentHp / event.maxHp : 0;
+    const earnedTier = earnedRewardTier(current.totalDamage);
+    const rewardRule = earnedTier >= 0 ? WORLD_BOSS_RULES.rewardTiers[earnedTier] : null;
+    const rewardPoints = rewardRule ? (event.defeated ? rewardRule.points : rewardRule.failurePoints) : 0;
+    const rewardAvailable = event.resultsOpen && current.attempts > 0 && current.claimedTier < earnedTier;
+    const leaderboard = Array.isArray(serverStatus.leaderboard) ? serverStatus.leaderboard : [];
+
+    elements.worldBossEventState.textContent = event.resultsOpen
+      ? event.defeated ? 'RAID CLEAR · RESULT' : 'RAID FAILED · RESULT'
+      : event.active ? 'SERVER RAID LIVE' : event.defeated ? 'BOSS DEFEATED' : 'NEXT RAID STANDBY';
+    elements.worldBossTimer.textContent = formatDuration(remainingMs / 1000);
+    elements.worldBossClockLabel.textContent = status === 'standby' ? '다음 출현까지' : event.resultsOpen ? '결과 종료까지' : '레이드 종료까지';
+    if (elements.worldBossSchedule) elements.worldBossSchedule.textContent = `매일 ${WORLD_BOSS_RULES.scheduleHours.join('·')}시 KST`;
+    if (elements.worldBossNextSlot) {
+      elements.worldBossNextSlot.hidden = status !== 'standby';
+      elements.worldBossNextSlot.textContent = status === 'standby' ? `다음 출현 ${kstSlotLabel(nextStartsAt)} KST` : '';
+    }
+    elements.worldBossPhase.textContent = `PHASE ${event.phase}`;
+    elements.worldBossHpBar.style.width = `${Math.max(0, Math.min(100, hpRatio * 100))}%`;
+    elements.worldBossHpText.textContent = `${number.format(event.currentHp)} / ${number.format(event.maxHp)}`;
+    elements.worldBossCore.dataset.phase = event.phase;
+    elements.worldBossCorePhase.textContent = `PHASE ${event.phase} · ${event.phase === 1 ? '악성 신호 활성' : event.phase === 2 ? '과부하 폭주' : '코어 붕괴 임계'}`;
+    if (!running) displayedDamage = current.lastDamage;
+    elements.worldBossAttemptDamage.textContent = number.format(displayedDamage);
+    elements.worldBossParticipants.textContent = number.format(event.participants ?? 0);
+    elements.worldBossBestDamage.textContent = number.format(current.bestDamage);
+    elements.worldBossTotalDamage.textContent = number.format(current.totalDamage);
+    elements.worldBossAttempts.textContent = `${Math.max(0, WORLD_BOSS_RULES.maxAttempts - current.attempts)} / ${WORLD_BOSS_RULES.maxAttempts}`;
+    const rank = Number(serverStatus.player?.rank ?? 0);
+    elements.worldBossPercentile.textContent = rank > 0 ? `${number.format(rank)}위 / ${number.format(event.participants ?? 0)}명` : '미참여';
+    elements.worldBossAttackButton.disabled = running || !serverStatus.player?.canAttack;
+    elements.worldBossAttackButton.querySelector('span').textContent = running
+      ? '교전 데이터 전송 중'
+      : event.resultsOpen ? event.defeated ? '레이드 성공' : '레이드 실패'
+        : event.active ? serverStatus.player?.canAttack ? '보스 교전 시작' : '교전 시작 불가' : '월드보스 대기 중';
+    elements.worldBossRewardButton.disabled = !rewardAvailable || running;
+    elements.worldBossRewardText.textContent = event.resultsOpen
+      ? current.attempts === 0 ? '미참여 · 보상 없음'
+        : rewardAvailable ? `${event.defeated ? '성공' : '실패'} +${number.format(rewardPoints)} P · 추가 보상 추첨`
+          : '보상 수령 완료'
+      : current.attempts === 0 ? `${kstSlotLabel(event.raidEndsAt)} 결과 공개 · 성공 최대 ${number.format(WORLD_BOSS_RULES.rewardTiers.at(-1).points)}P`
+        : `누적 피해 ${number.format(current.totalDamage)} · 결과 대기`;
+    renderParty();
+    elements.worldBossRanking.innerHTML = leaderboard.slice(0, 6).map((row) => `
+      <li class="${row.nickname === getState().nickname ? 'mine' : ''}"><b>${row.rank}</b><span>${escapeHtml(row.nickname)}</span><strong>${number.format(row.damage)}</strong></li>`).join('');
+    elements.worldBossRecent.innerHTML = leaderboard.slice(0, 3).map((row) => `<li><i></i><span>${escapeHtml(row.nickname)}</span><b>+${number.format(row.damage)}</b></li>`).join('');
+    elements.worldBossScreen?.setAttribute('data-boss-status', status);
+    window.lucide?.createIcons();
+    return true;
+  }
+
   function render(now = clock.now()) {
+    if (serverCommands && renderServerStatus(now)) return;
+    if (serverCommands) {
+      elements.worldBossEventState.textContent = 'SERVER RAID SYNC';
+      elements.worldBossAttackButton.disabled = true;
+      elements.worldBossRewardButton.disabled = true;
+      void refreshServerStatus();
+      return;
+    }
     const current = progress(now);
     const snapshot = getWorldBossSnapshot(current, now);
     const reward = getWorldBossReward(current, now);
@@ -166,11 +282,12 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
   async function startBattle() {
     if (running) return;
     const now = clock.now();
-    const current = progress(now);
-    const snapshot = getWorldBossSnapshot(current, now);
-    if (!snapshot.active) return showToast('현재 월드보스가 출현하지 않음');
+    if (serverCommands && !serverStatus) await refreshServerStatus(true);
+    const current = serverCommands ? serverProgress() : progress(now);
+    const snapshot = serverCommands ? serverStatus?.event : getWorldBossSnapshot(current, now);
+    if (!current || !snapshot?.active) return showToast('현재 월드보스가 출현하지 않음');
     if (current.attempts >= WORLD_BOSS_RULES.maxAttempts) return showToast('월드보스 도전 3회 완료');
-    if (!snapshot.canStartAttempt) return showToast('남은 시간이 부족해 교전 불가');
+    if (serverCommands ? !serverStatus?.player?.canAttack : !snapshot.canStartAttempt) return showToast('남은 시간이 부족해 교전 불가');
     const formation = getFormation();
     if (formation.length !== 5) return showToast('출전 카드 5장 편성 필요');
 
@@ -197,6 +314,7 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
       const response = await serverCommands.attackWorldBoss({ eventId: current.eventId });
       running = false;
       elements.worldBossCore.classList.remove('engaged');
+      await refreshServerStatus(true);
       render();
       if (!response?.ok) return showToast('월드보스 공격 저장 실패');
       return showToast(`월드보스 피해 ${number.format(response.result?.damage ?? result.totalDamage)}`);
@@ -223,9 +341,12 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
 
   async function claimReward() {
     if (serverCommands) {
-      const current = progress();
+      if (!serverStatus) await refreshServerStatus(true);
+      const current = serverProgress();
+      if (!current) return showToast('월드보스 회차 정보 없음');
       const response = await serverCommands.claimWorldBossReward({ eventId: current.eventId });
       if (!response?.ok) return showToast('월드보스 보상 수령 실패');
+      await refreshServerStatus(true);
       render();
       return showToast(`월드보스 보상 +${number.format(response.result?.points ?? 0)}P`);
     }
@@ -247,6 +368,14 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
   function tick() {
     if (!active) return;
     const now = clock.now();
+    if (serverCommands) {
+      if (running && serverStatus?.event) {
+        const remainingAt = serverStatus.event.resultsOpen ? serverStatus.event.endsAt : serverStatus.event.raidEndsAt;
+        elements.worldBossTimer.textContent = formatDuration((remainingAt - now) / 1000);
+      } else render(now);
+      if (now - serverStatusFetchedAt >= 10_000) void refreshServerStatus();
+      return;
+    }
     if (running) {
       const snapshot = getWorldBossSnapshot(progress(now), now);
       elements.worldBossTimer.textContent = formatDuration(snapshot.remainingSeconds);
@@ -262,7 +391,16 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
       running = false;
       elements.worldBossCore.classList.remove('engaged');
     }
-    if (active) render();
+    if (active) {
+      render();
+      void refreshServerStatus(true);
+      if (serverCommands?.subscribeWorldBoss && !unsubscribeWorldBoss) {
+        unsubscribeWorldBoss = serverCommands.subscribeWorldBoss(() => { void refreshServerStatus(true); });
+      }
+    } else if (unsubscribeWorldBoss) {
+      unsubscribeWorldBoss();
+      unsubscribeWorldBoss = null;
+    }
   }
 
   elements.worldBossAttackButton.addEventListener('click', startBattle);

@@ -29,7 +29,19 @@ export function createRemoteRuntime(config = readRemoteConfig(), options = {}) {
     getAccessToken: auth.getAccessToken,
     fetch: options.fetch,
   });
-  return { supabase, auth, game, now: () => Date.now(), random: () => Math.random() };
+  function subscribeWorldBoss(onChange) {
+    if (typeof onChange !== 'function') return () => {};
+    const channel = supabase
+      .channel('gacha-s2-world-boss-events')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'gacha_s2_world_boss_events',
+      }, () => onChange())
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }
+  return { supabase, auth, game, subscribeWorldBoss, now: () => Date.now(), random: () => Math.random() };
 }
 
 export function mergeServerSnapshot(snapshot, clientCache = {}) {

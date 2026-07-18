@@ -8,6 +8,8 @@ import {
 export const SUPABASE_GAME_SERVICE_METHODS = Object.freeze([
   'loadSnapshot',
   'getWorldBossStatus',
+  'getPowerRanking',
+  'getBridgeStatus',
   'executeCommand',
   'sendCommand',
 ]);
@@ -145,9 +147,30 @@ export function createSupabaseGameService(options = {}) {
     return response;
   }
 
+  async function getPowerRanking() {
+    const response = await request({ kind: 'powerRanking' });
+    if (response.ok === false) return response;
+    if (!response.ranking || typeof response.ranking !== 'object') {
+      return createGameError({
+        code: GAME_ERROR_CODES.INTERNAL_ERROR,
+        message: '전투력 랭킹 응답이 올바르지 않습니다.',
+        serverTime: clock.now(),
+      });
+    }
+    return response.ranking;
+  }
+
+  async function getBridgeStatus() {
+    const response = await request({ kind: 'bridgeStatus' });
+    if (response.ok === false) return response;
+    return response.status ?? { canUseDonationBridge: false, soopId: null };
+  }
+
   const service = {
     loadSnapshot,
     getWorldBossStatus,
+    getPowerRanking,
+    getBridgeStatus,
     executeCommand,
     sendCommand,
   };

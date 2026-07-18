@@ -9,6 +9,7 @@ const exists = (...parts) => fs.existsSync(at(...parts));
 
 for (const required of [
   'index.html',
+  'bridge.html',
   'runtime-config.js',
   'src/renewal/app.js',
   'styles/renewal/main.css',
@@ -23,11 +24,14 @@ for (const required of [
   'supabase/renewal_migration_006_world_boss.sql',
   'supabase/renewal_migration_007_economy_profile.sql',
   'supabase/renewal_migration_008_auth_bridge.sql',
+  'supabase/renewal_migration_009_live_services.sql',
   'supabase/config.toml',
   'supabase/functions/game-command/index.ts',
   'supabase/functions/game-command/deno.json',
   'supabase/functions/session-exchange/index.ts',
   'supabase/functions/session-exchange/deno.json',
+  'supabase/functions/soop-bridge/index.ts',
+  'supabase/functions/soop-bridge/deno.json',
   'src/renewal/supabase-game-service.js',
   'src/renewal/auth-session-service.js',
   'src/renewal/server-command-router.js',
@@ -88,6 +92,7 @@ assert.deepEqual(migrations, [
   'renewal_migration_006_world_boss.sql',
   'renewal_migration_007_economy_profile.sql',
   'renewal_migration_008_auth_bridge.sql',
+  'renewal_migration_009_live_services.sql',
   'renewal_migration_999_drop_season1.sql',
 ]);
 

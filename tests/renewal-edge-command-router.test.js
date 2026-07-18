@@ -33,6 +33,12 @@ const command = (type, payload, id) => createGameCommand({
   clientSentAt: 1000,
 });
 
+const powerRanking = await router.getPowerRanking('user-fixed-by-auth');
+assert.equal(powerRanking.rpc, 'gacha_s2_get_power_ranking');
+assert.equal(powerRanking.args.p_user_id, 'user-fixed-by-auth');
+assert.equal(Number.isInteger(powerRanking.args.p_verified_power), true);
+assert.equal(powerRanking.args.p_verified_power > 0, true);
+
 const formation = await router.execute('user-fixed-by-auth', command(
   GAME_COMMAND_TYPES.UPDATE_FORMATION,
   { formation: playable.map((card) => card.id) },
@@ -109,6 +115,8 @@ assert.match(edgeSource, /const userId = String\(accountId\)/);
 assert.doesNotMatch(edgeSource, /body\.userId|body\.user_id|SUPABASE_SERVICE_ROLE_KEY/);
 assert.match(edgeSource, /GAME_ALLOWED_ORIGINS/);
 assert.match(edgeSource, /MAX_BODY_BYTES/);
+assert.match(edgeSource, /body\.kind === 'powerRanking'/);
+assert.match(edgeSource, /body\.kind === 'bridgeStatus'/);
 assert.match(edgeSource, /req\.body\.getReader\(\)/);
 assert.match(edgeConfig, /\[functions\.game-command\]\s+verify_jwt = false/);
 

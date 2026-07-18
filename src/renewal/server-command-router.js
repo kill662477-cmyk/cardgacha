@@ -1,5 +1,5 @@
 import { BALANCE_VERSION, STAGES } from './config.js';
-import { simulateBattle } from './battle.js';
+import { computeFormationPower, simulateBattle } from './battle.js';
 import { calculateCollectionBonuses } from './collection.js';
 import { simulateWorldBossAttempt } from './worldboss.js';
 import {
@@ -147,6 +147,14 @@ export function createServerCommandRouter(options) {
     return gateway.rpc('gacha_s2_get_player_snapshot', { p_user_id: userId });
   }
 
+  async function getPowerRanking(userId) {
+    const context = await verifiedContext(userId, null);
+    return gateway.rpc('gacha_s2_get_power_ranking', {
+      p_user_id: userId,
+      p_verified_power: computeFormationPower(context.formation, context.bonuses),
+    });
+  }
+
   async function verifiedContext(userId, command) {
     const [activeVersion, snapshot] = await Promise.all([
       gateway.activeBalanceVersion(),
@@ -252,5 +260,5 @@ export function createServerCommandRouter(options) {
     }
   }
 
-  return { execute, loadSnapshot };
+  return { execute, loadSnapshot, getPowerRanking };
 }

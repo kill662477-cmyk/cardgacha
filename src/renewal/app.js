@@ -71,7 +71,6 @@ const gameService = remoteMode ? {
   now: remoteRuntime.now,
   random: remoteRuntime.random,
   persistSnapshot: () => {},
-  getPowerRanking: (resolver) => resolver(state),
 } : localGameService;
 let state = localGameService.loadSnapshot();
 if (freshStart) window.history.replaceState({}, '', window.location.pathname);
@@ -99,6 +98,7 @@ let miniGameController = null;
 let worldBossController = null;
 let rankingController = null;
 let fxController = null;
+let bridgeStatus = { canUseDonationBridge: false, soopId: null };
 const requestCoordinator = createRequestCoordinator({
   clock: gameService,
   isOnline: () => navigator.onLine !== false,
@@ -1888,7 +1888,8 @@ function bindEvents() {
     showToast(state.soundEnabled ? '효과음 켜짐' : '효과음 꺼짐');
   });
   elements.apiLinkButton.addEventListener('click', () => {
-    showToast('API 연동은 계정 연동 단계에서 활성화됩니다.');
+    if (!bridgeStatus.canUseDonationBridge) return showToast('캄몬 소속 스트리머 전용 기능입니다.');
+    window.open('bridge.html', '_blank', 'noopener,noreferrer');
   });
   elements.autoBattleButton.addEventListener('click', async () => {
     if (state.autoBattle) {
@@ -2069,6 +2070,11 @@ async function init() {
     cards = await response.json();
     cardsById = new Map(cards.map((card) => [card.id, card]));
     if (remoteMode) await requireRemoteSnapshot();
+    if (remoteMode) {
+      const status = await gameService.getBridgeStatus();
+      if (status?.ok !== false) bridgeStatus = status;
+    }
+    elements.apiLinkButton.hidden = remoteMode && !bridgeStatus.canUseDonationBridge;
     miniGameController = createMiniGameController({
       cards,
       getState: () => state,
@@ -2092,6 +2098,8 @@ async function init() {
       random: gameService.random,
       persist: (operation) => runUiOperation(operation, null, () => { gameService[operation](state); renderHeader(); }),
       serverCommands: remoteMode ? {
+        getWorldBossStatus: () => gameService.getWorldBossStatus(),
+        subscribeWorldBoss: (onChange) => remoteRuntime.subscribeWorldBoss(onChange),
         attackWorldBoss: (payload) => runUiOperation('attackWorldBoss', elements.worldBossAttackButton, () => (
           executeServerCommand(GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS, payload)
         )),

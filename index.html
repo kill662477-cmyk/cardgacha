@@ -554,6 +554,19 @@
     </form>
   </dialog>
 
+  <dialog class="account-login-dialog" id="loginDialog">
+    <form class="account-login-shell" id="loginForm">
+      <span>ACCOUNT LINK</span>
+      <h2>시즌2 계정 연결</h2>
+      <p>시즌1에서 사용한 로그인 KEY를 입력하세요.</p>
+      <label for="loginKeyInput">로그인 KEY</label>
+      <input id="loginKeyInput" name="loginKey" type="password" autocomplete="current-password" minlength="16" maxlength="256" required>
+      <small id="loginError" role="alert"></small>
+      <button class="confirm-button" id="loginSubmit" type="submit">계정 연결</button>
+    </form>
+  </dialog>
+
+  <script src="runtime-config.js"></script>
   <script type="module" src="src/renewal/app.js"></script>
 </body>
 </html>

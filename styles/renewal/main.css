@@ -1623,3 +1623,26 @@ button[aria-busy="true"]::after {
 }
 
 @keyframes fx-level-up-compact { 0% { opacity: 0; transform: translate(104px,-52px) scale(.4); filter: blur(4px); } 20% { opacity: 1; transform: translate(104px,-84px) scale(1.12); filter: blur(0); } 54% { transform: translate(104px,-74px) scale(1); } 82% { opacity: 1; } 100% { opacity: 0; transform: translate(104px,-90px) scale(.96); } }
+.account-login-dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid #586148;
+  border-radius: 6px;
+  color: #f4f6ed;
+  background: #090d0b;
+}
+.account-login-dialog::backdrop { background: rgba(0, 0, 0, .84); }
+.account-login-shell { display: grid; gap: 14px; padding: 28px; }
+.account-login-shell span { color: #c7f52b; font-size: 12px; font-weight: 800; }
+.account-login-shell h2, .account-login-shell p { margin: 0; }
+.account-login-shell p, .account-login-shell label { color: #aeb7aa; font-size: 13px; }
+.account-login-shell input {
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid #4c5548;
+  border-radius: 4px;
+  color: #fff;
+  background: #111713;
+}
+.account-login-shell small { min-height: 18px; color: #ff7e82; }

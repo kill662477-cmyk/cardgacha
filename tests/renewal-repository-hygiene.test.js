@@ -9,6 +9,7 @@ const exists = (...parts) => fs.existsSync(at(...parts));
 
 for (const required of [
   'index.html',
+  'runtime-config.js',
   'src/renewal/app.js',
   'styles/renewal/main.css',
   'data/renewal-cards.json',
@@ -30,6 +31,8 @@ for (const required of [
   'src/renewal/supabase-game-service.js',
   'src/renewal/auth-session-service.js',
   'src/renewal/server-command-router.js',
+  'src/renewal/remote-runtime.js',
+  'src/vendor/supabase.js',
   'supabase/renewal_migration_999_drop_season1.sql',
 ]) assert.equal(exists(...required.split('/')), true, `missing season2 file: ${required}`);
 

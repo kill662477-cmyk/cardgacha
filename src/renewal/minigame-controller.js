@@ -21,7 +21,7 @@ function imagePath(card) {
   return `assets/cards/${encodeURIComponent(card.file)}`;
 }
 
-export function createMiniGameController({ cards, getState, persist, showToast, clock }) {
+export function createMiniGameController({ cards, getState, persist, showToast, clock, serverCommands = null }) {
   const elements = Object.fromEntries([
     'minigameScreen', 'miniGamePicker', 'miniGameDaily', 'miniGameDailyBar',
     'miniGameEyebrow', 'miniGameTitle', 'miniGameTimer', 'miniGameScore',
@@ -194,7 +194,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     persist('finishMinigame');
   }
 
-  function finishGame({ completed = false, aborted = false } = {}) {
+  async function finishGame({ completed = false, aborted = false } = {}) {
     if (!session) return;
     stopTimer();
     const finished = session;
@@ -206,8 +206,20 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
       remainingSeconds,
       score: finished.score,
     }) : 0;
-    const reward = capMiniGameReward(progress(), finished.game, rawReward);
-    saveResult(finished.game, finished.score, reward);
+    let reward = capMiniGameReward(progress(), finished.game, rawReward);
+    if (serverCommands && finished.mode === 'reward') {
+      const response = await serverCommands.finishMinigame({
+        runId: finished.runId,
+        inputLog: finished.inputLog,
+        score: finished.score,
+      });
+      if (!response?.ok) {
+        session = null;
+        render();
+        return showToast('미니게임 결과 저장 실패');
+      }
+      reward = response.result?.rewardPoints ?? 0;
+    } else saveResult(finished.game, finished.score, reward);
     result = {
       mode: finished.mode,
       score: finished.score,
@@ -226,7 +238,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     if (sessionRemaining() <= 0) finishGame();
   }
 
-  function startGame() {
+  async function startGame() {
     const state = getState();
     const daily = progress();
     if (selectedMode === 'reward') {
@@ -234,15 +246,42 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
         return showToast(`오늘 ${selectedGame === 'memory' ? '카드 짝맞추기' : MINI_GAME_RULES.sumTen.label} 보상 한도 도달`);
       }
       if (state.actionEnergy < MINI_GAME_RULES.energyCost) return showToast('행동력 부족');
-      state.actionEnergy -= MINI_GAME_RULES.energyCost;
-      state.lastEnergyAt = clock.now();
-      persist('startMinigame');
+      if (!serverCommands) {
+        state.actionEnergy -= MINI_GAME_RULES.energyCost;
+        state.lastEnergyAt = clock.now();
+        persist('startMinigame');
+      }
     }
     result = null;
     sequence += 1;
     const now = clock.now();
     const seed = `${now}:${sequence}:${selectedGame}:${memoryDifficulty}`;
-    if (selectedGame === 'memory') {
+    if (serverCommands && selectedMode === 'reward') {
+      const response = await serverCommands.startMinigame({
+        game: selectedGame,
+        difficulty: selectedGame === 'memory' ? memoryDifficulty : null,
+      });
+      if (!response?.ok) return showToast('미니게임 시작 실패');
+      const remote = response.result;
+      if (selectedGame === 'memory') {
+        const cardsById = new Map(cards.map((card) => [card.id, card]));
+        session = {
+          id: sequence, runId: remote.runId, inputLog: [], game: 'memory', mode: selectedMode,
+          difficulty: memoryDifficulty, columns: memoryDifficulty === 'advanced' ? 6 : 4,
+          pairs: remote.board.length / 2,
+          deck: remote.board.map((cardId) => ({ ...cardsById.get(cardId), pairId: cardId })),
+          startAt: now, endAt: now + remote.timeLimit * 1000,
+          open: [], matched: new Set(), matches: 0, attempts: 0, streak: 0, score: 0,
+        };
+      } else {
+        session = {
+          id: sequence, runId: remote.runId, inputLog: [], game: 'sumTen', mode: selectedMode,
+          columns: 17, rows: 10,
+          tiles: remote.board.map((value, index) => ({ index, value, row: Math.floor(index / 17), column: index % 17, active: true })),
+          startAt: now, endAt: now + remote.timeLimit * 1000, score: 0, combinations: 0,
+        };
+      }
+    } else if (selectedGame === 'memory') {
       const created = createMemoryDeck(cards, memoryDifficulty, seed);
       session = {
         id: sequence, game: 'memory', mode: selectedMode, difficulty: memoryDifficulty,
@@ -265,6 +304,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   function flipMemoryCard(index) {
     if (!session || session.game !== 'memory' || resolvingMemory || session.matched.has(index) || session.open.includes(index)) return;
     session.open.push(index);
+    session.inputLog?.push({ index, atMs: Math.max(0, clock.now() - session.startAt) });
     renderMemory();
     if (session.open.length < 2) return;
     resolvingMemory = true;
@@ -335,6 +375,11 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   function endSumDrag(event) {
     if (!sumDrag || event.pointerId !== sumDrag.pointerId || !session) return;
     const evaluation = currentSumEvaluation();
+    session.inputLog?.push({
+      start: sumDrag.start.index,
+      end: sumDrag.end.index,
+      atMs: Math.max(0, clock.now() - session.startAt),
+    });
     if (evaluation?.valid) {
       session.tiles = applySumSelection(session.tiles, evaluation);
       session.score += evaluation.count;

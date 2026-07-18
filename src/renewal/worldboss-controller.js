@@ -30,7 +30,7 @@ function wait(ms) {
   return new Promise((resolve) => window.setTimeout(resolve, Math.max(0, ms)));
 }
 
-export function createWorldBossController({ getState, getFormation, getBonuses, persist, showToast, clock, random }) {
+export function createWorldBossController({ getState, getFormation, getBonuses, persist, showToast, clock, random, serverCommands = null }) {
   const elements = Object.fromEntries([
     'worldBossScreen', 'worldBossEventState', 'worldBossTimer', 'worldBossClockLabel', 'worldBossNextSlot',
     'worldBossSchedule', 'worldBossPhase',
@@ -193,6 +193,15 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
     await wait(260);
     if (!active || token !== sequence) return;
 
+    if (serverCommands) {
+      const response = await serverCommands.attackWorldBoss({ eventId: current.eventId });
+      running = false;
+      elements.worldBossCore.classList.remove('engaged');
+      render();
+      if (!response?.ok) return showToast('월드보스 공격 저장 실패');
+      return showToast(`월드보스 피해 ${number.format(response.result?.damage ?? result.totalDamage)}`);
+    }
+
     const state = getState();
     let recordedProgress;
     try {
@@ -212,7 +221,14 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
     showToast(`월드보스 피해 ${number.format(result.totalDamage)} · 카드 EXP +${WORLD_BOSS_RULES.cardExpPerAttempt}`);
   }
 
-  function claimReward() {
+  async function claimReward() {
+    if (serverCommands) {
+      const current = progress();
+      const response = await serverCommands.claimWorldBossReward({ eventId: current.eventId });
+      if (!response?.ok) return showToast('월드보스 보상 수령 실패');
+      render();
+      return showToast(`월드보스 보상 +${number.format(response.result?.points ?? 0)}P`);
+    }
     const state = getState();
     const claimed = claimWorldBossReward(progress(), clock.now());
     if (!claimed.reward.available) return showToast('결과 공개 시간에만 보상 수령 가능');

@@ -44,6 +44,8 @@ import {
 } from './rewards.js';
 import { assertValidGameState } from './state-schema.js';
 import { createLocalGameService } from './local-game-service.js';
+import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './remote-runtime.js';
+import { GAME_COMMAND_TYPES } from './service-contract.js';
 import { createRequestCoordinator, REQUEST_PHASES } from './request-coordinator.js';
 import { createMiniGameController } from './minigame-controller.js';
 import { createWorldBossController } from './worldboss-controller.js';
@@ -61,8 +63,17 @@ let cards = [];
 let cardsById = new Map();
 const freshStart = new URLSearchParams(window.location.search).has('fresh');
 const systemStatePreview = new URLSearchParams(window.location.search).get('ui-state');
-const gameService = createLocalGameService({ reset: freshStart });
-let state = gameService.loadSnapshot();
+const localGameService = createLocalGameService({ reset: freshStart });
+const remoteRuntime = createRemoteRuntime(readRemoteConfig());
+const remoteMode = Boolean(remoteRuntime);
+const gameService = remoteMode ? {
+  ...remoteRuntime.game,
+  now: remoteRuntime.now,
+  random: remoteRuntime.random,
+  persistSnapshot: () => {},
+  getPowerRanking: (resolver) => resolver(state),
+} : localGameService;
+let state = localGameService.loadSnapshot();
 if (freshStart) window.history.replaceState({}, '', window.location.pathname);
 let temporaryFormation = [];
 let battleToken = 0;
@@ -193,6 +204,7 @@ function cacheElements() {
     'minigameScreen', 'worldBossScreen', 'rankingScreen',
     'systemStateLayer', 'systemStateEyebrow', 'systemStateTitle', 'systemStateMessage', 'systemStateCode', 'systemStateRetry',
     'rewardDurationBlock', 'rewardBreakdown', 'rewardEmptyState',
+    'loginDialog', 'loginForm', 'loginKeyInput', 'loginSubmit', 'loginError',
   ].forEach((id) => { elements[id] = document.getElementById(id); });
 }
 
@@ -240,6 +252,60 @@ function handleRequestTransition(requestState) {
 
 function runUiOperation(operation, button, task) {
   return requestCoordinator.run(operation, task, { button });
+}
+
+function applyServerSnapshot(snapshot) {
+  state = mergeServerSnapshot(snapshot, state);
+  return state;
+}
+
+async function executeServerCommand(type, payload) {
+  const response = await gameService.sendCommand(type, payload, state.revision);
+  if (response?.ok && response.snapshot) applyServerSnapshot(response.snapshot);
+  else if (response?.code === 'VERSION_CONFLICT' && response.latestSnapshot) applyServerSnapshot(response.latestSnapshot);
+  return response;
+}
+
+async function requireRemoteSnapshot() {
+  const existingToken = await remoteRuntime.auth.getAccessToken();
+  if (existingToken) {
+    const loaded = await gameService.loadSnapshot();
+    if (loaded?.ok && loaded.snapshot) return applyServerSnapshot(loaded.snapshot);
+  }
+  setSystemState('auth');
+  elements.loginError.textContent = '';
+  elements.loginDialog.showModal();
+  return new Promise((resolve, reject) => {
+    const submit = async (event) => {
+      event.preventDefault();
+      elements.loginSubmit.disabled = true;
+      elements.loginError.textContent = '';
+      try {
+        const signedIn = await remoteRuntime.auth.signInWithLoginKey(elements.loginKeyInput.value);
+        if (!signedIn?.ok) {
+          elements.loginError.textContent = signedIn?.code === 'RATE_LIMITED'
+            ? '로그인 시도가 많습니다. 잠시 후 다시 시도하세요.'
+            : '로그인 KEY를 확인하세요.';
+          return;
+        }
+        elements.loginKeyInput.value = '';
+        const loaded = await gameService.loadSnapshot();
+        if (!loaded?.ok || !loaded.snapshot) throw new Error(loaded?.code ?? 'SNAPSHOT_FAILED');
+        applyServerSnapshot(loaded.snapshot);
+        elements.loginDialog.close();
+        elements.loginForm.removeEventListener('submit', submit);
+        setSystemState(null);
+        resolve(state);
+      } catch (error) {
+        elements.loginError.textContent = '계정 연결에 실패했습니다. 다시 시도하세요.';
+        console.error(error);
+      } finally {
+        elements.loginSubmit.disabled = false;
+      }
+    };
+    elements.loginForm.addEventListener('submit', submit);
+    elements.loginDialog.addEventListener('cancel', (event) => event.preventDefault());
+  });
 }
 
 function cardWithProgress(card) {
@@ -379,6 +445,7 @@ function currentIdleReward(now = gameService.now()) {
 }
 
 function synchronizeTimedState(now = gameService.now()) {
+  if (remoteMode) return false;
   let changed = false;
   const energy = recoverEnergy(state, now);
   if (energy.recovered > 0) {
@@ -578,6 +645,21 @@ function showResult(victory, clearedStages) {
 }
 
 function finishAdventureRun(reason) {
+  if (remoteMode) {
+    const runId = state.adventureRun?.runId;
+    if (!runId) return;
+    state.autoBattle = false;
+    return runUiOperation('finishAdventureRun', null, async () => {
+      const response = await executeServerCommand(GAME_COMMAND_TYPES.FINISH_ADVENTURE_RUN, { runId });
+      if (!response?.ok) return response;
+      state.autoBattle = false;
+      state.currentStage = 1;
+      renderAll();
+      const result = response.result ?? {};
+      showToast(`${result.clearedStages ?? 0}단계 보상 · +${number.format(result.points ?? 0)}P · 카드 EXP +${number.format(result.cardExp ?? 0)}`);
+      return response;
+    });
+  }
   const run = normalizeAdventureRun(state.adventureRun);
   const reward = calculateAdventureRunReward(run.clearedStages);
   const bonusDrop = rollAdventureBonusDrop(run.clearedStages, gameService.random);
@@ -657,7 +739,7 @@ async function runBattle() {
       return;
     }
     state.currentStage = state.adventureRun.currentStage;
-    gameService.persistSnapshot(state);
+    if (!remoteMode) gameService.persistSnapshot(state);
     renderAll();
     elements.battleState.textContent = state.autoBattle ? '다음 스테이지 진입' : `작전 일시 정지 · ${state.adventureRun.clearedStages}단계`;
     if (state.autoBattle) {
@@ -708,16 +790,22 @@ function toggleFormationCard(cardId) {
   renderFormationDialog();
 }
 
-function confirmFormation() {
-  return runUiOperation('updateFormation', elements.confirmFormation, () => {
+async function confirmFormation() {
+  return runUiOperation('updateFormation', elements.confirmFormation, async () => {
     if (temporaryFormation.length !== GAME_RULES.formationSize) return;
     battleToken += 1;
     battleRunning = false;
-    state.formation = [...temporaryFormation];
-    gameService.updateFormation(state);
+    if (remoteMode) {
+      const response = await executeServerCommand(GAME_COMMAND_TYPES.UPDATE_FORMATION, { formation: [...temporaryFormation] });
+      if (!response?.ok) return response;
+    } else {
+      state.formation = [...temporaryFormation];
+      gameService.updateFormation(state);
+    }
     elements.formationDialog.close();
     renderAll();
     showToast('새 편성 적용 완료');
+    return { ok: true };
   });
 }
 
@@ -821,7 +909,22 @@ function openRewardDialog(mode) {
 }
 
 function confirmReward() {
-  return runUiOperation('claimAdventureRewards', elements.confirmReward, () => {
+  return runUiOperation('claimAdventureRewards', elements.confirmReward, async () => {
+    if (remoteMode) {
+      const type = rewardMode === 'quick'
+        ? GAME_COMMAND_TYPES.CLAIM_QUICK_BATTLE
+        : GAME_COMMAND_TYPES.CLAIM_ADVENTURE_REWARDS;
+      const payload = rewardMode === 'quick' ? {} : { mode: 'offline' };
+      const response = await executeServerCommand(type, payload);
+      if (!response?.ok) return response;
+      rewardPreview = response.result ?? rewardPreview;
+      elements.rewardDialog.close();
+      renderAll();
+      showToast(rewardMode === 'quick'
+        ? `빠른 전투 완료 · +${number.format(response.result?.points ?? 0)}P`
+        : `누적 보상 완료 · 카드 EXP +${number.format(response.result?.cardExp ?? 0)}`);
+      return response;
+    }
     const now = gameService.now();
     let bonusDrop = null;
     synchronizeTimedState(now);
@@ -868,6 +971,7 @@ function confirmReward() {
       ].filter(Boolean).join(' · ')
       : '누적 보상 정산 완료';
     showToast(quickSummary);
+    return { ok: true };
   });
 }
 
@@ -1167,9 +1271,19 @@ function openCardDetail(cardId) {
   if (!elements.cardDetailDialog.open) elements.cardDetailDialog.showModal();
 }
 
-function toggleCardDetailLock() {
+async function toggleCardDetailLock() {
   const cardId = elements.cardDetailDialog.dataset.cardId;
   if (!cardId || (state.cardCopies[cardId] ?? 0) <= 0) return;
+  if (remoteMode) {
+    return runUiOperation('setCardLock', elements.cardDetailLockButton, async () => {
+      const response = await executeServerCommand(GAME_COMMAND_TYPES.SET_CARD_LOCK, { cardId, locked: !state.cardLocks[cardId] });
+      if (!response?.ok) return response;
+      renderCardDetail(cardId);
+      renderCollection();
+      renderEnhancement();
+      return response;
+    });
+  }
   state.cardLocks[cardId] = !state.cardLocks[cardId];
   gameService.persistSnapshot(state);
   renderCardDetail(cardId);
@@ -1178,13 +1292,24 @@ function toggleCardDetailLock() {
   showToast(state.cardLocks[cardId] ? '카드 잠금 완료' : '카드 잠금 해제');
 }
 
-function setRepresentativeCardFromDetail() {
+async function setRepresentativeCardFromDetail() {
   const cardId = elements.cardDetailDialog.dataset.cardId;
   const card = cardsById.get(cardId);
   if (!card || (state.cardCopies[cardId] ?? 0) <= 0) return;
   if (state.representativeCardId === cardId) {
     showToast('현재 대표카드입니다');
     return;
+  }
+  if (remoteMode) {
+    return runUiOperation('setRepresentativeCard', elements.cardDetailRepresentativeButton, async () => {
+      const response = await executeServerCommand(GAME_COMMAND_TYPES.SET_REPRESENTATIVE_CARD, { cardId });
+      if (!response?.ok) return response;
+      renderHeader();
+      renderCollection();
+      renderCardDetail(cardId);
+      showToast(`${card.member} 대표카드 설정 완료`);
+      return response;
+    });
   }
   state.representativeCardId = cardId;
   gameService.persistSnapshot(state);
@@ -1442,6 +1567,28 @@ async function purchaseCardPack(packKey, amount = 1, useTicketId = null, raceOve
     if (!pack) return;
     const cost = useTicketId ? 0 : pack.price * amount;
     const packRace = packKey === 'race' ? raceOverride ?? selectedShopRace : null;
+    if (remoteMode) {
+      const response = useTicketId
+        ? await executeServerCommand(GAME_COMMAND_TYPES.USE_SUPPORT_ITEM, {
+          itemId: useTicketId, targetCardId: null, race: packKey === 'race' ? packRace : null,
+        })
+        : await executeServerCommand(GAME_COMMAND_TYPES.PURCHASE_PACK, {
+          productId: packKey, quantity: amount, race: packRace,
+        });
+      if (!response?.ok) return response;
+      const cardIds = (response.result?.cards ?? []).map((entry) => entry.cardId ?? entry);
+      const openingPackImage = shopPackImage(packKey, packRace);
+      const openingPackName = packKey === 'race' ? `${packRace} ${pack.name}` : pack.name;
+      const openingCards = cardIds.map((id) => {
+        const card = cardsById.get(id);
+        return { image: imagePath(card), rarity: card.rarity, color: RARITIES[card.rarity].color, name: card.member, rank: RARITY_ORDER.indexOf(card.rarity) };
+      });
+      renderHeader();
+      renderShop();
+      await fxController?.playPackOpening({ image: openingPackImage, name: openingPackName, cards: openingCards, totalCount: cardIds.length });
+      showCardPackResults(packKey, cardIds, response.result?.spentPoints ?? 0, Boolean(useTicketId));
+      return response;
+    }
     if (useTicketId && (state.supportItems[useTicketId] ?? 0) <= 0) return showToast('교환권 없음');
     if (state.points < cost) return showToast('포인트 부족');
     const cardIds = [];
@@ -1480,7 +1627,15 @@ async function purchaseCardPack(packKey, amount = 1, useTicketId = null, raceOve
 }
 
 function purchaseSupportPack(amount = 1, triggerButton = null) {
-  return runUiOperation('purchasePack', triggerButton, () => {
+  return runUiOperation('purchaseSupportPack', triggerButton, async () => {
+    if (remoteMode) {
+      const response = await executeServerCommand(GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK, { quantity: amount });
+      if (!response?.ok) return response;
+      renderHeader();
+      renderShop();
+      showSupportResults(response.result?.items ?? [], response.result?.spentPoints ?? 0);
+      return response;
+    }
     const cost = amount === 10 ? SUPPORT_PACK.tenPrice : SUPPORT_PACK.price;
     if (state.points < cost) return showToast('포인트 부족');
     const itemIds = drawSupportPack(amount, gameService.random);
@@ -1494,7 +1649,7 @@ function purchaseSupportPack(amount = 1, triggerButton = null) {
   });
 }
 
-function activateShopItem(itemId) {
+async function activateShopItem(itemId) {
   const item = SUPPORT_ITEMS[itemId];
   if (!item) return;
   if (item.cardExp) {
@@ -1506,6 +1661,16 @@ function activateShopItem(itemId) {
     purchaseCardPack(item.pack, 1, itemId);
     return;
   }
+  if (remoteMode) {
+    return runUiOperation('useSupportItem', null, async () => {
+      const response = await executeServerCommand(GAME_COMMAND_TYPES.USE_SUPPORT_ITEM, { itemId, targetCardId: null, race: null });
+      if (!response?.ok) return response;
+      renderHeader();
+      renderShop();
+      showToast(`${item.name} 사용`);
+      return response;
+    });
+  }
   const result = useSupportItem(state, itemId, gameService.now());
   if (!result.used) return showToast(result.reason);
   state = result.state;
@@ -1515,9 +1680,20 @@ function activateShopItem(itemId) {
   showToast(result.reason);
 }
 
-function useSelectedCardExpPotion() {
+async function useSelectedCardExpPotion() {
   const card = selectedEnhancementCard();
   if (!card) return showToast('EXP를 지급할 카드를 선택하세요');
+  if (remoteMode) {
+    return runUiOperation('useSupportItem', elements.cardExpPotionButton, async () => {
+      const response = await executeServerCommand(GAME_COMMAND_TYPES.USE_SUPPORT_ITEM, {
+        itemId: 'cardExpPotion', targetCardId: card.id, race: null,
+      });
+      if (!response?.ok) return response;
+      renderEnhancement();
+      showToast(`${card.member} · 카드 EXP +${number.format(response.result?.cardExpGained ?? 0)}`);
+      return response;
+    });
+  }
   const result = useCardExpPotion(state, card.id, cardExpRequired(card.enhancement));
   if (!result.used) return showToast(result.reason);
   state = result.state;
@@ -1572,9 +1748,18 @@ function showScreen(screen) {
   if (previousScreen !== screen) releaseHeavyScreenDom(previousScreen);
 }
 
-function toggleEnhancementLock() {
+async function toggleEnhancementLock() {
   const card = selectedEnhancementCard();
   if (!card) return;
+  if (remoteMode) {
+    return runUiOperation('setCardLock', elements.enhanceLockButton, async () => {
+      const response = await executeServerCommand(GAME_COMMAND_TYPES.SET_CARD_LOCK, { cardId: card.id, locked: !state.cardLocks[card.id] });
+      if (!response?.ok) return response;
+      enhancementResult = null;
+      renderEnhancement();
+      return response;
+    });
+  }
   state.cardLocks[card.id] = !state.cardLocks[card.id];
   gameService.persistSnapshot(state);
   enhancementResult = null;
@@ -1621,6 +1806,33 @@ async function executeEnhancementAttempt(triggerButton = elements.enhanceAttempt
       showToast(gate.reason);
       renderEnhancement();
       return;
+    }
+    if (remoteMode) {
+      const target = card.enhancement + 1;
+      const response = await executeServerCommand(GAME_COMMAND_TYPES.ENHANCE_CARD, {
+        cardId: card.id,
+        targetEnhancement: target,
+        materialCardIds: materials.selected,
+        boosterId: selectedBooster === 'none' ? null : selectedBooster,
+      });
+      if (!response?.ok) return response;
+      const outcome = response.result?.outcome ?? 'fail';
+      enhancementResult = {
+        type: outcome === 'success' ? 'success' : outcome === 'destroy' ? 'destroy' : 'fail',
+        message: outcome === 'success'
+          ? `강화 성공 · ${card.member} ${enhancementLabel(target)}`
+          : outcome === 'destroy' ? `강화 파괴 · ${card.member} 강화 수치 초기화` : '강화 실패',
+      };
+      elements.enhanceConfirmDialog.close();
+      selectedBooster = 'none';
+      selectedMaterialOption = 0;
+      renderHeader();
+      renderEnhancement();
+      await fxController?.playEnhancement({
+        image: imagePath(card), rarity: card.rarity, color: RARITIES[card.rarity].color,
+        name: card.member, target, outcome, message: enhancementResult.message,
+      });
+      return response;
     }
     const result = resolveEnhancement(card, selectedBooster, gameService.random());
     const target = result.odds.target;
@@ -1678,24 +1890,32 @@ function bindEvents() {
   elements.apiLinkButton.addEventListener('click', () => {
     showToast('API 연동은 계정 연동 단계에서 활성화됩니다.');
   });
-  elements.autoBattleButton.addEventListener('click', () => {
+  elements.autoBattleButton.addEventListener('click', async () => {
     if (state.autoBattle) {
       state.autoBattle = false;
-      gameService.persistSnapshot(state);
+      if (!remoteMode) gameService.persistSnapshot(state);
       renderHeader();
       return;
     }
     const activeRun = normalizeAdventureRun(state.adventureRun);
     if (!activeRun.active) {
-      const now = gameService.now();
-      const runStatus = getAdventureRunLimitStatus(state.adventureRuns, now);
-      if (runStatus.remaining <= 0) return showToast('4시간당 모험 3회 완료');
-      state.adventureRuns = recordAdventureRun(state.adventureRuns, now);
-      state.adventureRun = createAdventureRun(now);
-      state.currentStage = 1;
+      if (remoteMode) {
+        const response = await runUiOperation('startAdventureRun', elements.autoBattleButton, () => (
+          executeServerCommand(GAME_COMMAND_TYPES.START_ADVENTURE_RUN, {})
+        ));
+        if (!response?.ok) return;
+        state.currentStage = 1;
+      } else {
+        const now = gameService.now();
+        const runStatus = getAdventureRunLimitStatus(state.adventureRuns, now);
+        if (runStatus.remaining <= 0) return showToast('4시간당 모험 3회 완료');
+        state.adventureRuns = recordAdventureRun(state.adventureRuns, now);
+        state.adventureRun = createAdventureRun(now);
+        state.currentStage = 1;
+      }
     }
     state.autoBattle = true;
-    gameService.persistSnapshot(state);
+    if (!remoteMode) gameService.persistSnapshot(state);
     renderHeader();
     if (!battleRunning) runBattle();
   });
@@ -1848,11 +2068,20 @@ async function init() {
     if (!response.ok) throw new Error(`Card data request failed: ${response.status}`);
     cards = await response.json();
     cardsById = new Map(cards.map((card) => [card.id, card]));
+    if (remoteMode) await requireRemoteSnapshot();
     miniGameController = createMiniGameController({
       cards,
       getState: () => state,
       clock: gameService,
       persist: (operation) => runUiOperation(operation, null, () => { gameService[operation](state); renderHeader(); }),
+      serverCommands: remoteMode ? {
+        startMinigame: (payload) => runUiOperation('startMinigame', elements.miniGameStartButton, () => (
+          executeServerCommand(GAME_COMMAND_TYPES.START_MINIGAME, payload)
+        )),
+        finishMinigame: (payload) => runUiOperation('finishMinigame', null, () => (
+          executeServerCommand(GAME_COMMAND_TYPES.FINISH_MINIGAME, payload)
+        )),
+      } : null,
       showToast,
     });
     worldBossController = createWorldBossController({
@@ -1862,6 +2091,14 @@ async function init() {
       clock: gameService,
       random: gameService.random,
       persist: (operation) => runUiOperation(operation, null, () => { gameService[operation](state); renderHeader(); }),
+      serverCommands: remoteMode ? {
+        attackWorldBoss: (payload) => runUiOperation('attackWorldBoss', elements.worldBossAttackButton, () => (
+          executeServerCommand(GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS, payload)
+        )),
+        claimWorldBossReward: (payload) => runUiOperation('claimWorldBossReward', elements.worldBossRewardButton, () => (
+          executeServerCommand(GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD, payload)
+        )),
+      } : null,
       showToast,
     });
     rankingController = createRankingController({
@@ -1871,13 +2108,15 @@ async function init() {
       getCombatPower: () => computeFormationPower(formationCards(), currentCombatBonuses()),
       gameService,
     });
-    ensureCardProgress();
-    applyLocalTestProfile(state, cards);
-    ensureValidAdventureProgress();
-    ensureValidFormation();
-    ensureValidRepresentativeCard();
+    if (!remoteMode) {
+      ensureCardProgress();
+      applyLocalTestProfile(state, cards);
+      ensureValidAdventureProgress();
+      ensureValidFormation();
+      ensureValidRepresentativeCard();
+    }
     assertValidGameState(state, { cardIds: cardsById.keys(), requireOwnedCards: true });
-    gameService.persistSnapshot(state);
+    if (!remoteMode) gameService.persistSnapshot(state);
     renderAll();
     bindEvents();
     showScreen(activeScreen);

@@ -4,10 +4,10 @@ globalThis.__CARD_GACHA_CONFIG__ = globalThis.__CARD_GACHA_CONFIG__ ?? {
   supabasePublishableKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsanZ6dWx0dXlpdWRoampmb3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NzUzNjUsImV4cCI6MjA5NzI1MTM2NX0.U2FYWE4AOfJS6utrXDvwhU4yUqNtDDKk75OM27IXXWU',
   // Maintenance toggle (Phase 1): true로 설정하면 app.js 로드 전에 점검 페이지로 가로채기.
   // 운영 토글 = 이 값을 수정 후 재배포. false로 두면 정상 동작.
-  maintenance: false,
+  maintenance: true,
   maintenanceTitle: '시즌2 점검 중',
-  maintenanceMessage: 'SOOP 숲 로그인 복구 작업을 진행하고 있습니다. 잠시 후 다시 접속해 주세요.',
-  maintenanceCode: 'MAINTENANCE // SOOP AUTH RESTORE',
+  maintenanceMessage: 'SOOP 숲 로그인 연동 관련 서버 점검을 진행하고 있습니다. 잠시 후 다시 접속해 주세요.',
+  maintenanceCode: 'MAINTENANCE // SERVER UPDATE',
 };
 
 // 점검 모드: app.js 모듈 실행 전에 본문을 가리고 점검 오버레이를 노출한다.

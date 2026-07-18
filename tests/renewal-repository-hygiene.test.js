@@ -20,6 +20,11 @@ for (const required of [
   'supabase/renewal_migration_004_pack_and_enhancement.sql',
   'supabase/renewal_migration_005_adventure_and_minigames.sql',
   'supabase/renewal_migration_006_world_boss.sql',
+  'supabase/config.toml',
+  'supabase/functions/game-command/index.ts',
+  'supabase/functions/game-command/deno.json',
+  'src/renewal/supabase-game-service.js',
+  'src/renewal/server-command-router.js',
   'supabase/renewal_migration_999_drop_season1.sql',
 ]) assert.equal(exists(...required.split('/')), true, `missing season2 file: ${required}`);
 
@@ -63,7 +68,9 @@ for (const file of staticSources) {
 }
 for (const asset of referencedAssets) assert.equal(exists(...asset.split('/')), true, `missing referenced asset: ${asset}`);
 
-const migrations = fs.readdirSync(at('supabase')).sort();
+const migrations = fs.readdirSync(at('supabase'))
+  .filter((name) => /^renewal_migration_.+\.sql$/.test(name))
+  .sort();
 assert.deepEqual(migrations, [
   'renewal_migration_001_accounts_reset.sql',
   'renewal_migration_002_catalog_and_balance.sql',

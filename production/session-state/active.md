@@ -617,3 +617,15 @@
 - 공동 HP 공개 이벤트 테이블만 authenticated 읽기와 Supabase Realtime publication 허용. 5~10초 tick 함수 추가
 - 자동 테스트 29묶음과 30일 성장 시뮬레이션 통과. 운영 Supabase 실행·push·배포 안 함
 - 다음 서버 작업: PDB-15 `supabase-game-service`·Edge 명령 라우터 연결
+
+## 2026-07-18 PDB-15 Supabase 게임 서비스·Edge 명령 라우터
+
+- `src/renewal/supabase-game-service.js` 추가. 브라우저는 project URL·publishable key·사용자 JWT만 사용하고 `game-command` 단일 endpoint 호출
+- `supabase/functions/game-command/index.ts` 추가. `createSupabaseContext(..., { auth: 'user' })`로 JWT 검증, 요청 본문이 아닌 `userClaims.id`를 계정 ID로 고정
+- 편성·팩·강화·모험 정산·미니게임·월드보스 보상은 service-role RPC로 직접 라우팅
+- 모험 시작·빠른 전투·월드보스 공격은 서버 스냅샷과 공용 전투 엔진으로 검증 결과·SHA-256 해시를 생성한 뒤 내부 RPC 호출
+- DB 활성 밸런스와 Edge `BALANCE_VERSION`이 다르면 전투 검증 명령 실패. stale 엔진으로 보상 지급 금지
+- `build:edge-shared`로 카드 212장·설정·전투·도감·월드보스·계약·라우터를 Edge `_shared/generated`에 동기화. 테스트가 원본과 생성본 일치 확인
+- 허용 Origin 환경변수, POST 전용, 128KiB 제한, `no-store` 적용. secret/service-role key는 브라우저에 없음
+- 자동 테스트 31묶음과 30일 성장 시뮬레이션 통과. Supabase CLI/Deno 실행·운영 DB·push·배포·UI 전환 안 함
+- 다음 작업: 누락 원자 RPC, 시즌1 로그인→Supabase Auth 연동 명세, 이후 UI 원격 명령 전환

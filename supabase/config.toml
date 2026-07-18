@@ -1,0 +1,4 @@
+project_id = "card-gacha-renewal"
+
+[functions.game-command]
+verify_jwt = false

@@ -1,5 +1,8 @@
 {
   "imports": {
-    "@supabase/server": "npm:@supabase/server@1.4.0"
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.110.7"
+  },
+  "compilerOptions": {
+    "strict": true
   }
 }

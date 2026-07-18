@@ -1,4 +1,4 @@
-import { createSupabaseContext } from '@supabase/server';
+import { createClient } from '@supabase/supabase-js';
 
 const MAX_BODY_BYTES = 4 * 1024;
 
@@ -20,6 +20,14 @@ function headers(req: Request): Record<string, string> {
 
 function json(req: Request, body: unknown, status = 200) {
   return Response.json(body, { status, headers: headers(req) });
+}
+
+function adminClient() {
+  return createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
 }
 
 async function sha256(value: string) {
@@ -44,8 +52,14 @@ Deno.serve(async (req: Request) => {
 
   const pepper = Deno.env.get('AUTH_RATE_LIMIT_PEPPER');
   if (!pepper || pepper.length < 32) return json(req, { ok: false, code: 'SERVER_MISCONFIGURED' }, 503);
-  const { data: context, error: authError } = await createSupabaseContext(req, { auth: 'user' });
-  if (authError || !context?.userClaims?.id) return json(req, { ok: false, code: 'AUTH_REQUIRED' }, 401);
+
+  // createSupabaseContext({ auth: 'user' }) 는 익명 ES256 JWT를 거부하므로,
+  // adminClient().auth.getUser(jwt) 로 직접 검증한다. 익명/일반 모두 수용.
+  const jwt = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
+  if (!jwt) return json(req, { ok: false, code: 'AUTH_REQUIRED' }, 401);
+  const supabase = adminClient();
+  const { data: { user }, error: userError } = await supabase.auth.getUser(jwt);
+  if (userError || !user?.id) return json(req, { ok: false, code: 'AUTH_REQUIRED' }, 401);
 
   let raw: string;
   try {
@@ -64,14 +78,14 @@ Deno.serve(async (req: Request) => {
   const soopExchange = String(parsed.soopExchange ?? '').trim();
   if (soopExchange && soopExchange.length >= 16 && soopExchange.length <= 256) {
     const rateKey = await hmac(clientAddress, pepper);
-    const { data, error } = await (context.supabaseAdmin as any).rpc('gacha_s2_bind_soop_session', {
-      p_auth_user_id: context.userClaims.id,
+    const { data, error } = await supabase.rpc('gacha_s2_bind_soop_session', {
+      p_auth_user_id: user.id,
       p_exchange_code: soopExchange,
       p_rate_key: rateKey,
     });
     if (error) return json(req, { ok: false, code: 'INTERNAL_ERROR' }, 500);
     if (!data?.ok) {
-      const status = data?.code === 'RATE_LIMITED' ? 429 : data?.code === 'AUTH_REQUIRED' ? 401 : 401;
+      const status = data?.code === 'RATE_LIMITED' ? 429 : 401;
       return json(req, data, status);
     }
     return json(req, data);
@@ -81,14 +95,14 @@ Deno.serve(async (req: Request) => {
   if (loginKey.length < 16 || loginKey.length > 256) return json(req, { ok: false, code: 'INVALID_CREDENTIALS' }, 401);
 
   const [keyHash, rateKey] = await Promise.all([sha256(loginKey), hmac(clientAddress, pepper)]);
-  const { data, error } = await (context.supabaseAdmin as any).rpc('gacha_s2_bind_auth_session', {
-    p_auth_user_id: context.userClaims.id,
+  const { data, error } = await supabase.rpc('gacha_s2_bind_auth_session', {
+    p_auth_user_id: user.id,
     p_login_key_hash: keyHash,
     p_rate_key: rateKey,
   });
   if (error) return json(req, { ok: false, code: 'INTERNAL_ERROR' }, 500);
   if (!data?.ok) {
-    const status = data?.code === 'RATE_LIMITED' ? 429 : data?.code === 'AUTH_REQUIRED' ? 401 : 401;
+    const status = data?.code === 'RATE_LIMITED' ? 429 : 401;
     return json(req, data, status);
   }
   return json(req, data);

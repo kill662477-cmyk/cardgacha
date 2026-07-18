@@ -1,7 +1,7 @@
 # Regression Suite Manifest
 
 > Last Updated: 2026-07-18
-> Total registered test files: 25
+> Total registered test files: 26
 
 ## 실행
 
@@ -22,6 +22,7 @@ npm.cmd run test:renewal
 | 이관 | `renewal-season1-import.test.js` | 5,000P·top50 차등 보상·카드 0장 비스트리머 제외·브릿지 보존 |
 | DB migration | `renewal-database-migration.test.js` | 시즌1 원본 무변경·계정/브릿지 이관·RLS·빈 카드 인벤토리 |
 | DB 카탈로그 | `renewal-database-catalog.test.js` | 212장 결정적 seed·밸런스 해시·RLS·카드 FK·생성 파일 최신성 |
+| 명령 기반 | `renewal-command-foundation.test.js` | 서버 스냅샷·멱등 재생·revision 행 잠금·보유/EX 편성·service role 제한 |
 | 시즌1 DB 삭제 | `renewal-season1-cleanup.test.js` | 이중 확인문구·수량/해시 검증·삭제 allowlist·CASCADE 금지 |
 | 저장소 정리 | `renewal-repository-hygiene.test.js` | 시즌2 루트·카드 자산 완전 일치·시즌1 앱 경로 제거 |
 | 전투 | `renewal-battle.test.js` | 역할 반영 전투력·3/4/5장 종족 시너지·광역/보스 적용·전투 이벤트 |

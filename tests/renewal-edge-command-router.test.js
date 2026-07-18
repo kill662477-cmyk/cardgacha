@@ -109,7 +109,7 @@ const edgeSource = await readFile(new URL('../supabase/functions/game-command/in
 const edgeConfig = await readFile(new URL('../supabase/config.toml', import.meta.url), 'utf8');
 assert.match(edgeSource, /createSupabaseContext\(req, \{ auth: 'user' \}\)/);
 assert.match(edgeSource, /context\.userClaims\.id/);
-assert.match(edgeSource, /context\.supabaseAdmin\.rpc/);
+assert.match(edgeSource, /context\.supabaseAdmin(?: as any)?\)\.rpc/);
 assert.match(edgeSource, /gacha_s2_resolve_auth_account/);
 assert.match(edgeSource, /const userId = String\(accountId\)/);
 assert.doesNotMatch(edgeSource, /body\.userId|body\.user_id|SUPABASE_SERVICE_ROLE_KEY/);

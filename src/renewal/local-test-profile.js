@@ -14,7 +14,7 @@ export function applyLocalTestProfile(state, cards, hostname = globalThis.locati
   state.pendingPoints = 0;
   state.lastRewardAt = Date.now();
   if (state.supportItems) Object.keys(state.supportItems).forEach((key) => { state.supportItems[key] = 0; });
-  cards.forEach((card) => { state.cardCopies[card.id] = 0; });
-  state.collectionRecords = {};
+  cards.forEach((card) => { state.cardCopies[card.id] = 1; });
+  state.collectionRecords = Object.fromEntries(cards.map((card) => [card.id, true]));
   return true;
 }

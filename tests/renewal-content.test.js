@@ -63,8 +63,9 @@ assert.equal(Object.hasOwn(localProfile, 'accountExp'), false, 'local profile ha
 assert.equal(localProfile.pendingPoints, 0, 'no pending offline reward');
 assert.equal(localProfile.actionEnergy, 120, 'energy refilled to max');
 assert.ok(Object.values(localProfile.supportItems).every((count) => count === 0), 'no support items granted');
-assert.equal(Object.keys(localProfile.collectionRecords).length, 0, 'no collection records granted');
-assert.ok(cards.every((card) => localProfile.cardCopies[card.id] === 0), 'no cards owned, gacha-first start');
+assert.equal(Object.keys(localProfile.collectionRecords).length, cards.length, 'local QA profile has full collection');
+assert.ok(cards.every((card) => localProfile.collectionRecords[card.id] === true), 'every card registered in local collection');
+assert.ok(cards.every((card) => localProfile.cardCopies[card.id] === 1), 'every card available for local QA');
 const ongoingProfile = { revision: 5, points: 42 };
 assert.equal(applyLocalTestProfile(ongoingProfile, cards, '127.0.0.1'), false, 'saved progress must not be reset');
 assert.equal(ongoingProfile.points, 42);

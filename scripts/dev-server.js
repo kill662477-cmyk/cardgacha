@@ -45,10 +45,9 @@ const server = http.createServer((req, res) => {
     }
 
     const extension = path.extname(filePath).toLowerCase();
-    const cacheControl = ['.html', '.json'].includes(extension) ? 'no-cache' : 'public, max-age=3600';
     res.writeHead(200, {
       'Content-Type': MIME[extension] || 'application/octet-stream',
-      'Cache-Control': cacheControl,
+      'Cache-Control': 'no-cache',
       'X-Content-Type-Options': 'nosniff',
     });
     res.end(data);

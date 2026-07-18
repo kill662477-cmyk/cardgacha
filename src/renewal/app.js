@@ -64,7 +64,8 @@ let cardsById = new Map();
 const freshStart = new URLSearchParams(window.location.search).has('fresh');
 const systemStatePreview = new URLSearchParams(window.location.search).get('ui-state');
 const localGameService = createLocalGameService({ reset: freshStart });
-const remoteRuntime = createRemoteRuntime(readRemoteConfig());
+const remoteConfig = readRemoteConfig();
+const remoteRuntime = createRemoteRuntime(remoteConfig);
 const remoteMode = Boolean(remoteRuntime);
 const gameService = remoteMode ? {
   ...remoteRuntime.game,
@@ -213,7 +214,7 @@ function cacheElements() {
     'minigameScreen', 'worldBossScreen', 'rankingScreen',
     'systemStateLayer', 'systemStateEyebrow', 'systemStateTitle', 'systemStateMessage', 'systemStateCode', 'systemStateRetry',
     'rewardDurationBlock', 'rewardBreakdown', 'rewardEmptyState',
-    'loginDialog', 'loginForm', 'loginKeyInput', 'loginSubmit', 'loginError',
+    'loginDialog', 'loginForm', 'loginKeyInput', 'loginSubmit', 'loginError', 'soopLoginButton',
   ].forEach((id) => { elements[id] = document.getElementById(id); });
 }
 
@@ -275,7 +276,55 @@ async function executeServerCommand(type, payload) {
   return response;
 }
 
+// SOOP 숲 로그인 콜백(#soopauth= / #soopautherr=)을 fragment에서 읽는다.
+// 시즌1 readAuthHash 패턴과 동일. 값을 쓰고 나면 URL에서 fragment를 제거한다.
+function readSoopAuthHash() {
+  const hash = window.location.hash || '';
+  const params = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
+  if (!params.has('soopauth') && !params.has('soopautherr')) return null;
+  const code = params.get('soopauth') ?? '';
+  const err = params.get('soopautherr') ?? '';
+  // fragment에서 키가 서버 로그/리퍼러에 남지 않도록 즉시 제거.
+  history.replaceState(null, '', window.location.pathname + window.location.search);
+  return { code: code.trim(), err: err.trim() };
+}
+
+async function completeSoopAuth(exchangeCode, { onError } = {}) {
+  elements.loginError.textContent = '';
+  elements.loginSubmit.disabled = true;
+  try {
+    const signedIn = await remoteRuntime.auth.signInWithSoopExchange(exchangeCode);
+    if (!signedIn?.ok) {
+      const message = signedIn?.code === 'RATE_LIMITED'
+        ? '로그인 시도가 많습니다. 잠시 후 다시 시도하세요.'
+        : '숲 로그인에 실패했습니다. 다시 시도해 주세요.';
+      if (onError) onError(message);
+      else elements.loginError.textContent = message;
+      return false;
+    }
+    const loaded = await gameService.loadSnapshot();
+    if (!loaded?.ok || !loaded.snapshot) throw new Error(loaded?.code ?? 'SNAPSHOT_FAILED');
+    applyServerSnapshot(loaded.snapshot);
+    return true;
+  } catch (error) {
+    console.error(error);
+    const message = '계정 연결에 실패했습니다. 다시 시도하세요.';
+    if (onError) onError(message);
+    else elements.loginError.textContent = message;
+    return false;
+  } finally {
+    elements.loginSubmit.disabled = false;
+  }
+}
+
 async function requireRemoteSnapshot() {
+  // SOOP 숲 로그인 콜백이 fragment에 있으면 가장 먼저 처리한다.
+  const soopCallback = readSoopAuthHash();
+  if (soopCallback?.code) {
+    const ok = await completeSoopAuth(soopCallback.code);
+    if (ok) return state;
+  }
+
   const existingToken = await remoteRuntime.auth.getAccessToken();
   if (existingToken) {
     const loaded = await gameService.loadSnapshot();
@@ -283,8 +332,20 @@ async function requireRemoteSnapshot() {
   }
   setSystemState('auth');
   elements.loginError.textContent = '';
+  if (soopCallback?.err) {
+    elements.loginError.textContent = '숲 로그인에 실패했습니다. 다시 시도해 주세요.';
+  }
   elements.loginDialog.showModal();
   return new Promise((resolve, reject) => {
+    // SOOP 메인 버튼: 숲 인증 페이지로 리다이렉트.
+    const startSoop = (event) => {
+      event.preventDefault();
+      const startUrl = `${remoteConfig.projectUrl}/functions/v1/soop-auth?action=start`;
+      window.location.assign(startUrl);
+    };
+    elements.soopLoginButton?.addEventListener('click', startSoop);
+
+    // KEY 보조 로그인.
     const submit = async (event) => {
       event.preventDefault();
       elements.loginSubmit.disabled = true;
@@ -303,6 +364,7 @@ async function requireRemoteSnapshot() {
         applyServerSnapshot(loaded.snapshot);
         elements.loginDialog.close();
         elements.loginForm.removeEventListener('submit', submit);
+        elements.soopLoginButton?.removeEventListener('click', startSoop);
         setSystemState(null);
         resolve(state);
       } catch (error) {

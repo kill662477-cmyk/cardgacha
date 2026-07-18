@@ -32,6 +32,8 @@ for (const required of [
   'supabase/functions/session-exchange/deno.json',
   'supabase/functions/soop-bridge/index.ts',
   'supabase/functions/soop-bridge/deno.json',
+  'supabase/functions/soop-auth/index.ts',
+  'supabase/functions/soop-auth/deno.json',
   'src/renewal/supabase-game-service.js',
   'src/renewal/auth-session-service.js',
   'src/renewal/server-command-router.js',
@@ -93,6 +95,7 @@ assert.deepEqual(migrations, [
   'renewal_migration_007_economy_profile.sql',
   'renewal_migration_008_auth_bridge.sql',
   'renewal_migration_009_live_services.sql',
+  'renewal_migration_010_soop_user_auth.sql',
   'renewal_migration_999_drop_season1.sql',
 ]);
 

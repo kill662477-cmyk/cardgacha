@@ -1,0 +1,1 @@
+-- placeholder for remote migration 20260718163101 (digest shim, applied via MCP)

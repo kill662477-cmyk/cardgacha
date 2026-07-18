@@ -555,15 +555,25 @@
   </dialog>
 
   <dialog class="account-login-dialog" id="loginDialog">
-    <form class="account-login-shell" id="loginForm">
-      <span>ACCOUNT LINK</span>
+    <div class="account-login-shell">
+      <span>SEASON 2 SIGN IN</span>
       <h2>시즌2 계정 연결</h2>
-      <p>시즌1에서 사용한 로그인 KEY를 입력하세요.</p>
-      <label for="loginKeyInput">로그인 KEY</label>
-      <input id="loginKeyInput" name="loginKey" type="password" autocomplete="current-password" minlength="16" maxlength="256" required>
+
+      <a class="cta soop-cta" id="soopLoginButton" href="#" role="button">
+        <span class="soop-mark">SOOP</span> 숲 계정으로 시작하기
+      </a>
+      <p class="login-hint">숲 로그인으로 자동 연결됩니다. 처음이면 계정이 만들어져요.</p>
       <small id="loginError" role="alert"></small>
-      <button class="confirm-button" id="loginSubmit" type="submit">계정 연결</button>
-    </form>
+
+      <details class="key-login">
+        <summary>KEY로 로그인 (백업 · 기기 이동)</summary>
+        <form id="loginForm">
+          <label for="loginKeyInput">시즌1에서 발급받은 로그인 KEY</label>
+          <input id="loginKeyInput" name="loginKey" type="password" autocomplete="current-password" minlength="16" maxlength="256" required>
+          <button class="confirm-button" id="loginSubmit" type="submit">KEY로 계정 연결</button>
+        </form>
+      </details>
+    </div>
   </dialog>
 
   <script src="runtime-config.js"></script>

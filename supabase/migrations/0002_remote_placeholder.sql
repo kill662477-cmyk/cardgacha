@@ -1,0 +1,1 @@
+-- placeholder for remote migration 0002 (already applied; not re-run)

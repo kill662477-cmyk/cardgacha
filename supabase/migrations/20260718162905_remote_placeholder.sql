@@ -1,0 +1,1 @@
+-- placeholder for remote migration 20260718162905 (gen_random_bytes shim, applied via MCP)

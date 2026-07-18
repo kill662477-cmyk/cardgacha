@@ -23,6 +23,13 @@ assert.equal(calls[0].options.headers.Authorization, 'Bearer anonymous-jwt');
 assert.equal(JSON.parse(calls[0].options.body).loginKey, 'legacy-login-key-000001');
 assert.equal((await service.signInWithLoginKey('short')).code, 'INVALID_CREDENTIALS');
 
+// Phase 2: SOOP 숲 로그인 exchange 코드 바인딩 분기.
+const soopSignedIn = await service.signInWithSoopExchange('soop-exchange-code-1234567890');
+assert.equal(soopSignedIn.ok, true);
+assert.equal(soopSignedIn.session.access_token, 'anonymous-jwt');
+assert.equal(JSON.parse(calls[1].options.body).soopExchange, 'soop-exchange-code-1234567890');
+assert.equal((await service.signInWithSoopExchange('short')).code, 'INVALID_CREDENTIALS');
+
 const sql = (await readFile(new URL('../supabase/renewal_migration_008_auth_bridge.sql', import.meta.url), 'utf8')).replace(/\s+/g, ' ');
 assert.match(sql, /add column if not exists auth_user_id uuid unique references auth\.users\(id\) on delete set null/);
 assert.match(sql, /create or replace function public\.gacha_s2_bind_auth_session\(/);

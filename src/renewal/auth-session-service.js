@@ -18,9 +18,8 @@ export function createAuthSessionService(options = {}) {
     return created.data.session;
   }
 
-  async function signInWithLoginKey(loginKey) {
-    const key = String(loginKey ?? '').trim();
-    if (key.length < 16 || key.length > 256) return { ok: false, code: 'INVALID_CREDENTIALS' };
+  // 공통 바인딩 POST. body 필드(loginKey 또는 soopExchange)만 다르다.
+  async function postExchange(body) {
     const session = await ensureSession();
     const response = await fetchImpl(exchangeEndpoint(projectUrl), {
       method: 'POST',
@@ -29,7 +28,7 @@ export function createAuthSessionService(options = {}) {
         apikey: publishableKey,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ loginKey: key }),
+      body: JSON.stringify(body),
     });
     let payload = null;
     try { payload = await response.json(); } catch { /* normalized below */ }
@@ -37,10 +36,24 @@ export function createAuthSessionService(options = {}) {
     return { ...payload, session };
   }
 
+  async function signInWithLoginKey(loginKey) {
+    const key = String(loginKey ?? '').trim();
+    if (key.length < 16 || key.length > 256) return { ok: false, code: 'INVALID_CREDENTIALS' };
+    return postExchange({ loginKey: key });
+  }
+
+  // Phase 2: SOOP 숲 로그인. OAuth 콜백이 fragment로 전달한 일회성 exchange 코드로
+  // 익명 세션을 soop_id 계정에 바인딩한다.
+  async function signInWithSoopExchange(exchangeCode) {
+    const code = String(exchangeCode ?? '').trim();
+    if (code.length < 16 || code.length > 256) return { ok: false, code: 'INVALID_CREDENTIALS' };
+    return postExchange({ soopExchange: code });
+  }
+
   async function getAccessToken() {
     const result = await auth.getSession();
     return result?.data?.session?.access_token ?? null;
   }
 
-  return { ensureSession, signInWithLoginKey, getAccessToken };
+  return { ensureSession, signInWithLoginKey, signInWithSoopExchange, getAccessToken };
 }

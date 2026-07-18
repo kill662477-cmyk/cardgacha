@@ -54,12 +54,32 @@ Deno.serve(async (req: Request) => {
   } catch {
     return json(req, { ok: false, code: 'INVALID_REQUEST' }, 400);
   }
-  let loginKey = '';
-  try { loginKey = String(JSON.parse(raw)?.loginKey ?? '').trim(); } catch { /* generic failure */ }
-  if (loginKey.length < 16 || loginKey.length > 256) return json(req, { ok: false, code: 'INVALID_CREDENTIALS' }, 401);
+  let parsed: { loginKey?: unknown; soopExchange?: unknown } = {};
+  try { parsed = JSON.parse(raw) ?? {}; } catch { /* generic failure */ }
 
   const forwarded = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
   const clientAddress = forwarded || req.headers.get('cf-connecting-ip') || 'unknown';
+
+  // Phase 2: SOOP 숲 로그인 분기. soopExchange 코드가 오면 soop_id 바인딩 RPC로.
+  const soopExchange = String(parsed.soopExchange ?? '').trim();
+  if (soopExchange && soopExchange.length >= 16 && soopExchange.length <= 256) {
+    const rateKey = await hmac(clientAddress, pepper);
+    const { data, error } = await (context.supabaseAdmin as any).rpc('gacha_s2_bind_soop_session', {
+      p_auth_user_id: context.userClaims.id,
+      p_exchange_code: soopExchange,
+      p_rate_key: rateKey,
+    });
+    if (error) return json(req, { ok: false, code: 'INTERNAL_ERROR' }, 500);
+    if (!data?.ok) {
+      const status = data?.code === 'RATE_LIMITED' ? 429 : data?.code === 'AUTH_REQUIRED' ? 401 : 401;
+      return json(req, data, status);
+    }
+    return json(req, data);
+  }
+
+  const loginKey = String(parsed.loginKey ?? '').trim();
+  if (loginKey.length < 16 || loginKey.length > 256) return json(req, { ok: false, code: 'INVALID_CREDENTIALS' }, 401);
+
   const [keyHash, rateKey] = await Promise.all([sha256(loginKey), hmac(clientAddress, pepper)]);
   const { data, error } = await (context.supabaseAdmin as any).rpc('gacha_s2_bind_auth_session', {
     p_auth_user_id: context.userClaims.id,

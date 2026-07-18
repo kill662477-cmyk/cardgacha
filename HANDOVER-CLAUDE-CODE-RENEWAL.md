@@ -39,7 +39,7 @@ git diff --check
 
 2026-07-18 마지막 상태:
 
-- 자동 테스트 24개 묶음 전부 통과
+- 자동 테스트 25개 묶음 전부 통과
 - 밸런스 버전 `2026.07.18-random-loot-1` (SSS 고정, F~SS 전면 재배치, 월드보스 30분 전투·30분 결과, 모험·레이드 랜덤 드롭)
 - 성장 시뮬레이션 통과
 - 월드보스 KST 4회(17~20시) 스케줄 로컬 연결 완료 (슬롯 밖 대기/카운트다운, 회차 전환, 경계 가드)
@@ -276,23 +276,24 @@ KST 매일 17:00, 18:00, 19:00, 20:00
 
 ### C. Supabase 작업
 
-DB 진입 승인 완료. 계정·브릿지 이관 migration과 시즌1 DB 최종 삭제 SQL은 로컬 작성·정적 검증까지 완료했고 운영 Supabase에는 실행하지 않았다.
+DB 진입 승인 완료. 계정·브릿지 이관, 서버 카드·밸런스 카탈로그, 시즌1 DB 최종 삭제 SQL은 로컬 작성·정적 검증까지 완료했고 운영 Supabase에는 실행하지 않았다.
 
 권장 구현 순서:
 
 1. ~~계정·브릿지·초기 상태·카드 인벤토리·멱등성·import batch 1차 migration 작성과 로컬 검토.~~
-2. 전체 시즌1 export로 preview 수량 대사 후 운영 실행 여부 확인.
-3. 모험·미니게임 일일 기록과 검증 로그.
-4. 월드보스 회차, 개인 시도, 공동 HP, 보상 수령 테이블.
-5. 멱등성 명령 로그와 revision 낙관적 잠금.
-6. 모든 보상·구매·강화·아이템 사용을 원자 RPC로 구현.
-7. RLS는 본인 읽기와 제한된 RPC만 허용. 클라이언트 직접 UPDATE 금지.
-8. `supabase-game-service` 추가 후 UI는 로컬 어댑터와 같은 인터페이스 사용.
-9. 합성 계정으로 전체 플로우 검증 후 시즌1 dry-run.
-10. 사용자 승인 후에만 실제 migration 실행과 운영 import.
-11. 시즌2 API 전환·로그인/브릿지/후원 smoke test·최종 백업 뒤 `renewal_migration_999_drop_season1.sql`로 시즌1 DB 제거.
+2. ~~212장 서버 카드 카탈로그·활성 밸런스 스냅샷·카드 FK 2차 migration 생성과 검증.~~
+3. 전체 시즌1 export로 preview 수량 대사 후 운영 실행 여부 확인.
+4. 멱등성·revision 공통 명령 기반과 편성·팩·강화 RPC.
+5. 모험·미니게임 일일 기록과 검증 로그.
+6. 월드보스 회차, 개인 시도, 공동 HP, 보상 수령 테이블.
+7. 모든 보상·구매·강화·아이템 사용을 원자 RPC로 구현.
+8. RLS는 본인 읽기와 제한된 RPC만 허용. 클라이언트 직접 UPDATE 금지.
+9. `supabase-game-service` 추가 후 UI는 로컬 어댑터와 같은 인터페이스 사용.
+10. 합성 계정으로 전체 플로우 검증 후 시즌1 dry-run.
+11. 사용자 승인 후에만 실제 migration 실행과 운영 import.
+12. 시즌2 API 전환·로그인/브릿지/후원 smoke test·최종 백업 뒤 `renewal_migration_999_drop_season1.sql`로 시즌1 DB 제거.
 
-테이블명은 아직 최종 승인되지 않았다. 문서의 후보 이름을 그대로 운영에 만들지 말고 먼저 명세를 확정할 것.
+현재 `gacha_s2_accounts`, `gacha_s2_player_states`, `gacha_s2_player_cards`, `gacha_s2_streamer_bridges`, `gacha_s2_card_catalog`, `gacha_s2_balance_versions`는 migration과 테스트에 고정됐다. 이후 테이블은 구현 전 명세를 확정할 것.
 
 ### D. 시즌1 계정·SOOP 이관
 
@@ -341,7 +342,8 @@ DB 진입 승인 완료. 계정·브릿지 이관 migration과 시즌1 DB 최종
 | PDB-6 요청 상태 UX | 완료 | 서버 연결 후 재검증 필요 |
 | PDB-7 사전 보안·성능 | 로컬 완료 | 운영 부하 검증 별도 |
 | PDB-8 시즌1 이관 명세 | 완료 | 계정·브릿지 이관, 게임상태 초기화, 랭커 보상·최종 시즌1 DB 삭제 확정 |
-| PDB-9 DB 진입 승인 | 승인 | 1차 migration 로컬 작성 완료, 운영 DB 미실행 |
+| PDB-9 DB 진입 승인 | 승인 | 1·2차 migration 로컬 작성 완료, 운영 DB 미실행 |
+| PDB-10 서버 카탈로그 | 완료 | 카드 212장·밸런스 해시·활성 버전·인벤토리 FK |
 
 ## 10. 주요 파일 지도
 
@@ -372,6 +374,7 @@ DB 진입 승인 완료. 계정·브릿지 이관 migration과 시즌1 DB 최종
 | 상태 스키마 v2 | `docs/PDB-3-GAME-STATE-SCHEMA-V2.md` |
 | 시즌1 계정 이관 명세 | `docs/PDB-8-SEASON1-MIGRATION-SPEC.md` |
 | 시즌2 1차 migration | `supabase/renewal_migration_001_accounts_reset.sql` |
+| 시즌2 카드·밸런스 migration | `supabase/renewal_migration_002_catalog_and_balance.sql` |
 | 시즌1 DB 최종 삭제 | `supabase/renewal_migration_999_drop_season1.sql` |
 | 최신 작업 로그 | `production/session-state/active.md` |
 

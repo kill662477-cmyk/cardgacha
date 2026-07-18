@@ -21,7 +21,9 @@
 - `RENEWAL-GAME-CONCEPT.md`: 초기 컨셉 중 현재 채택·보류 범위
 - `docs/RENEWAL-PRE-DATABASE-WORKLIST.md`: DB 진입 상태와 남은 운영 검증 체크리스트
 - `docs/PDB-8-SEASON1-MIGRATION-SPEC.md`: 시즌1 계정·브릿지 선별 이관, 초기화, 랭커 보상, 최종 삭제 기준
+- `docs/PDB-10-SERVER-CATALOG.md`: 서버 권위 카드 212장·밸런스 버전·생성·검증 기준
 - `supabase/renewal_migration_001_accounts_reset.sql`: 리뷰용 시즌2 계정·브릿지 이관 migration, 운영 미실행
+- `supabase/renewal_migration_002_catalog_and_balance.sql`: 생성형 카드·밸런스 카탈로그 migration, 운영 미실행
 - `supabase/renewal_migration_999_drop_season1.sql`: 시즌2 API 전환·백업 검증 후 실행할 시즌1 DB 삭제 SQL
 - `docs/RENEWAL-UI-SYSTEM.md`, `docs/RENEWAL-VISUAL-UX-AUDIT.md`: 공통 UI와 시각 승인 기준
 - `tests/regression-suite.md`: 자동·수동 회귀 범위
@@ -50,4 +52,4 @@
 - 월드보스 KST 17·18·19·20시, 회차별 30분 전투·30분 결과, 성공 최대 10,000P
 - 모험런·빠른 전투·월드보스 결과에서 상점 아이템·카드팩 교환권 랜덤 추가 드롭
 - 강화 성공 FX 4단계 총 3.12초, 강화 구간별 강도 차등
-- 자동 테스트 24묶음 통과. 직전 밸런스 30일 성장 시뮬레이션 통과
+- 자동 테스트 25묶음 통과. 직전 밸런스 30일 성장 시뮬레이션 통과

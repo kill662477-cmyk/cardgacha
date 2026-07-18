@@ -15,6 +15,7 @@ for (const required of [
   'assets/card-back.jpg',
   'assets/renewal/brand/card-gacha-s2-symbol.png',
   'supabase/renewal_migration_001_accounts_reset.sql',
+  'supabase/renewal_migration_002_catalog_and_balance.sql',
   'supabase/renewal_migration_999_drop_season1.sql',
 ]) assert.equal(exists(...required.split('/')), true, `missing season2 file: ${required}`);
 
@@ -61,6 +62,7 @@ for (const asset of referencedAssets) assert.equal(exists(...asset.split('/')), 
 const migrations = fs.readdirSync(at('supabase')).sort();
 assert.deepEqual(migrations, [
   'renewal_migration_001_accounts_reset.sql',
+  'renewal_migration_002_catalog_and_balance.sql',
   'renewal_migration_999_drop_season1.sql',
 ]);
 

@@ -13,9 +13,17 @@ globalThis.__CARD_GACHA_CONFIG__ = globalThis.__CARD_GACHA_CONFIG__ ?? {
 // 점검 모드: app.js 모듈 실행 전에 본문을 가리고 점검 오버레이를 노출한다.
 // index.html에 <div id="maintenanceOverlay">가 없으면 인라인으로 최소 마크업을 만든다.
 (function applyMaintenanceGuard() {
-  if (typeof document === 'undefined') return;
+  if (typeof document === 'undefined' || typeof window === 'undefined') return;
+  
+  // 관리자 접속 우회: URL에 ?admin=cmyk 를 붙여 접속하면 브라우저에 권한이 저장됩니다.
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('admin') === 'cmyk') {
+    localStorage.setItem('admin_bypass_maintenance', 'true');
+  }
+  const isBypass = localStorage.getItem('admin_bypass_maintenance') === 'true';
+
   const config = globalThis.__CARD_GACHA_CONFIG__;
-  if (!config || !config.maintenance) return;
+  if (!config || !config.maintenance || isBypass) return;
 
   const injectOverlay = () => {
     if (document.getElementById('maintenanceOverlay')) return;

@@ -1960,7 +1960,7 @@ function bindEvents() {
   });
   elements.apiLinkButton.addEventListener('click', () => {
     if (!bridgeStatus.canUseDonationBridge) return showToast('캄몬 소속 스트리머 전용 기능입니다.');
-    window.open('bridge.html', '_blank', 'noopener,noreferrer');
+    location.href = 'bridge.html';
   });
   elements.autoBattleButton.addEventListener('click', async () => {
     if (state.autoBattle) {

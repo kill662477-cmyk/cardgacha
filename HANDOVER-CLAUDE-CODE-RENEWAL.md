@@ -1,10 +1,10 @@
 # 카드가챠 시즌2 리뉴얼 - Claude Code 상세 인수인계
 
-> 갱신: 2026-07-18 KST (작업 5~8 로컬 검증 완료)
+> 갱신: 2026-07-19 KST (SOOP 숲 로그인 복구 Phase 1+2 완료)
 > 작업 폴더: `C:\Users\silve\OneDrive\Desktop\card-gacha-renewal`
 > 브랜치: `renewal`
-> 현재 HEAD: `dce54f8 chore: local QA profile with full roster and no-cache dev server`
-> 직전 커밋: `d9e13e6 feat: add live ranking and SOOP bridge`
+> 현재 HEAD: `ec96103 feat: restore SOOP user login (Phase 1 maintenance mode + Phase 2 soop-auth)`
+> 직전 커밋: `90a8beb feat: add maintenance mode toggle for SOOP auth restoration`
 
 ## 0. 사용자 지시
 
@@ -21,30 +21,16 @@
 커밋된 최신 작업:
 
 ```text
+ec96103 feat: restore SOOP user login (Phase 1 maintenance mode + Phase 2 soop-auth)
+90a8beb feat: add maintenance mode toggle for SOOP auth restoration
+dce54f8 chore: local QA profile with full roster and no-cache dev server
 d9e13e6 feat: add live ranking and SOOP bridge
 dbdc83a feat: route game UI through server commands
 c2c01f3 feat: bridge legacy login keys to Supabase Auth
 6b58d06 feat: add remaining economy and profile commands
-e66a9bf feat: add authenticated game command edge router
-751a482 feat: add world boss server RPCs
-5cfd608 feat: add adventure and minigame RPCs
-b07ec43 feat: add pack and enhancement RPCs
-398aaa6 feat: add server command foundation
-734e7af feat: add season 2 server card catalog
-72ffe07 feat: prepare season 1 database retirement
-220eef0 feat: prepare card gacha season 2 renewal
 ```
 
-중단 시점 미커밋 파일은 2026-07-18 로컬 검증 후 커밋 `dce54f8`로 정리됨:
-
-```text
-scripts/dev-server.js                     (no-cache)
-src/renewal/local-test-profile.js         (MSTZ 전체 카드+도감 QA 프로필)
-tests/renewal-content.test.js             (기대값 정렬)
-tests/renewal-edge-command-router.test.js (edge TS admin cast 정규식, 핸드오버 원문엔 누락되어 있던 5번째 파일)
-```
-
-이 커밋은 로컬 전용이며 push하지 않았다. HANDOVER 문서 갱신분은 아직 미커밋 상태로, 다음 로컬 커밋에 포함하면 된다.
+미커밋 파일 없음. 워킹트리 클린.
 
 미커밋 변경 의미:
 

@@ -15,6 +15,7 @@ for (const required of [
   'assets/card-back.jpg',
   'assets/renewal/brand/card-gacha-s2-symbol.png',
   'supabase/renewal_migration_001_accounts_reset.sql',
+  'supabase/renewal_migration_999_drop_season1.sql',
 ]) assert.equal(exists(...required.split('/')), true, `missing season2 file: ${required}`);
 
 for (const legacy of [
@@ -58,6 +59,9 @@ for (const file of staticSources) {
 for (const asset of referencedAssets) assert.equal(exists(...asset.split('/')), true, `missing referenced asset: ${asset}`);
 
 const migrations = fs.readdirSync(at('supabase')).sort();
-assert.deepEqual(migrations, ['renewal_migration_001_accounts_reset.sql']);
+assert.deepEqual(migrations, [
+  'renewal_migration_001_accounts_reset.sql',
+  'renewal_migration_999_drop_season1.sql',
+]);
 
 console.log(`renewal repository hygiene tests passed: ${cards.length} cards, ${referencedAssets.size} static assets, no season1 app paths`);

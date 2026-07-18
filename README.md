@@ -34,11 +34,12 @@ npm.cmd run simulate:renewal-balance
 - `data/renewal-cards.json`: 전체 카드 카탈로그
 - `assets/renewal/`: 시즌2 전용 UI·배경·팩·FX 자산
 - `assets/cards/`: 카드 사진 212개
-- `supabase/renewal_migration_001_accounts_reset.sql`: 시즌1 계정 선별 이관과 시즌2 초기 상태
+- `supabase/renewal_migration_001_accounts_reset.sql`: 시즌1 계정·브릿지 선별 이관과 시즌2 초기 상태
+- `supabase/renewal_migration_999_drop_season1.sql`: 시즌2 전환 검증 후 시즌1 DB 제거
 - `HANDOVER-CLAUDE-CODE-RENEWAL.md`: 최신 인수인계
 
 ## 운영 주의
 
 - 운영 Supabase migration은 preview 계정 수 확인 전 실행 금지.
-- 시즌1 원본 테이블은 읽기 전용으로 보존.
+- 시즌1 원본은 이관·API 전환·백업 검증 때까지만 읽기 전용 유지. 이후 `999`로 삭제.
 - 사용자 지시 전 push·배포 금지.

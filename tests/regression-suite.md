@@ -1,7 +1,7 @@
 # Regression Suite Manifest
 
 > Last Updated: 2026-07-18
-> Total registered test files: 23
+> Total registered test files: 24
 
 ## 실행
 
@@ -19,8 +19,9 @@ npm.cmd run test:renewal
 | API 계약 | `renewal-service-contract.test.js` | 멱등성·revision·응답 |
 | 요청 UX | `renewal-request-coordinator.test.js` | 연타 잠금·재시도·오류 상태 |
 | 보안 | `renewal-security.test.js` | 비밀 패턴·닉네임 이스케이프 |
-| 이관 | `renewal-season1-import.test.js` | 5,000P·top50 차등 보상·카드 0장 비스트리머 제외·스트리머 보존 |
-| DB migration | `renewal-database-migration.test.js` | 시즌1 원본 무변경·RLS·service role·빈 카드 인벤토리 |
+| 이관 | `renewal-season1-import.test.js` | 5,000P·top50 차등 보상·카드 0장 비스트리머 제외·브릿지 보존 |
+| DB migration | `renewal-database-migration.test.js` | 시즌1 원본 무변경·계정/브릿지 이관·RLS·빈 카드 인벤토리 |
+| 시즌1 DB 삭제 | `renewal-season1-cleanup.test.js` | 이중 확인문구·수량/해시 검증·삭제 allowlist·CASCADE 금지 |
 | 저장소 정리 | `renewal-repository-hygiene.test.js` | 시즌2 루트·카드 자산 완전 일치·시즌1 앱 경로 제거 |
 | 전투 | `renewal-battle.test.js` | 역할 반영 전투력·3/4/5장 종족 시너지·광역/보스 적용·전투 이벤트 |
 | 모험 | `renewal-adventure.test.js` | 4시간당 3회·실패 종료·보상 |

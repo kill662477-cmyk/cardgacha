@@ -132,6 +132,9 @@ export function analyzeSeason1Export(source, cards, options = {}) {
   issues.push(...snapshotAnalysis.issues);
   const usersById = new Map(users.map((user) => [user.id, user]));
 
+  duplicates(bridgeKeys.map((row) => row?.soop_id)).forEach((value) => issue(issues, 'error', 'DUPLICATE_BRIDGE_SOOP_ID', 'Duplicate bridge SOOP ID', { value }));
+  duplicates(bridgeKeys.map((row) => row?.key_hash)).forEach((value) => issue(issues, 'error', 'DUPLICATE_BRIDGE_KEY_HASH', 'Duplicate bridge key hash', { value }));
+
   duplicates(users.map((user) => user.id)).forEach((value) => issue(issues, 'error', 'DUPLICATE_USER_ID', '중복 사용자 ID', { value }));
   duplicates(users.map((user) => user.login_key_hash)).forEach((value) => issue(issues, 'error', 'DUPLICATE_LOGIN_HASH', '중복 로그인 키 해시', { value }));
   duplicates(users.map((user) => user.soop_id)).forEach((value) => issue(issues, 'error', 'DUPLICATE_SOOP_ID', '중복 SOOP ID', { value }));
@@ -145,6 +148,17 @@ export function analyzeSeason1Export(source, cards, options = {}) {
       issue(issues, 'error', 'INVALID_LOGIN_HASH', 'SHA-256 로그인 키 해시 필요', { userId: user.id });
     }
   });
+  bridgeKeys.forEach((row) => {
+    if (!isRecord(row) || typeof row.soop_id !== 'string' || !row.soop_id.trim()) {
+      issue(issues, 'error', 'INVALID_BRIDGE_SOOP_ID', 'Bridge SOOP ID required');
+    }
+    if (typeof row?.key_hash !== 'string' || !/^[a-f0-9]{64}$/i.test(row.key_hash)) {
+      issue(issues, 'error', 'INVALID_BRIDGE_KEY_HASH', 'Bridge SHA-256 key hash required', { soopId: row?.soop_id });
+    }
+    if (typeof row?.active !== 'boolean') {
+      issue(issues, 'error', 'INVALID_BRIDGE_ACTIVE', 'Bridge active state must be boolean', { soopId: row?.soop_id });
+    }
+  });
 
   const cardTotals = new Map(users.map((user) => [user.id, 0]));
   collection.forEach((row) => {
@@ -153,7 +167,7 @@ export function analyzeSeason1Export(source, cards, options = {}) {
     cardTotals.set(row.user_id, (cardTotals.get(row.user_id) ?? 0) + row.count);
   });
 
-  const streamerSoopIds = new Set(bridgeKeys.map((row) => row.soop_id).filter(Boolean));
+  const streamerSoopIds = new Set(bridgeKeys.map((row) => row?.soop_id).filter(Boolean));
   const isStreamer = (user) => Boolean(user.soop_id && streamerSoopIds.has(user.soop_id));
   const eligibleUsers = users.filter((user) => (cardTotals.get(user.id) ?? 0) > 0 || isStreamer(user));
   const eligibleIds = new Set(eligibleUsers.map((user) => user.id));
@@ -190,7 +204,9 @@ export function analyzeSeason1Export(source, cards, options = {}) {
   });
 
   const retainedSoopIds = new Set(mappedAccounts.map((account) => account.soopId).filter(Boolean));
-  const retainedBridgeKeys = bridgeKeys.filter((row) => retainedSoopIds.has(row.soop_id));
+  const retainedBridgeKeys = bridgeKeys.filter((row) => retainedSoopIds.has(row?.soop_id));
+  const orphanBridgeKeys = bridgeKeys.filter((row) => !users.some((user) => user.soop_id === row?.soop_id));
+  orphanBridgeKeys.forEach((row) => issue(issues, 'error', 'ORPHAN_BRIDGE_KEY', 'Bridge key has no matching account', { soopId: row?.soop_id }));
   const retainedStreamerWithoutCards = eligibleUsers.filter((user) => isStreamer(user) && (cardTotals.get(user.id) ?? 0) === 0).length;
   const deletedNoCardNonStreamerUsers = users.filter((user) => !isStreamer(user) && (cardTotals.get(user.id) ?? 0) === 0).length;
   const mappedPoints = mappedStates.reduce((sum, entry) => sum + entry.state.points, 0);
@@ -220,6 +236,7 @@ export function analyzeSeason1Export(source, cards, options = {}) {
       discardedSerials: serials.length,
       discardedMemberRewardRows: memberRewards.length,
       retainedBridgeKeyRows: retainedBridgeKeys.length,
+      orphanBridgeKeyRows: orphanBridgeKeys.length,
       rankingSnapshotRows: snapshotAnalysis.rows.length,
       errors: issues.filter((entry) => entry.severity === 'error').length,
       warnings: issues.filter((entry) => entry.severity === 'warning').length,

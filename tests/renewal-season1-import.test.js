@@ -46,6 +46,8 @@ const source = {
     soop_id: user.soop_id,
     key_hash: `${index + 1}`.repeat(64),
     active: index !== 2,
+    created_at: `2026-06-0${index + 1}T00:00:00Z`,
+    last_used_at: index === 0 ? '2026-07-18T00:00:00Z' : null,
   })),
 };
 
@@ -80,6 +82,7 @@ assert.equal(report.summary.clearedCollectionRows, 55);
 assert.equal(report.summary.discardedSerials, 55);
 assert.equal(report.summary.discardedMemberRewardRows, 3);
 assert.equal(report.summary.retainedBridgeKeyRows, 3);
+assert.equal(report.summary.orphanBridgeKeyRows, 0);
 assert.equal(report.sampleIds.length, 10);
 assert.equal(report.mapped.accounts.find((account) => account.season1FinalRank === 1).initialPoints, 35_000);
 assert.equal(report.mapped.accounts.find((account) => account.season1FinalRank === 50).initialPoints, 10_000);
@@ -97,6 +100,7 @@ assert.ok(report.mapped.states.every((entry) => (
 )));
 assert.equal(report.mapped.serials.length, 0);
 assert.equal(report.mapped.memberRewardAudit.length, 0);
+assert.deepEqual(report.mapped.bridgeKeys, source.bridgeKeys);
 
 const broken = structuredClone(source);
 broken.users[1].soop_id = broken.users[0].soop_id;
@@ -112,5 +116,18 @@ assert.ok(rejected.issues.some((entry) => entry.code === 'DUPLICATE_SOOP_ID'));
 assert.ok(rejected.issues.some((entry) => entry.code === 'ORPHAN_COLLECTION'));
 assert.ok(rejected.issues.some((entry) => entry.code === 'DUPLICATE_RANK'));
 assert.ok(rejected.issues.some((entry) => entry.code === 'MISSING_RANK'));
+
+const orphanBridge = structuredClone(source);
+orphanBridge.bridgeKeys.push({
+  soop_id: 'missing_streamer',
+  key_hash: 'f'.repeat(64),
+  active: true,
+});
+const orphanRejected = analyzeSeason1Export(orphanBridge, cards, {
+  importedAt: 1_784_246_400_000,
+  rankingSnapshot,
+});
+assert.equal(orphanRejected.ok, false);
+assert.ok(orphanRejected.issues.some((entry) => entry.code === 'ORPHAN_BRIDGE_KEY'));
 
 console.log('renewal season1 import tests passed: 5K base, top50 rewards, unopened non-streamer exclusion');

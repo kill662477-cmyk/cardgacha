@@ -1,6 +1,7 @@
 -- Card Gacha Season 2: account carryover and clean game-state bootstrap.
 -- REVIEW ONLY. Do not run against production until the preview counts are approved.
--- Season 1 tables are read-only sources and are never updated or deleted here.
+-- Season 1 tables stay read-only until the Season 2 import and cutover are verified.
+-- Remove them later with renewal_migration_999_drop_season1.sql.
 
 create extension if not exists pgcrypto;
 
@@ -47,6 +48,17 @@ create table if not exists public.gacha_s2_accounts (
   season1_final_rank integer unique check (season1_final_rank between 1 and 50),
   season1_rank_reward_points integer not null default 0 check (season1_rank_reward_points in (0, 5000, 10000, 15000, 20000, 30000)),
   is_streamer boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.gacha_s2_streamer_bridges (
+  user_id uuid primary key references public.gacha_s2_accounts(id) on delete cascade,
+  soop_id text not null unique,
+  key_hash text not null unique check (key_hash ~ '^[0-9a-fA-F]{64}$'),
+  active boolean not null default true,
+  legacy_created_at timestamptz,
+  last_used_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -126,6 +138,8 @@ create table if not exists public.gacha_s2_import_batches (
   retained_users integer not null check (retained_users >= 0),
   excluded_no_card_users integer not null check (excluded_no_card_users >= 0),
   retained_streamers_without_cards integer not null check (retained_streamers_without_cards >= 0),
+  source_bridge_keys integer not null check (source_bridge_keys >= 0),
+  retained_bridge_keys integer not null check (retained_bridge_keys >= 0),
   ranking_snapshot_rows integer not null check (ranking_snapshot_rows = 50),
   base_point_total bigint not null check (base_point_total >= 0),
   rank_bonus_total bigint not null check (rank_bonus_total >= 0),
@@ -135,10 +149,12 @@ create table if not exists public.gacha_s2_import_batches (
 );
 
 create index if not exists idx_gacha_s2_accounts_soop_id on public.gacha_s2_accounts(soop_id) where soop_id is not null;
+create index if not exists idx_gacha_s2_streamer_bridges_active on public.gacha_s2_streamer_bridges(active, soop_id);
 create index if not exists idx_gacha_s2_states_power on public.gacha_s2_player_states(power_snapshot desc, user_id);
 create index if not exists idx_gacha_s2_idempotency_expiry on public.gacha_s2_idempotency(expires_at);
 
 alter table public.gacha_s2_accounts enable row level security;
+alter table public.gacha_s2_streamer_bridges enable row level security;
 alter table public.gacha_s2_player_states enable row level security;
 alter table public.gacha_s2_player_cards enable row level security;
 alter table public.gacha_s2_idempotency enable row level security;
@@ -179,6 +195,19 @@ as $$
     'excludedNoCardUsers', (select count(*) from public.gacha_users) - (select count(*) from eligible),
     'excludedNoCardNonStreamerUsers', (select count(*) from public.gacha_users) - (select count(*) from eligible),
     'retainedStreamersWithoutCards', (select count(*) from eligible where is_streamer and coalesce(total_cards, 0) = 0),
+    'sourceBridgeKeyRows', (select count(*) from public.gacha_soop_bridge_keys),
+    'retainedBridgeKeyRows', (
+      select count(*)
+      from public.gacha_soop_bridge_keys b
+      join public.gacha_users u on u.soop_id = b.soop_id
+      join eligible e on e.id = u.id
+    ),
+    'orphanBridgeKeyRows', (
+      select count(*)
+      from public.gacha_soop_bridge_keys b
+      left join public.gacha_users u on u.soop_id = b.soop_id
+      where u.id is null
+    ),
     'rankingSnapshotRows', (select count(*) from ranked),
     'invalidRankingRows', (select count(*) from ranked where final_rank not between 1 and 50),
     'distinctRankingRows', (select count(distinct final_rank) from ranked),
@@ -208,6 +237,7 @@ as $$
 declare
   v_preview jsonb;
   v_imported integer;
+  v_imported_bridges integer;
   v_existing jsonb;
 begin
   perform pg_advisory_xact_lock(hashtext('gacha_s2_import_season1_accounts'));
@@ -236,6 +266,10 @@ begin
     or (v_preview->>'rankingUsersExcludedNoCards')::integer <> 0
     or (v_preview->>'rankBonusTotal')::bigint <> 800000 then
     raise exception 'invalid season1 top50 snapshot: %', v_preview;
+  end if;
+  if (v_preview->>'orphanBridgeKeyRows')::integer <> 0
+    or (v_preview->>'sourceBridgeKeyRows')::integer <> (v_preview->>'retainedBridgeKeyRows')::integer then
+    raise exception 'season1 bridge registry cannot be fully migrated: %', v_preview;
   end if;
 
   with card_totals as (
@@ -271,8 +305,19 @@ begin
   select a.id, 5000 + a.season1_rank_reward_points
   from public.gacha_s2_accounts a;
 
+  insert into public.gacha_s2_streamer_bridges (
+    user_id, soop_id, key_hash, active, legacy_created_at, last_used_at
+  )
+  select a.id, b.soop_id, b.key_hash, b.active, b.created_at, b.last_used_at
+  from public.gacha_soop_bridge_keys b
+  join public.gacha_s2_accounts a on a.soop_id = b.soop_id;
+  get diagnostics v_imported_bridges = row_count;
+
   if v_imported <> p_expected_retained_users then
     raise exception 'imported account count mismatch: expected %, actual %', p_expected_retained_users, v_imported;
+  end if;
+  if v_imported_bridges <> (v_preview->>'sourceBridgeKeyRows')::integer then
+    raise exception 'imported bridge count mismatch: expected %, actual %', v_preview->>'sourceBridgeKeyRows', v_imported_bridges;
   end if;
   if exists (select 1 from public.gacha_s2_player_cards) then
     raise exception 'season2 card inventory must be empty after season1 carryover';
@@ -280,7 +325,8 @@ begin
 
   insert into public.gacha_s2_import_batches (
     batch_id, source_name, source_snapshot_at, source_users, retained_users,
-    excluded_no_card_users, retained_streamers_without_cards, ranking_snapshot_rows, base_point_total,
+    excluded_no_card_users, retained_streamers_without_cards, source_bridge_keys, retained_bridge_keys,
+    ranking_snapshot_rows, base_point_total,
     rank_bonus_total, initial_point_total, summary
   ) values (
     p_batch_id,
@@ -290,18 +336,21 @@ begin
     (v_preview->>'retainedUsers')::integer,
     (v_preview->>'excludedNoCardUsers')::integer,
     (v_preview->>'retainedStreamersWithoutCards')::integer,
+    (v_preview->>'sourceBridgeKeyRows')::integer,
+    v_imported_bridges,
     (v_preview->>'rankingSnapshotRows')::integer,
     (v_preview->>'basePointTotal')::bigint,
     (v_preview->>'rankBonusTotal')::bigint,
     (v_preview->>'initialPointTotal')::bigint,
-    v_preview || jsonb_build_object('batchId', p_batch_id, 'importedUsers', v_imported)
+    v_preview || jsonb_build_object('batchId', p_batch_id, 'importedUsers', v_imported, 'importedBridgeKeys', v_imported_bridges)
   );
 
-  return v_preview || jsonb_build_object('batchId', p_batch_id, 'importedUsers', v_imported);
+  return v_preview || jsonb_build_object('batchId', p_batch_id, 'importedUsers', v_imported, 'importedBridgeKeys', v_imported_bridges);
 end;
 $$;
 
 revoke all on table public.gacha_s2_accounts from public, anon, authenticated;
+revoke all on table public.gacha_s2_streamer_bridges from public, anon, authenticated;
 revoke all on table public.gacha_s2_player_states from public, anon, authenticated;
 revoke all on table public.gacha_s2_player_cards from public, anon, authenticated;
 revoke all on table public.gacha_s2_idempotency from public, anon, authenticated;
@@ -316,5 +365,6 @@ grant execute on function public.gacha_s2_import_season1_accounts(uuid, integer,
 -- Required operator sequence after this file is reviewed and executed:
 -- 1) select public.gacha_s2_preview_season1_import();
 -- 2) Verify sourceUsers, retainedUsers, excludedNoCardNonStreamerUsers,
---    retainedStreamersWithoutCards, top50=50, and point totals.
+--    retainedStreamersWithoutCards, sourceBridgeKeyRows=retainedBridgeKeyRows,
+--    orphanBridgeKeyRows=0, top50=50, and point totals.
 -- 3) Only then call gacha_s2_import_season1_accounts with both approved counts.

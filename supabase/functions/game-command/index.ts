@@ -97,7 +97,13 @@ Deno.serve(async (req: Request) => {
       return data?.version ?? null;
     },
   };
-  const userId = String(context.userClaims.id);
+  const { data: accountId, error: accountError } = await context.supabaseAdmin.rpc('gacha_s2_resolve_auth_account', {
+    p_auth_user_id: context.userClaims.id,
+  });
+  if (accountError || !accountId) {
+    return json(req, { ok: false, code: 'AUTH_REQUIRED', message: '게임 계정 연결이 필요합니다.' }, 401);
+  }
+  const userId = String(accountId);
   const router = createServerCommandRouter({ gateway, cards });
 
   if (body.kind === 'snapshot') {

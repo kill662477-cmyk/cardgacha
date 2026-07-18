@@ -2,3 +2,6 @@ project_id = "card-gacha-renewal"
 
 [functions.game-command]
 verify_jwt = false
+
+[functions.session-exchange]
+verify_jwt = false

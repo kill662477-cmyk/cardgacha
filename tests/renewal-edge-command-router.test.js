@@ -104,6 +104,8 @@ const edgeConfig = await readFile(new URL('../supabase/config.toml', import.meta
 assert.match(edgeSource, /createSupabaseContext\(req, \{ auth: 'user' \}\)/);
 assert.match(edgeSource, /context\.userClaims\.id/);
 assert.match(edgeSource, /context\.supabaseAdmin\.rpc/);
+assert.match(edgeSource, /gacha_s2_resolve_auth_account/);
+assert.match(edgeSource, /const userId = String\(accountId\)/);
 assert.doesNotMatch(edgeSource, /body\.userId|body\.user_id|SUPABASE_SERVICE_ROLE_KEY/);
 assert.match(edgeSource, /GAME_ALLOWED_ORIGINS/);
 assert.match(edgeSource, /MAX_BODY_BYTES/);

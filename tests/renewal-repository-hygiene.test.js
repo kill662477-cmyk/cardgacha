@@ -21,10 +21,14 @@ for (const required of [
   'supabase/renewal_migration_005_adventure_and_minigames.sql',
   'supabase/renewal_migration_006_world_boss.sql',
   'supabase/renewal_migration_007_economy_profile.sql',
+  'supabase/renewal_migration_008_auth_bridge.sql',
   'supabase/config.toml',
   'supabase/functions/game-command/index.ts',
   'supabase/functions/game-command/deno.json',
+  'supabase/functions/session-exchange/index.ts',
+  'supabase/functions/session-exchange/deno.json',
   'src/renewal/supabase-game-service.js',
+  'src/renewal/auth-session-service.js',
   'src/renewal/server-command-router.js',
   'supabase/renewal_migration_999_drop_season1.sql',
 ]) assert.equal(exists(...required.split('/')), true, `missing season2 file: ${required}`);
@@ -80,6 +84,7 @@ assert.deepEqual(migrations, [
   'renewal_migration_005_adventure_and_minigames.sql',
   'renewal_migration_006_world_boss.sql',
   'renewal_migration_007_economy_profile.sql',
+  'renewal_migration_008_auth_bridge.sql',
   'renewal_migration_999_drop_season1.sql',
 ]);
 

@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { createAuthSessionService } from '../src/renewal/auth-session-service.js';
+
+const calls = [];
+const auth = {
+  getSession: async () => ({ data: { session: null } }),
+  signInAnonymously: async () => ({ data: { session: { access_token: 'anonymous-jwt' } }, error: null }),
+};
+const service = createAuthSessionService({
+  projectUrl: 'https://project.supabase.co',
+  publishableKey: 'sb_publishable_test',
+  auth,
+  fetch: async (url, options) => {
+    calls.push({ url, options });
+    return { ok: true, json: async () => ({ ok: true, accountId: 'account-1', nickname: 'MSTZ' }) };
+  },
+});
+const signedIn = await service.signInWithLoginKey('legacy-login-key-000001');
+assert.equal(signedIn.ok, true);
+assert.equal(signedIn.session.access_token, 'anonymous-jwt');
+assert.equal(calls[0].options.headers.Authorization, 'Bearer anonymous-jwt');
+assert.equal(JSON.parse(calls[0].options.body).loginKey, 'legacy-login-key-000001');
+assert.equal((await service.signInWithLoginKey('short')).code, 'INVALID_CREDENTIALS');
+
+const sql = (await readFile(new URL('../supabase/renewal_migration_008_auth_bridge.sql', import.meta.url), 'utf8')).replace(/\s+/g, ' ');
+assert.match(sql, /add column if not exists auth_user_id uuid unique references auth\.users\(id\) on delete set null/);
+assert.match(sql, /create or replace function public\.gacha_s2_bind_auth_session\(/);
+assert.match(sql, /create or replace function public\.gacha_s2_resolve_auth_account\(/);
+assert.match(sql, /login_key_hash = p_login_key_hash/);
+assert.match(sql, /attempts = least\(8, v_attempts\)/);
+assert.match(sql, /interval '15 minutes'/);
+assert.doesNotMatch(sql, /grant execute .* to authenticated/);
+
+const edge = await readFile(new URL('../supabase/functions/session-exchange/index.ts', import.meta.url), 'utf8');
+assert.match(edge, /createSupabaseContext\(req, \{ auth: 'user' \}\)/);
+assert.match(edge, /AUTH_RATE_LIMIT_PEPPER/);
+assert.match(edge, /sha256\(loginKey\)/);
+assert.match(edge, /hmac\(clientAddress, pepper\)/);
+assert.doesNotMatch(edge, /console\.log|loginKey.*Deno\.env|SUPABASE_SERVICE_ROLE_KEY/);
+
+console.log('renewal auth bridge tests passed: anonymous session, hashed legacy key, IP-HMAC rate limit');

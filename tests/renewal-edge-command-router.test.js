@@ -64,12 +64,27 @@ assert.equal(worldBoss.args.p_user_id, 'user-fixed-by-auth');
 assert.equal(worldBoss.args.p_verified_damage > 0, true);
 assert.match(worldBoss.args.p_verification_digest, /^[0-9a-f]{64}$/);
 
-const unsupported = await router.execute('user-fixed-by-auth', command(
+const idle = await router.execute('user-fixed-by-auth', command(
   GAME_COMMAND_TYPES.CLAIM_ADVENTURE_REWARDS,
   { mode: 'offline' },
-  'unsupported-edge-001',
+  'idle-edge-0000001',
 ));
-assert.equal(unsupported.code, 'COMMAND_REJECTED');
+assert.equal(idle.rpc, 'gacha_s2_claim_idle_reward');
+assert.equal(typeof idle.args.p_idle_bonus, 'number');
+
+const supportPack = await router.execute('user-fixed-by-auth', command(
+  GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK,
+  { quantity: 10 },
+  'support-pack-00001',
+));
+assert.equal(supportPack.rpc, 'gacha_s2_purchase_support_pack');
+
+const cardLock = await router.execute('user-fixed-by-auth', command(
+  GAME_COMMAND_TYPES.SET_CARD_LOCK,
+  { cardId: playable[0].id, locked: true },
+  'card-lock-0000001',
+));
+assert.equal(cardLock.rpc, 'gacha_s2_set_card_lock');
 
 const mismatchRouter = createServerCommandRouter({
   gateway: { ...gateway, activeBalanceVersion: async () => 'stale-balance' },

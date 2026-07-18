@@ -7,7 +7,11 @@ export const GAME_COMMAND_TYPES = Object.freeze({
   FINISH_ADVENTURE_RUN: 'finishAdventureRun',
   CLAIM_QUICK_BATTLE: 'claimQuickBattle',
   PURCHASE_PACK: 'purchasePack',
+  PURCHASE_SUPPORT_PACK: 'purchaseSupportPack',
+  USE_SUPPORT_ITEM: 'useSupportItem',
   ENHANCE_CARD: 'enhanceCard',
+  SET_REPRESENTATIVE_CARD: 'setRepresentativeCard',
+  SET_CARD_LOCK: 'setCardLock',
   START_MINIGAME: 'startMinigame',
   FINISH_MINIGAME: 'finishMinigame',
   ATTACK_WORLD_BOSS: 'attackWorldBoss',
@@ -53,7 +57,11 @@ function validatePayload(type, payload, issues) {
     [GAME_COMMAND_TYPES.FINISH_ADVENTURE_RUN]: ['runId'],
     [GAME_COMMAND_TYPES.CLAIM_QUICK_BATTLE]: [],
     [GAME_COMMAND_TYPES.PURCHASE_PACK]: ['productId', 'quantity', 'race'],
+    [GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK]: ['quantity'],
+    [GAME_COMMAND_TYPES.USE_SUPPORT_ITEM]: ['itemId', 'targetCardId', 'race'],
     [GAME_COMMAND_TYPES.ENHANCE_CARD]: ['cardId', 'targetEnhancement', 'materialCardIds', 'boosterId'],
+    [GAME_COMMAND_TYPES.SET_REPRESENTATIVE_CARD]: ['cardId'],
+    [GAME_COMMAND_TYPES.SET_CARD_LOCK]: ['cardId', 'locked'],
     [GAME_COMMAND_TYPES.START_MINIGAME]: ['game', 'difficulty'],
     [GAME_COMMAND_TYPES.FINISH_MINIGAME]: ['runId', 'inputLog', 'score'],
     [GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS]: ['eventId'],
@@ -73,7 +81,7 @@ function validatePayload(type, payload, issues) {
       }
       break;
     case GAME_COMMAND_TYPES.CLAIM_ADVENTURE_REWARDS:
-      if (!['offline', 'quick', 'run'].includes(payload.mode)) addIssue(issues, 'payload.mode', 'offline, quick 또는 run 필요');
+      if (payload.mode !== 'offline') addIssue(issues, 'payload.mode', 'offline required');
       break;
     case GAME_COMMAND_TYPES.START_ADVENTURE_RUN:
     case GAME_COMMAND_TYPES.CLAIM_QUICK_BATTLE:
@@ -97,6 +105,26 @@ function validatePayload(type, payload, issues) {
         addIssue(issues, 'payload.materialCardIds', '1~3개 재료 카드 ID 필요');
       } else payload.materialCardIds.forEach((cardId, index) => validateString(issues, cardId, `payload.materialCardIds.${index}`, 80));
       if (payload.boosterId !== null && payload.boosterId !== undefined) validateString(issues, payload.boosterId, 'payload.boosterId', 80);
+      break;
+    case GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK:
+      if (![1, 10].includes(payload.quantity)) addIssue(issues, 'payload.quantity', '1 or 10 required');
+      break;
+    case GAME_COMMAND_TYPES.USE_SUPPORT_ITEM: {
+      validateString(issues, payload.itemId, 'payload.itemId', 80);
+      const targetRequired = payload.itemId === 'cardExpPotion';
+      const raceRequired = payload.itemId === 'raceTicket';
+      if (targetRequired) validateString(issues, payload.targetCardId, 'payload.targetCardId', 80);
+      else if (payload.targetCardId !== null && payload.targetCardId !== undefined) addIssue(issues, 'payload.targetCardId', 'targetCardId is only valid for cardExpPotion');
+      if (raceRequired && !['저그', '테란', '프로토스'].includes(payload.race)) addIssue(issues, 'payload.race', 'valid race required');
+      else if (!raceRequired && payload.race !== null && payload.race !== undefined) addIssue(issues, 'payload.race', 'race is only valid for raceTicket');
+      break;
+    }
+    case GAME_COMMAND_TYPES.SET_REPRESENTATIVE_CARD:
+      validateString(issues, payload.cardId, 'payload.cardId', 80);
+      break;
+    case GAME_COMMAND_TYPES.SET_CARD_LOCK:
+      validateString(issues, payload.cardId, 'payload.cardId', 80);
+      if (typeof payload.locked !== 'boolean') addIssue(issues, 'payload.locked', 'boolean required');
       break;
     case GAME_COMMAND_TYPES.START_MINIGAME:
       if (!['memory', 'sumTen'].includes(payload.game)) addIssue(issues, 'payload.game', 'memory 또는 sumTen 필요');

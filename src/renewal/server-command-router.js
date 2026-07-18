@@ -12,7 +12,11 @@ import {
 const DIRECT_RPCS = Object.freeze({
   [GAME_COMMAND_TYPES.UPDATE_FORMATION]: 'gacha_s2_update_formation',
   [GAME_COMMAND_TYPES.PURCHASE_PACK]: 'gacha_s2_purchase_pack',
+  [GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK]: 'gacha_s2_purchase_support_pack',
+  [GAME_COMMAND_TYPES.USE_SUPPORT_ITEM]: 'gacha_s2_use_support_item',
   [GAME_COMMAND_TYPES.ENHANCE_CARD]: 'gacha_s2_enhance_card',
+  [GAME_COMMAND_TYPES.SET_REPRESENTATIVE_CARD]: 'gacha_s2_set_representative_card',
+  [GAME_COMMAND_TYPES.SET_CARD_LOCK]: 'gacha_s2_set_card_lock',
   [GAME_COMMAND_TYPES.FINISH_ADVENTURE_RUN]: 'gacha_s2_finish_adventure_run',
   [GAME_COMMAND_TYPES.START_MINIGAME]: 'gacha_s2_start_minigame',
   [GAME_COMMAND_TYPES.FINISH_MINIGAME]: 'gacha_s2_finish_minigame',
@@ -54,6 +58,15 @@ function directArgs(userId, command) {
         p_quantity: payload.quantity,
         p_race: payload.race ?? null,
       };
+    case GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK:
+      return { ...args, p_quantity: payload.quantity };
+    case GAME_COMMAND_TYPES.USE_SUPPORT_ITEM:
+      return {
+        ...args,
+        p_item_id: payload.itemId,
+        p_target_card_id: payload.targetCardId ?? null,
+        p_race: payload.race ?? null,
+      };
     case GAME_COMMAND_TYPES.ENHANCE_CARD:
       return {
         ...args,
@@ -62,6 +75,10 @@ function directArgs(userId, command) {
         p_material_card_ids: payload.materialCardIds,
         p_booster_id: payload.boosterId ?? null,
       };
+    case GAME_COMMAND_TYPES.SET_REPRESENTATIVE_CARD:
+      return { ...args, p_card_id: payload.cardId };
+    case GAME_COMMAND_TYPES.SET_CARD_LOCK:
+      return { ...args, p_card_id: payload.cardId, p_locked: payload.locked };
     case GAME_COMMAND_TYPES.FINISH_ADVENTURE_RUN:
       return { ...args, p_run_id: payload.runId };
     case GAME_COMMAND_TYPES.START_MINIGAME:
@@ -180,6 +197,14 @@ export function createServerCommandRouter(options) {
           ...baseArgs(userId, command),
           p_verified_cleared_stages: clearedStages,
           p_verification_digest: digest,
+        });
+      }
+
+      if (command.type === GAME_COMMAND_TYPES.CLAIM_ADVENTURE_REWARDS) {
+        const context = await verifiedContext(userId, command);
+        return await gateway.rpc('gacha_s2_claim_idle_reward', {
+          ...baseArgs(userId, command),
+          p_idle_bonus: context.bonuses.idle,
         });
       }
 

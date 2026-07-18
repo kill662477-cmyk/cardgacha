@@ -126,6 +126,13 @@ assert.equal(validateGameCommand({
   payload: { ...worldBossClaim.payload, tier: 5 },
 }).valid, false, 'client-selected reward tier must be rejected');
 
+for (const supportCommand of [
+  createGameCommand({ type: GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK, payload: { quantity: 10 }, expectedRevision: 8, idempotencyKey: 'support-pack-00001', clientSentAt: clock.now() }),
+  createGameCommand({ type: GAME_COMMAND_TYPES.USE_SUPPORT_ITEM, payload: { itemId: 'cardExpPotion', targetCardId: 'card-a', race: null }, expectedRevision: 8, idempotencyKey: 'support-use-000001', clientSentAt: clock.now() }),
+  createGameCommand({ type: GAME_COMMAND_TYPES.SET_REPRESENTATIVE_CARD, payload: { cardId: 'card-a' }, expectedRevision: 8, idempotencyKey: 'representative-0001', clientSentAt: clock.now() }),
+  createGameCommand({ type: GAME_COMMAND_TYPES.SET_CARD_LOCK, payload: { cardId: 'card-a', locked: true }, expectedRevision: 8, idempotencyKey: 'card-lock-0000001', clientSentAt: clock.now() }),
+]) assert.equal(validateGameCommand(supportCommand).valid, true);
+
 assert.equal(isRetryableGameError({ ok: false, retryable: true, code: GAME_ERROR_CODES.OFFLINE }), true);
 assert.equal(isRetryableGameError(conflict), false);
 assert.equal(validateGameResponse({ ...first, snapshot: { ...first.snapshot, revision: 999 } }).valid, false);

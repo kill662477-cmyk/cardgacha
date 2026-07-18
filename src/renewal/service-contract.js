@@ -57,7 +57,7 @@ function validatePayload(type, payload, issues) {
     [GAME_COMMAND_TYPES.START_MINIGAME]: ['game', 'difficulty'],
     [GAME_COMMAND_TYPES.FINISH_MINIGAME]: ['runId', 'inputLog', 'score'],
     [GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS]: ['eventId'],
-    [GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD]: ['eventId', 'tier'],
+    [GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD]: ['eventId'],
   };
   const allowed = new Set(allowedFields[type] ?? []);
   Object.keys(payload).forEach((field) => {
@@ -127,7 +127,6 @@ function validatePayload(type, payload, issues) {
       break;
     case GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD:
       validateString(issues, payload.eventId, 'payload.eventId', 100);
-      if (!isNonNegativeInteger(payload.tier)) addIssue(issues, 'payload.tier', '0 이상 정수 필요');
       break;
     default:
       addIssue(issues, 'type', '지원하지 않는 명령');

@@ -1,7 +1,7 @@
 # Regression Suite Manifest
 
 > Last Updated: 2026-07-18
-> Total registered test files: 28
+> Total registered test files: 29
 
 ## 실행
 
@@ -25,6 +25,7 @@ npm.cmd run test:renewal
 | 명령 기반 | `renewal-command-foundation.test.js` | 서버 스냅샷·멱등 재생·revision 행 잠금·보유/EX 편성·service role 제한 |
 | 팩·강화 RPC | `renewal-pack-enhancement-rpc.test.js` | 서버 난수·확률표·원자 경제 처리·재료 보호·파괴 초기화·감사 로그 |
 | 모험·미니게임 RPC | `renewal-adventure-minigame-rpc.test.js` | 서버 전투 검증 경계·런 제한·원자 보상·서버 보드·입력 로그 재검산·service role 제한 |
+| 월드보스 RPC | `renewal-worldboss-rpc.test.js` | KST 회차·공동 HP·서버 기여·개인 3회·결과시간 성공/실패 보상·Realtime 공개 경계 |
 | 시즌1 DB 삭제 | `renewal-season1-cleanup.test.js` | 이중 확인문구·수량/해시 검증·삭제 allowlist·CASCADE 금지 |
 | 저장소 정리 | `renewal-repository-hygiene.test.js` | 시즌2 루트·카드 자산 완전 일치·시즌1 앱 경로 제거 |
 | 전투 | `renewal-battle.test.js` | 역할 반영 전투력·3/4/5장 종족 시너지·광역/보스 적용·전투 이벤트 |

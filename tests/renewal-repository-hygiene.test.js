@@ -19,6 +19,7 @@ for (const required of [
   'supabase/renewal_migration_003_command_foundation.sql',
   'supabase/renewal_migration_004_pack_and_enhancement.sql',
   'supabase/renewal_migration_005_adventure_and_minigames.sql',
+  'supabase/renewal_migration_006_world_boss.sql',
   'supabase/renewal_migration_999_drop_season1.sql',
 ]) assert.equal(exists(...required.split('/')), true, `missing season2 file: ${required}`);
 
@@ -69,6 +70,7 @@ assert.deepEqual(migrations, [
   'renewal_migration_003_command_foundation.sql',
   'renewal_migration_004_pack_and_enhancement.sql',
   'renewal_migration_005_adventure_and_minigames.sql',
+  'renewal_migration_006_world_boss.sql',
   'renewal_migration_999_drop_season1.sql',
 ]);
 

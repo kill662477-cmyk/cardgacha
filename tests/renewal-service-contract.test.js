@@ -101,6 +101,31 @@ assert.equal(validateGameCommand({
   payload: { ...minigameStart.payload, verifiedScore: 99999 },
 }).valid, false, 'server verdict fields must be rejected');
 
+const worldBossAttack = createGameCommand({
+  type: GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS,
+  payload: { eventId: 'noise-zero-20260718-17' },
+  expectedRevision: 7,
+  idempotencyKey: 'worldboss-attack-001',
+  clientSentAt: clock.now(),
+});
+assert.equal(validateGameCommand(worldBossAttack).valid, true);
+assert.equal(validateGameCommand({
+  ...worldBossAttack,
+  payload: { ...worldBossAttack.payload, damage: 999999999 },
+}).valid, false, 'client-computed world-boss damage must be rejected');
+const worldBossClaim = createGameCommand({
+  type: GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD,
+  payload: { eventId: 'noise-zero-20260718-17' },
+  expectedRevision: 8,
+  idempotencyKey: 'worldboss-claim-001',
+  clientSentAt: clock.now(),
+});
+assert.equal(validateGameCommand(worldBossClaim).valid, true);
+assert.equal(validateGameCommand({
+  ...worldBossClaim,
+  payload: { ...worldBossClaim.payload, tier: 5 },
+}).valid, false, 'client-selected reward tier must be rejected');
+
 assert.equal(isRetryableGameError({ ok: false, retryable: true, code: GAME_ERROR_CODES.OFFLINE }), true);
 assert.equal(isRetryableGameError(conflict), false);
 assert.equal(validateGameResponse({ ...first, snapshot: { ...first.snapshot, revision: 999 } }).valid, false);

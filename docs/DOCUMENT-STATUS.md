@@ -25,11 +25,13 @@
 - `docs/PDB-11-COMMAND-FOUNDATION.md`: 멱등성·revision 명령 기반, 영구 도감, 감사 로그, 편성 RPC
 - `docs/PDB-12-PACK-ENHANCEMENT-RPC.md`: 서버 난수 카드팩 구매·강화 원자 처리와 감사 기준
 - `docs/PDB-13-ADVENTURE-MINIGAME-RPC.md`: 모험 검증·빠른 전투·서버 보드 미니게임 원자 처리 기준
+- `docs/PDB-14-WORLD-BOSS-RPC.md`: KST 월드보스 회차·공동 HP·개인 시도·결과 보상 기준
 - `supabase/renewal_migration_001_accounts_reset.sql`: 리뷰용 시즌2 계정·브릿지 이관 migration, 운영 미실행
 - `supabase/renewal_migration_002_catalog_and_balance.sql`: 생성형 카드·밸런스 카탈로그 migration, 운영 미실행
 - `supabase/renewal_migration_003_command_foundation.sql`: 서버 스냅샷·명령 기반·편성 RPC migration, 운영 미실행
 - `supabase/renewal_migration_004_pack_and_enhancement.sql`: 카드팩 구매·강화 RPC migration, 운영 미실행
 - `supabase/renewal_migration_005_adventure_and_minigames.sql`: 모험·빠른 전투·미니게임 RPC migration, 운영 미실행
+- `supabase/renewal_migration_006_world_boss.sql`: 월드보스 회차·공동 HP·공격·보상 RPC migration, 운영 미실행
 - `supabase/renewal_migration_999_drop_season1.sql`: 시즌2 API 전환·백업 검증 후 실행할 시즌1 DB 삭제 SQL
 - `docs/RENEWAL-UI-SYSTEM.md`, `docs/RENEWAL-VISUAL-UX-AUDIT.md`: 공통 UI와 시각 승인 기준
 - `tests/regression-suite.md`: 자동·수동 회귀 범위
@@ -58,4 +60,4 @@
 - 월드보스 KST 17·18·19·20시, 회차별 30분 전투·30분 결과, 성공 최대 10,000P
 - 모험런·빠른 전투·월드보스 결과에서 상점 아이템·카드팩 교환권 랜덤 추가 드롭
 - 강화 성공 FX 4단계 총 3.12초, 강화 구간별 강도 차등
-- 자동 테스트 28묶음 통과. 직전 밸런스 30일 성장 시뮬레이션 통과
+- 자동 테스트 29묶음 통과. 직전 밸런스 30일 성장 시뮬레이션 통과

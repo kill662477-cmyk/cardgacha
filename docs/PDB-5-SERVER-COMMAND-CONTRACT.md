@@ -50,7 +50,7 @@
 | `startMinigame` | `game: memory/sumTen`, 메모리 `difficulty` | 일일 상한·행동력·runId·서버 보드·제한시간 |
 | `finishMinigame` | `runId`, `inputLog`, `score` | 서버 보드에 입력 로그 재적용·시간·점수·보상 |
 | `attackWorldBoss` | `eventId` | 회차·횟수·편성 스냅숏·피해·공동 HP |
-| `claimWorldBossReward` | `eventId`, `tier` | 달성 피해·중복 수령·보상 |
+| `claimWorldBossReward` | `eventId` | 달성 피해·공동 성공 여부·중복 수령·보상 단계 |
 
 클라이언트가 계산한 `reward`, `damage`, `drawResults`, `success`, `pointsAfter`는 입력으로 받지 않는다.
 

@@ -181,7 +181,7 @@ function imagePath(card) {
 
 function cacheElements() {
   [
-    'nickname', 'combatPower', 'energyValue', 'pointValue', 'profileCardButton', 'apiLinkButton',
+    'nickname', 'combatPower', 'energyValue', 'pointValue', 'profileCardButton', 'apiLinkButton', 'logoutButton',
     'profileCardImage', 'profileCardFallback', 'soundToggleButton', 'regionLabel',
     'stageLabel', 'stageMeter', 'battleState', 'battleClock', 'enemyName', 'enemyHpBar', 'enemyHpText',
     'enemyRow', 'partyGrid', 'synergyChip', 'resultBanner', 'stageNodes',
@@ -1963,6 +1963,12 @@ function bindEvents() {
       showToast('스트리머 권한 확인 중이거나 권한이 없습니다. 우선 이동합니다.', 'warning');
     }
     location.href = 'bridge.html';
+  });
+  elements.logoutButton.addEventListener('click', async () => {
+    if (confirm('로그아웃 하시겠습니까?')) {
+      await remoteRuntime.auth.signOut();
+      location.reload();
+    }
   });
   elements.autoBattleButton.addEventListener('click', async () => {
     if (state.autoBattle) {

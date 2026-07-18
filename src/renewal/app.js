@@ -1962,7 +1962,7 @@ function bindEvents() {
     if (!bridgeStatus || !bridgeStatus.canUseDonationBridge) {
       showToast('스트리머 권한 확인 중이거나 권한이 없습니다. 우선 이동합니다.', 'warning');
     }
-    location.href = 'bridge.html';
+    window.open('bridge.html', '_blank', 'noopener,noreferrer');
   });
   elements.logoutButton.addEventListener('click', async () => {
     if (confirm('로그아웃 하시겠습니까?')) {

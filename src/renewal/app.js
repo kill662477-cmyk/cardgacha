@@ -1959,7 +1959,9 @@ function bindEvents() {
     showToast(state.soundEnabled ? '효과음 켜짐' : '효과음 꺼짐');
   });
   elements.apiLinkButton.addEventListener('click', () => {
-    if (!bridgeStatus.canUseDonationBridge) return showToast('캄몬 소속 스트리머 전용 기능입니다.');
+    if (!bridgeStatus || !bridgeStatus.canUseDonationBridge) {
+      showToast('스트리머 권한 확인 중이거나 권한이 없습니다. 우선 이동합니다.', 'warning');
+    }
     location.href = 'bridge.html';
   });
   elements.autoBattleButton.addEventListener('click', async () => {

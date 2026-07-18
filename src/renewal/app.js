@@ -54,6 +54,7 @@ import { createFxController } from './fx-controller.js';
 import { cardVisualChrome, enhancementLabel, enhancementStarMarkup, rarityMarkMarkup } from './card-visual.js';
 import { applyLocalTestProfile } from './local-test-profile.js';
 import { bonusDropText, grantBonusDrop, rollAdventureBonusDrop } from './bonus-loot.js';
+import { createLiveTickerController } from './live-ticker-controller.js';
 
 const number = new Intl.NumberFormat('ko-KR');
 const CARD_BACK_PATH = 'assets/card-back.jpg';
@@ -98,6 +99,7 @@ let selectedShopRace = '저그';
 let miniGameController = null;
 let worldBossController = null;
 let rankingController = null;
+let liveTickerController = null;
 let fxController = null;
 let bridgeStatus = { canUseDonationBridge: false, soopId: null };
 const requestCoordinator = createRequestCoordinator({
@@ -1657,6 +1659,7 @@ async function purchaseCardPack(packKey, amount = 1, useTicketId = null, raceOve
       renderHeader();
       renderShop();
       await fxController?.playPackOpening({ image: openingPackImage, name: openingPackName, cards: openingCards, totalCount: cardIds.length });
+      liveTickerController?.pushCardDraws(cardIds.map((id) => cardsById.get(id)).filter(Boolean));
       showCardPackResults(packKey, cardIds, response.result?.spentPoints ?? 0, Boolean(useTicketId));
       return response;
     }
@@ -1693,6 +1696,7 @@ async function purchaseCardPack(packKey, amount = 1, useTicketId = null, raceOve
       cards: openingCards,
       totalCount: cardIds.length,
     });
+    liveTickerController?.pushCardDraws(cardIds.map((id) => cardsById.get(id)).filter(Boolean));
     showCardPackResults(packKey, cardIds, cost, Boolean(useTicketId));
   });
 }
@@ -1903,6 +1907,7 @@ async function executeEnhancementAttempt(triggerButton = elements.enhanceAttempt
         image: imagePath(card), rarity: card.rarity, color: RARITIES[card.rarity].color,
         name: card.member, target, outcome, message: enhancementResult.message,
       });
+      if (outcome === 'success' && target === 9) liveTickerController?.pushNineStar(card);
       return response;
     }
     const result = resolveEnhancement(card, selectedBooster, gameService.random());
@@ -1941,6 +1946,7 @@ async function executeEnhancementAttempt(triggerButton = elements.enhanceAttempt
       outcome: result.outcome,
       message: enhancementResult.message,
     });
+    if (result.outcome === 'success' && target === 9) liveTickerController?.pushNineStar(card);
   });
 }
 
@@ -1962,13 +1968,19 @@ function bindEvents() {
     if (!bridgeStatus || !bridgeStatus.canUseDonationBridge) {
       showToast('스트리머 권한 확인 중이거나 권한이 없습니다. 우선 이동합니다.', 'warning');
     }
-    window.open('bridge.html', '_blank', 'noopener,noreferrer');
   });
   elements.logoutButton.addEventListener('click', async () => {
-    if (confirm('로그아웃 하시겠습니까?')) {
-      await remoteRuntime.auth.signOut();
-      location.reload();
+    if (!remoteMode || !confirm('로그아웃 하시겠습니까?')) return;
+    elements.logoutButton.setAttribute('aria-busy', 'true');
+    liveTickerController?.stop();
+    const result = await remoteRuntime.auth.signOut();
+    if (!result?.ok) {
+      elements.logoutButton.removeAttribute('aria-busy');
+      await liveTickerController?.start();
+      showToast('로그아웃에 실패했습니다. 다시 시도하세요.');
+      return;
     }
+    window.location.replace(`${window.location.pathname}${window.location.search}`);
   });
   elements.autoBattleButton.addEventListener('click', async () => {
     if (state.autoBattle) {
@@ -2195,6 +2207,11 @@ async function init() {
       getCombatPower: () => computeFormationPower(formationCards(), currentCombatBonuses()),
       gameService,
     });
+    liveTickerController = createLiveTickerController({
+      runtime: remoteRuntime,
+      getNickname: () => state.nickname,
+      now: gameService.now,
+    });
     if (!remoteMode) {
       ensureCardProgress();
       applyLocalTestProfile(state, cards, window.location.hostname);
@@ -2207,6 +2224,8 @@ async function init() {
     renderAll();
     bindEvents();
     showScreen(activeScreen);
+    elements.logoutButton.hidden = !remoteMode;
+    await liveTickerController.start();
     startTimedUpdates();
     const canPreviewState = ['localhost', '127.0.0.1'].includes(window.location.hostname) && SYSTEM_STATES[systemStatePreview];
     setSystemState(canPreviewState ? systemStatePreview : null);

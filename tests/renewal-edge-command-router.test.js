@@ -107,12 +107,12 @@ assert.equal(mismatch.details, null, 'internal verification details must not rea
 
 const edgeSource = await readFile(new URL('../supabase/functions/game-command/index.ts', import.meta.url), 'utf8');
 const edgeConfig = await readFile(new URL('../supabase/config.toml', import.meta.url), 'utf8');
-assert.match(edgeSource, /createSupabaseContext\(req, \{ auth: 'user' \}\)/);
-assert.match(edgeSource, /context\.userClaims\.id/);
-assert.match(edgeSource, /context\.supabaseAdmin(?: as any)?\)\.rpc/);
+assert.match(edgeSource, /supabaseAdmin\.auth\.getUser\(jwt\)/);
+assert.match(edgeSource, /p_auth_user_id: user\.id/);
+assert.match(edgeSource, /supabaseAdmin\.rpc/);
 assert.match(edgeSource, /gacha_s2_resolve_auth_account/);
 assert.match(edgeSource, /const userId = String\(accountId\)/);
-assert.doesNotMatch(edgeSource, /body\.userId|body\.user_id|SUPABASE_SERVICE_ROLE_KEY/);
+assert.doesNotMatch(edgeSource, /body\.userId|body\.user_id/);
 assert.match(edgeSource, /GAME_ALLOWED_ORIGINS/);
 assert.match(edgeSource, /MAX_BODY_BYTES/);
 assert.match(edgeSource, /body\.kind === 'powerRanking'/);

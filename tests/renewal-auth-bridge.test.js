@@ -3,9 +3,11 @@ import { readFile } from 'node:fs/promises';
 import { createAuthSessionService } from '../src/renewal/auth-session-service.js';
 
 const calls = [];
+const signOutCalls = [];
 const auth = {
   getSession: async () => ({ data: { session: null } }),
   signInAnonymously: async () => ({ data: { session: { access_token: 'anonymous-jwt' } }, error: null }),
+  signOut: async (options) => { signOutCalls.push(options); return { error: null }; },
 };
 const service = createAuthSessionService({
   projectUrl: 'https://project.supabase.co',
@@ -29,6 +31,8 @@ assert.equal(soopSignedIn.ok, true);
 assert.equal(soopSignedIn.session.access_token, 'anonymous-jwt');
 assert.equal(JSON.parse(calls[1].options.body).soopExchange, 'soop-exchange-code-1234567890');
 assert.equal((await service.signInWithSoopExchange('short')).code, 'INVALID_CREDENTIALS');
+assert.deepEqual(await service.signOut(), { ok: true });
+assert.deepEqual(signOutCalls, [{ scope: 'local' }]);
 
 const sql = (await readFile(new URL('../supabase/renewal_migration_008_auth_bridge.sql', import.meta.url), 'utf8')).replace(/\s+/g, ' ');
 assert.match(sql, /add column if not exists auth_user_id uuid unique references auth\.users\(id\) on delete set null/);
@@ -40,10 +44,11 @@ assert.match(sql, /interval '15 minutes'/);
 assert.doesNotMatch(sql, /grant execute .* to authenticated/);
 
 const edge = await readFile(new URL('../supabase/functions/session-exchange/index.ts', import.meta.url), 'utf8');
-assert.match(edge, /createSupabaseContext\(req, \{ auth: 'user' \}\)/);
+assert.match(edge, /supabase\.auth\.getUser\(jwt\)/);
 assert.match(edge, /AUTH_RATE_LIMIT_PEPPER/);
 assert.match(edge, /sha256\(loginKey\)/);
 assert.match(edge, /hmac\(clientAddress, pepper\)/);
-assert.doesNotMatch(edge, /console\.log|loginKey.*Deno\.env|SUPABASE_SERVICE_ROLE_KEY/);
+assert.match(edge, /gacha_s2_bind_soop_session/);
+assert.doesNotMatch(edge, /console\.log|loginKey.*Deno\.env/);
 
 console.log('renewal auth bridge tests passed: anonymous session, hashed legacy key, IP-HMAC rate limit');

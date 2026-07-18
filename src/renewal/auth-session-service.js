@@ -8,7 +8,7 @@ export function createAuthSessionService(options = {}) {
   const auth = options.auth;
   const fetchImpl = options.fetch ?? globalThis.fetch;
   if (!/^https:\/\/[^/]+$/.test(projectUrl) || !publishableKey) throw new Error('Supabase public configuration required.');
-  if (!auth || typeof auth.getSession !== 'function' || typeof auth.signInAnonymously !== 'function') throw new Error('Supabase Auth client required.');
+  if (!auth || typeof auth.getSession !== 'function' || typeof auth.signInAnonymously !== 'function' || typeof auth.signOut !== 'function') throw new Error('Supabase Auth client required.');
 
   async function ensureSession() {
     const current = await auth.getSession();
@@ -55,5 +55,15 @@ export function createAuthSessionService(options = {}) {
     return result?.data?.session?.access_token ?? null;
   }
 
-  return { ensureSession, signInWithLoginKey, signInWithSoopExchange, getAccessToken };
+  async function signOut() {
+    try {
+      const result = await auth.signOut({ scope: 'local' });
+      if (result?.error) return { ok: false, code: 'SIGN_OUT_FAILED' };
+      return { ok: true };
+    } catch {
+      return { ok: false, code: 'SIGN_OUT_FAILED' };
+    }
+  }
+
+  return { ensureSession, signInWithLoginKey, signInWithSoopExchange, getAccessToken, signOut };
 }

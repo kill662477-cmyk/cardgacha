@@ -25,6 +25,8 @@ for (const required of [
   'supabase/renewal_migration_007_economy_profile.sql',
   'supabase/renewal_migration_008_auth_bridge.sql',
   'supabase/renewal_migration_009_live_services.sql',
+  'supabase/renewal_migration_010_soop_user_auth.sql',
+  'supabase/renewal_migration_011_live_event_ticker.sql',
   'supabase/config.toml',
   'supabase/functions/game-command/index.ts',
   'supabase/functions/game-command/deno.json',
@@ -38,6 +40,7 @@ for (const required of [
   'src/renewal/auth-session-service.js',
   'src/renewal/server-command-router.js',
   'src/renewal/remote-runtime.js',
+  'src/renewal/live-ticker-controller.js',
   'src/vendor/supabase.js',
   'supabase/renewal_migration_999_drop_season1.sql',
 ]) assert.equal(exists(...required.split('/')), true, `missing season2 file: ${required}`);
@@ -58,6 +61,7 @@ for (const legacy of [
 const index = fs.readFileSync(at('index.html'), 'utf8');
 assert.match(index, /<title>카드가챠 시즌2<\/title>/);
 assert.match(index, /src\/renewal\/app\.js/);
+assert.match(index, /id="apiLinkButton"[^>]+target="_blank"[^>]+rel="noopener noreferrer"/);
 assert.doesNotMatch(index, /api\//);
 
 const cards = JSON.parse(fs.readFileSync(at('data', 'renewal-cards.json'), 'utf8'));
@@ -96,6 +100,7 @@ assert.deepEqual(migrations, [
   'renewal_migration_008_auth_bridge.sql',
   'renewal_migration_009_live_services.sql',
   'renewal_migration_010_soop_user_auth.sql',
+  'renewal_migration_011_live_event_ticker.sql',
   'renewal_migration_999_drop_season1.sql',
 ]);
 

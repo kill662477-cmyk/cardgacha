@@ -41,7 +41,33 @@ export function createRemoteRuntime(config = readRemoteConfig(), options = {}) {
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
   }
-  return { supabase, auth, game, subscribeWorldBoss, now: () => Date.now(), random: () => Math.random() };
+  async function getLiveEvents() {
+    const cutoff = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const { data, error } = await supabase
+      .from('gacha_s2_live_events')
+      .select('id,event_type,nickname,card_id,member,rarity,enhancement,created_at')
+      .gte('created_at', cutoff)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if (error) throw new Error(`LIVE_EVENTS_FAILED:${error.code ?? 'unknown'}`);
+    return data ?? [];
+  }
+  function subscribeLiveEvents(onEvent) {
+    if (typeof onEvent !== 'function') return () => {};
+    const channel = supabase
+      .channel('gacha-s2-live-events')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'gacha_s2_live_events',
+      }, (payload) => onEvent(payload.new))
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }
+  return {
+    supabase, auth, game, subscribeWorldBoss, getLiveEvents, subscribeLiveEvents,
+    now: () => Date.now(), random: () => Math.random(),
+  };
 }
 
 export function mergeServerSnapshot(snapshot, clientCache = {}) {

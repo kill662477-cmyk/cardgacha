@@ -25,6 +25,7 @@ assert.equal(merged.soundEnabled, false);
 assert.equal(merged.worldBoss.eventId, 'local-placeholder');
 
 const app = await readFile(new URL('../src/renewal/app.js', import.meta.url), 'utf8');
+const runtime = await readFile(new URL('../src/renewal/remote-runtime.js', import.meta.url), 'utf8');
 for (const command of [
   'UPDATE_FORMATION', 'CLAIM_ADVENTURE_REWARDS', 'CLAIM_QUICK_BATTLE',
   'PURCHASE_PACK', 'PURCHASE_SUPPORT_PACK', 'USE_SUPPORT_ITEM', 'ENHANCE_CARD',
@@ -33,5 +34,8 @@ for (const command of [
 ]) assert.match(app, new RegExp(`GAME_COMMAND_TYPES\\.${command}`));
 assert.match(app, /if \(remoteMode\) await requireRemoteSnapshot\(\)/);
 assert.match(app, /applyServerSnapshot\(response\.snapshot\)/);
+assert.match(runtime, /from\('gacha_s2_live_events'\)/);
+assert.match(runtime, /event: 'INSERT'/);
+assert.match(runtime, /subscribeLiveEvents/);
 
 console.log('renewal remote runtime tests passed: opt-in config, server snapshots, all mutation command paths');

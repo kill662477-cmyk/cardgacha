@@ -59,6 +59,8 @@ import { createLiveTickerController } from './live-ticker-controller.js';
 const number = new Intl.NumberFormat('ko-KR');
 const CARD_BACK_PATH = 'assets/card-back.jpg';
 const SCREEN_IDS = new Set(['shop', 'enhance', 'collection', 'ranking', 'adventure', 'worldboss', 'minigame']);
+// Temporary: world boss disabled to cap Supabase free-tier realtime/edge load until Pro (2026-07-24). Flip to true + redeploy to re-enable.
+const WORLD_BOSS_ENABLED = false;
 const elements = {};
 let cards = [];
 let cardsById = new Map();
@@ -1794,6 +1796,10 @@ function showScreen(screen) {
     showToast(`${label}은 다음 제작 묶음`);
     return;
   }
+  if (screen === 'worldboss' && !WORLD_BOSS_ENABLED) {
+    showToast('월드보스 준비 중입니다');
+    screen = SCREEN_IDS.has(activeScreen) && activeScreen !== 'worldboss' ? activeScreen : 'adventure';
+  }
   const previousScreen = activeScreen;
   activeScreen = screen;
   if (window.location.hash !== `#${screen}`) {
@@ -2027,6 +2033,11 @@ function bindEvents() {
     if (activeScreen === 'adventure' && state.autoBattle && !battleRunning) setTimeout(runBattle, 350);
   });
   document.querySelectorAll('.nav-item').forEach((button) => {
+    if (!WORLD_BOSS_ENABLED && button.dataset.screen === 'worldboss') {
+      button.classList.add('nav-soon');
+      const label = button.querySelector('span');
+      if (label) label.textContent = '준비중';
+    }
     button.addEventListener('click', () => showScreen(button.dataset.screen));
   });
   elements.enhanceTargetList.addEventListener('click', (event) => {

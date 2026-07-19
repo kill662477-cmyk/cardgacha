@@ -187,7 +187,7 @@ function imagePath(card) {
 function cacheElements() {
   [
     'nickname', 'combatPower', 'energyValue', 'pointValue', 'profileCardButton', 'apiLinkButton', 'logoutButton',
-    'mailButton', 'mailDialog',
+    'mailButton', 'mailDialog', 'mailBadge',
     'profileCardImage', 'profileCardFallback', 'soundToggleButton', 'regionLabel',
     'stageLabel', 'stageMeter', 'battleState', 'battleClock', 'enemyName', 'enemyHpBar', 'enemyHpText',
     'enemyRow', 'partyGrid', 'synergyChip', 'resultBanner', 'stageNodes',
@@ -2032,8 +2032,13 @@ async function executeEnhancementAttempt(triggerButton = elements.enhanceAttempt
 }
 
 function bindEvents() {
+  if (localStorage.getItem('mail_20260720_read') === 'true') {
+    elements.mailBadge.hidden = true;
+  }
   elements.profileCardButton.addEventListener('click', openRepresentativeCardDetail);
   elements.mailButton.addEventListener('click', () => {
+    localStorage.setItem('mail_20260720_read', 'true');
+    elements.mailBadge.hidden = true;
     elements.mailDialog.showModal();
   });
   elements.soundToggleButton.addEventListener('click', () => {

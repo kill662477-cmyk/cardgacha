@@ -38,7 +38,10 @@
         <div class="currency energy"><i data-lucide="zap"></i><strong id="energyValue">64 / 120</strong></div>
         <div class="currency points"><i data-lucide="sparkles"></i><strong id="pointValue">8,450 P</strong></div>
         <button class="icon-button sound-toggle active" id="soundToggleButton" type="button" aria-label="효과음 끄기" aria-pressed="true" title="효과음 끄기"><i data-lucide="volume-2"></i></button>
-        <button class="icon-button" id="mailButton" type="button" aria-label="우편함" title="우편함"><i data-lucide="mail"></i></button>
+        <button class="icon-button" id="mailButton" type="button" aria-label="우편함" title="우편함" style="position: relative;">
+          <i data-lucide="mail"></i>
+          <span id="mailBadge" style="position: absolute; top: -2px; right: -2px; background: var(--color-danger, #e11d48); color: white; font-size: 9px; font-weight: 800; border-radius: 50%; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; line-height: 1;">N</span>
+        </button>
         <a class="api-link-button" id="apiLinkButton" href="bridge.html" target="_blank" rel="noopener noreferrer" aria-label="SOOP API 연동 새 창 열기" title="SOOP API 연동 새 창 열기"><i data-lucide="key-round"></i><span>API</span></a>
         <button class="icon-button" id="logoutButton" type="button" aria-label="로그아웃" title="로그아웃"><i data-lucide="log-out"></i></button>
       </div>

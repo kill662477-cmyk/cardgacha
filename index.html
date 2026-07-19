@@ -430,6 +430,21 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <div class="orient-guide" id="orientGuide" hidden role="dialog" aria-modal="true" aria-label="가로 모드 안내">
+    <div class="orient-guide-panel">
+      <div class="orient-guide-icon" aria-hidden="true">
+        <span class="orient-phone"><i data-lucide="smartphone"></i></span>
+        <span class="orient-arrow"><i data-lucide="rotate-cw"></i></span>
+      </div>
+      <h2>가로 모드로 즐겨주세요</h2>
+      <p>이 게임은 가로 전체화면에 최적화돼 있습니다. 기기를 가로로 돌려주세요.</p>
+      <button class="orient-guide-cta" id="orientCta" type="button">
+        <i data-lucide="maximize-2"></i><span>전체화면 시작</span>
+      </button>
+      <button class="orient-guide-skip" id="orientSkip" type="button">건너뛰기</button>
+    </div>
+  </div>
+
   <section class="fx-layer" id="fxLayer" data-phase="idle" aria-hidden="true" hidden>
     <div class="fx-vignette"></div>
     <video class="fx-rarity-video" data-fx-rarity-video playsinline preload="metadata" hidden></video>

@@ -219,6 +219,7 @@ function cacheElements() {
     'systemStateLayer', 'systemStateEyebrow', 'systemStateTitle', 'systemStateMessage', 'systemStateCode', 'systemStateRetry',
     'rewardDurationBlock', 'rewardBreakdown', 'rewardEmptyState',
     'loginDialog', 'loginForm', 'loginKeyInput', 'loginSubmit', 'loginError', 'soopLoginButton',
+    'orientGuide', 'orientCta', 'orientSkip',
   ].forEach((id) => { elements[id] = document.getElementById(id); });
 }
 
@@ -381,6 +382,65 @@ async function requireRemoteSnapshot() {
     elements.loginForm.addEventListener('submit', submit);
     elements.loginDialog.addEventListener('cancel', (event) => event.preventDefault());
   });
+}
+
+// ===== 모바일 가로 모드 가이드 =====
+// 브라우저 보안 정책상 requestFullscreen/orientation.lock 은 유저 제스처(탭 직후) 안에서만 동작.
+// 따라서 자동 전환은 불가능하고, 로그인 후 게임 진입 시 가이드를 띄워 유저가 버튼을 누르게 한다.
+// 그 제스처 안에서만 fullscreen + orientation.lock 을 시도.
+// iOS Safari는 둘 다 미지원이라 안내만 표시되고 기기 회전에 맡김.
+function isMobileDevice() {
+  const ua = navigator.userAgent || '';
+  const touchPoints = navigator.maxTouchPoints || 0;
+  const hasTouch = touchPoints > 0 || 'ontouchstart' in window;
+  const mobileUa = /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(ua);
+  // 화면이 좁고 터치가 있으면 모바일로 간주. 태블릿도 포함.
+  return hasTouch && (mobileUa || Math.min(window.innerWidth, window.innerHeight) <= 820);
+}
+
+function isPortrait() {
+  // orientation.angle 이 확실하면 우선, 아니면 창 비율로 판별.
+  const angle = window.screen?.orientation?.angle ?? 0;
+  if (angle === 90 || angle === 270) return false;
+  if (angle === 0 || angle === 180) return window.innerHeight > window.innerWidth;
+  return window.innerHeight > window.innerWidth;
+}
+
+async function tryEnterFullscreenLandscape() {
+  const el = document.documentElement;
+  // 1) 전체화면 진입. iOS Safari는 지원 안 함.
+  try {
+    if (el.requestFullscreen && !document.fullscreenElement) await el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  } catch { /* 권한 거부 등은 무시 */ }
+  // 2) 가로 방향 잠금. 전체화면 상태에서만 동작(Android Chrome). iOS 미지원.
+  try {
+    const lock = window.screen?.orientation?.lock;
+    if (typeof lock === 'function') await lock.call(window.screen.orientation, 'landscape');
+  } catch { /* 미지원/거부 무시 */ }
+}
+
+function showOrientGuideIfNeeded() {
+  if (!isMobileDevice()) return;
+  if (!elements.orientGuide) return;
+  elements.orientGuide.hidden = false;
+  window.lucide?.createIcons();
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    elements.orientGuide.hidden = true;
+    elements.orientCta?.removeEventListener('click', onCta);
+    elements.orientSkip?.removeEventListener('click', onSkip);
+  };
+  const onCta = async () => {
+    // 이 탭 제스처 안에서만 fullscreen/orientation 호출이 유효.
+    await tryEnterFullscreenLandscape();
+    close();
+  };
+  const onSkip = () => close();
+  elements.orientCta?.addEventListener('click', onCta);
+  elements.orientSkip?.addEventListener('click', onSkip);
 }
 
 function cardWithProgress(card) {
@@ -2236,6 +2296,8 @@ async function init() {
     bindEvents();
     showScreen(activeScreen);
     elements.logoutButton.hidden = !remoteMode;
+    // 모바일에서 로그인 후 게임 진입 시 가로모드/전체화면 가이드 표시.
+    showOrientGuideIfNeeded();
     await liveTickerController.start();
     startTimedUpdates();
     const canPreviewState = ['localhost', '127.0.0.1'].includes(window.location.hostname) && SYSTEM_STATES[systemStatePreview];

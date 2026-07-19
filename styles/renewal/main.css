@@ -1233,10 +1233,11 @@ button[aria-busy="true"]::after {
 
 @media (max-width: 900px) {
   body { overflow: auto; }
-  .game-shell { grid-template: 64px minmax(0,1fr) 66px / 1fr; height: 100svh; min-height: 100svh; }
-  .topbar { grid-column: 1; grid-row: 1; grid-template-columns: minmax(0,1fr) auto; padding: 0 10px; }
-  .live-ticker { display: none; }
-  .profile-block { grid-template-columns: 38px auto; gap: 8px; }
+  .game-shell { grid-template: 102px minmax(0,1fr) 66px / 1fr; height: 100svh; min-height: 100svh; }
+  .topbar { grid-column: 1; grid-row: 1; grid-template-columns: minmax(0,1fr) auto; grid-template-rows: 64px 38px; align-content: start; padding: 0 10px; }
+  .profile-block { grid-column: 1; grid-row: 1; grid-template-columns: 38px auto; gap: 8px; }
+  .currency-bar { grid-column: 2; grid-row: 1; }
+  .live-ticker { grid-column: 1 / -1; grid-row: 2; border-left: none; border-right: none; margin: 0 -10px; }
   .profile-mark { width: 38px; height: 38px; }
   .currency.energy, .currency-bar .icon-button { display: none; }
   .profile-stats { gap: 7px; }
@@ -1665,3 +1666,56 @@ button[aria-busy="true"]::after {
   background: #111713;
 }
 .account-login-shell small { min-height: 18px; color: #ff7e82; }
+
+/* ===== 모바일 가로 모드 가이드 (로그인 후 게임 진입 시) =====
+   브라우저 보안 정책상 requestFullscreen/orientation.lock 은 유저 제스처 안에서만 동작.
+   iOS Safari는 둘 다 미지원이라 안내만 표시. Android Chrome은 전체화면 진입 시 가로 잠금 작동. */
+.orient-guide {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  background: radial-gradient(120% 120% at 50% 0%, #0c1310 0%, #050807 60%, #000 100%);
+  text-align: center; color: #e8f2d0;
+  font-family: system-ui, 'Segoe UI', 'Malgun Gothic', sans-serif;
+}
+.orient-guide[hidden] { display: none; }
+.orient-guide-panel { display: grid; gap: 14px; place-items: center; max-width: 360px; }
+.orient-guide-icon {
+  position: relative; width: 72px; height: 72px;
+  display: grid; place-items: center; margin-bottom: 4px;
+}
+.orient-guide-icon i { width: 56px; height: 56px; }
+.orient-phone {
+  display: grid; place-items: center; width: 40px; height: 64px;
+  border: 3px solid #6a7a6e; border-radius: 9px; background: #0c1410;
+  color: #9fb29a; animation: orient-rotate 2.4s ease-in-out infinite;
+  transform-origin: center center;
+}
+.orient-arrow { position: absolute; top: -6px; right: -10px; color: #c8f52e; }
+.orient-arrow i { width: 22px; height: 22px; }
+.orient-guide h2 {
+  margin: 0; font-size: clamp(20px, 5vw, 26px); font-weight: 800; letter-spacing: -0.01em;
+}
+.orient-guide p { margin: 0; font-size: 14px; line-height: 1.55; color: #9fb29a; }
+.orient-guide-cta {
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 6px;
+  padding: 13px 26px; border: 1px solid #2a3a2a; border-radius: 11px;
+  background: linear-gradient(180deg, #c8f52e, #9fd020); color: #07100a;
+  font-size: 15px; font-weight: 800; cursor: pointer;
+  box-shadow: 0 6px 18px rgba(200, 245, 46, 0.18);
+  transition: transform .15s ease, filter .15s ease;
+}
+.orient-guide-cta:active { transform: scale(0.97); filter: brightness(0.95); }
+.orient-guide-cta i { width: 18px; height: 18px; }
+.orient-guide-skip {
+  margin-top: 2px; padding: 8px 14px; border: none; background: transparent;
+  color: #6a7a6e; font-size: 12px; cursor: pointer; text-decoration: underline;
+}
+@keyframes orient-rotate {
+  0%, 40% { transform: rotate(0deg); }
+  60%, 90% { transform: rotate(-90deg); }
+  100% { transform: rotate(-90deg); }
+}
+/* 데스크톱에서는 가이드 자체을 띄우지 않는다 (app.js에서 모바일 판별하지만 안전망) */
+@media (hover: hover) and (pointer: fine) and (min-width: 900px) {
+  .orient-guide { display: none !important; }
+}

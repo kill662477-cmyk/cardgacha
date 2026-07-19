@@ -749,12 +749,15 @@ button[aria-busy="true"]::after {
 .ranking-list li > strong { color: var(--acid); font-size: 15px; font-variant-numeric: tabular-nums; text-align: right; }
 .ranking-list li > strong small { color: var(--muted); font-size: 10px; }
 .ranking-list li.mine { background: rgba(200,245,46,.08); box-shadow: inset 3px 0 var(--acid); }
-/* 넓은 화면에서는 리스트 영역이 남아돌아 2열로 펼쳐 가독성을 높인다. table-head는 열이
-   갈라지면 정렬 의미가 없어지므로 접는다(그리드 row 구조를 유지하려 DOM에는 남긴다). */
+/* 넓은 화면에서는 리스트 영역이 남아돌아 2열로 펼친다. table-head는 열이 갈라지면
+   정렬 의미가 없어지므로 접는다(그리드 row 구조를 유지하려 DOM에는 남긴다).
+   열 우선(신문 다단) 배치: 왼쪽 열 4~N, 오른쪽 열 N+1~50. CSS multi-column은
+   행 우선 grid와 달리 위→아래 채운 뒤 다음 열로 넘어간다(좌우좌우 지그재그 방지). */
 @media (min-width: 1200px) {
   .ranking-board { grid-template-rows: auto 230px 0 minmax(0, 1fr); }
   .ranking-board .ranking-table-head { padding: 0; height: 0; border: 0; overflow: hidden; }
-  .ranking-list { display: grid; grid-template-columns: 1fr 1fr; column-gap: 22px; align-content: start; padding: 6px 20px 14px; }
+  .ranking-list { display: block; column-count: 2; column-gap: 22px; padding: 6px 20px 14px; }
+  .ranking-list li { break-inside: avoid; page-break-inside: avoid; }
 }
 
 .ranking-profile { display: grid; grid-template-rows: auto auto auto minmax(0, 1fr) auto; min-width: 0; min-height: 0; overflow: hidden; border-left: 1px solid var(--line); background: #090c0a; }

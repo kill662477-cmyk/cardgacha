@@ -1,6 +1,6 @@
 export const COMBAT_RANKING_RULES = {
   population: 1500,
-  visibleCount: 20,
+  visibleCount: 50,
 };
 
 const FEATURED_NAMES = [

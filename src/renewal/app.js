@@ -687,6 +687,9 @@ function renderHeader() {
   elements.quickBattleCount.textContent = `${state.quickBattle.count}/${REWARD_RULES.quickBattleDailyLimit}`;
   const adventureStatus = getAdventureRunLimitStatus(state.adventureRuns, gameService.now());
   const activeRun = normalizeAdventureRun(state.adventureRun);
+  // 자동전투 진행 중 빠른전투를 누르면 진행 중이던 스테이지 전투가 무효 처리되던 버그(battleToken 무효화) 방지.
+  elements.quickBattleButton.disabled = state.autoBattle && activeRun.active;
+  elements.quickBattleButton.title = elements.quickBattleButton.disabled ? '모험 진행 중에는 사용할 수 없음' : '';
   elements.autoBattleButton.classList.toggle('active', state.autoBattle);
   elements.autoBattleButton.disabled = !activeRun.active && adventureStatus.remaining <= 0;
   elements.autoBattleButton.querySelector('span').textContent = activeRun.active
@@ -1028,6 +1031,10 @@ function renderRewardDialog() {
 function openRewardDialog(mode) {
   synchronizeTimedState();
   if (mode === 'quick') {
+    if (state.autoBattle && normalizeAdventureRun(state.adventureRun).active) {
+      showToast('모험 진행 중에는 빠른 전투를 사용할 수 없음');
+      return;
+    }
     if (state.quickBattle.count >= REWARD_RULES.quickBattleDailyLimit) {
       showToast('오늘 빠른 전투 횟수를 모두 사용함');
       return;

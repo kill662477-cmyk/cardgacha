@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
-import { REWARD_RULES } from '../src/renewal/config.js';
+import { ADVENTURE_RULES, REWARD_RULES } from '../src/renewal/config.js';
 import {
   applyCardExperience,
   calculateIdleReward,
   cardExpRequired,
   normalizeQuickBattle,
+  recordQuickBattle,
   recoverEnergy,
 } from '../src/renewal/rewards.js';
 
@@ -32,7 +33,18 @@ const energy = recoverEnergy({ actionEnergy: 10, maxActionEnergy: 120, lastEnerg
 assert.equal(energy.energy, 13);
 assert.equal(energy.recovered, 3);
 
-assert.equal(normalizeQuickBattle({ date: '2000-01-01', count: 3 }, now).count, 0);
+// 빠른 전투는 모험 런과 동일한 4시간 롤링 윈도우로 초기화된다(달력 날짜 아님).
+assert.deepEqual(normalizeQuickBattle(null, now), { windowStartedAt: 0, count: 0 }, 'no prior state starts fresh');
+assert.deepEqual(normalizeQuickBattle({ windowStartedAt: now - 60 * 60 * 1000, count: 2 }, now),
+  { windowStartedAt: now - 60 * 60 * 1000, count: 2 }, 'within the 4h window the count survives');
+assert.deepEqual(normalizeQuickBattle({ windowStartedAt: now - ADVENTURE_RULES.runWindowMs, count: 2 }, now),
+  { windowStartedAt: 0, count: 0 }, 'a window exactly 4h old must reset');
+assert.equal(normalizeQuickBattle({ date: '2000-01-01', count: 3 }, now).count, 0, 'legacy {date,count} rows read as a fresh window');
+const firstUse = recordQuickBattle({ windowStartedAt: 0, count: 0 }, now);
+assert.deepEqual(firstUse, { windowStartedAt: now, count: 1 }, 'first use in a window stamps windowStartedAt');
+const secondUse = recordQuickBattle(firstUse, now + 60_000);
+assert.deepEqual(secondUse, { windowStartedAt: now, count: 2 }, 'later uses in the same window keep windowStartedAt');
+assert.throws(() => recordQuickBattle({ windowStartedAt: now, count: REWARD_RULES.quickBattleDailyLimit }, now), /limit reached/);
 assert.equal(REWARD_RULES.quickBattleEnergy, 20);
 assert.equal(REWARD_RULES.quickBattleHours, 2);
 

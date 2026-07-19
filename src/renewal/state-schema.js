@@ -114,6 +114,12 @@ function validateDailyProgress(issues, value, path, fields) {
   });
 }
 
+function validateWindowedProgress(issues, value, path, maxCount) {
+  if (!isRecord(value)) return issue(issues, path, '객체 필요');
+  if (!isIntegerBetween(value.windowStartedAt, 0)) issue(issues, `${path}.windowStartedAt`, '0 이상 정수 필요');
+  if (!isIntegerBetween(value.count, 0, maxCount)) issue(issues, `${path}.count`, '허용 범위 정수 필요');
+}
+
 function validateWorldBoss(issues, value) {
   if (!isRecord(value)) return issue(issues, 'worldBoss', '객체 필요');
   if (typeof value.eventId !== 'string' || value.eventId.length === 0) issue(issues, 'worldBoss.eventId', '회차 ID 필요');
@@ -259,7 +265,7 @@ export function validateGameState(state, options = {}) {
   if (typeof state.soundEnabled !== 'boolean') issue(issues, 'soundEnabled', 'boolean 필요');
   if (typeof state.autoBattle !== 'boolean') issue(issues, 'autoBattle', 'boolean 필요');
 
-  validateDailyProgress(issues, state.quickBattle, 'quickBattle', [['count', REWARD_RULES.quickBattleDailyLimit]]);
+  validateWindowedProgress(issues, state.quickBattle, 'quickBattle', REWARD_RULES.quickBattleDailyLimit);
   validateAdventure(issues, state);
   validateCardProgress(issues, state.cardProgress, cardIds);
   validateCountRecord(issues, state.cardCopies, 'cardCopies', cardIds);

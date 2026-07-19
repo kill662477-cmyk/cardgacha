@@ -10,9 +10,13 @@ const section = (start, end) => normalized.slice(
 );
 const startAdventure = section('gacha_s2_start_adventure_run', 'gacha_s2_finish_adventure_run');
 const finishAdventure = section('gacha_s2_finish_adventure_run', 'gacha_s2_claim_quick_battle');
-const quickBattle = section('gacha_s2_claim_quick_battle', 'gacha_s2_start_minigame');
 const startMinigame = section('gacha_s2_start_minigame', 'gacha_s2_finish_minigame');
 const finishMinigame = section('gacha_s2_finish_minigame');
+
+// gacha_s2_claim_quick_battle was superseded by migration 013 (4h rolling window instead of a
+// calendar-day reset) -- read the currently-active body from there, not the original in 005.
+const quickBattleSql = await readFile(new URL('../supabase/renewal_migration_013_quick_battle_4h_window.sql', import.meta.url), 'utf8');
+const quickBattle = quickBattleSql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 
 for (const table of ['gacha_s2_adventure_runs', 'gacha_s2_minigame_daily', 'gacha_s2_minigame_runs']) {
   assert.match(normalized, new RegExp(`create table if not exists public\\.${table}`));
@@ -66,9 +70,13 @@ assert.match(quickBattle, /'quickbattleenergy'/);
 assert.match(quickBattle, /'quickbattledailylimit'/);
 assert.match(quickBattle, /'runwindowms'/);
 assert.match(quickBattle, /action_energy = v_energy -/);
-assert.match(quickBattle, /quick_battle = jsonb_build_object/);
+assert.match(quickBattle, /quick_battle = jsonb_build_object\('windowstartedat', v_quick_window_started, 'count', v_quick_count \+ 1\)/);
 assert.match(quickBattle, /adventure_runs = jsonb_build_object/);
 assert.match(quickBattle, /insert into public\.gacha_s2_adventure_runs/);
+// 4시간 롤링 윈도우로 초기화 (달력 날짜 기반 리셋 아님).
+assert.match(quickBattle, /v_quick_window_started := greatest\(0, coalesce\(\(v_quick->>'windowstartedat'\)::bigint, 0\)\)/);
+assert.match(quickBattle, /v_now_ms - v_quick_window_started >= v_quick_window_ms/);
+assert.doesNotMatch(quickBattle, /v_quick->>'date'/, 'day-based reset must be fully replaced by the 4h window');
 
 assert.match(normalized, /create or replace function public\.gacha_s2_memory_board/);
 assert.match(normalized, /digest\(p_seed::text \|\| ':deck:' \|\| card_id/);

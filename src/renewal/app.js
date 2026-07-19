@@ -39,6 +39,7 @@ import {
   calculateIdleReward,
   cardExpRequired,
   normalizeQuickBattle,
+  recordQuickBattle,
   recoverEnergy,
   rewardRates,
 } from './rewards.js';
@@ -589,7 +590,7 @@ function synchronizeTimedState(now = gameService.now()) {
     changed = true;
   }
   const quickBattle = normalizeQuickBattle(state.quickBattle, now);
-  if (quickBattle.date !== state.quickBattle.date || quickBattle.count !== state.quickBattle.count) {
+  if (quickBattle.windowStartedAt !== state.quickBattle.windowStartedAt || quickBattle.count !== state.quickBattle.count) {
     state.quickBattle = quickBattle;
     changed = true;
   }
@@ -1093,7 +1094,7 @@ function confirmReward() {
       }
       state.actionEnergy -= REWARD_RULES.quickBattleEnergy;
       state.lastEnergyAt = now;
-      state.quickBattle = { ...state.quickBattle, count: state.quickBattle.count + 1 };
+      state.quickBattle = recordQuickBattle(state.quickBattle, now);
       state.adventureRuns = recordAdventureRun(state.adventureRuns, now);
       state.points += rewardPreview.points;
       bonusDrop = rollAdventureBonusDrop(rewardPreview.clearedStages, gameService.random);

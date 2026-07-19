@@ -201,6 +201,7 @@ export const REWARD_RULES = {
   offlineCapHours: 24,
   quickBattleHours: 2,
   quickBattleEnergy: 20,
+  // 이름과 달리 달력 날짜가 아니라 ADVENTURE_RULES.runWindowMs(4시간)와 동일한 롤링 윈도우로 초기화된다.
   quickBattleDailyLimit: 3,
   energyRecoveryMinutes: 6,
   cardExpBasePerMinute: 0.04,

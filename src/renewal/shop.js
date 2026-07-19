@@ -99,7 +99,7 @@ export function useSupportItem(state, itemId, now = Date.now()) {
   } else if (item.reset === 'quickBattle') {
     const quickBattle = normalizeQuickBattle(state.quickBattle, now);
     if (quickBattle.count <= 0) return { used: false, reason: '초기화할 빠른 전투 횟수 없음', state };
-    next.quickBattle = { ...quickBattle, count: 0 };
+    next.quickBattle = { windowStartedAt: 0, count: 0 };
   } else {
     return { used: false, reason: '이 화면에서 직접 사용할 수 없는 아이템', state };
   }

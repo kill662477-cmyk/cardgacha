@@ -1,4 +1,4 @@
-import { ENHANCEMENT, REWARD_RULES } from './config.js';
+import { ADVENTURE_RULES, ENHANCEMENT, REWARD_RULES } from './config.js';
 
 export function localDateKey(timestamp = Date.now()) {
   const date = new Date(timestamp);
@@ -65,8 +65,33 @@ export function recoverEnergy(state, now = Date.now()) {
   };
 }
 
+// 빠른 전투 횟수는 달력 날짜가 아니라 모험 런과 동일한 4시간 롤링 윈도우로 초기화된다.
+// (모험 런의 4시간 풀과는 별개로 자체 windowStartedAt/count를 갖는다.)
 export function normalizeQuickBattle(quickBattle, now = Date.now()) {
-  const today = localDateKey(now);
-  if (!quickBattle || quickBattle.date !== today) return { date: today, count: 0 };
-  return { date: today, count: Math.max(0, Number(quickBattle.count) || 0) };
+  const startedAt = Math.max(0, Number(quickBattle?.windowStartedAt) || 0);
+  const count = Math.max(0, Math.floor(Number(quickBattle?.count) || 0));
+  if (startedAt === 0 || now - startedAt >= ADVENTURE_RULES.runWindowMs || now < startedAt) {
+    return { windowStartedAt: 0, count: 0 };
+  }
+  return { windowStartedAt: startedAt, count: Math.min(REWARD_RULES.quickBattleDailyLimit, count) };
+}
+
+export function getQuickBattleLimitStatus(quickBattle, now = Date.now()) {
+  const normalized = normalizeQuickBattle(quickBattle, now);
+  return {
+    progress: normalized,
+    remaining: REWARD_RULES.quickBattleDailyLimit - normalized.count,
+    resetsInMs: normalized.windowStartedAt === 0
+      ? 0
+      : Math.max(0, normalized.windowStartedAt + ADVENTURE_RULES.runWindowMs - now),
+  };
+}
+
+export function recordQuickBattle(quickBattle, now = Date.now()) {
+  const status = getQuickBattleLimitStatus(quickBattle, now);
+  if (status.remaining <= 0) throw new Error('Quick battle limit reached.');
+  return {
+    windowStartedAt: status.progress.windowStartedAt || now,
+    count: status.progress.count + 1,
+  };
 }

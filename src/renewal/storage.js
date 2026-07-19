@@ -22,7 +22,7 @@ export function createDefaultState(now = Date.now()) {
     clearedStage: 0,
     pendingPoints: 0,
     lastRewardAt: now - 2 * 60 * 60 * 1000,
-    quickBattle: { date: localDateKey(now), count: 0 },
+    quickBattle: { windowStartedAt: 0, count: 0 },
     adventureRuns: { windowStartedAt: 0, count: 0 },
     adventureRun: { active: false, currentStage: 1, clearedStages: 0, startedAt: 0 },
     cardProgress: {},

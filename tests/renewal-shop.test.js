@@ -65,15 +65,15 @@ assert.equal(unusedAdventureReset.state.supportItems.adventureRunReset, 1);
 
 const quickResetState = {
   supportItems: { quickBattleReset: 1 }, activeBuffs: {},
-  quickBattle: { date: '2026-07-17', count: 3 },
+  quickBattle: { windowStartedAt: resetNow - 60 * 60 * 1000, count: 3 },
 };
 const quickReset = useSupportItem(quickResetState, 'quickBattleReset', resetNow);
 assert.equal(quickReset.used, true);
-assert.equal(quickReset.state.quickBattle.count, 0);
+assert.deepEqual(quickReset.state.quickBattle, { windowStartedAt: 0, count: 0 });
 assert.equal(quickReset.state.supportItems.quickBattleReset, 0);
 const unusedQuickReset = useSupportItem({
   ...quickResetState,
-  quickBattle: { date: '2026-07-17', count: 0 },
+  quickBattle: { windowStartedAt: 0, count: 0 },
 }, 'quickBattleReset', resetNow);
 assert.equal(unusedQuickReset.used, false);
 assert.equal(unusedQuickReset.state.supportItems.quickBattleReset, 1);

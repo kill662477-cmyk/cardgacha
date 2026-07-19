@@ -84,7 +84,7 @@ function buildImportedState(user, rank, importedAt) {
   state.clearedStage = 0;
   state.pendingPoints = 0;
   state.lastRewardAt = importedAt;
-  state.quickBattle = { date: new Date(importedAt).toISOString().slice(0, 10), count: 0 };
+  state.quickBattle = { windowStartedAt: 0, count: 0 };
   state.adventureRuns = { windowStartedAt: 0, count: 0 };
   state.adventureRun = { active: false, currentStage: 1, clearedStages: 0, startedAt: 0 };
   state.cardProgress = {};

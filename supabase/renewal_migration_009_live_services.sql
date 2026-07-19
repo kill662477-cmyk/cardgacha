@@ -104,7 +104,7 @@ begin
         'representativeCardId', representative_card_id,
         'mine', user_id = p_user_id
       ) order by rank)
-      from ranked where rank <= 20
+      from ranked where rank <= 50
     ), '[]'::jsonb)
   into v_population, v_rank, v_top_fifty_power, v_leaders;
 

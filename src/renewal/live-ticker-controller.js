@@ -121,17 +121,23 @@ export function createLiveTickerController({ runtime = null, getNickname = () =>
     });
   }
 
+  async function poll() {
+    if (!runtime?.getLiveEvents) return;
+    try {
+      const latest = await runtime.getLiveEvents();
+      events = mergeLiveEvents([...(latest ?? []), ...events], now());
+    } catch { /* keep showing whatever we already have */ }
+    render();
+  }
+
   async function start() {
     render();
-    if (runtime?.getLiveEvents) {
-      try {
-        const initial = await runtime.getLiveEvents();
-        events = mergeLiveEvents([...(initial ?? []), ...events], now());
-        render();
-      } catch { /* idle state remains available */ }
-    }
-    if (runtime?.subscribeLiveEvents) unsubscribe = runtime.subscribeLiveEvents((event) => push(event));
-    pruneTimer = window.setInterval(render, 30_000);
+    await poll();
+    // Supabase free-tier realtime concurrent-connection cap: a persistent channel per
+    // logged-in tab doesn't scale. REST-poll on the existing interval instead of
+    // subscribeLiveEvents() -- ticker updates every 30s instead of push-instant, but costs
+    // zero realtime connections. Re-enable subscribeLiveEvents() once on a paid plan.
+    pruneTimer = window.setInterval(poll, 30_000);
   }
 
   function stop() {

@@ -164,6 +164,11 @@ async function chatSdk() {
   throw lastError ?? new Error('SOOP ChatSDK를 불러오지 못했습니다.');
 }
 
+const MAX_RECONNECT_ATTEMPTS = 4;
+let reconnectAttempts = 0;
+let reconnectTimer = null;
+let manualStop = false;
+
 async function connect() {
   try {
     notice('SOOP ChatSDK 연결 중');
@@ -171,11 +176,18 @@ async function connect() {
     try { state.sdk = new ChatSDK(state.credentials.clientId); } catch { state.sdk = new ChatSDK(state.credentials.clientId, ''); }
     state.sdk.init?.();
     state.sdk.handleMessageReceived((action, message) => { void handleMessage(action, message); });
-    state.sdk.handleChatClosed(() => { state.connected = false; render(); notice('SOOP 연결 종료', 'error'); });
+    state.sdk.handleChatClosed(() => {
+      state.connected = false;
+      render();
+      if (manualStop) { manualStop = false; return; }
+      notice('SOOP 연결 끊김 · 자동 재연결 시도 중', 'error');
+      scheduleReconnect();
+    });
     state.sdk.handleError((code, message) => notice(`SOOP 오류: ${code || message || 'unknown'}`, 'error'));
     state.sdk.setAuth(state.credentials.accessToken);
     await state.sdk.connect();
     state.connected = true;
+    reconnectAttempts = 0;
     render();
     notice(`수집 중 · ${state.credentials.soopId}`, 'ok');
   } catch (error) {
@@ -185,7 +197,36 @@ async function connect() {
   }
 }
 
+function scheduleReconnect() {
+  if (reconnectTimer) return;
+  if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+    notice('SOOP 자동 재연결 실패 · 다시 연동해주세요', 'error');
+    return;
+  }
+  reconnectAttempts += 1;
+  const delayMs = Math.min(30_000, 3_000 * reconnectAttempts);
+  notice(`SOOP 재연결 대기 중 (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`, '');
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    void reconnectWithFreshToken();
+  }, delayMs);
+}
+
+async function reconnectWithFreshToken() {
+  try {
+    const result = await request('refreshToken');
+    state.credentials = result.credentials;
+    await connect();
+  } catch (error) {
+    notice(`SOOP 재연결 실패 · ${error.message}`, 'error');
+    scheduleReconnect();
+  }
+}
+
 function disconnect() {
+  manualStop = true;
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+  reconnectAttempts = 0;
   try { state.sdk?.disconnect?.(); } catch {}
   state.connected = false;
   render();

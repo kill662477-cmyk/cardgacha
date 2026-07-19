@@ -27,6 +27,7 @@ for (const required of [
   'supabase/renewal_migration_009_live_services.sql',
   'supabase/renewal_migration_010_soop_user_auth.sql',
   'supabase/renewal_migration_011_live_event_ticker.sql',
+  'supabase/renewal_migration_012_soop_token_refresh.sql',
   'supabase/config.toml',
   'supabase/functions/game-command/index.ts',
   'supabase/functions/game-command/deno.json',
@@ -101,6 +102,7 @@ assert.deepEqual(migrations, [
   'renewal_migration_009_live_services.sql',
   'renewal_migration_010_soop_user_auth.sql',
   'renewal_migration_011_live_event_ticker.sql',
+  'renewal_migration_012_soop_token_refresh.sql',
   'renewal_migration_999_drop_season1.sql',
 ]);
 

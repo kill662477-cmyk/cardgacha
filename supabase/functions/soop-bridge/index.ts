@@ -128,6 +128,15 @@ function extractSoopLoginId(profileImageUrl: unknown) {
   }
 }
 
+function parseTokenPayload(payload: Record<string, unknown>, fallbackRefreshToken = '') {
+  if (!payload?.access_token) throw new Error('TOKEN_EMPTY');
+  return {
+    accessToken: String(payload.access_token),
+    // SOOP may not rotate the refresh_token on every refresh; keep the prior one if omitted.
+    refreshToken: payload.refresh_token ? String(payload.refresh_token) : fallbackRefreshToken,
+  };
+}
+
 async function exchangeSoopToken(code: string) {
   const body = new URLSearchParams({
     grant_type: 'authorization_code',
@@ -140,9 +149,21 @@ async function exchangeSoopToken(code: string) {
     method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body,
   });
   if (!response.ok) throw new Error(`TOKEN_EXCHANGE_FAILED:${response.status}`);
-  const payload = await response.json();
-  if (!payload?.access_token) throw new Error('TOKEN_EXCHANGE_EMPTY');
-  return String(payload.access_token);
+  return parseTokenPayload(await response.json());
+}
+
+async function refreshSoopToken(refreshToken: string) {
+  const body = new URLSearchParams({
+    grant_type: 'refresh_token',
+    client_id: requiredEnv('SOOP_DONATION_CLIENT_ID'),
+    client_secret: requiredEnv('SOOP_DONATION_CLIENT_SECRET'),
+    refresh_token: refreshToken,
+  });
+  const response = await fetch(TOKEN_URL, {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body,
+  });
+  if (!response.ok) throw new Error(`TOKEN_REFRESH_FAILED:${response.status}`);
+  return parseTokenPayload(await response.json(), refreshToken);
 }
 
 async function stationId(accessToken: string) {
@@ -197,11 +218,11 @@ Deno.serve(async (req: Request) => {
       const state = await verifyToken(url.searchParams.get('state') ?? '', 'soop-oauth');
       const code = safeText(url.searchParams.get('code'), 512);
       if (!state?.userId || !state?.soopId || !code) return bridgePageRedirect('error', 'auth');
-      const accessToken = await exchangeSoopToken(code);
-      const connectedSoopId = await stationId(accessToken);
+      const tokens = await exchangeSoopToken(code);
+      const connectedSoopId = await stationId(tokens.accessToken);
       if (connectedSoopId !== state.soopId) return bridgePageRedirect('error', 'mismatch');
       const exchange = randomToken();
-      const encrypted = await encryptToken(accessToken);
+      const encrypted = await encryptToken(tokens.accessToken);
       const supabase = adminClient();
       const { error } = await supabase.from('gacha_s2_soop_oauth_exchanges').insert({
         exchange_hash: await sha256Hex(exchange),
@@ -212,6 +233,16 @@ Deno.serve(async (req: Request) => {
         expires_at: new Date(Date.now() + 2 * 60 * 1000).toISOString(),
       });
       if (error) throw new Error(`EXCHANGE_STORE_FAILED:${error.code ?? 'unknown'}`);
+      // Persist the refresh_token so the bridge can silently mint new access tokens later
+      // instead of forcing the streamer to click through SOOP OAuth again every session.
+      if (tokens.refreshToken) {
+        const encryptedRefresh = await encryptToken(tokens.refreshToken);
+        await supabase.from('gacha_s2_streamer_bridges').update({
+          soop_refresh_token_ciphertext: encryptedRefresh.ciphertext,
+          soop_refresh_token_iv: encryptedRefresh.iv,
+          soop_refresh_updated_at: new Date().toISOString(),
+        }).eq('user_id', state.userId);
+      }
       return bridgePageRedirect('exchange', exchange);
     } catch (error) {
       console.error('SOOP_CALLBACK_FAILED', error instanceof Error ? error.message : String(error));
@@ -274,6 +305,38 @@ Deno.serve(async (req: Request) => {
         soopId: data.soopId,
       },
     });
+  }
+
+  if (action === 'refreshToken') {
+    const { data: bridgeRow, error: bridgeError } = await supabase
+      .from('gacha_s2_streamer_bridges')
+      .select('soop_refresh_token_ciphertext, soop_refresh_token_iv')
+      .eq('user_id', session.userId)
+      .maybeSingle();
+    if (bridgeError || !bridgeRow?.soop_refresh_token_ciphertext || !bridgeRow?.soop_refresh_token_iv) {
+      return json(req, { ok: false, code: 'REFRESH_UNAVAILABLE', error: 'SOOP 재연동이 필요합니다.' }, 401);
+    }
+    try {
+      const storedRefreshToken = await decryptToken(bridgeRow.soop_refresh_token_ciphertext, bridgeRow.soop_refresh_token_iv);
+      const tokens = await refreshSoopToken(storedRefreshToken);
+      const encryptedRefresh = await encryptToken(tokens.refreshToken);
+      await supabase.from('gacha_s2_streamer_bridges').update({
+        soop_refresh_token_ciphertext: encryptedRefresh.ciphertext,
+        soop_refresh_token_iv: encryptedRefresh.iv,
+        soop_refresh_updated_at: new Date().toISOString(),
+      }).eq('user_id', session.userId);
+      return json(req, {
+        ok: true,
+        credentials: {
+          clientId: requiredEnv('SOOP_DONATION_CLIENT_ID'),
+          accessToken: tokens.accessToken,
+          soopId: session.soopId,
+        },
+      });
+    } catch (error) {
+      console.error('SOOP_TOKEN_REFRESH_FAILED', error instanceof Error ? error.message : String(error));
+      return json(req, { ok: false, code: 'REFRESH_FAILED', error: 'SOOP 재연동이 필요합니다.' }, 401);
+    }
   }
 
   if (action === 'donation') {

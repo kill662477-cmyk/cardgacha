@@ -134,18 +134,19 @@ begin
   end if;
 
   v_seed := public.gacha_s2_new_seed();
+  v_effective_stages := greatest(1, p_verified_cleared_stages);
   v_points := least(
     (v_config->'adventureRules'->'runReward'->>'maxPointsPerRun')::integer,
-    p_verified_cleared_stages * (v_config->'adventureRules'->'runReward'->>'pointsBasePerStage')::integer
+    v_effective_stages * (v_config->'adventureRules'->'runReward'->>'pointsBasePerStage')::integer
       + (v_config->'adventureRules'->'runReward'->>'pointsGrowthPerStage')::integer
-        * p_verified_cleared_stages * (p_verified_cleared_stages + 1) / 2
+        * v_effective_stages * (v_effective_stages + 1) / 2
   );
-  v_card_exp := p_verified_cleared_stages
+  v_card_exp := v_effective_stages
     * (v_config->'adventureRules'->'runReward'->>'cardExpPerClearedStage')::integer;
   if coalesce((v_active_buffs->>'cardExpEndAt')::bigint, 0) > v_now_ms then
     v_card_exp := ceil(v_card_exp * 1.5)::integer;
   end if;
-  v_bonus_item := public.gacha_s2_roll_adventure_drop(v_config, p_verified_cleared_stages, v_seed, 10);
+  v_bonus_item := public.gacha_s2_roll_adventure_drop(v_config, v_effective_stages, v_seed, 10);
   if v_bonus_item is not null then
     v_support_items := jsonb_set(
       v_support_items, array[v_bonus_item],

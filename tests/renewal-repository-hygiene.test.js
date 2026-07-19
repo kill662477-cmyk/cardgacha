@@ -105,6 +105,9 @@ assert.deepEqual(migrations, [
   'renewal_migration_011_live_event_ticker.sql',
   'renewal_migration_012_soop_token_refresh.sql',
   'renewal_migration_013_quick_battle_4h_window.sql',
+  'renewal_migration_014_allow_quick_battle_stage0.sql',
+  'renewal_migration_015_fix_points_growth_cast.sql',
+  'renewal_migration_016_sum_ten_reshuffle.sql',
   'renewal_migration_999_drop_season1.sql',
 ]);
 

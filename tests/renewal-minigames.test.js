@@ -8,7 +8,9 @@ import {
   createMemoryDeck,
   createSumTenBoard,
   evaluateSumSelection,
+  hasValidSumMove,
   normalizeMiniGameProgress,
+  reshuffleSumTiles,
 } from '../src/renewal/minigames.js';
 
 const cards = JSON.parse(fs.readFileSync(new URL('../data/renewal-cards.json', import.meta.url), 'utf8'));
@@ -41,8 +43,33 @@ assert.equal(invalid.valid, false);
 assert.equal(calculateMiniGameReward('memory', { completed: true, difficulty: 'basic', matches: 8, remainingSeconds: 30 }), 500);
 assert.equal(calculateMiniGameReward('memory', { completed: true, difficulty: 'advanced', matches: 18, remainingSeconds: 1 }), 1500);
 assert.equal(calculateMiniGameReward('memory', { completed: false }), 0);
-assert.equal(calculateMiniGameReward('sumTen', { score: 100 }), 140);
-assert.equal(calculateMiniGameReward('sumTen', { score: 999 }), 240);
+assert.equal(calculateMiniGameReward('sumTen', { score: 100 }), 1740);
+assert.equal(calculateMiniGameReward('sumTen', { score: 999 }), 3000);
+assert.equal(calculateMiniGameReward('sumTen', { score: 0 }), 0);
+
+// Deadlock detection + deterministic reshuffle (must mirror server verify RPC).
+function sumBoardFrom(values) {
+  return values.map((value, index) => ({
+    index, row: Math.floor(index / 17), column: index % 17, value, active: value > 0,
+  }));
+}
+// 34 active tiles alternating 9/8 => no rectangle can sum to 10 (min pair 16).
+const deadlock = sumBoardFrom(Array.from({ length: 170 }, (_, i) => (i < 34 ? (i % 2 ? 8 : 9) : 0)));
+assert.equal(hasValidSumMove(deadlock, 17, 10), false, 'all 8/9 tiles cannot reach 10');
+assert.equal(reshuffleSumTiles(deadlock, 17, 10), null, '8/9 multiset is unrescuable -> end game');
+// A board with a 4 and a 6 adjacent has a move; strip it so it deadlocks, reshuffle rescues.
+const rescuable = sumBoardFrom([4, 6, 7, 3, ...Array.from({ length: 166 }, () => 0)]);
+assert.equal(hasValidSumMove(rescuable, 17, 10), true, '4+6 adjacent is a valid move');
+// reshuffle is deterministic: same input -> identical output every call.
+const dead2 = sumBoardFrom([9, 1, 9, 1, ...Array.from({ length: 166 }, () => 0)]);
+// 9,1,9,1 in a row: 9+1=10 exists, so already playable.
+assert.equal(hasValidSumMove(dead2, 17, 10), true);
+const forced = sumBoardFrom([1, 1, 1, 7, ...Array.from({ length: 166 }, () => 0)]);
+// row 0: 1,1,1,7 -> 1+1+1+7 = 10 across cols 0..3.
+assert.equal(hasValidSumMove(forced, 17, 10), true, 'contiguous 1,1,1,7 sums to 10');
+const a = reshuffleSumTiles(deadlock, 17, 10);
+const b = reshuffleSumTiles(deadlock, 17, 10);
+assert.deepEqual(a, b, 'reshuffle must be deterministic');
 const reset = normalizeMiniGameProgress({ date: '2000-01-01', pointsEarned: 3000 }, Date.UTC(2026, 6, 17));
 assert.equal(reset.pointsEarned, 0);
 assert.deepEqual(reset.pointsEarnedByGame, { memory: 0, sumTen: 0 });

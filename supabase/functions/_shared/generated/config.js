@@ -227,7 +227,7 @@ export const MINI_GAME_RULES = {
     basic: { label: '4×4', pairs: 8, columns: 4, timeLimit: 90, completionReward: 500 },
     advanced: { label: '6×6', pairs: 18, columns: 6, timeLimit: 150, completionReward: 1500 },
   },
-  sumTen: { label: '캄몬사과게임', rows: 10, columns: 17, timeLimit: 120, baseReward: 40, rewardPerScore: 1, maxReward: 240 },
+  sumTen: { label: '캄몬사과게임', rows: 10, columns: 17, timeLimit: 120, baseReward: 40, rewardPerScore: 17, maxReward: 3000 },
 };
 
 export const WORLD_BOSS_RULES = {

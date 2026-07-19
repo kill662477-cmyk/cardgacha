@@ -80,6 +80,85 @@ export function applySumSelection(tiles, evaluation) {
   return tiles.map((tile) => removed.has(tile.index) ? { ...tile, active: false } : { ...tile });
 }
 
+const SUM_TEN_RESHUFFLE_ATTEMPTS = 4;
+
+// True when some axis-aligned rectangle of active tiles sums to exactly 10.
+// Uses a 2D prefix sum over active values so each rectangle is O(1); short-circuits.
+// Mirrors public.gacha_s2_sum_ten_has_move in the server verify RPC — keep in sync.
+export function hasValidSumMove(tiles, columns, rows) {
+  const cols = columns;
+  const rowCount = rows ?? Math.floor(tiles.length / columns);
+  const width = cols + 1;
+  const pre = new Array(width * (rowCount + 1)).fill(0);
+  for (let r = 0; r < rowCount; r += 1) {
+    for (let c = 0; c < cols; c += 1) {
+      const tile = tiles[r * cols + c];
+      const value = tile.active ? tile.value : 0;
+      pre[(r + 1) * width + (c + 1)] = value
+        + pre[r * width + (c + 1)]
+        + pre[(r + 1) * width + c]
+        - pre[r * width + c];
+    }
+  }
+  const rectSum = (r1, c1, r2, c2) => pre[(r2 + 1) * width + (c2 + 1)]
+    - pre[r1 * width + (c2 + 1)]
+    - pre[(r2 + 1) * width + c1]
+    + pre[r1 * width + c1];
+  for (let r1 = 0; r1 < rowCount; r1 += 1) {
+    for (let r2 = r1; r2 < rowCount; r2 += 1) {
+      for (let c1 = 0; c1 < cols; c1 += 1) {
+        for (let c2 = c1; c2 < cols; c2 += 1) {
+          if (rectSum(r1, c1, r2, c2) === 10) return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+function sumTenArrangement(sortedAsc, attempt) {
+  const m = sortedAsc.length;
+  const zigzag = () => {
+    const out = [];
+    let lo = 0;
+    let hi = m - 1;
+    while (lo <= hi) {
+      out.push(sortedAsc[lo]);
+      lo += 1;
+      if (lo <= hi) {
+        out.push(sortedAsc[hi]);
+        hi -= 1;
+      }
+    }
+    return out;
+  };
+  if (attempt === 0) return zigzag();
+  if (attempt === 1) return [...sortedAsc];
+  if (attempt === 2) return [...sortedAsc].reverse();
+  const z = zigzag();
+  return m > 1 ? z.slice(1).concat(z.slice(0, 1)) : z;
+}
+
+// Deterministic deadlock rescue: when no sum-10 remains, redistribute the
+// remaining active values into their positions using fixed arrangements (no RNG,
+// so the server can reproduce it exactly during replay). Returns the reshuffled
+// tiles for the first arrangement that restores a valid move, or null if none can
+// (caller should end the game). Mirrors public.gacha_s2_sum_ten_reshuffle.
+export function reshuffleSumTiles(tiles, columns, rows) {
+  const positions = [];
+  for (const tile of tiles) if (tile.active) positions.push(tile.index);
+  positions.sort((a, b) => a - b);
+  if (positions.length === 0) return null;
+  const sortedAsc = positions.map((index) => tiles[index].value).sort((a, b) => a - b);
+  for (let attempt = 0; attempt < SUM_TEN_RESHUFFLE_ATTEMPTS; attempt += 1) {
+    const arranged = sumTenArrangement(sortedAsc, attempt);
+    const next = tiles.map((tile) => ({ ...tile }));
+    positions.forEach((position, order) => { next[position].value = arranged[order]; });
+    if (hasValidSumMove(next, columns, rows)) return next;
+  }
+  return null;
+}
+
 export function calculateMiniGameReward(game, result) {
   if (game === 'memory') {
     if (!result.completed) return 0;

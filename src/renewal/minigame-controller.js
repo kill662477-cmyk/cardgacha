@@ -7,7 +7,9 @@ import {
   createMemoryDeck,
   createSumTenBoard,
   evaluateSumSelection,
+  hasValidSumMove,
   normalizeMiniGameProgress,
+  reshuffleSumTiles,
 } from './minigames.js';
 
 const number = new Intl.NumberFormat('ko-KR');
@@ -296,6 +298,8 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
         score: 0, combinations: 0,
       };
     }
+    // Initial deadlock guard (mirrors server): reshuffle a dead board, else play as dealt.
+    if (session?.game === 'sumTen') ensureSumPlayable();
     render();
     stopTimer();
     timer = window.setInterval(tick, 1000);
@@ -387,8 +391,24 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
       elements.miniGameScore.textContent = number.format(session.score);
     }
     sumDrag = null;
-    if (session.tiles.every((tile) => !tile.active)) finishGame({ completed: true });
-    else renderSumTen();
+    if (session.tiles.every((tile) => !tile.active)) return finishGame({ completed: true });
+    if (!ensureSumPlayable()) return finishGame({ completed: false });
+    renderSumTen();
+  }
+
+  // When the board deadlocks (no sum-10 remains) reshuffle the leftover tiles in
+  // place. Returns false only when no arrangement can restore a move — the server
+  // verify RPC runs the identical check, so both sides stay in sync.
+  function ensureSumPlayable() {
+    if (!session || session.game !== 'sumTen') return true;
+    if (!session.tiles.some((tile) => tile.active)) return true;
+    if (hasValidSumMove(session.tiles, session.columns, session.rows)) return true;
+    const next = reshuffleSumTiles(session.tiles, session.columns, session.rows);
+    if (!next) return false;
+    session.tiles = next;
+    session.reshuffles = (session.reshuffles ?? 0) + 1;
+    showToast('재배치! 합계 10 조합이 새로 생겼어요');
+    return true;
   }
 
   elements.miniGamePicker.addEventListener('click', (event) => {

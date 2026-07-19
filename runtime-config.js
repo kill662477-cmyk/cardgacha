@@ -4,7 +4,7 @@ globalThis.__CARD_GACHA_CONFIG__ = globalThis.__CARD_GACHA_CONFIG__ ?? {
   supabasePublishableKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsanZ6dWx0dXlpdWRoampmb3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NzUzNjUsImV4cCI6MjA5NzI1MTM2NX0.U2FYWE4AOfJS6utrXDvwhU4yUqNtDDKk75OM27IXXWU',
   // Maintenance toggle (Phase 1): true로 설정하면 app.js 로드 전에 점검 페이지로 가로채기.
   // 운영 토글 = 이 값을 수정 후 재배포. false로 두면 정상 동작.
-  maintenance: true,
+  maintenance: false,
   maintenanceTitle: '시즌2 긴급 점검 안내',
   maintenanceMessage: '안녕하세요, 카드가챠 운영팀입니다.\n\n현재 게임 데이터 초기화 및 밸런스 패치 작업이 진행 중입니다.\n\n이번 초기화로 인해 그동안 열심히 플레이해 주신 여러분의 진행 데이터가 리셋되는 점, 진심으로 사과드립니다. 더 나은 게임 환경과 공정한 밸런스를 위한 결정이오니 너그러운 양해 부탁드립니다.\n\n점검이 완료되면 별도 공지 없이 바로 접속 가능합니다.\n감사합니다.',
   maintenanceCode: 'MAINTENANCE // 데이터 초기화 & 밸런스 패치',

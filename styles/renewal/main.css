@@ -1234,7 +1234,7 @@ button[aria-busy="true"]::after {
 @media (max-width: 900px) {
   body { overflow: auto; }
   .game-shell { grid-template: 102px minmax(0,1fr) 66px / 1fr; height: 100svh; min-height: 100svh; }
-  .topbar { grid-column: 1; grid-row: 1; grid-template-columns: minmax(0,1fr) auto; grid-template-rows: 64px 38px; align-content: start; padding: 0 10px; }
+  .topbar { grid-column: 1; grid-row: 1; grid-template-columns: minmax(0,1fr) auto; grid-template-rows: 64px 38px; align-content: start; padding: 0 10px; gap: 0; }
   .profile-block { grid-column: 1; grid-row: 1; grid-template-columns: 38px auto; gap: 8px; }
   .currency-bar { grid-column: 2; grid-row: 1; }
   .live-ticker { grid-column: 1 / -1; grid-row: 2; border-left: none; border-right: none; margin: 0 -10px; }

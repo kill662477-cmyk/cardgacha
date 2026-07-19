@@ -192,7 +192,7 @@ function cacheElements() {
     'cardExpPerMinute', 'runPointReward', 'autoBattleButton',
     'formationButton', 'quickBattleButton', 'quickBattleCount', 'claimButton', 'pendingReward',
     'formationDialog', 'selectedFormation', 'inventoryGrid', 'selectionCount',
-    'confirmFormation', 'toast', 'attackEcho', 'battlefield', 'offlineTime', 'offlineSummary',
+    'confirmFormation', 'clearFormation', 'toast', 'attackEcho', 'battlefield', 'offlineTime', 'offlineSummary',
     'rewardDialog', 'rewardEyebrow', 'rewardTitle', 'rewardDuration',
     'rewardCardExp', 'rewardPoints', 'rewardParty', 'rewardNote', 'confirmReward',
     'adventureScreen', 'enhanceScreen', 'enhanceOwnedCount', 'enhanceTargetList', 'enhanceCardName',
@@ -922,6 +922,12 @@ function toggleFormationCard(cardId) {
   if (index >= 0) temporaryFormation.splice(index, 1);
   else if (temporaryFormation.length < GAME_RULES.formationSize) temporaryFormation.push(cardId);
   else showToast('출전 카드는 5장까지 선택 가능');
+  renderFormationDialog();
+}
+
+function clearFormationSelection() {
+  if (temporaryFormation.length === 0) return;
+  temporaryFormation = [];
   renderFormationDialog();
 }
 
@@ -2083,6 +2089,7 @@ function bindEvents() {
     if (button) toggleFormationCard(button.dataset.cardId);
   });
   elements.confirmFormation.addEventListener('click', confirmFormation);
+  elements.clearFormation.addEventListener('click', clearFormationSelection);
   elements.quickBattleButton.addEventListener('click', () => openRewardDialog('quick'));
   elements.claimButton.addEventListener('click', () => openRewardDialog('offline'));
   elements.confirmReward.addEventListener('click', confirmReward);
@@ -2236,7 +2243,7 @@ async function init() {
       const status = await gameService.getBridgeStatus();
       if (status?.ok !== false) bridgeStatus = status;
     }
-    elements.apiLinkButton.hidden = remoteMode && !bridgeStatus.canUseDonationBridge;
+    if (elements.apiLinkButton) elements.apiLinkButton.hidden = remoteMode && !bridgeStatus.canUseDonationBridge;
     miniGameController = createMiniGameController({
       cards,
       getState: () => state,
@@ -2295,7 +2302,7 @@ async function init() {
     renderAll();
     bindEvents();
     showScreen(activeScreen);
-    elements.logoutButton.hidden = !remoteMode;
+    if (elements.logoutButton) elements.logoutButton.hidden = !remoteMode;
     // 모바일에서 로그인 후 게임 진입 시 가로모드/전체화면 가이드 표시.
     showOrientGuideIfNeeded();
     await liveTickerController.start();
@@ -2303,8 +2310,8 @@ async function init() {
     const canPreviewState = ['localhost', '127.0.0.1'].includes(window.location.hostname) && SYSTEM_STATES[systemStatePreview];
     setSystemState(canPreviewState ? systemStatePreview : null);
   } catch (error) {
-    console.error(error);
-    elements.battleState.textContent = '카드 데이터 로드 실패';
+    console.error('[init] fatal:', error);
+    elements.battleState.textContent = `초기화 실패: ${error?.message ?? error}`;
     setSystemState('network');
   }
 }

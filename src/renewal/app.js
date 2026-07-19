@@ -582,7 +582,6 @@ function currentIdleReward(now = gameService.now()) {
 }
 
 function synchronizeTimedState(now = gameService.now()) {
-  if (remoteMode) return false;
   let changed = false;
   const energy = recoverEnergy(state, now);
   if (energy.recovered > 0) {

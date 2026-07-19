@@ -1309,7 +1309,8 @@ button[aria-busy="true"]::after {
 
 @media (max-width: 900px) and (orientation: landscape) and (max-height: 520px) {
   .game-shell { grid-template-rows: 52px minmax(0, 1fr) 52px; }
-  .topbar { height: 52px; }
+  .topbar { height: 52px; grid-template-rows: 52px; gap: 0; }
+  .live-ticker { display: none; }
   .currency.energy { display: inline-flex; }
   .currency-bar .sound-toggle { display: inline-grid; }
   .profile-block { grid-template-columns: 44px auto; gap: 6px; }

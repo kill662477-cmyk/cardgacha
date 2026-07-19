@@ -62,7 +62,7 @@ export const PACKS = {
   },
   premium: {
     name: '프리미엄 보급팩', price: 500, count: 4,
-    rates: { F: 8, E: 13, D: 19, C: 21, B: 18, A: 19.02, S: 1.5, SS: 0.42, SSS: 0.06 },
+    rates: { F: 9, E: 14, D: 19.5, C: 21, B: 18, A: 17.2, S: 1.0, SS: 0.25, SSS: 0.05 },
   },
   race: {
     name: '종족 보급팩', price: 100, count: 3,
@@ -139,9 +139,9 @@ export const BONUS_DROP_RULES = {
 export const REGIONS = [
   { id: 1, name: '끊어진 전파도시', code: 'signal-city', hpBase: 590000, attackBase: 3000, bossHp: 1200000, bossAttack: 4000 },
   { id: 2, name: '침묵한 중계기지', code: 'relay-base', hpBase: 1100000, attackBase: 4500, bossHp: 1820000, bossAttack: 6000 },
-  { id: 3, name: '검게 물든 스튜디오', code: 'black-studio', hpBase: 1450000, attackBase: 5800, bossHp: 2400000, bossAttack: 7500 },
-  { id: 4, name: '폭주한 데이터 요새', code: 'data-fortress', hpBase: 1900000, attackBase: 7000, bossHp: 3160000, bossAttack: 8500 },
-  { id: 5, name: '악플 코어 심층부', code: 'malice-core', hpBase: 3040000, attackBase: 8500, bossHp: 4900000, bossAttack: 9000 },
+  { id: 3, name: '검게 물든 스튜디오', code: 'black-studio', hpBase: 1700000, attackBase: 6500, bossHp: 2800000, bossAttack: 8500 },
+  { id: 4, name: '폭주한 데이터 요새', code: 'data-fortress', hpBase: 2500000, attackBase: 9000, bossHp: 4000000, bossAttack: 11000 },
+  { id: 5, name: '악플 코어 심층부', code: 'malice-core', hpBase: 4200000, attackBase: 12500, bossHp: 9500000, bossAttack: 21000 },
 ];
 
 const ENEMY_TYPES = ['crawler', 'jammer', 'leech', 'crusher'];
@@ -188,9 +188,9 @@ export const ADVENTURE_RULES = {
   maxRunsPerWindow: 3,
   runWindowMs: 4 * 60 * 60 * 1000,
   runReward: {
-    pointsBasePerStage: 45,
-    pointsGrowthPerStage: 10,
-    maxPointsPerRun: 15000,
+    pointsBasePerStage: 20,
+    pointsGrowthPerStage: 5.5,
+    maxPointsPerRun: 8000,
     cardExpPerClearedStage: 1,
   },
 };
@@ -222,7 +222,7 @@ export const COLLECTION_RULES = {
 
 export const MINI_GAME_RULES = {
   energyCost: 10,
-  dailyPointCapPerGame: 5000,
+  dailyPointCapPerGame: 3000,
   memory: {
     basic: { label: '4×4', pairs: 8, columns: 4, timeLimit: 90, completionReward: 500 },
     advanced: { label: '6×6', pairs: 18, columns: 6, timeLimit: 150, completionReward: 1500 },

@@ -53,12 +53,12 @@ assert.equal(resumedRun.verifiedClearedStages, 7);
 assert.equal(resumedRun.verificationDigest, 'a'.repeat(64));
 assert.deepEqual(calculateAdventureRunReward(3), {
   clearedStages: 3,
-  points: 195,
+  points: 93,
   cardExp: 3,
 });
-assert.equal(calculateAdventureRunReward(10).points, 1000);
-assert.equal(calculateAdventureRunReward(50).points, 15000);
-assert.equal(calculateAdventureRunReward(99).points, 15000, 'run point reward must cap at 15,000P');
+assert.equal(calculateAdventureRunReward(10).points, 502);
+assert.equal(calculateAdventureRunReward(50).points, 8000);
+assert.equal(calculateAdventureRunReward(99).points, 8000, 'run point reward must cap at 8,000P');
 
 const exGrant = claimAdventureExMilestones(20, {}, {}, {});
 assert.deepEqual(exGrant.awarded.map((reward) => reward.cardId), ['group-1', 'group-2', 'group-3', 'group-4']);

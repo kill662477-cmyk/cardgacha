@@ -46,14 +46,14 @@ assert.equal(calculateMiniGameReward('sumTen', { score: 999 }), 240);
 const reset = normalizeMiniGameProgress({ date: '2000-01-01', pointsEarned: 3000 }, Date.UTC(2026, 6, 17));
 assert.equal(reset.pointsEarned, 0);
 assert.deepEqual(reset.pointsEarnedByGame, { memory: 0, sumTen: 0 });
-const independentCaps = { pointsEarnedByGame: { memory: 4990, sumTen: 0 } };
+const independentCaps = { pointsEarnedByGame: { memory: 2990, sumTen: 0 } };
 assert.equal(capMiniGameReward(independentCaps, 'memory', 50), 10);
 assert.equal(capMiniGameReward(independentCaps, 'sumTen', 240), 240);
-assert.equal(capMiniGameReward({ pointsEarnedByGame: { memory: 3000, sumTen: 0 } }, 'memory', 1500), 1500);
+assert.equal(capMiniGameReward({ pointsEarnedByGame: { memory: 1000, sumTen: 0 } }, 'memory', 1500), 1500);
 const legacy = normalizeMiniGameProgress({
   date: '2026-07-17', pointsEarned: 3000, plays: 2, bestMemory: 10, bestSumTen: 5,
 }, new Date(2026, 6, 17, 12, 0, 0).getTime());
 assert.deepEqual(legacy.pointsEarnedByGame, { memory: 3000, sumTen: 0 });
 assert.equal(MINI_GAME_RULES.energyCost, 10);
 
-console.log('renewal minigame tests passed: 4x4 500P, 6x6 1500P, Cammon Apple, independent 5000P caps');
+console.log('renewal minigame tests passed: 4x4 500P, 6x6 1500P, Cammon Apple, independent 3000P caps');

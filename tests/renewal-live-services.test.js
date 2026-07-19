@@ -11,7 +11,7 @@ const ranking = await readFile(new URL('../src/renewal/ranking-controller.js', i
 assert.match(sql, /create or replace function public\.gacha_s2_get_power_ranking/);
 assert.match(sql, /set power_snapshot = p_verified_power, power_snapshot_at = now\(\)/);
 assert.match(sql, /order by state\.power_snapshot desc, state\.power_snapshot_at asc nulls last, state\.user_id/);
-assert.match(sql, /where rank <= 20/);
+assert.match(sql, /where rank <= 50/);
 assert.match(sql, /when v_rank <= 50 or v_top_fifty_power = 0 then 0/);
 
 assert.match(sql, /action in \('BALLOON_GIFTED', 'BATTLE_MISSION_GIFTED'\)/);

@@ -66,8 +66,8 @@ export function advanceAdventureRun(run) {
 export function calculateAdventureRunReward(clearedStages) {
   const cleared = Math.max(0, Math.floor(Number(clearedStages) || 0));
   const rules = ADVENTURE_RULES.runReward;
-  const points = cleared * rules.pointsBasePerStage
-    + rules.pointsGrowthPerStage * cleared * (cleared + 1) / 2;
+  const points = Math.floor(cleared * rules.pointsBasePerStage
+    + rules.pointsGrowthPerStage * cleared * (cleared + 1) / 2);
   return {
     clearedStages: cleared,
     points: Math.min(rules.maxPointsPerRun, points),

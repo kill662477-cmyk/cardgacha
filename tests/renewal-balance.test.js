@@ -67,7 +67,7 @@ const isolatedRarityDeck = (rarity, enhancement = 0) => fixedArchetypes.map((arc
   race: 'Z',
 }));
 const zeroStarReach = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'].map((rarity) => reaches(isolatedRarityDeck(rarity)));
-assert.deepEqual(zeroStarReach, [3, 5, 8, 10, 11, 18, 24, 33, 40], 'zero-star rarity progression must not collapse into a region-2 dead zone');
+assert.deepEqual(zeroStarReach, [3, 5, 8, 10, 11, 18, 20, 24, 30], 'zero-star rarity progression must not collapse into a region-2 dead zone');
 
 const combatRarities = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
 for (let rarityIndex = 1; rarityIndex < combatRarities.length; rarityIndex += 1) {
@@ -82,9 +82,8 @@ for (let rarityIndex = 1; rarityIndex < combatRarities.length; rarityIndex += 1)
   }
 }
 
-assert.equal(clearsAll(rarityDeck('S', 9), cardOnlyBonuses), true, 'S 9성 deck must full-clear all 50 stages without account scaling');
-assert.equal(clearsAll(rarityDeck('SS', 5), cardOnlyBonuses), true, 'SS 5성 deck must full-clear without account scaling');
-assert.equal(clearsAll(rarityDeck('SS', 6), cardOnlyBonuses), true, 'SS 6성 deck must full-clear without account scaling');
+assert.equal(clearsAll(rarityDeck('SS', 9), fullCollection), true, 'SS 9성 deck with full collection must full-clear');
+assert.equal(stallsBeforeEnd(rarityDeck('S', 9), fullCollection), true, 'S 9성 deck with full collection must NOT full-clear');
 assert.equal(stallsBeforeEnd(isolatedRarityDeck('F', 9), cardOnlyBonuses), true, 'F 9성 deck must retain an endgame wall');
 assert.equal(stallsBeforeEnd(isolatedRarityDeck('E', 9), cardOnlyBonuses), true, 'E 9성 deck must retain an endgame wall');
 assert.equal(stallsBeforeEnd(isolatedRarityDeck('D', 9), cardOnlyBonuses), true, 'D 9성 deck must retain an endgame wall');

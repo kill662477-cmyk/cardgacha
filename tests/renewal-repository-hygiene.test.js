@@ -108,6 +108,7 @@ assert.deepEqual(migrations, [
   'renewal_migration_014_allow_quick_battle_stage0.sql',
   'renewal_migration_015_fix_points_growth_cast.sql',
   'renewal_migration_016_sum_ten_reshuffle.sql',
+  'renewal_migration_017_world_boss_status_readonly.sql',
   'renewal_migration_999_drop_season1.sql',
 ]);
 

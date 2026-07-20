@@ -11,15 +11,24 @@ const env = envText.split('\n').reduce((acc, line) => {
 const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 async function run() {
-  const { data: { user }, error: authError } = await supabase.auth.signInWithPassword({
-    email: 'test@example.com',
+  let { data: { user }, error: authError } = await supabase.auth.signInWithPassword({
+    email: 'test2@example.com',
     password: 'password123'
   });
+  
   if (authError) {
-    console.log('Auth Error:', authError.message);
-    return;
+    const signupRes = await supabase.auth.signUp({
+      email: 'test2@example.com',
+      password: 'password123'
+    });
+    if (signupRes.error) {
+      console.log('Signup Error:', signupRes.error.message);
+      return;
+    }
+    user = signupRes.data.user;
   }
   
+  console.log('User signed in:', user?.id);
   const { data, error } = await supabase.functions.invoke('game-command', {
     body: { kind: 'snapshot' }
   });

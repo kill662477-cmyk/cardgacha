@@ -123,8 +123,8 @@ Deno.serve(async (req: Request) => {
     try {
       const snapshot = await router.loadSnapshot(userId);
       return json(req, { ok: true, serverTime: Date.now(), snapshot });
-    } catch {
-      return json(req, { ok: false, code: 'INTERNAL_ERROR', message: '계정 상태를 불러오지 못했습니다.' }, 500);
+    } catch (e: any) {
+      return json(req, { ok: false, code: 'INTERNAL_ERROR', message: `계정 상태를 불러오지 못했습니다. (${e?.message ?? 'unknown'})` }, 500);
     }
   }
   if (body.kind === 'worldBossStatus') {

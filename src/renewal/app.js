@@ -43,7 +43,7 @@ import {
   recoverEnergy,
   rewardRates,
 } from './rewards.js';
-import { assertValidGameState } from './state-schema.js';
+import { assertValidGameState, migrateGameState } from './state-schema.js';
 import { createLocalGameService } from './local-game-service.js';
 import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './remote-runtime.js';
 import { GAME_COMMAND_TYPES } from './service-contract.js';
@@ -274,7 +274,9 @@ function runUiOperation(operation, button, task) {
 }
 
 function applyServerSnapshot(snapshot) {
-  state = mergeServerSnapshot(snapshot, state);
+  const migrated = migrateGameState(snapshot);
+  if (!migrated.ok) throw new Error(`Snapshot migration failed: ${migrated.issues[0]?.message}`);
+  state = mergeServerSnapshot(migrated.state, state);
   return state;
 }
 

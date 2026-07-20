@@ -225,7 +225,15 @@ function cacheElements() {
     'rewardDurationBlock', 'rewardBreakdown', 'rewardEmptyState',
     'loginDialog', 'loginForm', 'loginKeyInput', 'loginSubmit', 'loginError', 'soopLoginButton',
     'orientGuide', 'orientCta', 'orientSkip',
-  ].forEach((id) => { elements[id] = document.getElementById(id); });
+  ].forEach((id) => {
+    let el = document.getElementById(id);
+    if (!el) {
+      // Fallback for cached index.html versions with kebab-case IDs
+      const kebabId = id.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
+      el = document.getElementById(kebabId);
+    }
+    elements[id] = el;
+  });
 }
 
 function emptyStateMarkup({ stateType = 'empty', icon = 'archive-x', eyebrow, title, message, compact = false }) {

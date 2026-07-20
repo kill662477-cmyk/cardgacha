@@ -4,13 +4,15 @@ export const COMBAT_RANKING_RULES = {
 };
 
 const FEATURED_NAMES = [
-  '전파도시_루키', 'Fresh민트', 'Calm_브로커', '암흑신호', 'MSTZ_손실바',
-  '테란반장', 'ZERG_SIGNAL', '푸른수정탑', '김치신호', 'NOISE_CUTTER',
+  '꺼내먹어요e', '빙하.', 'Mstz_손실바', 'TayK', 'HyuN:9',
+  'Calm_벌초', '오랜ㄴr무', '모야!', '캄사탄', '비타밍500',
+  '브레인', 'Aerys', '죽한연', '스타트아토', '억타구경꾼',
+  '사랑해요형', 'Calm_Jm~', '콩맛두유', '아르헨_', 'Calm_별',
 ];
 
 export const COMBAT_POWER_LEADERS = Array.from({ length: 50 }, (_, index) => ({
   nickname: FEATURED_NAMES[index] ?? `CALM_RANKER_${String(index + 1).padStart(2, '0')}`,
-  power: 928_540 - index * 6_080,
+  power: 450_000 - index * 8_500,
 }));
 
 export function buildCombatPowerRanking(nickname, combatPower, population = COMBAT_RANKING_RULES.population) {

@@ -307,8 +307,10 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
 
   function flipMemoryCard(index) {
     if (!session || session.game !== 'memory' || resolvingMemory || session.matched.has(index) || session.open.includes(index)) return;
+    const atMs = Math.max(0, clock.now() - session.startAt);
+    if (atMs > session.timeLimit * 1000) return;
     session.open.push(index);
-    session.inputLog?.push({ index, atMs: Math.max(0, clock.now() - session.startAt) });
+    session.inputLog?.push({ index, atMs });
     renderMemory();
     if (session.open.length < 2) return;
     resolvingMemory = true;
@@ -378,11 +380,17 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
 
   function endSumDrag(event) {
     if (!sumDrag || event.pointerId !== sumDrag.pointerId || !session) return;
+    const atMs = Math.max(0, clock.now() - session.startAt);
+    if (atMs > session.timeLimit * 1000) {
+      sumDrag = null;
+      updateSumSelection();
+      return;
+    }
     const evaluation = currentSumEvaluation();
     session.inputLog?.push({
       start: sumDrag.start.index,
       end: sumDrag.end.index,
-      atMs: Math.max(0, clock.now() - session.startAt),
+      atMs,
     });
     if (evaluation?.valid) {
       session.tiles = applySumSelection(session.tiles, evaluation);

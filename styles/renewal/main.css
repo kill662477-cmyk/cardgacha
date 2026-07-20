@@ -333,7 +333,8 @@ button[aria-busy="true"]::after {
 .enhance-exp-block b { color: var(--gold); }
 .enhance-exp-track { height: 7px; margin-top: 7px; background: #222822; }
 .enhance-exp-track i { display: block; width: 0; height: 100%; background: var(--gold); box-shadow: 0 0 9px rgba(229,189,78,.6); }
-.card-exp-potion-button { width: 100%; min-height: 34px; margin-top: 8px; border: 1px solid rgba(98,212,208,.42); background: rgba(98,212,208,.08); color: #b8fffb; display: flex; align-items: center; justify-content: center; gap: 7px; font: inherit; cursor: pointer; }
+.enhance-exp-actions { display: flex; gap: 8px; margin-top: 8px; }
+.card-exp-potion-button { flex: 1; min-height: 34px; border: 1px solid rgba(98,212,208,.42); background: rgba(98,212,208,.08); color: #b8fffb; display: flex; align-items: center; justify-content: center; gap: 7px; font: inherit; cursor: pointer; }
 .card-exp-potion-button svg { width: 14px; height: 14px; }
 .card-exp-potion-button b { margin-left: auto; min-width: 28px; padding: 3px 6px; color: #07100f; background: #62d4d0; }
 .card-exp-potion-button:disabled { opacity: .36; cursor: not-allowed; }

@@ -119,7 +119,7 @@ export const SUPPORT_ITEMS = {
   enhance10: { name: '고순도 강화 촉진제', category: '강화', effect: '성공률 +10%p' },
   destructionGuard: { name: '파괴 차단제', category: '강화', effect: '파괴 1회 차단' },
   cardExpPotion: { name: '카드 EXP 포션', category: '경험치', effect: '선택 카드 EXP +300', cardExp: 300 },
-  cardExpPotionLarge: { name: '농축 카드 EXP 포션', category: '경험치', effect: '선택 카드 EXP +10', cardExp: 10 },
+  cardExpPotionLarge: { name: '농축 카드 EXP 포션', category: '경험치', effect: '선택 카드 EXP +20', cardExp: 20 },
   exp30m: { name: '경험 신호 증폭제', category: '경험치', effect: '카드 EXP +50% · 30분', durationMinutes: 30 },
   exp2h: { name: '고출력 경험 신호 증폭제', category: '경험치', effect: '카드 EXP +50% · 2시간', durationMinutes: 120 },
   generalTicket: { name: '일반 카드팩 교환권', category: '교환권', effect: '일반팩 1개', pack: 'general' },

@@ -200,7 +200,7 @@ function cacheElements() {
     'rewardCardExp', 'rewardPoints', 'rewardParty', 'rewardNote', 'confirmReward',
     'adventureScreen', 'enhanceScreen', 'enhanceOwnedCount', 'enhanceTargetList', 'enhanceCardName',
     'enhanceLockButton', 'enhanceCardPreview', 'enhanceCardMeta', 'enhanceExpText', 'enhanceExpBar',
-    'cardExpPotionButton', 'cardExpPotionCount',
+    'cardExpPotionLargeButton', 'cardExpPotionLargeCount', 'cardExpPotionButton', 'cardExpPotionCount',
     'enhanceStatCompare', 'enhanceTargetLevel', 'enhanceStatus', 'enhanceSuccessRate',
     'enhanceFailRate', 'enhanceDestroyRate', 'enhanceMaterialRule', 'enhanceMaterialOptions',
     'enhanceMaterials', 'enhanceSupports', 'enhance5Count', 'enhance10Count',
@@ -1195,6 +1195,8 @@ function renderEnhancementFocus(card) {
     elements.enhanceCardMeta.textContent = '';
     elements.enhanceExpText.textContent = '0 / 0';
     elements.enhanceExpBar.style.width = '0%';
+    elements.cardExpPotionLargeCount.textContent = state.supportItems.cardExpPotionLarge ?? 0;
+    elements.cardExpPotionLargeButton.disabled = true;
     elements.cardExpPotionCount.textContent = state.supportItems.cardExpPotion ?? 0;
     elements.cardExpPotionButton.disabled = true;
     elements.enhanceStatCompare.innerHTML = '';
@@ -1212,6 +1214,8 @@ function renderEnhancementFocus(card) {
   elements.enhanceCardMeta.textContent = `${card.race} · ${ARCHETYPES[card.archetype].label} · 보유 ${state.cardCopies[card.id]}장`;
   elements.enhanceExpText.textContent = required === 0 ? 'MAX' : `${number.format(card.exp)} / ${number.format(required)}`;
   elements.enhanceExpBar.style.width = `${expPercent}%`;
+  elements.cardExpPotionLargeCount.textContent = state.supportItems.cardExpPotionLarge ?? 0;
+  elements.cardExpPotionLargeButton.disabled = required <= 0 || card.exp >= required || (state.supportItems.cardExpPotionLarge ?? 0) <= 0;
   elements.cardExpPotionCount.textContent = state.supportItems.cardExpPotion ?? 0;
   elements.cardExpPotionButton.disabled = required <= 0 || card.exp >= required || (state.supportItems.cardExpPotion ?? 0) <= 0;
   elements.enhanceStatCompare.innerHTML = [
@@ -1898,6 +1902,28 @@ async function useSelectedCardExpPotion() {
   showToast(`${card.member} · ${result.reason}`);
 }
 
+async function useSelectedCardExpPotionLarge() {
+  const card = selectedEnhancementCard();
+  if (!card) return showToast('EXP를 지급할 카드를 선택하세요');
+  if (remoteMode) {
+    return runUiOperation('useSupportItem', elements.cardExpPotionLargeButton, async () => {
+      const response = await executeServerCommand(GAME_COMMAND_TYPES.USE_SUPPORT_ITEM, {
+        itemId: 'cardExpPotionLarge', targetCardId: card.id, race: null,
+      });
+      if (!response?.ok) return response;
+      renderEnhancement();
+      showToast(`${card.member} · 카드 EXP +${number.format(response.result?.cardExpGained ?? 0)}`);
+      return response;
+    });
+  }
+  const result = useCardExpPotion(state, card.id, cardExpRequired(card.enhancement), 'cardExpPotionLarge');
+  if (!result.used) return showToast(result.reason);
+  state = result.state;
+  gameService.persistSnapshot(state);
+  renderEnhancement();
+  showToast(`${card.member} · ${result.reason}`);
+}
+
 function releaseHeavyScreenDom(screen) {
   if (screen === 'collection') {
     elements.collectionCardGrid.replaceChildren();
@@ -2198,6 +2224,7 @@ function bindEvents() {
     renderEnhancement();
   });
   elements.enhanceLockButton.addEventListener('click', toggleEnhancementLock);
+  elements.cardExpPotionLargeButton.addEventListener('click', useSelectedCardExpPotionLarge);
   elements.cardExpPotionButton.addEventListener('click', useSelectedCardExpPotion);
   elements.enhanceAttemptButton.addEventListener('click', prepareEnhancementAttempt);
   elements.confirmEnhanceAttempt.addEventListener('click', () => executeEnhancementAttempt(elements.confirmEnhanceAttempt));

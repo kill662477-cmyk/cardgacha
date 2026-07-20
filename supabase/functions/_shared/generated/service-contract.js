@@ -118,10 +118,10 @@ function validatePayload(type, payload, issues) {
       break;
     case GAME_COMMAND_TYPES.USE_SUPPORT_ITEM: {
       validateString(issues, payload.itemId, 'payload.itemId', 80);
-      const targetRequired = payload.itemId === 'cardExpPotion';
+      const targetRequired = payload.itemId === 'cardExpPotion' || payload.itemId === 'cardExpPotionLarge';
       const raceRequired = payload.itemId === 'raceTicket';
       if (targetRequired) validateString(issues, payload.targetCardId, 'payload.targetCardId', 80);
-      else if (payload.targetCardId !== null && payload.targetCardId !== undefined) addIssue(issues, 'payload.targetCardId', 'targetCardId is only valid for cardExpPotion');
+      else if (payload.targetCardId !== null && payload.targetCardId !== undefined) addIssue(issues, 'payload.targetCardId', 'targetCardId is only valid for EXP potions');
       if (raceRequired && !['저그', '테란', '프로토스'].includes(payload.race)) addIssue(issues, 'payload.race', 'valid race required');
       else if (!raceRequired && payload.race !== null && payload.race !== undefined) addIssue(issues, 'payload.race', 'race is only valid for raceTicket');
       break;

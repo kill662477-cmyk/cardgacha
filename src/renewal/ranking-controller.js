@@ -30,16 +30,24 @@ export function createRankingController({ cards = [], getState, getFormation, ge
   function openRankerDeck(rank) {
     const entry = cachedRanking?.leaders?.find((leader) => leader.rank === rank);
     if (!entry) return;
-    const deck = (entry.formation ?? []).map((id) => cardsById.get(id)).filter(Boolean);
+    const deck = (entry.formation ?? []).map((item) => {
+      const id = typeof item === 'string' ? item : item?.cardId;
+      const card = cardsById.get(id);
+      if (!card) return null;
+      const enhancement = typeof item === 'string' ? 0 : Number(item?.enhancement) || 0;
+      return { ...card, enhancement };
+    }).filter(Boolean);
     elements.rankerDeckEyebrow.textContent = `${entry.rank}위 · ${entry.nickname}`;
     elements.rankerDeckTitle.textContent = `${escapeHtml(entry.nickname)}님의 편성`;
     elements.rankerDeckPower.textContent = `전투력 ${number.format(entry.power)}`;
-    elements.rankerDeckGrid.innerHTML = deck.length ? deck.map((card) => `<figure class="card-visual" data-rarity="${card.rarity}" data-stars="${card.enhancement ?? 0}" style="--rarity:${RARITIES[card.rarity].color}">
+    elements.rankerDeckGrid.innerHTML = deck.length ? deck.map((card) => `<figure class="card-visual" data-rarity="${card.rarity}" data-stars="${card.enhancement}" style="--rarity:${RARITIES[card.rarity].color}">
       <img class="card-photo" src="${imagePath(card)}" alt="${escapeHtml(card.member)}">${cardVisualChrome(card)}<figcaption>${escapeHtml(card.member)}</figcaption>
     </figure>`).join('') : '<p class="ranking-note">편성 정보를 아직 확인할 수 없습니다.</p>';
     window.lucide?.createIcons();
     elements.rankerDeckDialog.showModal();
   }
+
+  elements.rankerDeckDialog.addEventListener('click', () => elements.rankerDeckDialog.close());
 
   function bindRankerDeckClicks(container) {
     container.addEventListener('click', (event) => {

@@ -267,20 +267,22 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
       const remote = response.result;
       if (selectedGame === 'memory') {
         const cardsById = new Map(cards.map((card) => [card.id, card]));
+        const started = clock.now();
         session = {
           id: sequence, runId: remote.runId, inputLog: [], game: 'memory', mode: selectedMode,
           difficulty: memoryDifficulty, columns: memoryDifficulty === 'advanced' ? 6 : 4,
           pairs: remote.board.length / 2,
           deck: remote.board.map((cardId) => ({ ...cardsById.get(cardId), pairId: cardId })),
-          startAt: now, endAt: now + remote.timeLimit * 1000,
+          startAt: started, endAt: started + remote.timeLimit * 1000,
           open: [], matched: new Set(), matches: 0, attempts: 0, streak: 0, score: 0,
         };
       } else {
+        const started = clock.now();
         session = {
           id: sequence, runId: remote.runId, inputLog: [], game: 'sumTen', mode: selectedMode,
           columns: 17, rows: 10,
           tiles: remote.board.map((value, index) => ({ index, value, row: Math.floor(index / 17), column: index % 17, active: true })),
-          startAt: now, endAt: now + remote.timeLimit * 1000, score: 0, combinations: 0,
+          startAt: started, endAt: started + remote.timeLimit * 1000, score: 0, combinations: 0,
         };
       }
     } else if (selectedGame === 'memory') {

@@ -49,7 +49,7 @@ import { createLocalGameService } from './local-game-service.js';
 import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './remote-runtime.js';
 import { GAME_COMMAND_TYPES } from './service-contract.js';
 import { createRequestCoordinator, REQUEST_PHASES } from './request-coordinator.js';
-import { createMiniGameController } from './minigame-controller.js';
+import { createMiniGameController } from './minigame-controller.js?v=20260721';
 import { createWorldBossController } from './worldboss-controller.js';
 import { createRankingController } from './ranking-controller.js';
 import { createFxController } from './fx-controller.js';

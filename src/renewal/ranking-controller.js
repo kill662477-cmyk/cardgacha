@@ -11,6 +11,7 @@ export function createRankingController({ cards = [], getState, getFormation, ge
     'rankingPopulation', 'rankingPodium', 'rankingList', 'rankingNickname',
     'rankingMyRank', 'rankingMyPercentile', 'rankingMyPower', 'rankingTopFiftyGap',
     'rankingProgressBar', 'rankingFormation',
+    'rankerDeckDialog', 'rankerDeckEyebrow', 'rankerDeckTitle', 'rankerDeckPower', 'rankerDeckGrid',
   ].map((id) => [id, document.getElementById(id)]));
   const cardsById = new Map(cards.map((card) => [card.id, card]));
   let renderSequence = 0;
@@ -21,10 +22,41 @@ export function createRankingController({ cards = [], getState, getFormation, ge
   }
 
   function rowMarkup(entry) {
-    return `<li class="${entry.mine ? 'mine' : ''}">
+    return `<li class="${entry.mine ? 'mine' : ''}" data-rank="${entry.rank}" role="button" tabindex="0">
       <b>${entry.rank}</b><span>${escapeHtml(entry.nickname)}</span><strong>${number.format(entry.power)} <small>CP</small></strong>
     </li>`;
   }
+
+  function openRankerDeck(rank) {
+    const entry = cachedRanking?.leaders?.find((leader) => leader.rank === rank);
+    if (!entry) return;
+    const deck = (entry.formation ?? []).map((id) => cardsById.get(id)).filter(Boolean);
+    elements.rankerDeckEyebrow.textContent = `${entry.rank}위 · ${entry.nickname}`;
+    elements.rankerDeckTitle.textContent = `${escapeHtml(entry.nickname)}님의 편성`;
+    elements.rankerDeckPower.textContent = `전투력 ${number.format(entry.power)}`;
+    elements.rankerDeckGrid.innerHTML = deck.length ? deck.map((card) => `<figure class="card-visual" data-rarity="${card.rarity}" data-stars="${card.enhancement ?? 0}" style="--rarity:${RARITIES[card.rarity].color}">
+      <img class="card-photo" src="${imagePath(card)}" alt="${escapeHtml(card.member)}">${cardVisualChrome(card)}<figcaption>${escapeHtml(card.member)}</figcaption>
+    </figure>`).join('') : '<p class="ranking-note">편성 정보를 아직 확인할 수 없습니다.</p>';
+    window.lucide?.createIcons();
+    elements.rankerDeckDialog.showModal();
+  }
+
+  function bindRankerDeckClicks(container) {
+    container.addEventListener('click', (event) => {
+      const target = event.target.closest('[data-rank]');
+      if (!target) return;
+      openRankerDeck(Number(target.dataset.rank));
+    });
+    container.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      const target = event.target.closest('[data-rank]');
+      if (!target) return;
+      event.preventDefault();
+      openRankerDeck(Number(target.dataset.rank));
+    });
+  }
+  bindRankerDeckClicks(elements.rankingPodium);
+  bindRankerDeckClicks(elements.rankingList);
 
   function podiumCard(entry, state, formation) {
     const rankedRepresentative = cardsById.get(entry.representativeCardId);
@@ -48,7 +80,7 @@ export function createRankingController({ cards = [], getState, getFormation, ge
       const cardMarkup = card ? `<figure class="ranking-podium-card card-visual" data-rarity="${card.rarity}" data-stars="${card.enhancement ?? 0}" style="--rarity:${RARITIES[card.rarity].color}">
         <img class="card-photo" src="${imagePath(card)}" alt="${escapeHtml(card.member)} 대표 카드">${cardVisualChrome(card)}
       </figure>` : '';
-      return `<article class="ranking-podium-item rank-${entry.rank}${entry.mine ? ' mine' : ''}">
+      return `<article class="ranking-podium-item rank-${entry.rank}${entry.mine ? ' mine' : ''}" data-rank="${entry.rank}" role="button" tabindex="0">
         <span>${entry.rank}위</span><div class="ranking-podium-emblem"><i data-lucide="${entry.rank === 1 ? 'crown' : 'medal'}"></i></div>${cardMarkup}<div class="ranking-podium-copy"><strong>${escapeHtml(entry.nickname)}</strong><b>${number.format(entry.power)} CP</b></div>
       </article>`;
     }).join('');

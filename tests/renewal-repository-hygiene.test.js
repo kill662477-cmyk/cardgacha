@@ -111,6 +111,8 @@ assert.deepEqual(migrations, [
   'renewal_migration_017_world_boss_status_readonly.sql',
   'renewal_migration_018_add_jjiking_sss_card.sql',
   'renewal_migration_019_jjiking_ss_and_photo_swap.sql',
+  'renewal_migration_020_ranking_representative_fallback.sql',
+  'renewal_migration_021_ranking_formation_reveal.sql',
   'renewal_migration_999_drop_season1.sql',
 ]);
 

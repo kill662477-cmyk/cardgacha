@@ -723,7 +723,8 @@ button[aria-busy="true"]::after {
 .ranking-heading small { display: block; color: var(--acid); font-size: 8px; font-weight: 950; }
 .ranking-heading strong { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; }
 .ranking-podium { display: grid; grid-template-columns: repeat(3, minmax(0, 190px)); justify-content: center; align-items: end; gap: 10px; padding: 12px 22px 0; border-bottom: 1px solid var(--line); background-image: linear-gradient(rgba(229,189,78,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(229,189,78,.02) 1px, transparent 1px); background-size: 30px 30px; }
-.ranking-podium-item { position: relative; display: grid; grid-template-columns: 68px minmax(0, 1fr); align-items: center; gap: 9px; height: 164px; padding: 12px; border: 1px solid #4b4838; border-bottom: 3px solid #a7a58e; background: #10130f; text-align: left; }
+.ranking-podium-item { position: relative; display: grid; grid-template-columns: 68px minmax(0, 1fr); align-items: center; gap: 9px; height: 164px; padding: 12px; border: 1px solid #4b4838; border-bottom: 3px solid #a7a58e; background: #10130f; text-align: left; cursor: pointer; transition: background .15s ease; }
+.ranking-podium-item:hover, .ranking-podium-item:focus-visible { background: #171b14; }
 .ranking-podium-item.rank-1 { grid-template-columns: 84px minmax(0, 1fr); height: 208px; border-color: var(--gold); border-bottom-width: 4px; background: #17150c; box-shadow: 0 0 30px rgba(229,189,78,.16); }
 .ranking-podium-item.rank-2 { border-bottom-color: #c9d0cc; }
 .ranking-podium-item.rank-3 { border-bottom-color: #b87949; }
@@ -743,7 +744,9 @@ button[aria-busy="true"]::after {
 .ranking-table-head { display: grid; grid-template-columns: 58px minmax(0, 1fr) 150px; padding: 10px 20px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 10px; }
 .ranking-table-head span:last-child { text-align: right; }
 .ranking-list { margin: 0; padding: 0 14px 12px; overflow-y: auto; list-style: none; }
-.ranking-list li { display: grid; grid-template-columns: 44px minmax(0, 1fr) 150px; align-items: center; min-height: 44px; padding: 0 8px; border-bottom: 1px solid #1d231f; }
+.ranking-list li { display: grid; grid-template-columns: 44px minmax(0, 1fr) 150px; align-items: center; min-height: 44px; padding: 0 8px; border-bottom: 1px solid #1d231f; cursor: pointer; transition: background .15s ease; }
+.ranking-list li:hover, .ranking-list li:focus-visible { background: rgba(255,255,255,.04); outline: none; }
+.ranker-deck-dialog .ranking-formation-block { padding: 15px 0 0; }
 .ranking-list li > b { color: #b0b7b1; font-size: 13px; }
 .ranking-list li > span { overflow: hidden; font-size: 14px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
 .ranking-list li > strong { color: var(--acid); font-size: 15px; font-variant-numeric: tabular-nums; text-align: right; }

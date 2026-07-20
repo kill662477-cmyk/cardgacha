@@ -121,7 +121,7 @@ export function createLiveTickerController({ runtime = null, getNickname = () =>
     });
   }
 
-  async function poll() {
+  async function backfill() {
     if (!runtime?.getLiveEvents) return;
     try {
       const latest = await runtime.getLiveEvents();
@@ -132,12 +132,11 @@ export function createLiveTickerController({ runtime = null, getNickname = () =>
 
   async function start() {
     render();
-    await poll();
-    // Supabase free-tier realtime concurrent-connection cap: a persistent channel per
-    // logged-in tab doesn't scale. REST-poll on the existing interval instead of
-    // subscribeLiveEvents() -- ticker updates every 30s instead of push-instant, but costs
-    // zero realtime connections. Re-enable subscribeLiveEvents() once on a paid plan.
-    pruneTimer = window.setInterval(poll, 30_000);
+    await backfill();
+    // Paid plan: push-instant via a single realtime channel (INSERT on gacha_s2_live_events).
+    if (runtime?.subscribeLiveEvents) unsubscribe = runtime.subscribeLiveEvents(push);
+    // Age TTL-expired items out of the ticker even when no new events arrive.
+    pruneTimer = window.setInterval(render, 60_000);
   }
 
   function stop() {

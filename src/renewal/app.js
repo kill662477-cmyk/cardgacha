@@ -2263,11 +2263,21 @@ function bindEvents() {
     const payload = { rarity: dismantleRarity };
     
     if (remoteMode) {
-      const response = await serverCommands.dismantleCards(payload);
-      if (!response?.ok) {
-        elements.dismantleConfirmButton.disabled = false;
-        return;
+      const response = await executeServerCommand(GAME_COMMAND_TYPES.DISMANTLE_CARDS, payload);
+      const result = response?.result;
+      if (result && result.dismantledCount > 0) {
+        const items = [];
+        if (result.gainedPotions > 0) items.push(`대형 경험치 포션 x${result.gainedPotions}`);
+        if (result.gainedPoints > 0) items.push(`${number.format(result.gainedPoints)} P`);
+        elements.dismantleResult.hidden = false;
+        elements.dismantleResult.innerHTML = `<p>총 ${result.dismantledCount}장 분해 완료</p><ul>${items.map(item => `<li>${item} 획득</li>`).join('') || '<li>획득한 아이템이 없습니다.</li>'}</ul>`;
+        dismantleRarity = null;
+        renderCollection();
+        renderHeader();
+        renderDismantlePreview();
       }
+      elements.dismantleConfirmButton.disabled = false;
+      return;
     } else {
       // Local fallback logic for test
       const rule = DISMANTLE_RULES.dropRates[dismantleRarity];
@@ -2297,9 +2307,12 @@ function bindEvents() {
         
         elements.dismantleResult.hidden = false;
         elements.dismantleResult.innerHTML = `<p>총 ${dismantledCount}장 분해 완료</p><ul>${items.map(item => `<li>${item} 획득</li>`).join('') || '<li>획득한 아이템이 없습니다.</li>'}</ul>`;
+        dismantleRarity = null;
         renderCollection();
         renderHeader();
+        renderDismantlePreview();
       }
+      elements.dismantleConfirmButton.disabled = false;
     }
   });
   elements.shopTabs.addEventListener('click', (event) => {
@@ -2404,24 +2417,6 @@ async function init() {
         attackWorldBoss: (payload) => runUiOperation('attackWorldBoss', elements.worldBossAttackButton, () => (
           executeServerCommand(GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS, payload)
         )),
-        dismantleCards: async (payload) => {
-          const response = await executeServerCommand(GAME_COMMAND_TYPES.DISMANTLE_CARDS, payload);
-          const result = response?.result;
-          if (result && result.dismantledCount > 0) {
-            const items = [];
-            if (result.gainedPotions > 0) items.push(`대형 경험치 포션 x${result.gainedPotions}`);
-            if (result.gainedPoints > 0) items.push(`${number.format(result.gainedPoints)} P`);
-            elements.dismantleResult.hidden = false;
-            elements.dismantleResult.innerHTML = `<p>총 ${result.dismantledCount}장 분해 완료</p><ul>${items.map(item => `<li>${item} 획득</li>`).join('') || '<li>획득한 아이템이 없습니다.</li>'}</ul>`;
-            dismantleRarity = null;
-            renderCollection();
-            renderHeader();
-            renderDismantlePreview();
-          }
-          // Always re-enable button after completion
-          elements.dismantleConfirmButton.disabled = false;
-          return response;
-        },
         claimWorldBossReward: (payload) => runUiOperation('claimWorldBossReward', elements.worldBossRewardButton, () => (
           executeServerCommand(GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD, payload)
         )),

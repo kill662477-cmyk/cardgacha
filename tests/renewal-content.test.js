@@ -11,18 +11,18 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const cards = JSON.parse(fs.readFileSync(path.join(root, 'data', 'renewal-cards.json'), 'utf8'));
 const combatRarities = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
 const combatArchetypes = ['quick', 'heavy', 'combo', 'area', 'boss', 'amplify', 'weaken', 'sustain'];
-assert.equal(cards.length, 212);
-assert.equal(new Set(cards.map((card) => card.id)).size, 212);
+assert.equal(cards.length, 214);
+assert.equal(new Set(cards.map((card) => card.id)).size, 214);
 assert.equal(cards.filter((card) => card.rarity === 'EX').length, 8);
 assert.ok(cards.filter((card) => card.rarity === 'EX').every((card) => card.member === '단체사진' && card.archetype === null));
 const nonKimFurCards = cards.filter((card) => card.sourceRarity === 'FUR' && card.member !== '김윤환' && !card.group);
-assert.equal(nonKimFurCards.length, 12);
+assert.equal(nonKimFurCards.length, 13);
 assert.ok(nonKimFurCards.every((card) => card.rarity === 'SSS'));
 assert.equal(cards.find((card) => card.id === 'vitaming-14').rarity, 'SSS');
 assert.equal(cards.find((card) => card.id === 'imjoy-12').rarity, 'SSS');
 assert.equal(cards.find((card) => card.id === 'meonjin-12').rarity, 'SSS');
 const fixedSssIds = [
-  'jidudu-1', 'kimyunhwan-2', 'kimyunhwan-4', 'tomato-6', 'nangni-8', 'tomato-11', 'haetsal-12',
+  'jidudu-1', 'kimyunhwan-2', 'kimyunhwan-4', 'tomato-6', 'nangni-8', 'jjiking-12', 'tomato-11', 'haetsal-12',
   'kimmincheol-7', 'sojuyang-13', 'chiri-14', 'namdeokseon-12', 'vitaming-14', 'imjoy-12', 'meonjin-12',
 ];
 assert.deepEqual(cards.filter((card) => card.rarity === 'SSS').map((card) => card.id), fixedSssIds);
@@ -36,7 +36,7 @@ for (const [id, rarity] of Object.entries(newRarities)) assert.equal(cards.find(
 assert.deepEqual(Object.fromEntries(['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS'].map((rarity) => [
   rarity,
   cards.filter((card) => card.rarity === rarity).length,
-])), { F: 24, E: 24, D: 24, C: 24, B: 24, A: 24, S: 24, SS: 22 });
+])), { F: 24, E: 24, D: 24, C: 24, B: 24, A: 24, S: 24, SS: 23 });
 assert.equal(cards.find((card) => card.id === 'group-1').rarity, 'EX');
 assert.equal(cards.filter((card) => card.copies > 0).length, 20);
 assert.ok(cards.filter((card) => card.rarity !== 'EX').every((card) => ['저그', '테란', '프로토스'].includes(card.race)));
@@ -96,4 +96,4 @@ const baseEndgameDeck = endgameDeck.map((card) => ({ ...card, enhancement: 0 }))
 assert.equal(simulateBattle(baseEndgameDeck, STAGES[9], collectionBonuses).victory, true, 'high-rarity base deck clears region 1');
 assert.equal(simulateBattle(baseEndgameDeck, STAGES[49]).victory, false, 'without a completed collection, enhancement remains required for final boss');
 
-console.log('renewal content tests passed: 212 cards, 5 regions, 50 stages, fixed SSS, full F-SS regrade');
+console.log('renewal content tests passed: 214 cards, 5 regions, 50 stages, fixed SSS, full F-SS regrade');

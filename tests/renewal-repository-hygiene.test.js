@@ -69,7 +69,7 @@ assert.doesNotMatch(index, /api\//);
 const cards = JSON.parse(fs.readFileSync(at('data', 'renewal-cards.json'), 'utf8'));
 const catalogFiles = [...new Set(cards.map((card) => card.file))].sort();
 const assetFiles = fs.readdirSync(at('assets', 'cards')).sort();
-assert.equal(cards.length, 212);
+assert.equal(cards.length, 214);
 assert.deepEqual(assetFiles, catalogFiles, 'assets/cards must exactly match the season2 catalog');
 
 const staticSources = [
@@ -109,6 +109,8 @@ assert.deepEqual(migrations, [
   'renewal_migration_015_fix_points_growth_cast.sql',
   'renewal_migration_016_sum_ten_reshuffle.sql',
   'renewal_migration_017_world_boss_status_readonly.sql',
+  'renewal_migration_018_add_jjiking_sss_card.sql',
+  'renewal_migration_019_jjiking_ss_and_photo_swap.sql',
   'renewal_migration_999_drop_season1.sql',
 ]);
 

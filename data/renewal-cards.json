@@ -1627,7 +1627,7 @@
   {
     "id": "jjiking-5",
     "member": "찌킹",
-    "file": "jjiking-5.png",
+    "file": "jjiking-5.jpg",
     "rarity": "C",
     "race": "저그",
     "archetype": "quick",
@@ -2246,6 +2246,32 @@
     "exp": 0,
     "copies": 0,
     "sourceRarity": "C",
+    "group": false
+  },
+  {
+    "id": "jjiking-12",
+    "member": "찌킹",
+    "file": "jjiking-12.jpg",
+    "rarity": "SSS",
+    "race": "저그",
+    "archetype": "sustain",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "FUR",
+    "group": false
+  },
+  {
+    "id": "jjiking-13",
+    "member": "찌킹",
+    "file": "jjiking-13.jpg",
+    "rarity": "SS",
+    "race": "저그",
+    "archetype": "area",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "MUR",
     "group": false
   },
   {

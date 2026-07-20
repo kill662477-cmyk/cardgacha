@@ -1,4 +1,4 @@
-export const BALANCE_VERSION = '2026.07.20-dismantle-1';
+export const BALANCE_VERSION = '2026.07.21-soop-ratio';
 
 export const RARITY_ORDER = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
 
@@ -277,7 +277,7 @@ export const WORLD_BOSS_RULES = {
 };
 
 export const SOOP_RULES = {
-  pointsPerBalloon: 3,
+  pointsPerBalloon: 5,
 };
 
 export const EX_DISTRIBUTION_RULES = {

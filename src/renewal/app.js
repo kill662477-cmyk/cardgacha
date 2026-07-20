@@ -2275,6 +2275,9 @@ function bindEvents() {
         renderCollection();
         renderHeader();
         renderDismantlePreview();
+        showToast(`${result.dismantledCount}장 분해 성공!`);
+      } else if (!response?.ok) {
+        showToast(response?.message || '해당 등급에 분해할 카드가 없습니다.');
       }
       elements.dismantleConfirmButton.disabled = false;
       return;

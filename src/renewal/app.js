@@ -2263,7 +2263,11 @@ function bindEvents() {
     const payload = { rarity: dismantleRarity };
     
     if (remoteMode) {
-      await serverCommands.dismantleCards(payload);
+      const response = await serverCommands.dismantleCards(payload);
+      if (!response?.ok) {
+        elements.dismantleConfirmButton.disabled = false;
+        return;
+      }
     } else {
       // Local fallback logic for test
       const rule = DISMANTLE_RULES.dropRates[dismantleRarity];

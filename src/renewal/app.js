@@ -99,6 +99,7 @@ let selectedCollectionCardId = null;
 let shopTab = 'cards';
 let selectedShopProduct = 'general';
 let selectedShopRace = '저그';
+let dismantleRarity = null;
 let miniGameController = null;
 let worldBossController = null;
 let rankingController = null;
@@ -1535,6 +1536,39 @@ function renderCollection() {
   renderCollectionSelected(bonuses);
   renderCollectionSets(bonuses.model);
   window.lucide?.createIcons();
+}
+
+function renderDismantlePreview() {
+  elements.dismantleRaritySelect.querySelectorAll('button').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.dismantleRarity === dismantleRarity);
+  });
+  
+  if (!dismantleRarity) {
+    elements.dismantlePreview.innerHTML = '<p>등급을 선택하세요</p>';
+    elements.dismantleConfirmWarning.hidden = true;
+    elements.dismantleConfirmButton.disabled = true;
+    return;
+  }
+  
+  let count = 0;
+  for (const card of cards) {
+    if (card.rarity !== dismantleRarity) continue;
+    const progress = state.cardProgress[card.id];
+    if (progress?.locked) continue;
+    const copies = state.inventory[card.id] ?? 0;
+    if (copies > 1) count += copies - 1;
+  }
+  
+  if (count > 0) {
+    elements.dismantlePreview.innerHTML = `<p>분해 가능 중복 카드</p><strong>총 ${count}장</strong>`;
+    elements.dismantleConfirmButton.disabled = false;
+  } else {
+    elements.dismantlePreview.innerHTML = `<p>분해 가능한 ${dismantleRarity} 등급 카드가 없습니다</p>`;
+    elements.dismantleConfirmButton.disabled = true;
+  }
+  
+  const isHighRarity = ['S', 'SS', 'SSS'].includes(dismantleRarity);
+  elements.dismantleConfirmWarning.hidden = !(isHighRarity && count > 0);
 }
 
 const PACK_IMAGES = {

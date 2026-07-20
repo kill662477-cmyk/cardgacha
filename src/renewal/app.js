@@ -2035,12 +2035,12 @@ async function executeEnhancementAttempt(triggerButton = elements.enhanceAttempt
 }
 
 function bindEvents() {
-  if (sessionStorage.getItem('mail_wb_open_20260720_read') === 'true') {
+  if (sessionStorage.getItem('mail_dismantle_error_20260720_read') === 'true') {
     elements.mailBadge.hidden = true;
   }
   elements.profileCardButton.addEventListener('click', openRepresentativeCardDetail);
   elements.mailButton.addEventListener('click', () => {
-    sessionStorage.setItem('mail_wb_open_20260720_read', 'true');
+    sessionStorage.setItem('mail_dismantle_error_20260720_read', 'true');
     elements.mailBadge.hidden = true;
     elements.mailDialog.showModal();
   });

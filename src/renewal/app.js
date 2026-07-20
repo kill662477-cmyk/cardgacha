@@ -187,7 +187,7 @@ function imagePath(card) {
 function cacheElements() {
   [
     'nickname', 'combatPower', 'energyValue', 'pointValue', 'profileCardButton', 'apiLinkButton', 'logoutButton',
-    'mailButton', 'mailDialog', 'mailBadge',
+    'mailButton', 'mailDialog', 'mailBadge', 'worldBossNavBadge',
     'profileCardImage', 'profileCardFallback', 'soundToggleButton', 'regionLabel',
     'stageLabel', 'stageMeter', 'battleState', 'battleClock', 'enemyName', 'enemyHpBar', 'enemyHpText',
     'enemyRow', 'partyGrid', 'synergyChip', 'resultBanner', 'stageNodes',
@@ -2231,12 +2231,17 @@ function bindEvents() {
 }
 
 function startTimedUpdates() {
+  let tickCount = 0;
   setInterval(() => {
+    tickCount += 1;
     synchronizeTimedState();
     renderHeader();
     renderRewardReadout();
     if (activeScreen === 'shop') renderShopBuff();
     if (activeScreen === 'worldboss') worldBossController?.tick();
+    // Nav badge nudge: check reward availability even when off the world boss
+    // screen, since claiming is manual and the results window is only 30 minutes.
+    else if (tickCount % 60 === 0) void worldBossController?.checkRewardAvailability();
   }, 1000);
 }
 
@@ -2293,6 +2298,9 @@ async function init() {
         )),
       } : null,
       showToast,
+      onRewardAvailability: (available) => {
+        if (elements.worldBossNavBadge) elements.worldBossNavBadge.hidden = !available;
+      },
     });
     rankingController = createRankingController({
       cards,
@@ -2323,6 +2331,7 @@ async function init() {
     showOrientGuideIfNeeded();
     await liveTickerController.start();
     startTimedUpdates();
+    if (activeScreen !== 'worldboss') void worldBossController?.checkRewardAvailability();
     const canPreviewState = ['localhost', '127.0.0.1'].includes(window.location.hostname) && SYSTEM_STATES[systemStatePreview];
     setSystemState(canPreviewState ? systemStatePreview : null);
   } catch (error) {

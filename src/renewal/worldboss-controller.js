@@ -30,7 +30,7 @@ function wait(ms) {
   return new Promise((resolve) => window.setTimeout(resolve, Math.max(0, ms)));
 }
 
-export function createWorldBossController({ getState, getFormation, getBonuses, persist, showToast, clock, random, serverCommands = null }) {
+export function createWorldBossController({ getState, getFormation, getBonuses, persist, showToast, clock, random, serverCommands = null, onRewardAvailability = null }) {
   const elements = Object.fromEntries([
     'worldBossScreen', 'worldBossEventState', 'worldBossTimer', 'worldBossClockLabel', 'worldBossNextSlot',
     'worldBossSchedule', 'worldBossPhase',
@@ -93,6 +93,19 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
     return serverStatusRequest;
   }
 
+  // Background reward-availability check, independent of whether the world boss
+  // screen is open. Lets the nav badge warn players who never revisit the screen
+  // before the 30-minute claim window closes (claim is manual by design).
+  async function checkRewardAvailability() {
+    if (!serverCommands?.getWorldBossStatus) return;
+    await refreshServerStatus();
+    const event = serverStatus?.event;
+    const current = serverProgress();
+    if (!event || !current) return;
+    const earnedTier = earnedRewardTier(current.totalDamage);
+    onRewardAvailability?.(event.resultsOpen && current.attempts > 0 && current.claimedTier < earnedTier);
+  }
+
   function renderParty() {
     elements.worldBossParty.innerHTML = getFormation().map((card, index) => `
       <article class="worldboss-card card-visual" data-worldboss-card="${index}" data-rarity="${card.rarity}" data-stars="${card.enhancement}" style="--rarity:${RARITIES[card.rarity].color}">
@@ -148,6 +161,7 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
     const rewardRule = earnedTier >= 0 ? WORLD_BOSS_RULES.rewardTiers[earnedTier] : null;
     const rewardPoints = rewardRule ? (event.defeated ? rewardRule.points : rewardRule.failurePoints) : 0;
     const rewardAvailable = event.resultsOpen && current.attempts > 0 && current.claimedTier < earnedTier;
+    onRewardAvailability?.(rewardAvailable);
     const leaderboard = Array.isArray(serverStatus.leaderboard) ? serverStatus.leaderboard : [];
 
     elements.worldBossEventState.textContent = event.resultsOpen
@@ -206,6 +220,7 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
     const current = progress(now);
     const snapshot = getWorldBossSnapshot(current, now);
     const reward = getWorldBossReward(current, now);
+    onRewardAvailability?.(reward.available);
     const status = snapshot.resultsOpen
       ? snapshot.defeated ? 'result-success' : 'result-failure'
       : snapshot.active ? 'live' : snapshot.defeated ? 'closed' : 'standby';
@@ -405,5 +420,5 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
 
   elements.worldBossAttackButton.addEventListener('click', startBattle);
   elements.worldBossRewardButton.addEventListener('click', claimReward);
-  return { render, tick, setActive };
+  return { render, tick, setActive, checkRewardAvailability };
 }

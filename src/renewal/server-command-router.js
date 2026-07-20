@@ -21,6 +21,7 @@ const DIRECT_RPCS = Object.freeze({
   [GAME_COMMAND_TYPES.START_MINIGAME]: 'gacha_s2_start_minigame',
   [GAME_COMMAND_TYPES.FINISH_MINIGAME]: 'gacha_s2_finish_minigame',
   [GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD]: 'gacha_s2_claim_world_boss_reward',
+  [GAME_COMMAND_TYPES.DISMANTLE_CARDS]: 'gacha_s2_dismantle_cards',
 });
 
 function canonicalJson(value) {
@@ -92,6 +93,8 @@ function directArgs(userId, command) {
       };
     case GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD:
       return { ...args, p_event_id: payload.eventId };
+    case GAME_COMMAND_TYPES.DISMANTLE_CARDS:
+      return { ...args, p_rarity: payload.rarity };
     default:
       return args;
   }

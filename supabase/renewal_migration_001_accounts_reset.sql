@@ -81,7 +81,7 @@ create table if not exists public.gacha_s2_player_states (
   support_items jsonb not null default '{
     "energySmall":0,"energyMedium":0,"energyLarge":0,
     "enhance5":0,"enhance10":0,"destructionGuard":0,
-    "cardExpPotion":0,"exp30m":0,"exp2h":0,
+    "cardExpPotion":0,"cardExpPotionLarge":0,"exp30m":0,"exp2h":0,
     "generalTicket":0,"eliteTicket":0,"raceTicket":0,"premiumTicket":0,
     "adventureRunReset":0,"quickBattleReset":0
   }'::jsonb check (jsonb_typeof(support_items) = 'object'),

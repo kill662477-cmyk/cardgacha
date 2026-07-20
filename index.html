@@ -240,6 +240,9 @@
       <section class="collection-library">
         <header class="collection-toolbar">
           <div><span>COLLECTION LIBRARY</span><h2>등록 카드</h2></div>
+          <div class="collection-toolbar-actions">
+            <button class="dismantle-button" id="dismantleButton" type="button"><i data-lucide="hammer"></i> 분해</button>
+          </div>
           <div class="collection-ownership-filter" id="collectionOwnershipFilter">
             <button class="active" type="button" data-collection-owned="all">전체</button>
             <button type="button" data-collection-owned="owned">보유</button>
@@ -269,6 +272,35 @@
           <div class="collection-set-list" id="collectionSetList"></div>
         </section>
       </aside>
+
+      <dialog class="dismantle-dialog" id="dismantleDialog">
+        <header class="dismantle-header">
+          <h2>카드 분해</h2>
+          <p>중복 카드를 분해하여 포션과 포인트를 획득합니다.<br>각 카드의 보유 1장은 보존되며, 잠금 카드는 제외됩니다.</p>
+        </header>
+        <section class="dismantle-rarity-select" id="dismantleRaritySelect">
+          <button type="button" data-dismantle-rarity="F" class="rarity-F">F</button>
+          <button type="button" data-dismantle-rarity="E" class="rarity-E">E</button>
+          <button type="button" data-dismantle-rarity="D" class="rarity-D">D</button>
+          <button type="button" data-dismantle-rarity="C" class="rarity-C">C</button>
+          <button type="button" data-dismantle-rarity="B" class="rarity-B">B</button>
+          <button type="button" data-dismantle-rarity="A" class="rarity-A">A</button>
+          <button type="button" data-dismantle-rarity="S" class="rarity-S">S</button>
+          <button type="button" data-dismantle-rarity="SS" class="rarity-SS">SS</button>
+          <button type="button" data-dismantle-rarity="SSS" class="rarity-SSS">SSS</button>
+        </section>
+        <section class="dismantle-preview" id="dismantlePreview">
+          <p>등급을 선택하세요</p>
+        </section>
+        <section class="dismantle-result" id="dismantleResult" hidden></section>
+        <div class="dismantle-confirm-warning" id="dismantleConfirmWarning" hidden>
+          <p>⚠️ <strong>S등급 이상</strong>의 카드를 분해합니다. 정말 진행할까요?</p>
+        </div>
+        <footer class="dismantle-actions">
+          <button type="button" id="dismantleConfirmButton" disabled>분해 실행</button>
+          <button type="button" id="dismantleCancelButton">닫기</button>
+        </footer>
+      </dialog>
     </main>
 
     <main class="worldboss-screen" id="worldBossScreen" hidden>

@@ -32,7 +32,7 @@ export function createDefaultState(now = Date.now()) {
     supportItems: {
       energySmall: 1, energyMedium: 0, energyLarge: 0,
       enhance5: 2, enhance10: 1, destructionGuard: 1,
-      cardExpPotion: 1, exp30m: 1, exp2h: 0,
+      cardExpPotion: 1, cardExpPotionLarge: 0, exp30m: 1, exp2h: 0,
       generalTicket: 1, eliteTicket: 0, raceTicket: 0, premiumTicket: 0,
       adventureRunReset: 0, quickBattleReset: 0,
     },

@@ -1,4 +1,4 @@
-export const BALANCE_VERSION = '2026.07.18-random-loot-1';
+export const BALANCE_VERSION = '2026.07.20-dismantle-1';
 
 export const RARITY_ORDER = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
 
@@ -51,6 +51,26 @@ export const MATERIAL_RULES = {
   SSS: [{ rarity: 'SS', count: 3 }, { rarity: 'SSS', count: 1 }],
 };
 
+// 카드 분해. 중복 카드(1장 보존, 잠금 제외)를 소각해 카드 EXP 포션과 뽑기 포인트를
+// 개별 확률 굴림으로 얻는다. 등급이 높을수록 드롭 확률/포인트량 상승.
+// potionRate/pointsRate: 각 카드 1장당 포션/포인트 드롭 확률 (0~1). 각각 따로 굴림.
+// potionItem: 드롭 시 지급할 카드 EXP 포션 아이템 ID.
+export const DISMANTLE_RULES = {
+  potionItem: 'cardExpPotionLarge',
+  keepCopies: 1,
+  dropRates: {
+    F:   { potionRate: 0.10, pointsRate: 0.10, points: 5 },
+    E:   { potionRate: 0.15, pointsRate: 0.15, points: 10 },
+    D:   { potionRate: 0.20, pointsRate: 0.20, points: 20 },
+    C:   { potionRate: 0.25, pointsRate: 0.25, points: 40 },
+    B:   { potionRate: 0.30, pointsRate: 0.30, points: 70 },
+    A:   { potionRate: 0.35, pointsRate: 0.35, points: 120 },
+    S:   { potionRate: 0.50, pointsRate: 0.50, points: 300 },
+    SS:  { potionRate: 0.70, pointsRate: 0.70, points: 800 },
+    SSS: { potionRate: 0.90, pointsRate: 0.90, points: 2000 },
+  },
+};
+
 export const PACKS = {
   general: {
     name: '일반 보급팩', price: 50, count: 3,
@@ -99,6 +119,7 @@ export const SUPPORT_ITEMS = {
   enhance10: { name: '고순도 강화 촉진제', category: '강화', effect: '성공률 +10%p' },
   destructionGuard: { name: '파괴 차단제', category: '강화', effect: '파괴 1회 차단' },
   cardExpPotion: { name: '카드 EXP 포션', category: '경험치', effect: '선택 카드 EXP +300', cardExp: 300 },
+  cardExpPotionLarge: { name: '농축 카드 EXP 포션', category: '경험치', effect: '선택 카드 EXP +10', cardExp: 10 },
   exp30m: { name: '경험 신호 증폭제', category: '경험치', effect: '카드 EXP +50% · 30분', durationMinutes: 30 },
   exp2h: { name: '고출력 경험 신호 증폭제', category: '경험치', effect: '카드 EXP +50% · 2시간', durationMinutes: 120 },
   generalTicket: { name: '일반 카드팩 교환권', category: '교환권', effect: '일반팩 1개', pack: 'general' },

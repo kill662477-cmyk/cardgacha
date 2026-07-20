@@ -106,11 +106,11 @@ export function useSupportItem(state, itemId, now = Date.now()) {
   return { used: true, reason: `${item.name} 사용`, state: next };
 }
 
-export function useCardExpPotion(state, cardId, requiredExp) {
-  const item = SUPPORT_ITEMS.cardExpPotion;
+export function useCardExpPotion(state, cardId, requiredExp, itemId = 'cardExpPotion') {
+  const item = SUPPORT_ITEMS[itemId];
   const current = state.cardProgress[cardId] ?? { enhancement: 0, exp: 0 };
   const required = Math.max(0, Number(requiredExp) || 0);
-  if ((state.supportItems.cardExpPotion ?? 0) <= 0) return { used: false, reason: '카드 EXP 포션 없음', state };
+  if ((state.supportItems[itemId] ?? 0) <= 0) return { used: false, reason: `${item.name} 없음`, state };
   if (required <= 0 || current.exp >= required) return { used: false, reason: '현재 강화 경험치 MAX', state };
   const gained = Math.min(item.cardExp, required - current.exp);
   return {
@@ -119,7 +119,7 @@ export function useCardExpPotion(state, cardId, requiredExp) {
     reason: `카드 EXP +${gained}`,
     state: {
       ...state,
-      supportItems: { ...state.supportItems, cardExpPotion: state.supportItems.cardExpPotion - 1 },
+      supportItems: { ...state.supportItems, [itemId]: state.supportItems[itemId] - 1 },
       cardProgress: {
         ...state.cardProgress,
         [cardId]: { ...current, exp: current.exp + gained },

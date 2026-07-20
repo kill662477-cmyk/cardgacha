@@ -557,6 +557,33 @@ button[aria-busy="true"]::after {
 .collection-selected-copy dl .power dt, .collection-selected-copy dl .power dd { color: var(--rarity); }
 .collection-selected-copy .registered { margin-top: 11px; color: var(--acid); font-size: 8px; font-weight: 900; }
 .collection-selected-copy .registered.missing { color: var(--red); }
+
+.collection-toolbar-actions { display: flex; gap: 8px; }
+.dismantle-button { height: 26px; padding: 0 10px; border: 1px solid var(--line-bright); border-radius: 4px; background: #0b100d; color: var(--text-muted); font-size: 11px; }
+.dismantle-button:hover { background: #121a15; color: white; border-color: var(--text-muted); }
+.dismantle-button:active { transform: scale(.97); }
+
+.dismantle-dialog { width: min(420px, calc(100vw - 32px)); padding: 24px; border: 1px solid var(--line-bright); border-radius: 8px; background: #070a08; color: var(--text); }
+.dismantle-dialog::backdrop { background: rgba(0,0,0,.85); backdrop-filter: blur(4px); }
+.dismantle-header h2 { margin: 0 0 8px; font-size: 20px; }
+.dismantle-header p { margin: 0 0 20px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.dismantle-rarity-select { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 20px; }
+.dismantle-rarity-select button { height: 36px; border: 1px solid var(--line); border-radius: 4px; background: #0c110e; font-size: 13px; font-weight: 800; color: var(--muted); transition: all .12s; }
+.dismantle-rarity-select button:hover:not(:disabled) { border-color: color-mix(in srgb, currentColor 50%, transparent); background: #121814; }
+.dismantle-rarity-select button.active { border-color: currentColor; background: color-mix(in srgb, currentColor 15%, transparent); color: white; box-shadow: 0 0 12px color-mix(in srgb, currentColor 30%, transparent); }
+.dismantle-rarity-select button:disabled { opacity: 0.3; cursor: not-allowed; }
+.dismantle-preview { padding: 16px; border-radius: 6px; background: #121814; text-align: center; margin-bottom: 20px; min-height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.dismantle-preview p { margin: 0; color: var(--text-muted); font-size: 12px; }
+.dismantle-preview strong { font-size: 18px; color: var(--acid); display: block; margin-top: 4px; }
+.dismantle-result { padding: 16px; margin-bottom: 20px; border-radius: 6px; background: #0c110e; border: 1px solid var(--acid); animation: pop .2s ease; }
+.dismantle-result p { margin: 0 0 8px; color: var(--text); font-size: 13px; }
+.dismantle-result ul { margin: 0; padding: 0 0 0 16px; color: var(--acid); font-size: 12px; }
+.dismantle-confirm-warning { margin-bottom: 20px; padding: 12px; border-radius: 6px; background: rgba(225,29,72,.15); border: 1px solid var(--red); color: #fff; font-size: 12px; text-align: center; }
+.dismantle-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.dismantle-actions button { height: 36px; padding: 0 16px; border: none; border-radius: 4px; font-weight: 800; font-size: 13px; }
+#dismantleConfirmButton { background: var(--acid); color: #000; }
+#dismantleConfirmButton:disabled { background: var(--line); color: var(--muted); cursor: not-allowed; }
+#dismantleCancelButton { background: transparent; color: var(--text-muted); border: 1px solid var(--line); }
 .card-detail-dialog { width: min(900px, calc(100vw - 28px)); max-height: min(720px, calc(100vh - 28px)); padding: 0; border: 1px solid var(--rarity, var(--line-bright)); background: #070a08; color: var(--text); }
 .card-detail-dialog::backdrop { background: rgba(0,0,0,.88); backdrop-filter: blur(7px); }
 .card-detail-shell { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; max-height: calc(100vh - 30px); }

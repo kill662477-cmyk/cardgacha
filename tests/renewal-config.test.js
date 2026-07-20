@@ -49,7 +49,7 @@ assert.equal(EX_DISTRIBUTION_RULES.milestones.length, 8);
 assert.equal(Object.values(PACKS).some((pack) => Object.hasOwn(pack.rates, 'EX')), false);
 assert.deepEqual(EX_DISTRIBUTION_RULES.milestones.map(({ clearedStage }) => clearedStage), [5, 10, 15, 20, 25, 30, 40, 50]);
 assert.equal(new Set(EX_DISTRIBUTION_RULES.milestones.map(({ cardId }) => cardId)).size, 8);
-assert.equal(BALANCE_VERSION, '2026.07.18-random-loot-1');
+assert.strictEqual(BALANCE_VERSION, '2026.07.20-dismantle-1');
 assert.equal(REGIONS[4].bossHp, 9_500_000, 'region 5 final boss uses card-only progression scale');
 assert.equal(REGIONS[4].bossAttack, 21_000);
 assert.equal(Object.hasOwn(BALANCE_GOVERNANCE, 'ACCOUNT_RULES'), false);

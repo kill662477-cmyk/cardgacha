@@ -203,7 +203,7 @@ export function migrateGameState(rawState) {
   let addedResetItems = false;
   if (isRecord(state.supportItems)) {
     state.supportItems = { ...state.supportItems };
-    ['adventureRunReset', 'quickBattleReset'].forEach((itemId) => {
+    ['adventureRunReset', 'quickBattleReset', 'cardExpPotionLarge'].forEach((itemId) => {
       if (!Object.hasOwn(state.supportItems, itemId)) {
         state.supportItems[itemId] = 0;
         addedResetItems = true;

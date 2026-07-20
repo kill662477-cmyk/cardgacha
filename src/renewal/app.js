@@ -212,6 +212,8 @@ function cacheElements() {
     'collectionBossBonus', 'collectionIdleBonus', 'collectionOwnershipFilter',
     'collectionRaceFilter', 'collectionRarityFilter', 'collectionCardGrid', 'collectionSelected',
     'collectionCompletedSets', 'collectionSetTabs', 'collectionSetList',
+    'dismantleButton', 'dismantleDialog', 'dismantleRaritySelect', 'dismantlePreview',
+    'dismantleResult', 'dismantleConfirmWarning', 'dismantleConfirmButton', 'dismantleCancelButton',
     'cardDetailDialog', 'cardDetailTitle', 'cardDetailBody', 'cardDetailRepresentativeButton', 'cardDetailLockButton',
     'shopScreen', 'shopTabs', 'shopPointValue', 'shopBuffStatus', 'shopEyebrow',
     'shopTitle', 'shopRaceSelector', 'shopProductGrid', 'shopInventoryGrid',
@@ -2031,12 +2033,12 @@ async function executeEnhancementAttempt(triggerButton = elements.enhanceAttempt
 }
 
 function bindEvents() {
-  if (localStorage.getItem('mail_wb_open_20260720_read') === 'true') {
+  if (sessionStorage.getItem('mail_wb_open_20260720_read') === 'true') {
     elements.mailBadge.hidden = true;
   }
   elements.profileCardButton.addEventListener('click', openRepresentativeCardDetail);
   elements.mailButton.addEventListener('click', () => {
-    localStorage.setItem('mail_wb_open_20260720_read', 'true');
+    sessionStorage.setItem('mail_wb_open_20260720_read', 'true');
     elements.mailBadge.hidden = true;
     elements.mailDialog.showModal();
   });
@@ -2191,6 +2193,69 @@ function bindEvents() {
     collectionSetType = button.dataset.collectionSet;
     renderCollection();
   });
+
+  elements.dismantleButton.addEventListener('click', () => {
+    dismantleRarity = null;
+    renderDismantlePreview();
+    elements.dismantleDialog.showModal();
+  });
+
+  elements.dismantleCancelButton.addEventListener('click', () => {
+    elements.dismantleDialog.close();
+  });
+
+  elements.dismantleRaritySelect.addEventListener('click', (event) => {
+    const button = event.target.closest('button');
+    if (!button) return;
+    dismantleRarity = button.dataset.dismantleRarity;
+    renderDismantlePreview();
+  });
+
+  elements.dismantleConfirmButton.addEventListener('click', async () => {
+    if (!dismantleRarity || elements.dismantleConfirmButton.disabled) return;
+    const isHighRarity = ['S', 'SS', 'SSS'].includes(dismantleRarity);
+    if (isHighRarity && !confirm(`정말로 ${dismantleRarity} 등급 카드를 분해하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
+
+    elements.dismantleConfirmButton.disabled = true;
+    const payload = { rarity: dismantleRarity };
+    
+    if (remoteMode) {
+      await serverCommands.dismantleCards(payload);
+    } else {
+      // Local fallback logic for test
+      const rule = DISMANTLE_RULES.dropRates[dismantleRarity];
+      let dismantledCount = 0;
+      let gainedPotions = 0;
+      let gainedPoints = 0;
+      for (const card of cards) {
+        if (card.rarity !== dismantleRarity) continue;
+        const progress = state.cardProgress[card.id];
+        if (progress?.locked) continue;
+        const copies = state.inventory[card.id] ?? 0;
+        if (copies > 1) {
+          const count = copies - 1;
+          dismantledCount += count;
+          state.inventory[card.id] = 1;
+          for (let i = 0; i < count; i++) {
+            if (gameService.random() < rule.potionRate) gainedPotions++;
+            if (gameService.random() < rule.pointsRate) gainedPoints += rule.points;
+          }
+        }
+      }
+      if (dismantledCount > 0) {
+        state.supportItems.cardExpPotionLarge = (state.supportItems.cardExpPotionLarge ?? 0) + gainedPotions;
+        state.points += gainedPoints;
+        const items = [];
+        if (gainedPotions > 0) items.push(`대형 경험치 포션 x${gainedPotions}`);
+        if (gainedPoints > 0) items.push(`${number.format(gainedPoints)} P`);
+        
+        elements.dismantleResult.hidden = false;
+        elements.dismantleResult.innerHTML = `<p>총 ${dismantledCount}장 분해 완료</p><ul>${items.map(item => `<li>${item} 획득</li>`).join('') || '<li>획득한 아이템이 없습니다.</li>'}</ul>`;
+        renderCollection();
+        renderHeader();
+      }
+    }
+  });
   elements.shopTabs.addEventListener('click', (event) => {
     const button = event.target.closest('[data-shop-tab]');
     if (!button) return;
@@ -2293,6 +2358,19 @@ async function init() {
         attackWorldBoss: (payload) => runUiOperation('attackWorldBoss', elements.worldBossAttackButton, () => (
           executeServerCommand(GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS, payload)
         )),
+        dismantleCards: async (payload) => {
+          const result = await executeServerCommand(GAME_COMMAND_TYPES.DISMANTLE_CARDS, payload);
+          if (result && result.dismantledCount > 0) {
+            const items = [];
+            if (result.gainedPotions > 0) items.push(`대형 경험치 포션 x${result.gainedPotions}`);
+            if (result.gainedPoints > 0) items.push(`${number.format(result.gainedPoints)} P`);
+            elements.dismantleResult.hidden = false;
+            elements.dismantleResult.innerHTML = `<p>총 ${result.dismantledCount}장 분해 완료</p><ul>${items.map(item => `<li>${item} 획득</li>`).join('') || '<li>획득한 아이템이 없습니다.</li>'}</ul>`;
+            dismantleRarity = null;
+            renderCollection();
+          }
+          return result;
+        },
         claimWorldBossReward: (payload) => runUiOperation('claimWorldBossReward', elements.worldBossRewardButton, () => (
           executeServerCommand(GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD, payload)
         )),

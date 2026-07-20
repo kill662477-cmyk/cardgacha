@@ -10,6 +10,7 @@ export const GAME_COMMAND_TYPES = Object.freeze({
   PURCHASE_SUPPORT_PACK: 'purchaseSupportPack',
   USE_SUPPORT_ITEM: 'useSupportItem',
   ENHANCE_CARD: 'enhanceCard',
+  DISMANTLE_CARDS: 'dismantleCards',
   SET_REPRESENTATIVE_CARD: 'setRepresentativeCard',
   SET_CARD_LOCK: 'setCardLock',
   START_MINIGAME: 'startMinigame',
@@ -60,6 +61,7 @@ function validatePayload(type, payload, issues) {
     [GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK]: ['quantity'],
     [GAME_COMMAND_TYPES.USE_SUPPORT_ITEM]: ['itemId', 'targetCardId', 'race'],
     [GAME_COMMAND_TYPES.ENHANCE_CARD]: ['cardId', 'targetEnhancement', 'materialCardIds', 'boosterId'],
+    [GAME_COMMAND_TYPES.DISMANTLE_CARDS]: ['rarity'],
     [GAME_COMMAND_TYPES.SET_REPRESENTATIVE_CARD]: ['cardId'],
     [GAME_COMMAND_TYPES.SET_CARD_LOCK]: ['cardId', 'locked'],
     [GAME_COMMAND_TYPES.START_MINIGAME]: ['game', 'difficulty'],
@@ -105,6 +107,11 @@ function validatePayload(type, payload, issues) {
         addIssue(issues, 'payload.materialCardIds', '1~3개 재료 카드 ID 필요');
       } else payload.materialCardIds.forEach((cardId, index) => validateString(issues, cardId, `payload.materialCardIds.${index}`, 80));
       if (payload.boosterId !== null && payload.boosterId !== undefined) validateString(issues, payload.boosterId, 'payload.boosterId', 80);
+      break;
+    case GAME_COMMAND_TYPES.DISMANTLE_CARDS:
+      if (!['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'].includes(payload.rarity)) {
+        addIssue(issues, 'payload.rarity', 'F~SSS 등급 필요');
+      }
       break;
     case GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK:
       if (![1, 10].includes(payload.quantity)) addIssue(issues, 'payload.quantity', '1 or 10 required');

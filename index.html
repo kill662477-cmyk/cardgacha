@@ -187,8 +187,14 @@
           <div><span>강화 경험치</span><b id="enhanceExpText">0 / 0</b></div>
           <div class="enhance-exp-track"><i id="enhanceExpBar"></i></div>
           <div class="enhance-exp-actions">
-            <button class="card-exp-potion-button" id="cardExpPotionLargeButton" type="button" disabled><i data-lucide="flask-conical"></i><span>EXP 포션 +20</span><b id="cardExpPotionLargeCount">0</b></button>
-            <button class="card-exp-potion-button" id="cardExpPotionButton" type="button" disabled><i data-lucide="flask-conical"></i><span>EXP 포션 +300</span><b id="cardExpPotionCount">0</b></button>
+            <div class="card-exp-potion-group">
+              <button class="card-exp-potion-button" id="cardExpPotionLargeButton" type="button" disabled><i data-lucide="flask-conical"></i><span>EXP 포션 +20</span><b id="cardExpPotionLargeCount">0</b></button>
+              <button class="card-exp-potion-fill-button" id="cardExpPotionLargeFillButton" type="button" disabled title="필요량까지 보유한 만큼 한번에 사용">일괄 채우기</button>
+            </div>
+            <div class="card-exp-potion-group">
+              <button class="card-exp-potion-button" id="cardExpPotionButton" type="button" disabled><i data-lucide="flask-conical"></i><span>EXP 포션 +300</span><b id="cardExpPotionCount">0</b></button>
+              <button class="card-exp-potion-fill-button" id="cardExpPotionFillButton" type="button" disabled title="필요량까지 보유한 만큼 한번에 사용">일괄 채우기</button>
+            </div>
           </div>
         </div>
         <dl class="enhance-stat-compare" id="enhanceStatCompare"></dl>

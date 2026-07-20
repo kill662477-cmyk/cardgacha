@@ -67,6 +67,7 @@ function directArgs(userId, command) {
         p_item_id: payload.itemId,
         p_target_card_id: payload.targetCardId ?? null,
         p_race: payload.race ?? null,
+        p_count: payload.count ?? 1,
       };
     case GAME_COMMAND_TYPES.ENHANCE_CARD:
       return {

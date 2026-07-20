@@ -59,7 +59,7 @@ function validatePayload(type, payload, issues) {
     [GAME_COMMAND_TYPES.CLAIM_QUICK_BATTLE]: [],
     [GAME_COMMAND_TYPES.PURCHASE_PACK]: ['productId', 'quantity', 'race'],
     [GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK]: ['quantity'],
-    [GAME_COMMAND_TYPES.USE_SUPPORT_ITEM]: ['itemId', 'targetCardId', 'race'],
+    [GAME_COMMAND_TYPES.USE_SUPPORT_ITEM]: ['itemId', 'targetCardId', 'race', 'count'],
     [GAME_COMMAND_TYPES.ENHANCE_CARD]: ['cardId', 'targetEnhancement', 'materialCardIds', 'boosterId'],
     [GAME_COMMAND_TYPES.DISMANTLE_CARDS]: ['rarity'],
     [GAME_COMMAND_TYPES.SET_REPRESENTATIVE_CARD]: ['cardId'],
@@ -124,6 +124,10 @@ function validatePayload(type, payload, issues) {
       else if (payload.targetCardId !== null && payload.targetCardId !== undefined) addIssue(issues, 'payload.targetCardId', 'targetCardId is only valid for EXP potions');
       if (raceRequired && !['저그', '테란', '프로토스'].includes(payload.race)) addIssue(issues, 'payload.race', 'valid race required');
       else if (!raceRequired && payload.race !== null && payload.race !== undefined) addIssue(issues, 'payload.race', 'race is only valid for raceTicket');
+      if (payload.count !== null && payload.count !== undefined) {
+        if (!targetRequired) addIssue(issues, 'payload.count', 'count is only valid for EXP potions');
+        else if (!Number.isInteger(payload.count) || payload.count < 1 || payload.count > 9999) addIssue(issues, 'payload.count', '1~9999 정수 필요');
+      }
       break;
     }
     case GAME_COMMAND_TYPES.SET_REPRESENTATIVE_CARD:

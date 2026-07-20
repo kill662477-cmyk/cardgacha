@@ -32,6 +32,7 @@ import {
   drawSupportPack,
   effectivePackRates,
   useCardExpPotion,
+  useCardExpPotionBatch,
   useSupportItem,
 } from './shop.js';
 import {
@@ -201,6 +202,7 @@ function cacheElements() {
     'adventureScreen', 'enhanceScreen', 'enhanceOwnedCount', 'enhanceTargetList', 'enhanceCardName',
     'enhanceLockButton', 'enhanceCardPreview', 'enhanceCardMeta', 'enhanceExpText', 'enhanceExpBar',
     'cardExpPotionLargeButton', 'cardExpPotionLargeCount', 'cardExpPotionButton', 'cardExpPotionCount',
+    'cardExpPotionLargeFillButton', 'cardExpPotionFillButton',
     'enhanceStatCompare', 'enhanceTargetLevel', 'enhanceStatus', 'enhanceSuccessRate',
     'enhanceFailRate', 'enhanceDestroyRate', 'enhanceMaterialRule', 'enhanceMaterialOptions',
     'enhanceMaterials', 'enhanceSupports', 'enhance5Count', 'enhance10Count',
@@ -1197,8 +1199,10 @@ function renderEnhancementFocus(card) {
     elements.enhanceExpBar.style.width = '0%';
     elements.cardExpPotionLargeCount.textContent = state.supportItems.cardExpPotionLarge ?? 0;
     elements.cardExpPotionLargeButton.disabled = true;
+    elements.cardExpPotionLargeFillButton.disabled = true;
     elements.cardExpPotionCount.textContent = state.supportItems.cardExpPotion ?? 0;
     elements.cardExpPotionButton.disabled = true;
+    elements.cardExpPotionFillButton.disabled = true;
     elements.enhanceStatCompare.innerHTML = '';
     return;
   }
@@ -1216,8 +1220,10 @@ function renderEnhancementFocus(card) {
   elements.enhanceExpBar.style.width = `${expPercent}%`;
   elements.cardExpPotionLargeCount.textContent = state.supportItems.cardExpPotionLarge ?? 0;
   elements.cardExpPotionLargeButton.disabled = required <= 0 || card.exp >= required || (state.supportItems.cardExpPotionLarge ?? 0) <= 0;
+  elements.cardExpPotionLargeFillButton.disabled = elements.cardExpPotionLargeButton.disabled;
   elements.cardExpPotionCount.textContent = state.supportItems.cardExpPotion ?? 0;
   elements.cardExpPotionButton.disabled = required <= 0 || card.exp >= required || (state.supportItems.cardExpPotion ?? 0) <= 0;
+  elements.cardExpPotionFillButton.disabled = elements.cardExpPotionButton.disabled;
   elements.enhanceStatCompare.innerHTML = [
     ['공격력', currentStats.atk, nextStats.atk],
     ['체력', currentStats.hp, nextStats.hp],
@@ -1924,6 +1930,28 @@ async function useSelectedCardExpPotionLarge() {
   showToast(`${card.member} · ${result.reason}`);
 }
 
+async function fillSelectedCardExpPotion(itemId, button) {
+  const card = selectedEnhancementCard();
+  if (!card) return showToast('EXP를 지급할 카드를 선택하세요');
+  if (remoteMode) {
+    return runUiOperation('useSupportItem', button, async () => {
+      const response = await executeServerCommand(GAME_COMMAND_TYPES.USE_SUPPORT_ITEM, {
+        itemId, targetCardId: card.id, race: null, count: state.supportItems[itemId] ?? 0,
+      });
+      if (!response?.ok) return response;
+      renderEnhancement();
+      showToast(`${card.member} · EXP 포션 x${number.format(response.result?.potionsUsed ?? 0)} · 카드 EXP +${number.format(response.result?.cardExpGained ?? 0)}`);
+      return response;
+    });
+  }
+  const result = useCardExpPotionBatch(state, card.id, cardExpRequired(card.enhancement), itemId);
+  if (!result.used) return showToast(result.reason);
+  state = result.state;
+  gameService.persistSnapshot(state);
+  renderEnhancement();
+  showToast(`${card.member} · ${result.reason}`);
+}
+
 function releaseHeavyScreenDom(screen) {
   if (screen === 'collection') {
     elements.collectionCardGrid.replaceChildren();
@@ -2226,6 +2254,12 @@ function bindEvents() {
   elements.enhanceLockButton.addEventListener('click', toggleEnhancementLock);
   elements.cardExpPotionLargeButton.addEventListener('click', useSelectedCardExpPotionLarge);
   elements.cardExpPotionButton.addEventListener('click', useSelectedCardExpPotion);
+  elements.cardExpPotionLargeFillButton.addEventListener('click', () => (
+    fillSelectedCardExpPotion('cardExpPotionLarge', elements.cardExpPotionLargeFillButton)
+  ));
+  elements.cardExpPotionFillButton.addEventListener('click', () => (
+    fillSelectedCardExpPotion('cardExpPotion', elements.cardExpPotionFillButton)
+  ));
   elements.enhanceAttemptButton.addEventListener('click', prepareEnhancementAttempt);
   elements.confirmEnhanceAttempt.addEventListener('click', () => executeEnhancementAttempt(elements.confirmEnhanceAttempt));
   elements.collectionCardGrid.addEventListener('click', (event) => {
@@ -2266,6 +2300,7 @@ function bindEvents() {
 
   elements.dismantleButton.addEventListener('click', () => {
     dismantleRarity = null;
+    elements.dismantleResult.hidden = true;
     renderDismantlePreview();
     elements.dismantleDialog.showModal();
   });
@@ -2278,6 +2313,7 @@ function bindEvents() {
     const button = event.target.closest('button');
     if (!button) return;
     dismantleRarity = button.dataset.dismantleRarity;
+    elements.dismantleResult.hidden = true;
     renderDismantlePreview();
   });
 
@@ -2292,17 +2328,17 @@ function bindEvents() {
     if (remoteMode) {
       const response = await executeServerCommand(GAME_COMMAND_TYPES.DISMANTLE_CARDS, payload);
       const result = response?.result;
-      if (result && result.dismantledCount > 0) {
+      if (result && result.dismantledCards > 0) {
         const items = [];
         if (result.gainedPotions > 0) items.push(`대형 경험치 포션 x${result.gainedPotions}`);
         if (result.gainedPoints > 0) items.push(`${number.format(result.gainedPoints)} P`);
         elements.dismantleResult.hidden = false;
-        elements.dismantleResult.innerHTML = `<p>총 ${result.dismantledCount}장 분해 완료</p><ul>${items.map(item => `<li>${item} 획득</li>`).join('') || '<li>획득한 아이템이 없습니다.</li>'}</ul>`;
+        elements.dismantleResult.innerHTML = `<p>총 ${result.dismantledCards}장 분해 완료</p><ul>${items.map(item => `<li>${item} 획득</li>`).join('') || '<li>획득한 아이템이 없습니다.</li>'}</ul>`;
         dismantleRarity = null;
         renderCollection();
         renderHeader();
         renderDismantlePreview();
-        showToast(`${result.dismantledCount}장 분해 성공!`);
+        showToast(`${result.dismantledCards}장 분해 성공!`);
       } else if (!response?.ok) {
         showToast(response?.message || '해당 등급에 분해할 카드가 없습니다.');
       }

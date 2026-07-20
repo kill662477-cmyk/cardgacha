@@ -10,6 +10,7 @@ import {
   effectivePackRates,
   useSupportItem,
   useCardExpPotion,
+  useCardExpPotionBatch,
 } from '../src/renewal/shop.js';
 
 const cards = JSON.parse(fs.readFileSync(new URL('../data/renewal-demo-cards.json', import.meta.url), 'utf8'));
@@ -85,4 +86,40 @@ assert.equal(potion.gained, 50, 'potion EXP must stop at the current enhancement
 assert.equal(potion.state.cardProgress.target.exp, 300);
 assert.equal(potion.state.supportItems.cardExpPotion, 0);
 
-console.log('renewal shop tests passed: card packs, support guarantee, consumables, adventure and quick-battle resets');
+// Batch fill: consumes only as many potions as needed to reach the cap, even
+// when more are owned (mirrors calling useCardExpPotion repeatedly).
+const batchExact = useCardExpPotionBatch(
+  { supportItems: { cardExpPotionLarge: 10 }, cardProgress: { target: { enhancement: 2, exp: 260 } } },
+  'target', 300, 'cardExpPotionLarge',
+);
+assert.equal(batchExact.used, true);
+assert.equal(batchExact.potionsUsed, 2, 'ceil((300-260)/20) = 2 potions, not all 10 owned');
+assert.equal(batchExact.gained, 40);
+assert.equal(batchExact.state.cardProgress.target.exp, 300);
+assert.equal(batchExact.state.supportItems.cardExpPotionLarge, 8, 'unused potions remain in inventory');
+
+// Batch fill: not enough owned to reach the cap -> uses everything owned, partial progress.
+const batchPartial = useCardExpPotionBatch(
+  { supportItems: { cardExpPotionLarge: 2 }, cardProgress: { target: { enhancement: 2, exp: 0 } } },
+  'target', 300, 'cardExpPotionLarge',
+);
+assert.equal(batchPartial.used, true);
+assert.equal(batchPartial.potionsUsed, 2);
+assert.equal(batchPartial.gained, 40);
+assert.equal(batchPartial.state.supportItems.cardExpPotionLarge, 0);
+
+// Batch fill: none owned -> no-op.
+const batchNone = useCardExpPotionBatch(
+  { supportItems: { cardExpPotionLarge: 0 }, cardProgress: { target: { enhancement: 2, exp: 0 } } },
+  'target', 300, 'cardExpPotionLarge',
+);
+assert.equal(batchNone.used, false);
+
+// Batch fill: already at cap -> no-op even with potions owned.
+const batchMaxed = useCardExpPotionBatch(
+  { supportItems: { cardExpPotionLarge: 5 }, cardProgress: { target: { enhancement: 2, exp: 300 } } },
+  'target', 300, 'cardExpPotionLarge',
+);
+assert.equal(batchMaxed.used, false);
+
+console.log('renewal shop tests passed: card packs, support guarantee, consumables, adventure and quick-battle resets, batch EXP potion fill');

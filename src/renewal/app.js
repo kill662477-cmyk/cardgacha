@@ -1561,9 +1561,8 @@ function renderDismantlePreview() {
   let count = 0;
   for (const card of cards) {
     if (card.rarity !== dismantleRarity) continue;
-    const progress = state.cardProgress[card.id];
-    if (progress?.locked) continue;
-    const copies = state.inventory[card.id] ?? 0;
+    if (state.cardLocks[card.id]) continue;
+    const copies = state.cardCopies[card.id] ?? 0;
     if (copies > 1) count += copies - 1;
   }
   
@@ -2273,13 +2272,12 @@ function bindEvents() {
       let gainedPoints = 0;
       for (const card of cards) {
         if (card.rarity !== dismantleRarity) continue;
-        const progress = state.cardProgress[card.id];
-        if (progress?.locked) continue;
-        const copies = state.inventory[card.id] ?? 0;
+        if (state.cardLocks[card.id]) continue;
+        const copies = state.cardCopies[card.id] ?? 0;
         if (copies > 1) {
           const count = copies - 1;
           dismantledCount += count;
-          state.inventory[card.id] = 1;
+          state.cardCopies[card.id] = 1;
           for (let i = 0; i < count; i++) {
             if (gameService.random() < rule.potionRate) gainedPotions++;
             if (gameService.random() < rule.pointsRate) gainedPoints += rule.points;

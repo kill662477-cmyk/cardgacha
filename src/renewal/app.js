@@ -61,7 +61,7 @@ const number = new Intl.NumberFormat('ko-KR');
 const CARD_BACK_PATH = 'assets/card-back.jpg';
 const SCREEN_IDS = new Set(['shop', 'enhance', 'collection', 'ranking', 'adventure', 'worldboss', 'minigame']);
 // Temporary: world boss disabled to cap Supabase free-tier realtime/edge load until Pro (2026-07-24). Flip to true + redeploy to re-enable.
-const WORLD_BOSS_ENABLED = false;
+const WORLD_BOSS_ENABLED = true;
 const elements = {};
 let cards = [];
 let cardsById = new Map();

@@ -121,7 +121,7 @@ export function createLiveTickerController({ runtime = null, getNickname = () =>
     });
   }
 
-  async function backfill() {
+  async function poll() {
     if (!runtime?.getLiveEvents) return;
     try {
       const latest = await runtime.getLiveEvents();
@@ -132,11 +132,12 @@ export function createLiveTickerController({ runtime = null, getNickname = () =>
 
   async function start() {
     render();
-    await backfill();
-    // Paid plan: push-instant via a single realtime channel (INSERT on gacha_s2_live_events).
-    if (runtime?.subscribeLiveEvents) unsubscribe = runtime.subscribeLiveEvents(push);
-    // Age TTL-expired items out of the ticker even when no new events arrive.
-    pruneTimer = window.setInterval(render, 60_000);
+    await poll();
+    // Realtime concurrent-connection cap is only 500 even on Pro, and world boss already
+    // holds a realtime channel per active tab during raid windows. Keep the (non-essential)
+    // ticker on 30s REST polling so it costs zero realtime connections and leaves headroom
+    // for the world boss channel. subscribeLiveEvents() stays available if that ever changes.
+    pruneTimer = window.setInterval(poll, 30_000);
   }
 
   function stop() {

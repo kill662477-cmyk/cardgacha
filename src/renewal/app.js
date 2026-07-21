@@ -60,7 +60,7 @@ import { createLiveTickerController } from './live-ticker-controller.js';
 
 const number = new Intl.NumberFormat('ko-KR');
 const CARD_BACK_PATH = 'assets/card-back.jpg';
-const SCREEN_IDS = new Set(['shop', 'enhance', 'collection', 'ranking', 'adventure', 'worldboss', 'minigame']);
+const SCREEN_IDS = new Set(['shop', 'enhance', 'collection', 'ranking', 'adventure', 'worldboss']);
 // Temporary: world boss disabled to cap Supabase free-tier realtime/edge load until Pro (2026-07-24). Flip to true + redeploy to re-enable.
 const WORLD_BOSS_ENABLED = true;
 const elements = {};
@@ -193,7 +193,7 @@ function cacheElements() {
     'profileCardImage', 'profileCardFallback', 'soundToggleButton', 'regionLabel',
     'stageLabel', 'stageMeter', 'battleState', 'battleClock', 'enemyName', 'enemyHpBar', 'enemyHpText',
     'enemyRow', 'partyGrid', 'synergyChip', 'resultBanner', 'stageNodes',
-    'cardExpPerMinute', 'runPointReward', 'autoBattleButton',
+    'cardExpPerMinute', 'runPointReward', 'nextAdventureRecharge', 'autoBattleButton',
     'formationButton', 'quickBattleButton', 'quickBattleCount', 'claimButton', 'pendingReward',
     'formationDialog', 'selectedFormation', 'inventoryGrid', 'selectionCount',
     'confirmFormation', 'clearFormation', 'toast', 'attackEcho', 'battlefield', 'offlineTime', 'offlineSummary',
@@ -715,6 +715,13 @@ function renderHeader() {
   elements.autoBattleButton.querySelector('span').textContent = activeRun.active
     ? `${state.autoBattle ? '진행 중' : '계속하기'} · ${activeRun.clearedStages}단계`
     : autoBattleText;
+  
+  if (adventureStatus.remaining < ADVENTURE_RULES.maxRunsPerWindow && adventureStatus.resetsInMs > 0) {
+    elements.nextAdventureRecharge.textContent = formatDuration(Math.ceil(adventureStatus.resetsInMs / 1000));
+  } else {
+    elements.nextAdventureRecharge.textContent = '충전 완료';
+  }
+  
   elements.collectionPanelBonus.textContent = `+${(collectionBonuses.combatTotal * 100).toFixed(2)}%`;
 }
 
@@ -1175,11 +1182,12 @@ function renderEnhancementList() {
   const deckIds = new Set(formationCards().map(c => c.id));
   const available = ownedCards().filter((card) => !RARITIES[card.rarity]?.displayOnly).map(cardWithProgress).map((card) => ({
     card,
+    isRep: card.id === state.representativeCardId,
     ready: enhancementReady(card),
     hasExp: card.exp > 0,
     inDeck: deckIds.has(card.id),
     power: computeCardPower(card, combatBonuses),
-  })).sort((left, right) => Number(right.hasExp) - Number(left.hasExp) || Number(right.inDeck) - Number(left.inDeck) || right.card.exp - left.card.exp || Number(right.ready) - Number(left.ready) || right.power - left.power || left.card.member.localeCompare(right.card.member, 'ko'));
+  })).sort((left, right) => Number(right.isRep) - Number(left.isRep) || Number(right.hasExp) - Number(left.hasExp) || Number(right.inDeck) - Number(left.inDeck) || right.card.exp - left.card.exp || Number(right.ready) - Number(left.ready) || right.power - left.power || left.card.member.localeCompare(right.card.member, 'ko'));
   const visible = enhanceFilter === 'ready' ? available.filter((entry) => entry.ready) : available;
   elements.enhanceOwnedCount.textContent = `${available.length}종`;
   elements.enhanceTargetList.innerHTML = visible.map(({ card, ready, power }) => {

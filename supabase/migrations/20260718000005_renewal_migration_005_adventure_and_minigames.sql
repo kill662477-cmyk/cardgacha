@@ -1126,7 +1126,7 @@ begin
   from public.gacha_s2_minigame_daily
   where user_id = p_user_id and play_date = v_today and game = p_game;
   v_daily_points := coalesce(v_daily_points, 0);
-  if v_daily_points >= (v_config->'miniGameRules'->>'dailyPointCapPerGame')::integer then
+  if v_daily_points >= (v_config->'miniGameRules'->p_game->>'dailyPointCapPerGame')::integer then
     return public.gacha_s2_command_error(p_idempotency_key, 'COMMAND_REJECTED', '오늘 해당 미니게임 보상 한도에 도달했습니다.', v_revision, null, null);
   end if;
   v_interval_ms := (v_config->'rewardRules'->>'energyRecoveryMinutes')::bigint * 60000;
@@ -1134,7 +1134,7 @@ begin
     v_recovered := floor(greatest(0, extract(epoch from (now() - v_last_energy_at)) * 1000) / v_interval_ms)::integer;
     v_energy := least(v_max_energy, v_energy + v_recovered);
   end if;
-  v_energy_cost := (v_config->'miniGameRules'->>'energyCost')::integer;
+  v_energy_cost := (v_config->'miniGameRules'->p_game->>'energyCost')::integer;
   if v_energy < v_energy_cost then
     return public.gacha_s2_command_error(p_idempotency_key, 'COMMAND_REJECTED', '행동력이 부족합니다.', v_revision, null, null);
   end if;
@@ -1332,7 +1332,7 @@ begin
   if not found then
     return public.gacha_s2_command_error(p_idempotency_key, 'COMMAND_REJECTED', '미니게임 일일 기록을 찾을 수 없습니다.', v_revision, null, null);
   end if;
-  v_daily_cap := (v_config->'miniGameRules'->>'dailyPointCapPerGame')::integer;
+  v_daily_cap := (v_config->'miniGameRules'->v_run.game->>'dailyPointCapPerGame')::integer;
   v_reward := least(greatest(0, v_daily_cap - v_daily_points), v_raw_reward);
   v_input_digest := encode(digest(p_input_log::text, 'sha256'), 'hex');
 

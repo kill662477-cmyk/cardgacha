@@ -59,7 +59,7 @@
         <button class="nav-item" type="button" data-screen="ranking"><i data-lucide="trophy"></i><span>랭킹</span></button>
         <button class="nav-item active" type="button" data-screen="adventure"><i data-lucide="compass"></i><span>모험</span></button>
         <button class="nav-item" type="button" data-screen="worldboss" style="position: relative;"><i data-lucide="radio-tower"></i><span>월드보스</span><span id="worldBossNavBadge" hidden style="position: absolute; top: 2px; right: 2px; background: var(--color-danger, #e11d48); color: white; font-size: 9px; font-weight: 800; border-radius: 50%; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; line-height: 1;">!</span></button>
-        <button class="nav-item" type="button" data-screen="minigame"><i data-lucide="gamepad-2"></i><span>미니게임</span></button>
+        <button class="nav-item" type="button" data-screen="minigame" hidden><i data-lucide="gamepad-2"></i><span>미니게임</span></button>
       </nav>
     </aside>
 
@@ -104,6 +104,7 @@
           <dl>
             <div><dt>분당 카드 EXP</dt><dd id="cardExpPerMinute">0.16</dd></div>
             <div><dt>이번 런 카드 P</dt><dd id="runPointReward">0 / 30,000 P</dd></div>
+            <div><dt>모험 티켓 충전</dt><dd id="nextAdventureRecharge">충전됨</dd></div>
           </dl>
         </section>
 

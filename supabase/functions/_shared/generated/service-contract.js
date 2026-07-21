@@ -155,10 +155,12 @@ function validatePayload(type, payload, issues) {
           addIssue(issues, `payload.inputLog.${index}`, 'atMs가 있는 입력 객체 필요');
           return;
         }
-        const actionValid = isNonNegativeInteger(action.start) && isNonNegativeInteger(action.end);
-        if (!actionValid) {
-          console.log('INVALID ACTION:', action, typeof action.start, action.start);
-          addIssue(issues, `payload.inputLog.${index}`, '카드 선택 start/end 필요');
+        // memory: {index, atMs} (flip 단위). sumTen: {start, end, atMs} (드래그 범위).
+        // 두 포맷 중 하나여야 한다 (서버 RPC 가 game 종류별로 알맞게 검증).
+        const memoryAction = isNonNegativeInteger(action.index);
+        const sumTenAction = isNonNegativeInteger(action.start) && isNonNegativeInteger(action.end);
+        if (!memoryAction && !sumTenAction) {
+          addIssue(issues, `payload.inputLog.${index}`, 'memory(index) 또는 sumTen(start/end) 액션 필요');
         }
       });
       if (!isNonNegativeInteger(payload.score)) addIssue(issues, 'payload.score', '0 이상 정수 필요');

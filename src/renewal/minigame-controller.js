@@ -263,7 +263,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
         game: selectedGame,
         difficulty: selectedGame === 'memory' ? memoryDifficulty : null,
       });
-      if (!response?.ok) return showToast('미니게임 시작 실패');
+      if (!response?.ok) return showToast('미니게임 시작 실패: ' + (response?.message || response?.code || '알 수 없음'));
       const remote = response.result;
       if (selectedGame === 'memory') {
         const cardsById = new Map(cards.map((card) => [card.id, card]));

@@ -1179,7 +1179,7 @@ function renderEnhancementList() {
     hasExp: card.exp > 0,
     inDeck: deckIds.has(card.id),
     power: computeCardPower(card, combatBonuses),
-  })).sort((left, right) => Number(right.hasExp) - Number(left.hasExp) || Number(right.inDeck) - Number(left.inDeck) || Number(right.ready) - Number(left.ready) || right.power - left.power || left.card.member.localeCompare(right.card.member, 'ko'));
+  })).sort((left, right) => Number(right.hasExp) - Number(left.hasExp) || Number(right.inDeck) - Number(left.inDeck) || right.card.exp - left.card.exp || Number(right.ready) - Number(left.ready) || right.power - left.power || left.card.member.localeCompare(right.card.member, 'ko'));
   const visible = enhanceFilter === 'ready' ? available.filter((entry) => entry.ready) : available;
   elements.enhanceOwnedCount.textContent = `${available.length}종`;
   elements.enhanceTargetList.innerHTML = visible.map(({ card, ready, power }) => {
@@ -1983,6 +1983,9 @@ function showScreen(screen) {
     screen = SCREEN_IDS.has(activeScreen) && activeScreen !== 'worldboss' ? activeScreen : 'adventure';
   }
   const previousScreen = activeScreen;
+  if (screen === 'enhance' && previousScreen !== 'enhance') {
+    selectedEnhanceCardId = null;
+  }
   activeScreen = screen;
   if (window.location.hash !== `#${screen}`) {
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#${screen}`);

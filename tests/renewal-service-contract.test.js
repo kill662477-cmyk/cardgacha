@@ -86,7 +86,7 @@ const minigameStart = createGameCommand({
 assert.equal(validateGameCommand(minigameStart).valid, true);
 const minigameFinish = createGameCommand({
   type: GAME_COMMAND_TYPES.FINISH_MINIGAME,
-  payload: { runId: 'run-00000001', inputLog: [{ index: 2, atMs: 120 }], score: 0 },
+  payload: { runId: 'run-00000001', inputLog: [{ start: 2, end: 3, atMs: 120 }], score: 0 },
   expectedRevision: 7,
   idempotencyKey: 'minigame-finish-001',
   clientSentAt: clock.now(),

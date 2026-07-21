@@ -48,8 +48,8 @@ import { assertValidGameState, migrateGameState } from './state-schema.js';
 import { createLocalGameService } from './local-game-service.js';
 import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './remote-runtime.js';
 import { GAME_COMMAND_TYPES } from './service-contract.js';
-import { createRequestCoordinator, REQUEST_PHASES } from './request-coordinator.js';
-import { createMiniGameController } from './minigame-controller.js?v=20260721';
+import { createRequestCoordinator, REQUEST_PHASES } from './request-coordinator.js?v=202607211025';
+import { createMiniGameController } from './minigame-controller.js?v=202607211525';
 import { createWorldBossController } from './worldboss-controller.js';
 import { createRankingController } from './ranking-controller.js';
 import { createFxController } from './fx-controller.js';
@@ -2130,12 +2130,12 @@ async function executeEnhancementAttempt(triggerButton = elements.enhanceAttempt
 }
 
 function bindEvents() {
-  if (sessionStorage.getItem('mail_sumten_error_20260720_read') === 'true') {
+  if (sessionStorage.getItem('mail_launch_thanks_20260721_read') === 'true') {
     elements.mailBadge.hidden = true;
   }
   elements.profileCardButton.addEventListener('click', openRepresentativeCardDetail);
   elements.mailButton.addEventListener('click', () => {
-    sessionStorage.setItem('mail_sumten_error_20260720_read', 'true');
+    sessionStorage.setItem('mail_launch_thanks_20260721_read', 'true');
     elements.mailBadge.hidden = true;
     elements.mailDialog.showModal();
   });
@@ -2459,7 +2459,10 @@ async function init() {
       cards,
       getState: () => state,
       clock: gameService,
-      persist: (operation) => runUiOperation(operation, null, () => { gameService[operation](state); renderHeader(); }),
+      persist: (operation) => runUiOperation(operation, null, () => {
+        if (typeof gameService[operation] === 'function') gameService[operation](state);
+        renderHeader();
+      }),
       serverCommands: remoteMode ? {
         startMinigame: (payload) => runUiOperation('startMinigame', elements.miniGameStartButton, () => (
           executeServerCommand(GAME_COMMAND_TYPES.START_MINIGAME, payload)
@@ -2476,7 +2479,10 @@ async function init() {
       getBonuses: currentCombatBonuses,
       clock: gameService,
       random: gameService.random,
-      persist: (operation) => runUiOperation(operation, null, () => { gameService[operation](state); renderHeader(); }),
+      persist: (operation) => runUiOperation(operation, null, () => {
+        if (typeof gameService[operation] === 'function') gameService[operation](state);
+        renderHeader();
+      }),
       serverCommands: remoteMode ? {
         getWorldBossStatus: () => gameService.getWorldBossStatus(),
         subscribeWorldBoss: (onChange) => remoteRuntime.subscribeWorldBoss(onChange),

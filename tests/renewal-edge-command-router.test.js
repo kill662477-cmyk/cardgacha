@@ -102,7 +102,7 @@ const mismatch = await mismatchRouter.execute('user-fixed-by-auth', command(
   {},
   'mismatch-edge-001',
 ));
-assert.equal(mismatch.code, 'INTERNAL_ERROR');
+assert.equal(mismatch.code, 'VERSION_CONFLICT');
 assert.equal(mismatch.details, null, 'internal verification details must not reach the browser');
 
 const edgeSource = await readFile(new URL('../supabase/functions/game-command/index.ts', import.meta.url), 'utf8');

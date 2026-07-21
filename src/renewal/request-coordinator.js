@@ -15,6 +15,9 @@ function phaseForResponse(response) {
   if (response.code === GAME_ERROR_CODES.OFFLINE) return REQUEST_PHASES.OFFLINE;
   if (response.code === GAME_ERROR_CODES.AUTH_REQUIRED) return REQUEST_PHASES.AUTH;
   if (response.code === GAME_ERROR_CODES.VERSION_CONFLICT) return REQUEST_PHASES.CONFLICT;
+  if (response.code === GAME_ERROR_CODES.COMMAND_REJECTED || response.code === GAME_ERROR_CODES.VALIDATION_FAILED) {
+    return REQUEST_PHASES.SUCCESS;
+  }
   return REQUEST_PHASES.ERROR;
 }
 

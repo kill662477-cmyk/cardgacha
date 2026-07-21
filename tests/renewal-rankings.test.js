@@ -5,7 +5,7 @@ assert.equal(COMBAT_POWER_LEADERS.length, 50);
 assert.equal(new Set(COMBAT_POWER_LEADERS.map((entry) => entry.nickname)).size, 50);
 assert.ok(COMBAT_POWER_LEADERS.every((entry, index) => index === 0 || COMBAT_POWER_LEADERS[index - 1].power > entry.power));
 
-const outside = buildCombatPowerRanking('내계정', 214_159);
+const outside = buildCombatPowerRanking('내계정', 14_159);
 assert.equal(outside.leaders.length, COMBAT_RANKING_RULES.visibleCount);
 assert.ok(outside.player.rank > 50 && outside.player.rank <= outside.population);
 assert.ok(outside.player.topPercent > 0 && outside.player.topPercent <= 100);

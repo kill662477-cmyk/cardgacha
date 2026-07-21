@@ -255,6 +255,12 @@ export function createServerCommandRouter(options) {
 
       return commandError(command, GAME_ERROR_CODES.COMMAND_REJECTED, '아직 서버 전환되지 않은 명령입니다.', clock);
     } catch (error) {
+      if (error?.message?.includes('BALANCE_VERSION_MISMATCH')) {
+        return commandError(command, GAME_ERROR_CODES.VERSION_CONFLICT, '최신 기록을 다시 불러와야 합니다.', clock);
+      }
+      if (error?.message?.includes('SERVER_FORMATION_INVALID')) {
+        return commandError(command, GAME_ERROR_CODES.COMMAND_REJECTED, '유효한 전투 카드 5장 편성이 필요합니다.', clock);
+      }
       options?.onError?.({
         commandId: command.commandId,
         commandType: command.type,

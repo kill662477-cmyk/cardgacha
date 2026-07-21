@@ -218,7 +218,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
       if (!response?.ok) {
         session = null;
         render();
-        return showToast('미니게임 결과 저장 실패');
+        return showToast(response?.message || '요청 처리 실패');
       }
       reward = response.result?.rewardPoints ?? 0;
     } else saveResult(finished.game, finished.score, reward);
@@ -309,15 +309,15 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
 
   function flipMemoryCard(index) {
     if (!session || session.game !== 'memory' || resolvingMemory || session.matched.has(index) || session.open.includes(index)) return;
-    const atMs = Math.max(0, clock.now() - session.startAt);
+    const atMs = Math.floor(Math.max(0, clock.now() - session.startAt));
     if (atMs > session.timeLimit * 1000) return;
     session.open.push(index);
-    session.inputLog?.push({ index, atMs });
     renderMemory();
     if (session.open.length < 2) return;
     resolvingMemory = true;
     session.attempts += 1;
     const [left, right] = session.open;
+    session.inputLog?.push({ start: left, end: right, atMs });
     const matched = session.deck[left].pairId === session.deck[right].pairId;
     const sessionId = session.id;
     window.setTimeout(() => {
@@ -382,19 +382,15 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
 
   function endSumDrag(event) {
     if (!sumDrag || event.pointerId !== sumDrag.pointerId || !session) return;
-    const atMs = Math.max(0, clock.now() - session.startAt);
-    if (atMs > session.timeLimit * 1000) {
-      sumDrag = null;
-      updateSumSelection();
-      return;
-    }
+    const maxMs = session.endAt - session.startAt;
+    const atMs = Math.floor(Math.min(maxMs, Math.max(0, clock.now() - session.startAt)));
     const evaluation = currentSumEvaluation();
-    session.inputLog?.push({
-      start: sumDrag.start.index,
-      end: sumDrag.end.index,
-      atMs,
-    });
     if (evaluation?.valid) {
+      session.inputLog?.push({
+        start: sumDrag.start.index,
+        end: sumDrag.end.index,
+        atMs,
+      });
       session.tiles = applySumSelection(session.tiles, evaluation);
       session.score += evaluation.count;
       session.combinations += 1;

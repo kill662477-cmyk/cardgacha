@@ -708,9 +708,13 @@ function renderHeader() {
   elements.quickBattleButton.title = elements.quickBattleButton.disabled ? '모험 진행 중에는 사용할 수 없음' : '';
   elements.autoBattleButton.classList.toggle('active', state.autoBattle);
   elements.autoBattleButton.disabled = !activeRun.active && adventureStatus.remaining <= 0;
+  let autoBattleText = `모험 시작 · ${adventureStatus.remaining}/${ADVENTURE_RULES.maxRunsPerWindow}`;
+  if (!activeRun.active && adventureStatus.remaining < ADVENTURE_RULES.maxRunsPerWindow && adventureStatus.resetsInMs > 0) {
+    autoBattleText += ` (${formatCompactDuration(Math.ceil(adventureStatus.resetsInMs / 1000))})`;
+  }
   elements.autoBattleButton.querySelector('span').textContent = activeRun.active
     ? `${state.autoBattle ? '진행 중' : '계속하기'} · ${activeRun.clearedStages}단계`
-    : `모험 시작 · ${adventureStatus.remaining}/${ADVENTURE_RULES.maxRunsPerWindow}`;
+    : autoBattleText;
   elements.collectionPanelBonus.textContent = `+${(collectionBonuses.combatTotal * 100).toFixed(2)}%`;
 }
 
@@ -1155,7 +1159,9 @@ function enhancementReady(card) {
 function chooseEnhancementTarget() {
   const available = ownedCards().filter((card) => !RARITIES[card.rarity]?.displayOnly);
   if (available.some((card) => card.id === selectedEnhanceCardId)) return;
-  selectedEnhanceCardId = available.map(cardWithProgress).find(enhancementReady)?.id ?? available[0]?.id ?? null;
+  const repCard = representativeCard();
+  const defaultCardId = (repCard && available.some(c => c.id === repCard.id)) ? repCard.id : null;
+  selectedEnhanceCardId = defaultCardId ?? available.map(cardWithProgress).find(enhancementReady)?.id ?? available[0]?.id ?? null;
   selectedMaterialOption = 0;
 }
 
@@ -1166,11 +1172,14 @@ function selectedEnhancementCard() {
 
 function renderEnhancementList() {
   const combatBonuses = currentCombatBonuses();
+  const deckIds = new Set(formationCards().map(c => c.id));
   const available = ownedCards().filter((card) => !RARITIES[card.rarity]?.displayOnly).map(cardWithProgress).map((card) => ({
     card,
     ready: enhancementReady(card),
+    hasExp: card.exp > 0,
+    inDeck: deckIds.has(card.id),
     power: computeCardPower(card, combatBonuses),
-  })).sort((left, right) => Number(right.ready) - Number(left.ready) || right.power - left.power || left.card.member.localeCompare(right.card.member, 'ko'));
+  })).sort((left, right) => Number(right.hasExp) - Number(left.hasExp) || Number(right.inDeck) - Number(left.inDeck) || Number(right.ready) - Number(left.ready) || right.power - left.power || left.card.member.localeCompare(right.card.member, 'ko'));
   const visible = enhanceFilter === 'ready' ? available.filter((entry) => entry.ready) : available;
   elements.enhanceOwnedCount.textContent = `${available.length}종`;
   elements.enhanceTargetList.innerHTML = visible.map(({ card, ready, power }) => {

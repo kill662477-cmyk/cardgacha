@@ -3,6 +3,9 @@ import { createAuthSessionService } from './auth-session-service.js';
 import { createSupabaseGameService } from './supabase-game-service.js';
 
 export function readRemoteConfig(source = globalThis.__CARD_GACHA_CONFIG__) {
+  if (globalThis.location && new URLSearchParams(globalThis.location.search).has('local')) {
+    return { enabled: false, projectUrl: '', publishableKey: '' };
+  }
   const projectUrl = String(source?.supabaseUrl ?? '').trim();
   const publishableKey = String(source?.supabasePublishableKey ?? '').trim();
   return {

@@ -312,12 +312,14 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     const atMs = Math.floor(Math.max(0, clock.now() - session.startAt));
     if (atMs > session.timeLimit * 1000) return;
     session.open.push(index);
+    // 서버 gacha_s2_verify_memory_log 는 각 flip 을 {index, atMs} 단위 액션으로 기대.
+    // 매치 1회 = 첫 flip 액션 + 둘째 flip 액션(2개). sumTen 의 {start,end,atMs} 와 다름.
+    session.inputLog?.push({ index, atMs });
     renderMemory();
     if (session.open.length < 2) return;
     resolvingMemory = true;
     session.attempts += 1;
     const [left, right] = session.open;
-    session.inputLog?.push({ start: left, end: right, atMs });
     const matched = session.deck[left].pairId === session.deck[right].pairId;
     const sessionId = session.id;
     window.setTimeout(() => {

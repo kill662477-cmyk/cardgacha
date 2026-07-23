@@ -84,8 +84,8 @@ invalidMiniGameTotal.miniGames.pointsEarnedByGame.memory = 500;
 assert.ok(validateGameState(invalidMiniGameTotal).issues.some(({ path }) => path === 'miniGames.pointsEarned'));
 
 const overCapLadder = clone(state);
-overCapLadder.miniGames.pointsEarnedByGame.ladder = 3001;
-overCapLadder.miniGames.pointsEarned = 3001;
+overCapLadder.miniGames.pointsEarnedByGame.ladder = 10001;
+overCapLadder.miniGames.pointsEarned = 10001;
 assert.ok(validateGameState(overCapLadder).issues.some(({ path }) => path === 'miniGames.pointsEarnedByGame.ladder'));
 
 const resumedServerState = clone(state);

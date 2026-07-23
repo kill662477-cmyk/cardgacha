@@ -53,7 +53,7 @@ assert.equal(EXPORTED_MINI_GAME_RULES, MINI_GAME_RULES);
 assert.equal(EXPORTED_WORLD_BOSS_RULES, WORLD_BOSS_RULES);
 assert.equal(MATERIAL_RULES.SSS[1].count, 1);
 assert.equal(ADVENTURE_RULES.maxRunsPerWindow, 3);
-assert.equal(MINI_GAME_RULES.dailyPointCapPerGame, 3000);
+assert.equal(MINI_GAME_RULES.dailyPointCapPerGame, 10000);
 assert.equal(MINI_GAME_RULES.ladder.energyCost, 100);
 assert.deepEqual(MINI_GAME_RULES.ladder.rewards, [3000, 2000, 1500, 1000, 500, 50]);
 assert.deepEqual(WORLD_BOSS_RULES.rewardTiers.map(({ damage, points, failurePoints }) => [damage, points, failurePoints]), [
@@ -63,19 +63,21 @@ assert.deepEqual(WORLD_BOSS_RULES.rewardTiers.map(({ damage, points, failurePoin
   [10_000_000, 5500, 2000],
   [15_000_000, 8000, 3000],
   [20_000_000, 10000, 5000],
+  [30_000_000, 20000, 10000],
+  [40_000_000, 30000, 15000],
 ]);
 assert.equal(WORLD_BOSS_RULES.timeZone, 'Asia/Seoul');
 assert.deepEqual(WORLD_BOSS_RULES.scheduleHours, [17, 18, 19, 20]);
 assert.equal(WORLD_BOSS_RULES.attackEnergyCost, 10);
 assert.deepEqual(Object.values(WORLD_BOSS_RULES.slotTiers).map(({ difficultyMultiplier, maxHp }) => [difficultyMultiplier, maxHp]), [
-  [1, 5_000_000_000],
-  [1.5, 7_500_000_000],
-  [2.25, 11_250_000_000],
-  [3.375, 16_875_000_000],
+  [1, 6_500_000_000],
+  [1.5, 9_750_000_000],
+  [2.25, 14_625_000_000],
+  [3.375, 21_937_500_000],
 ]);
 assert.deepEqual(Object.values(WORLD_BOSS_RULES.slotTiers).map(({ clearDestructionGuardRate }) => clearDestructionGuardRate), [0.05, 0.10, 0.15, 0.20]);
 assert.equal(WORLD_BOSS_RULES.raidDurationSeconds, 30 * 60);
-assert.equal(Math.max(...WORLD_BOSS_RULES.rewardTiers.flatMap(({ points, failurePoints }) => [points, failurePoints])), 10000);
+assert.equal(Math.max(...WORLD_BOSS_RULES.rewardTiers.flatMap(({ points, failurePoints }) => [points, failurePoints])), 30000);
 assert.equal(SOOP_RULES.pointsPerBalloon, 5);
 assert.equal(EX_DISTRIBUTION_RULES.enabled, true);
 assert.equal(EX_DISTRIBUTION_RULES.milestones.length, 8);

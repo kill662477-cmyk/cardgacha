@@ -82,17 +82,18 @@ assert.deepEqual(a, b, 'reshuffle must be deterministic');
 const reset = normalizeMiniGameProgress({ date: '2000-01-01', pointsEarned: 3000 }, Date.UTC(2026, 6, 17));
 assert.equal(reset.pointsEarned, 0);
 assert.deepEqual(reset.pointsEarnedByGame, { memory: 0, sumTen: 0, ladder: 0 });
-const independentCaps = { pointsEarnedByGame: { memory: 2990, sumTen: 0 } };
+// dailyPointCapPerGame 10000 기준
+const independentCaps = { pointsEarnedByGame: { memory: 9990, sumTen: 0 } };
 assert.equal(capMiniGameReward(independentCaps, 'memory', 50), 10);
 assert.equal(capMiniGameReward(independentCaps, 'sumTen', 240), 240);
-assert.equal(capMiniGameReward({ pointsEarnedByGame: { ladder: 2950 } }, 'ladder', 500), 50);
+assert.equal(capMiniGameReward({ pointsEarnedByGame: { ladder: 9950 } }, 'ladder', 500), 50);
 assert.equal(capMiniGameReward({ pointsEarnedByGame: { memory: 1000, sumTen: 0 } }, 'memory', 1500), 1500);
 const cappedLadder = normalizeMiniGameProgress({
-  date: '2026-07-17', pointsEarned: 7000,
-  pointsEarnedByGame: { memory: 0, sumTen: 0, ladder: 7000 },
+  date: '2026-07-17', pointsEarned: 12000,
+  pointsEarnedByGame: { memory: 0, sumTen: 0, ladder: 12000 },
 }, new Date(2026, 6, 17, 12, 0, 0).getTime());
-assert.equal(cappedLadder.pointsEarnedByGame.ladder, 3000);
-assert.equal(cappedLadder.pointsEarned, 3000);
+assert.equal(cappedLadder.pointsEarnedByGame.ladder, 10000);
+assert.equal(cappedLadder.pointsEarned, 10000);
 const legacy = normalizeMiniGameProgress({
   date: '2026-07-17', pointsEarned: 3000, plays: 2, bestMemory: 10, bestSumTen: 5,
 }, new Date(2026, 6, 17, 12, 0, 0).getTime());

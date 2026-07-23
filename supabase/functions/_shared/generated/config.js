@@ -290,7 +290,7 @@ export const COLLECTION_RULES = {
 
 export const MINI_GAME_RULES = {
   energyCost: 10,
-  dailyPointCapPerGame: 3000,
+  dailyPointCapPerGame: 10000,
   memory: {
     basic: { label: '4×4', pairs: 8, columns: 4, timeLimit: 90, completionReward: 500 },
     advanced: { label: '6×6', pairs: 18, columns: 6, timeLimit: 150, completionReward: 1500 },
@@ -313,36 +313,39 @@ export const WORLD_BOSS_RULES = {
   scheduleHours: [17, 18, 19, 20],
   attackEnergyCost: 10,
   slotTiers: {
+    // balance-tune: 난이도 상향 위해 슬롯별 maxHp를 기존의 1.3배로 올림(서버 DPS는 유지 -> 처치 난이도 상승).
     17: {
       title: '신호 요새', name: 'SIGNAL//BASTION', difficultyMultiplier: 1,
-      maxHp: 5_000_000_000, serverDamagePerSecond: 2_766_667, clearDestructionGuardRate: 0.05,
+      maxHp: 6_500_000_000, serverDamagePerSecond: 3_596_667, clearDestructionGuardRate: 0.05,
       image: 'assets/renewal/worldboss/boss-17-signal-bastion.webp',
     },
     18: {
       title: '중계 포식자', name: 'RELAY//DEVOURER', difficultyMultiplier: 1.5,
-      maxHp: 7_500_000_000, serverDamagePerSecond: 4_150_001, clearDestructionGuardRate: 0.10,
+      maxHp: 9_750_000_000, serverDamagePerSecond: 5_395_001, clearDestructionGuardRate: 0.10,
       image: 'assets/renewal/worldboss/boss-18-relay-devourer.webp',
     },
     19: {
       title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 2.25,
-      maxHp: 11_250_000_000, serverDamagePerSecond: 6_225_001, clearDestructionGuardRate: 0.15,
+      maxHp: 14_625_000_000, serverDamagePerSecond: 8_092_501, clearDestructionGuardRate: 0.15,
       image: 'assets/renewal/worldboss/boss-19-void-harvester.webp',
     },
     20: {
       title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 3.375,
-      maxHp: 16_875_000_000, serverDamagePerSecond: 9_337_501, clearDestructionGuardRate: 0.20,
+      maxHp: 21_937_500_000, serverDamagePerSecond: 12_138_751, clearDestructionGuardRate: 0.20,
       image: 'assets/renewal/worldboss/boss-20-malice-singularity.webp',
     },
   },
-  // nolevel-1: 새 카드 전투력 스케일에 맞춰 공동 HP·서버 DPS 재튠.
-  maxHp: 5_000_000_000,
+  // nolevel-1: 새 카드 전투력 스케일에 맞춰 공동 HP·서버 DPS 재튠. (기본 maxHp도 1.3배)
+  maxHp: 6_500_000_000,
   battleDuration: 60,
   maxAttempts: 3,
   eventDurationSeconds: 60 * 60,
   raidDurationSeconds: 30 * 60,
-  // 30분 전투 종료 시 서버 기여 49.8억. 개인 누적 2,000만이 성공 경계가 된다.
-  serverDamagePerSecond: 2_766_667,
+  // balance-tune: maxHp·serverDPS를 함께 1.3배 -> 처치 요구 개인/공동 딜(갭)이 정확히 1.3배로
+  // 상승(단순 HP만 올리면 DPS가 HP의 99.6%를 먹어 갭이 폭증하므로 DPS도 같이 스케일).
+  serverDamagePerSecond: 3_596_667,
   cardExpPerAttempt: 25,
+  // balance-tune: 상위 딜 구간 차등 보상 확장. 4,000만딜 3만포 / 3,000만딜 2만포.
   rewardTiers: [
     { damage: 1, points: 1000, failurePoints: 250, label: '참여' },
     { damage: 2_000_000, points: 2000, failurePoints: 500, label: '200만' },
@@ -350,6 +353,8 @@ export const WORLD_BOSS_RULES = {
     { damage: 10_000_000, points: 5500, failurePoints: 2000, label: '1,000만' },
     { damage: 15_000_000, points: 8000, failurePoints: 3000, label: '1,500만' },
     { damage: 20_000_000, points: 10000, failurePoints: 5000, label: '2,000만' },
+    { damage: 30_000_000, points: 20000, failurePoints: 10000, label: '3,000만' },
+    { damage: 40_000_000, points: 30000, failurePoints: 15000, label: '4,000만' },
   ],
 };
 

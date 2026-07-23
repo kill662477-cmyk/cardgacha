@@ -1,5 +1,5 @@
 import {
-  ADVENTURE_RULES, ARCHETYPES, ENHANCEMENT, GAME_RULES, PACKS, RARITIES, RARITY_ORDER,
+  ADVENTURE_RULES, ARCHETYPES, DISMANTLE_RULES, ENHANCEMENT, GAME_RULES, PACKS, RARITIES, RARITY_ORDER,
   REWARD_RULES, STAGES, SUPPORT_ITEMS, SUPPORT_PACK,
 } from './config.js';
 import { computeCardPower, computeCardStats, computeFormationPower, getRaceSynergy, simulateBattle } from './battle.js';

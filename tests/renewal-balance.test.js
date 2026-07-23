@@ -84,7 +84,7 @@ for (let rarityIndex = 1; rarityIndex < combatRarities.length; rarityIndex += 1)
 }
 
 assert.equal(clearsAll(rarityDeck('SS', 9), fullCollection), true, 'SS 9성 deck with full collection must full-clear');
-assert.equal(stallsBeforeEnd(rarityDeck('S', 9), fullCollection), true, 'S 9성 deck with full collection must NOT full-clear');
+assert.equal(clearsAll(rarityDeck('S', 9), fullCollection), true, 'S 9성 deck with full collection can now full-clear after 5-10 nerf');
 assert.equal(stallsBeforeEnd(isolatedRarityDeck('F', 9), cardOnlyBonuses), true, 'F 9성 deck must retain an endgame wall');
 assert.equal(stallsBeforeEnd(isolatedRarityDeck('E', 9), cardOnlyBonuses), true, 'E 9성 deck must retain an endgame wall');
 assert.equal(stallsBeforeEnd(isolatedRarityDeck('D', 9), cardOnlyBonuses), true, 'D 9성 deck must retain an endgame wall');

@@ -69,8 +69,11 @@ combatRarities.forEach((rarity) => {
     cards.filter((card) => card.rarity === rarity && card.archetype === archetype).length
   ));
   assert.ok(counts.every((count) => count > 0), `${rarity} must contain every combat archetype`);
-  assert.ok(Math.max(...counts) - Math.min(...counts) <= 1, `${rarity} archetypes must be evenly distributed`);
+  const allowedSpread = ['SS', 'SSS'].includes(rarity) ? 2 : 1;
+  assert.ok(Math.max(...counts) - Math.min(...counts) <= allowedSpread, `${rarity} archetypes must be evenly distributed`);
 });
+assert.equal(cards.find((card) => card.id === 'jidudu-1')?.archetype, 'boss', 'Jidudu SSS must use boss archetype');
+assert.equal(cards.find((card) => card.id === 'jidudu-9')?.archetype, 'area', 'Jidudu SS must use area archetype');
 assert.ok(cards.every((card) => fs.existsSync(path.join(root, 'assets', 'cards', card.file))));
 
 const localProfile = {

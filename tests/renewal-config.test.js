@@ -106,8 +106,8 @@ assert.match(sss46Migration, /v_ss_multiplier <> 2\.7 or v_sss_multiplier <> 4\.
 assert.match(ss29Migration, /'\{rarities,SS,multiplier\}', '2\.9'::jsonb/);
 assert.match(ss29Migration, /v_ss_multiplier <> 2\.9 or v_sss_multiplier <> 4\.6/);
 // balance-tune: 5-10 보스를 SS 7강 + 도감 80% 스펙으로 클리어 가능하게 하향.
-assert.equal(REGIONS[4].bossHp, 8_250_000, 'region 5 final boss tuned to SS+7/collection-80% clear spec');
-assert.equal(REGIONS[4].bossAttack, 21_000);
+assert.equal(REGIONS[4].bossHp, 7_500_000, 'region 5 final boss tuned to SS+7/collection-80% clear spec');
+assert.equal(REGIONS[4].bossAttack, 16_000);
 // balance-tune: 하드 최종 보스를 SSS 올 7강 + 풀도감 올클리어 스펙에 맞춰 하향.
 assert.equal(REGIONS[9].bossHp, 18_900_000, 'hard final boss tuned to SSS+7/full-collection all-clear spec');
 assert.equal(REGIONS.length, 10);

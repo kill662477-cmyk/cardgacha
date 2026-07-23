@@ -166,7 +166,7 @@ export const REGIONS = [
   { id: 4, name: '폭주한 데이터 요새', code: 'data-fortress', hpBase: 2500000, attackBase: 9000, bossHp: 4000000, bossAttack: 11000 },
   // balance-tune: 5-10 최종 보스를 SS 7강 + 도감 80% 스펙으로 클리어 가능하게 하향
   // (9,500,000 -> 8,250,000). S 9성 풀도감 테스트 덱은 여전히 막힘.
-  { id: 5, name: '악플 코어 심층부', code: 'malice-core', hpBase: 4200000, attackBase: 12500, bossHp: 8250000, bossAttack: 21000 },
+  { id: 5, name: '악플 코어 심층부', code: 'malice-core', hpBase: 4200000, attackBase: 12500, bossHp: 7500000, bossAttack: 16000 },
   // balance-tune: 하드 모험 올클리어 기준을 SSS 올 7강 + 풀도감 스펙에 맞춤.
   // 카드 천장(SSS 4.6배 × 9강 3배) 대비 과튜닝돼 있던 HP를 원래의 약 0.675배로
   // 하향, 공격력 0.85배(생존 여유). SSS 7강 풀도감이 딱 100 올클, 도감 80%면

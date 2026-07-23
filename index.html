@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/renewal/brand/card-gacha-s2-favicon-32.png">
   <link rel="apple-touch-icon" sizes="192x192" href="assets/renewal/brand/card-gacha-s2-icon-192.png">
   <link rel="stylesheet" href="styles/renewal/tokens.css">
-  <link rel="stylesheet" href="styles/renewal/main.css?v=202607210946">
+  <link rel="stylesheet" href="styles/renewal/main.css?v=202607231530">
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
 </head>
 <body>
@@ -54,12 +54,14 @@
       </div>
       <nav>
         <button class="nav-item" type="button" data-screen="shop"><i data-lucide="shopping-bag"></i><span>상점</span></button>
+        <button class="nav-item" type="button" data-screen="inventory"><i data-lucide="backpack"></i><span>인벤토리</span></button>
         <button class="nav-item" type="button" data-screen="enhance"><i data-lucide="chevrons-up"></i><span>강화</span></button>
         <button class="nav-item" type="button" data-screen="collection"><i data-lucide="book-open"></i><span>도감</span></button>
         <button class="nav-item" type="button" data-screen="ranking"><i data-lucide="trophy"></i><span>랭킹</span></button>
         <button class="nav-item active" type="button" data-screen="adventure"><i data-lucide="compass"></i><span>모험</span></button>
+        <button class="nav-item" type="button" data-screen="formation"><i data-lucide="users"></i><span>편성</span></button>
         <button class="nav-item" type="button" data-screen="worldboss" style="position: relative;"><i data-lucide="radio-tower"></i><span>월드보스</span><span id="worldBossNavBadge" hidden style="position: absolute; top: 2px; right: 2px; background: var(--color-danger, #e11d48); color: white; font-size: 9px; font-weight: 800; border-radius: 50%; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; line-height: 1;">!</span></button>
-        <button class="nav-item" type="button" data-screen="minigame" hidden><i data-lucide="gamepad-2"></i><span>미니게임</span></button>
+        <button class="nav-item" type="button" data-screen="minigame"><i data-lucide="gamepad-2"></i><span>미니게임</span></button>
       </nav>
     </aside>
 
@@ -94,6 +96,15 @@
       </section>
 
       <aside class="mission-panel">
+        <section class="panel-section adventure-mode-panel">
+          <div class="section-title"><span>모험 난이도</span><i data-lucide="shield-alert"></i></div>
+          <div class="adventure-mode-switch" role="group" aria-label="모험 난이도 선택">
+            <button class="active" id="adventureModeNormal" type="button"><span>NORMAL</span><b>1-1 ~ 5-10</b></button>
+            <button id="adventureModeHard" type="button" disabled><span>HARD</span><b>6-1 ~ 10-10</b></button>
+          </div>
+          <small class="adventure-mode-lock" id="adventureModeLock">일반 모험 5-10 클리어 시 해금</small>
+        </section>
+
         <section class="panel-section region-progress">
           <div class="section-title"><span>지역 진행</span><i data-lucide="activity"></i></div>
           <div class="stage-nodes" id="stageNodes"></div>
@@ -173,6 +184,12 @@
         <div class="enhance-filters" role="group" aria-label="강화 카드 필터">
           <button class="active" type="button" data-enhance-filter="all">전체</button>
           <button type="button" data-enhance-filter="ready">준비 완료</button>
+        </div>
+        <div class="enhance-filters enhance-sorts" role="group" aria-label="강화 카드 정렬">
+          <button class="active" type="button" data-enhance-sort="smart">기본</button>
+          <button type="button" data-enhance-sort="power">전투력순</button>
+          <button type="button" data-enhance-sort="exp">EXP순</button>
+          <button type="button" data-enhance-sort="enhancement">강화순</button>
         </div>
         <div class="enhance-target-list" id="enhanceTargetList"></div>
       </section>
@@ -316,7 +333,7 @@
     <main class="worldboss-screen" id="worldBossScreen" hidden>
       <section class="worldboss-stage">
         <header class="worldboss-heading">
-          <div><span id="worldBossEventState">SERVER RAID LIVE</span><h1>거대 악플 코어 <b>NOISE//ZERO</b></h1><small class="worldboss-schedule" id="worldBossSchedule">매일 17·18·19·20시 KST</small></div>
+          <div><span id="worldBossEventState">SERVER RAID LIVE</span><h1><span id="worldBossTitle">신호 요새</span> <b id="worldBossName">SIGNAL//BASTION</b></h1><small class="worldboss-schedule" id="worldBossSchedule">매일 17·18·19·20시 KST</small></div>
           <div class="worldboss-clock"><span id="worldBossClockLabel">종료까지</span><strong id="worldBossTimer">00:52:00</strong><em class="worldboss-next-slot" id="worldBossNextSlot" hidden></em></div>
         </header>
         <div class="worldboss-hp-block">
@@ -325,8 +342,8 @@
         </div>
         <div class="worldboss-arena">
           <div class="worldboss-scanline"></div>
-          <div class="worldboss-core" id="worldBossCore" data-phase="1">
-            <i class="core-ring outer"></i><i class="core-ring middle"></i><i class="core-ring inner"></i><b>NOISE//ZERO</b><span id="worldBossCorePhase">PHASE 1 · 악성 신호 활성</span>
+          <div class="worldboss-core" id="worldBossCore" data-phase="1" data-slot-hour="17">
+            <i class="core-ring outer"></i><i class="core-ring middle"></i><i class="core-ring inner"></i><b id="worldBossCoreName">SIGNAL//BASTION</b><span id="worldBossCorePhase">PHASE 1 · 악성 신호 활성</span>
           </div>
           <div class="worldboss-current-damage"><span>이번 도전 피해</span><strong id="worldBossAttemptDamage">0</strong></div>
         </div>
@@ -343,7 +360,7 @@
           <div><dt>개인 백분위</dt><dd id="worldBossPercentile">미참여</dd></div>
         </dl>
         <div class="worldboss-actions">
-          <button id="worldBossAttackButton" type="button"><i data-lucide="swords"></i><span>보스 교전 시작</span><small>60초 · 행동력 소모 없음</small></button>
+          <button id="worldBossAttackButton" type="button"><i data-lucide="swords"></i><span>보스 교전 시작</span><small>60초 · 행동력 10 소모</small></button>
           <button id="worldBossRewardButton" type="button" disabled><i data-lucide="gift"></i><span>누적 보상 받기</span><small id="worldBossRewardText">1회 참여 후 활성화</small></button>
         </div>
         <section class="worldboss-rank-block">
@@ -396,6 +413,9 @@
           <button type="button" data-minigame-select="sumTen">
             <i data-lucide="grid-3x3"></i><span>캄몬사과게임</span><small>SUM TEN</small>
           </button>
+          <button type="button" data-minigame-select="ladder">
+            <i data-lucide="git-branch"></i><span>운명의 사다리</span><small>LUCKY LADDER</small>
+          </button>
         </nav>
         <div class="minigame-daily-block">
           <span>오늘 획득</span><strong id="miniGameDaily">0 / 3,000 P</strong>
@@ -424,6 +444,10 @@
             <div class="sum-ten-board" id="sumTenBoard"></div>
             <div class="sum-selection-readout"><span>SELECT</span><b id="miniGameSelectionSum">0</b><small>/ 10</small></div>
           </div>
+          <div class="ladder-shell" id="ladderShell" hidden>
+            <div class="ladder-choice-copy" id="ladderChoiceCopy">출발점을 선택하세요</div>
+            <div class="ladder-board" id="ladderBoard"></div>
+          </div>
           <div class="minigame-result-panel" id="miniGameResult" hidden>
             <span>RESULT</span><h3 id="miniGameResultTitle">작전 완료</h3>
             <strong id="miniGameResultScore">0 SCORE</strong>
@@ -435,7 +459,7 @@
       <aside class="minigame-control">
         <header><span>PLAY MODE</span><h2>작전 설정</h2></header>
         <div class="minigame-mode" id="miniGameMode">
-          <button class="active" type="button" data-mini-mode="reward"><i data-lucide="zap"></i><span>보상</span><small>-10 행동력</small></button>
+          <button class="active" type="button" data-mini-mode="reward"><i data-lucide="zap"></i><span>보상</span><small id="miniGameRewardCost">-10 행동력</small></button>
           <button type="button" data-mini-mode="practice"><i data-lucide="infinity"></i><span>연습</span><small>무료</small></button>
         </div>
         <section class="minigame-difficulty" id="miniGameDifficulty">
@@ -642,12 +666,13 @@
         <button class="icon-button" value="cancel" aria-label="우편함 닫기" title="닫기"><i data-lucide="x"></i></button>
       </header>
       <div style="padding: 20px; font-size: 0.9rem; line-height: 1.6; color: var(--color-foreground);">
-        <strong style="display: block; margin-bottom: 12px; color: var(--color-warning, #f59e0b);">[축하 안내] 전 서버 최초 9강 달성 기념 축하금 지급!</strong>
+        <strong style="display: block; margin-bottom: 12px; color: var(--color-warning, #f59e0b);">[업데이트 기념 보상] SS·SSS 상향 및 신규 SS 카드 추가</strong>
         <p style="margin-bottom: 12px;">안녕하세요, 카드 가챠 운영진입니다.</p>
-        <p style="margin-bottom: 12px;">방금 전, <strong>'빙하.'</strong> 유저님께서 전 서버를 통틀어 <strong>최초로 9강(토마토 S등급) 달성</strong>에 성공하셨습니다!</p>
-        <p style="margin-bottom: 12px;">서버 오픈 이후 누구도 도달하지 못했던 극한의 확률을 뚫고 최초 9강의 위업을 달성하신 빙하. 님께 진심으로 축하의 말씀을 전합니다.</p>
-        <p style="margin-bottom: 12px;">역사적인 첫 9강 탄생을 기념하며, 가챠에 참여해주고 계신 1,700명 이상의 <strong>모든 유저분들께 축하금 9,999 P (포인트)</strong>를 일괄 지급해 드렸습니다! (현재 접속 중이신 계정에 즉시 반영되어 있습니다.)</p>
-        <p>다음 9강의 주인공은 누가 될지 기대하며, 앞으로도 즐거운 가챠 되시길 바랍니다. 감사합니다.</p>
+        <p style="margin-bottom: 12px;">SS·SSS 등급 카드의 전투력 계수가 각각 <strong>2.9, 4.6</strong>으로 상향 조정되었습니다.</p>
+        <p style="margin-bottom: 12px;">신규 SS 등급 카드 <strong>비타밍</strong>과 <strong>햇살</strong>이 카드팩 및 도감에 추가되었습니다.</p>
+        <p style="margin-bottom: 12px;">업데이트를 기념해 <strong>현재 모든 계정에 50,000 P</strong>를 일괄 지급했습니다.</p>
+        <p style="margin-bottom: 12px;">보상은 별도 수령 없이 계정 포인트에 자동 반영됩니다. 현재 접속 중인 경우 재접속 후 확인해 주세요.</p>
+        <p>앞으로도 카드 등급과 콘텐츠 밸런스를 지속적으로 개선하겠습니다. 감사합니다.</p>
       </div>
       <footer>
         <button class="confirm-button" value="cancel" type="button" style="width: 100%;">확인</button>
@@ -678,6 +703,6 @@
   </dialog>
 
   <script src="runtime-config.js?v=4"></script>
-  <script type="module" src="src/renewal/app.js?v=202607211525"></script>
+  <script type="module" src="src/renewal/app.js?v=202607231530"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 import { simulateBattle } from './battle.js';
 import { WORLD_BOSS_RULES } from './config.js';
-import { resolveWorldBossSlot } from './worldboss-schedule.js';
+import { getWorldBossTier, resolveWorldBossSlot } from './worldboss-schedule.js';
 
 export { WORLD_BOSS_RULES };
 
@@ -41,6 +41,7 @@ export function normalizeWorldBossProgress(progress, now = Date.now()) {
 
 export function getWorldBossSnapshot(progress, now = Date.now()) {
   const normalized = normalizeWorldBossProgress(progress, now);
+  const tier = getWorldBossTier(normalized.eventId);
   const resolved = resolveWorldBossSlot(now);
   const live = resolved.live && resolved.slot.id === normalized.eventId;
   const raidEndsAt = normalized.startedAt + WORLD_BOSS_RULES.raidDurationSeconds * 1000;
@@ -48,10 +49,10 @@ export function getWorldBossSnapshot(progress, now = Date.now()) {
     WORLD_BOSS_RULES.raidDurationSeconds,
     Math.floor((now - normalized.startedAt) / 1000),
   ));
-  const serverDamage = Math.floor(elapsedSeconds * WORLD_BOSS_RULES.serverDamagePerSecond);
-  const totalDamage = Math.min(WORLD_BOSS_RULES.maxHp, serverDamage + normalized.totalDamage);
-  const currentHp = Math.max(0, WORLD_BOSS_RULES.maxHp - totalDamage);
-  const hpRatio = currentHp / WORLD_BOSS_RULES.maxHp;
+  const serverDamage = Math.floor(elapsedSeconds * tier.serverDamagePerSecond);
+  const totalDamage = Math.min(tier.maxHp, serverDamage + normalized.totalDamage);
+  const currentHp = Math.max(0, tier.maxHp - totalDamage);
+  const hpRatio = currentHp / tier.maxHp;
   const raidRemainingSeconds = Math.max(0, Math.ceil((raidEndsAt - now) / 1000));
   const resultRemainingSeconds = Math.max(0, Math.ceil((normalized.endsAt - now) / 1000));
   const secondsUntilStart = Math.max(0, Math.ceil((normalized.startedAt - now) / 1000));
@@ -68,7 +69,8 @@ export function getWorldBossSnapshot(progress, now = Date.now()) {
       && normalized.attempts < WORLD_BOSS_RULES.maxAttempts
       && raidRemainingSeconds > WORLD_BOSS_RULES.battleDuration,
     currentHp,
-    maxHp: WORLD_BOSS_RULES.maxHp,
+    maxHp: tier.maxHp,
+    tier,
     hpRatio,
     phase: hpRatio > 0.66 ? 1 : hpRatio > 0.33 ? 2 : 3,
     remainingSeconds: resultsOpen ? resultRemainingSeconds : raidRemainingSeconds,

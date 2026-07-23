@@ -56,8 +56,25 @@ const adventure = await router.execute('user-fixed-by-auth', command(
 ));
 assert.equal(adventure.rpc, 'gacha_s2_start_adventure_run');
 assert.equal(Number.isInteger(adventure.args.p_verified_cleared_stages), true);
+assert.equal(adventure.args.p_mode, 'normal');
 assert.match(adventure.args.p_verification_digest, /^[0-9a-f]{64}$/);
 assert.equal(calls.some(({ name }) => name === 'gacha_s2_get_player_snapshot'), true);
+
+const lockedHard = await router.execute('user-fixed-by-auth', command(
+  GAME_COMMAND_TYPES.START_ADVENTURE_RUN,
+  { mode: 'hard' },
+  'hard-locked-edge-001',
+));
+assert.equal(lockedHard.code, 'COMMAND_REJECTED');
+snapshot.clearedStage = 50;
+const hardQuick = await router.execute('user-fixed-by-auth', command(
+  GAME_COMMAND_TYPES.CLAIM_QUICK_BATTLE,
+  { mode: 'hard' },
+  'hard-quick-edge-0001',
+));
+assert.equal(hardQuick.rpc, 'gacha_s2_claim_quick_battle');
+assert.equal(hardQuick.args.p_mode, 'hard');
+snapshot.clearedStage = 0;
 
 calls.length = 0;
 const worldBoss = await router.execute('user-fixed-by-auth', command(
@@ -91,6 +108,15 @@ const cardLock = await router.execute('user-fixed-by-auth', command(
   'card-lock-0000001',
 ));
 assert.equal(cardLock.rpc, 'gacha_s2_set_card_lock');
+
+const ladder = await router.execute('user-fixed-by-auth', command(
+  GAME_COMMAND_TYPES.PLAY_LADDER,
+  { lane: 4 },
+  'ladder-edge-00001',
+));
+assert.equal(ladder.rpc, 'gacha_s2_play_ladder');
+assert.equal(ladder.args.p_lane, 4);
+assert.equal(ladder.args.p_user_id, 'user-fixed-by-auth');
 
 const mismatchRouter = createServerCommandRouter({
   gateway: { ...gateway, activeBalanceVersion: async () => 'stale-balance' },

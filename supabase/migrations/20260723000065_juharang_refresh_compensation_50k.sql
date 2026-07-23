@@ -1,0 +1,62 @@
+-- Grant 50,000P once to users affected by the Juharang enhancement remapping.
+
+begin;
+
+create table if not exists public.gacha_s2_juharang_refresh_compensation_20260723 (
+  user_id uuid primary key references public.gacha_s2_accounts(id) on delete cascade,
+  points_before integer not null,
+  points_granted integer not null default 50000 check (points_granted = 50000),
+  points_after integer,
+  granted_at timestamptz not null default now()
+);
+
+insert into public.gacha_s2_juharang_refresh_compensation_20260723 (
+  user_id,
+  points_before
+)
+select distinct recovery.user_id, state.points
+from public.gacha_s2_juharang_enhancement_recovery_20260723 recovery
+join public.gacha_s2_player_states state on state.user_id = recovery.user_id
+on conflict (user_id) do nothing;
+
+update public.gacha_s2_player_states state
+set points = state.points + compensation.points_granted,
+    revision = state.revision + 1,
+    updated_at = now()
+from public.gacha_s2_juharang_refresh_compensation_20260723 compensation
+where state.user_id = compensation.user_id
+  and compensation.points_after is null;
+
+update public.gacha_s2_juharang_refresh_compensation_20260723 compensation
+set points_after = state.points
+from public.gacha_s2_player_states state
+where state.user_id = compensation.user_id
+  and compensation.points_after is null;
+
+do $$
+begin
+  if (
+    select count(*)
+    from public.gacha_s2_juharang_refresh_compensation_20260723
+  ) <> (
+    select count(distinct user_id)
+    from public.gacha_s2_juharang_enhancement_recovery_20260723
+  ) then
+    raise exception 'Juharang compensation target count mismatch';
+  end if;
+
+  if exists (
+    select 1
+    from public.gacha_s2_juharang_refresh_compensation_20260723
+    where points_after is null
+       or points_after <> points_before + points_granted
+  ) then
+    raise exception 'Juharang compensation amount validation failed';
+  end if;
+end;
+$$;
+
+revoke all on table public.gacha_s2_juharang_refresh_compensation_20260723
+  from public, anon, authenticated;
+
+commit;

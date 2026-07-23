@@ -9,6 +9,7 @@ import {
   normalizeAdventureRun,
   normalizeAdventureRuns,
   recordAdventureRun,
+  isAdventureModeUnlocked,
 } from '../src/renewal/adventure.js';
 
 const now = Date.UTC(2026, 6, 17, 12, 0, 0);
@@ -59,6 +60,15 @@ assert.deepEqual(calculateAdventureRunReward(3), {
 assert.equal(calculateAdventureRunReward(10).points, 502);
 assert.equal(calculateAdventureRunReward(50).points, 8000);
 assert.equal(calculateAdventureRunReward(99).points, 8000, 'run point reward must cap at 8,000P');
+const hardRun = createAdventureRun(now, 'hard');
+assert.equal(hardRun.currentStage, 51);
+assert.equal(hardRun.mode, 'hard');
+assert.equal(advanceAdventureRun(hardRun).currentStage, 52);
+assert.equal(calculateAdventureRunReward(0, 'hard').points, 0);
+assert.equal(calculateAdventureRunReward(1, 'hard').points, 7000);
+assert.equal(calculateAdventureRunReward(50, 'hard').points, 20000);
+assert.equal(isAdventureModeUnlocked('hard', 49), false);
+assert.equal(isAdventureModeUnlocked('hard', 50), true);
 
 const exGrant = claimAdventureExMilestones(20, {}, {}, {});
 assert.deepEqual(exGrant.awarded.map((reward) => reward.cardId), ['group-1', 'group-2', 'group-3', 'group-4']);

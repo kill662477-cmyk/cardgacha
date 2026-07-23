@@ -74,10 +74,11 @@ export function createRemoteRuntime(config = readRemoteConfig(), options = {}) {
 }
 
 export function mergeServerSnapshot(snapshot, clientCache = {}) {
+  const activeRunStage = snapshot.adventureRun?.active ? snapshot.adventureRun.currentStage : null;
   return {
     ...snapshot,
     worldBoss: snapshot.worldBoss?.eventId ? snapshot.worldBoss : clientCache.worldBoss,
-    currentStage: Math.max(1, Math.min(50, Number(clientCache.currentStage ?? snapshot.clearedStage + 1) || 1)),
+    currentStage: Math.max(1, Math.min(100, Number(activeRunStage ?? clientCache.currentStage ?? snapshot.clearedStage + 1) || 1)),
     autoBattle: Boolean(clientCache.autoBattle),
     soundEnabled: clientCache.soundEnabled !== false,
   };

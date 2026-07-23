@@ -83,21 +83,37 @@ function validateAdventure(issues, state) {
   const run = state.adventureRun;
   if (!isRecord(run)) return issue(issues, 'adventureRun', '객체 필요');
   if (typeof run.active !== 'boolean') issue(issues, 'adventureRun.active', 'boolean 필요');
-  if (!isIntegerBetween(run.currentStage, 1, REWARD_RULES.maxStage)) issue(issues, 'adventureRun.currentStage', '1~50 정수 필요');
-  if (!isIntegerBetween(run.clearedStages, 0, REWARD_RULES.maxStage)) issue(issues, 'adventureRun.clearedStages', '0~50 정수 필요');
+  const mode = run.mode === 'hard' ? 'hard' : 'normal';
+  const modeRules = ADVENTURE_RULES.modes[mode];
+  if (run.mode !== undefined && !['normal', 'hard'].includes(run.mode)) {
+    issue(issues, 'adventureRun.mode', 'normal 또는 hard 필요');
+  }
+  if (!isIntegerBetween(
+    run.currentStage,
+    run.active ? modeRules.startStage : 1,
+    run.active ? modeRules.endStage : 1,
+  )) {
+    issue(issues, 'adventureRun.currentStage', run.active
+      ? `${modeRules.startStage}~${modeRules.endStage} 정수 필요`
+      : '비활성 런은 1 필요');
+  }
+  if (!isIntegerBetween(run.clearedStages, 0, modeRules.stageCount)) {
+    issue(issues, 'adventureRun.clearedStages', `0~${modeRules.stageCount} 정수 필요`);
+  }
   if (!isIntegerBetween(run.startedAt, 0)) issue(issues, 'adventureRun.startedAt', '0 이상 정수 필요');
   if (run.runId !== undefined && (typeof run.runId !== 'string' || !run.runId.trim() || run.runId.length > 100)) {
     issue(issues, 'adventureRun.runId', '유효한 서버 실행 ID 필요');
   }
   if (run.verifiedClearedStages !== undefined
-    && !isIntegerBetween(run.verifiedClearedStages, 0, REWARD_RULES.maxStage)) {
+    && !isIntegerBetween(run.verifiedClearedStages, 0, modeRules.stageCount)) {
     issue(issues, 'adventureRun.verifiedClearedStages', '0~50 정수 필요');
   }
   if (run.verificationDigest !== undefined
     && (typeof run.verificationDigest !== 'string' || !/^[0-9a-f]{64}$/i.test(run.verificationDigest))) {
     issue(issues, 'adventureRun.verificationDigest', '64자리 검증 해시 필요');
   }
-  if (run.active && run.currentStage !== run.clearedStages + 1) issue(issues, 'adventureRun', '진행 단계와 클리어 수 불일치');
+  const expectedCurrentStage = Math.min(modeRules.endStage, modeRules.startStage + run.clearedStages);
+  if (run.active && run.currentStage !== expectedCurrentStage) issue(issues, 'adventureRun', '진행 단계와 클리어 수 불일치');
   if (!run.active && (run.currentStage !== 1 || run.clearedStages !== 0 || run.startedAt !== 0)) {
     issue(issues, 'adventureRun', '비활성 런은 초기 상태 필요');
   }
@@ -220,7 +236,18 @@ export function migrateGameState(rawState) {
       pointsEarnedByGame: {
         memory: memoryPoints,
         sumTen: Math.min(MINI_GAME_RULES.dailyPointCapPerGame, Math.max(0, legacyPoints - memoryPoints)),
+        ladder: 0,
       },
+      bestLadder: 0,
+    };
+    addedMiniGameBreakdown = true;
+  }
+  if (isRecord(state.miniGames) && isRecord(state.miniGames.pointsEarnedByGame)
+    && !Object.hasOwn(state.miniGames.pointsEarnedByGame, 'ladder')) {
+    state.miniGames = {
+      ...state.miniGames,
+      bestLadder: Math.max(0, Math.floor(Number(state.miniGames.bestLadder) || 0)),
+      pointsEarnedByGame: { ...state.miniGames.pointsEarnedByGame, ladder: 0 },
     };
     addedMiniGameBreakdown = true;
   }
@@ -282,22 +309,23 @@ export function validateGameState(state, options = {}) {
   }
 
   validateDailyProgress(issues, state.miniGames, 'miniGames', [
-    ['pointsEarned', MINI_GAME_RULES.dailyPointCapPerGame * 2], ['plays', Number.MAX_SAFE_INTEGER],
-    ['bestMemory', Number.MAX_SAFE_INTEGER], ['bestSumTen', Number.MAX_SAFE_INTEGER],
+    ['pointsEarned', Number.MAX_SAFE_INTEGER], ['plays', Number.MAX_SAFE_INTEGER],
+    ['bestMemory', Number.MAX_SAFE_INTEGER], ['bestSumTen', Number.MAX_SAFE_INTEGER], ['bestLadder', Number.MAX_SAFE_INTEGER],
   ]);
   const miniGameBreakdown = state.miniGames?.pointsEarnedByGame;
   if (!isRecord(miniGameBreakdown)) issue(issues, 'miniGames.pointsEarnedByGame', '게임별 포인트 객체 필요');
   else {
-    ['memory', 'sumTen'].forEach((game) => {
+    ['memory', 'sumTen', 'ladder'].forEach((game) => {
       if (!isIntegerBetween(miniGameBreakdown[game], 0, MINI_GAME_RULES.dailyPointCapPerGame)) {
         issue(issues, `miniGames.pointsEarnedByGame.${game}`, `0~${MINI_GAME_RULES.dailyPointCapPerGame} 정수 필요`);
       }
     });
     Object.keys(miniGameBreakdown).forEach((game) => {
-      if (!['memory', 'sumTen'].includes(game)) issue(issues, `miniGames.pointsEarnedByGame.${game}`, '존재하지 않는 미니게임');
+      if (!['memory', 'sumTen', 'ladder'].includes(game)) issue(issues, `miniGames.pointsEarnedByGame.${game}`, '존재하지 않는 미니게임');
     });
     if (isIntegerBetween(miniGameBreakdown.memory, 0) && isIntegerBetween(miniGameBreakdown.sumTen, 0)
-      && state.miniGames.pointsEarned !== miniGameBreakdown.memory + miniGameBreakdown.sumTen) {
+      && isIntegerBetween(miniGameBreakdown.ladder, 0)
+      && state.miniGames.pointsEarned !== miniGameBreakdown.memory + miniGameBreakdown.sumTen + miniGameBreakdown.ladder) {
       issue(issues, 'miniGames.pointsEarned', '게임별 포인트 합계와 불일치');
     }
   }

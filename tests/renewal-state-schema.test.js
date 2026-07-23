@@ -54,7 +54,7 @@ delete preMiniGameBreakdown.miniGames.pointsEarnedByGame;
 preMiniGameBreakdown.miniGames.pointsEarned = 3000;
 const miniGameMigration = migrateGameState(preMiniGameBreakdown);
 assert.equal(miniGameMigration.migrated, true);
-assert.deepEqual(miniGameMigration.state.miniGames.pointsEarnedByGame, { memory: 3000, sumTen: 0 });
+assert.deepEqual(miniGameMigration.state.miniGames.pointsEarnedByGame, { memory: 3000, sumTen: 0, ladder: 0 });
 assert.equal(validateGameState(miniGameMigration.state, { cardIds }).valid, true);
 
 const legacyV1 = { ...clone(state), schemaVersion: 1, accountLevel: 432, accountExp: 987654 };
@@ -82,6 +82,11 @@ assert.ok(validateGameState(invalidRanking).issues.some(({ path }) => path === '
 const invalidMiniGameTotal = clone(state);
 invalidMiniGameTotal.miniGames.pointsEarnedByGame.memory = 500;
 assert.ok(validateGameState(invalidMiniGameTotal).issues.some(({ path }) => path === 'miniGames.pointsEarned'));
+
+const overCapLadder = clone(state);
+overCapLadder.miniGames.pointsEarnedByGame.ladder = 3001;
+overCapLadder.miniGames.pointsEarned = 3001;
+assert.ok(validateGameState(overCapLadder).issues.some(({ path }) => path === 'miniGames.pointsEarnedByGame.ladder'));
 
 const resumedServerState = clone(state);
 resumedServerState.adventureRun = {

@@ -5,6 +5,7 @@ import {
   grantBonusDrop,
   rollAdventureBonusDrop,
   rollWorldBossBonusDrop,
+  rollWorldBossDestructionGuardDrop,
 } from '../src/renewal/bonus-loot.js';
 
 function sequenceRandom(values) {
@@ -35,6 +36,9 @@ assert.equal(failedRaidItem.isPack, false);
 const clearedRaidPack = rollWorldBossBonusDrop(true, sequenceRandom([0, 0, 0]));
 assert.equal(clearedRaidPack.itemId, 'generalTicket');
 assert.equal(clearedRaidPack.isPack, true);
+assert.equal(rollWorldBossDestructionGuardDrop('noise-zero-20260717-17', true, sequenceRandom([0.05])), null, 'guard roll at the 5% boundary fails');
+assert.equal(rollWorldBossDestructionGuardDrop('noise-zero-20260717-20', true, sequenceRandom([0.1])).itemId, 'destructionGuard');
+assert.equal(rollWorldBossDestructionGuardDrop('noise-zero-20260717-20', false, sequenceRandom([0])), null, 'failed raid cannot grant a clear-only guard');
 
 const granted = grantBonusDrop({ energySmall: 2, premiumTicket: 0 }, adventurePack);
 assert.equal(granted.premiumTicket, 1);

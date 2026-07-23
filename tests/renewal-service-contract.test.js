@@ -84,6 +84,15 @@ const minigameStart = createGameCommand({
   clientSentAt: clock.now(),
 });
 assert.equal(validateGameCommand(minigameStart).valid, true);
+const hardQuickBattle = createGameCommand({
+  type: GAME_COMMAND_TYPES.CLAIM_QUICK_BATTLE,
+  payload: { mode: 'hard' },
+  expectedRevision: 6,
+  idempotencyKey: 'hard-quick-contract-1',
+  clientSentAt: clock.now(),
+});
+assert.equal(validateGameCommand(hardQuickBattle).valid, true);
+assert.equal(validateGameCommand({ ...hardQuickBattle, payload: { mode: 'nightmare' } }).valid, false);
 const minigameFinish = createGameCommand({
   type: GAME_COMMAND_TYPES.FINISH_MINIGAME,
   payload: { runId: 'run-00000001', inputLog: [{ start: 2, end: 3, atMs: 120 }], score: 0 },
@@ -92,6 +101,15 @@ const minigameFinish = createGameCommand({
   clientSentAt: clock.now(),
 });
 assert.equal(validateGameCommand(minigameFinish).valid, true);
+const ladderPlay = createGameCommand({
+  type: GAME_COMMAND_TYPES.PLAY_LADDER,
+  payload: { lane: 5 },
+  expectedRevision: 8,
+  idempotencyKey: 'ladder-play-00001',
+  clientSentAt: clock.now(),
+});
+assert.equal(validateGameCommand(ladderPlay).valid, true);
+assert.equal(validateGameCommand({ ...ladderPlay, payload: { lane: 6 } }).valid, false);
 assert.equal(validateGameCommand({
   ...minigameFinish,
   payload: { ...minigameFinish.payload, inputDigest: 'client-forged' },

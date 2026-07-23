@@ -31,6 +31,45 @@ function shuffle(values, random) {
   return result;
 }
 
+export function pickLadderReward(randomValue) {
+  const rewards = MINI_GAME_RULES.ladder.rewards;
+  const roll = Math.max(0, Math.min(0.999999999999, Number(randomValue) || 0));
+  return rewards[Math.floor(roll * rewards.length)];
+}
+
+export function createLadderBoard(seed, startLane, winningReward) {
+  const { columns, rungRows, rewards } = MINI_GAME_RULES.ladder;
+  const lane = Math.max(0, Math.min(columns - 1, Math.floor(Number(startLane) || 0)));
+  const reward = rewards.includes(winningReward) ? winningReward : rewards.at(-1);
+  const random = seededRandom(seed);
+  const rows = Array.from({ length: rungRows }, () => {
+    const rungs = [];
+    for (let edge = 0; edge < columns - 1; edge += 1) {
+      if (rungs.includes(edge - 1)) continue;
+      if (random() < 0.38) rungs.push(edge);
+    }
+    if (rungs.length === 0) rungs.push(Math.floor(random() * (columns - 1)));
+    return rungs;
+  });
+  const path = [{ lane, row: -1 }];
+  let currentLane = lane;
+  rows.forEach((rungs, row) => {
+    path.push({ lane: currentLane, row });
+    if (rungs.includes(currentLane)) currentLane += 1;
+    else if (rungs.includes(currentLane - 1)) currentLane -= 1;
+    path.push({ lane: currentLane, row });
+  });
+  path.push({ lane: currentLane, row: rungRows });
+  const otherRewards = shuffle(rewards.filter((value) => value !== reward), random);
+  const bottomRewards = new Array(columns);
+  bottomRewards[currentLane] = reward;
+  let otherIndex = 0;
+  for (let index = 0; index < columns; index += 1) {
+    if (index !== currentLane) bottomRewards[index] = otherRewards[otherIndex++];
+  }
+  return { columns, rungRows, rows, startLane: lane, endLane: currentLane, path, rewards: bottomRewards };
+}
+
 export function createMemoryDeck(cards, difficulty = 'basic', seed = Date.now()) {
   const rules = MINI_GAME_RULES.memory[difficulty] ?? MINI_GAME_RULES.memory.basic;
   const candidates = cards.filter((card) => card.rarity !== 'EX');
@@ -170,6 +209,7 @@ export function calculateMiniGameReward(game, result) {
     const rules = MINI_GAME_RULES.sumTen;
     return Math.min(rules.maxReward, rules.baseReward + Math.floor(result.score * rules.rewardPerScore));
   }
+  if (game === 'ladder') return MINI_GAME_RULES.ladder.rewards.includes(result.reward) ? result.reward : 0;
   return 0;
 }
 
@@ -184,10 +224,11 @@ export function normalizeMiniGameProgress(progress, now = Date.now()) {
     return {
       date,
       pointsEarned: 0,
-      pointsEarnedByGame: { memory: 0, sumTen: 0 },
+      pointsEarnedByGame: { memory: 0, sumTen: 0, ladder: 0 },
       plays: 0,
       bestMemory: 0,
       bestSumTen: 0,
+      bestLadder: 0,
     };
   }
   const legacyPoints = Math.max(0, Number(progress.pointsEarned) || 0);
@@ -200,13 +241,18 @@ export function normalizeMiniGameProgress(progress, now = Date.now()) {
     MINI_GAME_RULES.dailyPointCapPerGame,
     Math.max(0, Number(storedByGame?.sumTen) || 0),
   );
+  const ladderPoints = Math.min(
+    MINI_GAME_RULES.dailyPointCapPerGame,
+    Math.max(0, Number(storedByGame?.ladder) || 0),
+  );
   return {
     date,
-    pointsEarned: memoryPoints + sumTenPoints,
-    pointsEarnedByGame: { memory: memoryPoints, sumTen: sumTenPoints },
+    pointsEarned: memoryPoints + sumTenPoints + ladderPoints,
+    pointsEarnedByGame: { memory: memoryPoints, sumTen: sumTenPoints, ladder: ladderPoints },
     plays: Math.max(0, Number(progress.plays) || 0),
     bestMemory: Math.max(0, Number(progress.bestMemory) || 0),
     bestSumTen: Math.max(0, Number(progress.bestSumTen) || 0),
+    bestLadder: Math.max(0, Number(progress.bestLadder) || 0),
   };
 }
 

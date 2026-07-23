@@ -5,11 +5,13 @@ import {
   applySumSelection,
   calculateMiniGameReward,
   capMiniGameReward,
+  createLadderBoard,
   createMemoryDeck,
   createSumTenBoard,
   evaluateSumSelection,
   hasValidSumMove,
   normalizeMiniGameProgress,
+  pickLadderReward,
   reshuffleSumTiles,
 } from '../src/renewal/minigames.js';
 
@@ -46,6 +48,13 @@ assert.equal(calculateMiniGameReward('memory', { completed: false }), 0);
 assert.equal(calculateMiniGameReward('sumTen', { score: 100 }), 1740);
 assert.equal(calculateMiniGameReward('sumTen', { score: 999 }), 3000);
 assert.equal(calculateMiniGameReward('sumTen', { score: 0 }), 0);
+assert.deepEqual([0, 1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6].map(pickLadderReward), [3000, 2000, 1500, 1000, 500, 50]);
+for (let lane = 0; lane < MINI_GAME_RULES.ladder.columns; lane += 1) {
+  const ladder = createLadderBoard(`ladder-${lane}`, lane, 1500);
+  assert.equal(ladder.rewards[ladder.endLane], 1500, 'chosen route must end at server reward');
+  assert.equal(ladder.startLane, lane, 'user-selected lane must be preserved');
+  assert.equal(ladder.path.at(-1).lane, ladder.endLane);
+}
 
 // Deadlock detection + deterministic reshuffle (must mirror server verify RPC).
 function sumBoardFrom(values) {
@@ -72,15 +81,24 @@ const b = reshuffleSumTiles(deadlock, 17, 10);
 assert.deepEqual(a, b, 'reshuffle must be deterministic');
 const reset = normalizeMiniGameProgress({ date: '2000-01-01', pointsEarned: 3000 }, Date.UTC(2026, 6, 17));
 assert.equal(reset.pointsEarned, 0);
-assert.deepEqual(reset.pointsEarnedByGame, { memory: 0, sumTen: 0 });
+assert.deepEqual(reset.pointsEarnedByGame, { memory: 0, sumTen: 0, ladder: 0 });
 const independentCaps = { pointsEarnedByGame: { memory: 2990, sumTen: 0 } };
 assert.equal(capMiniGameReward(independentCaps, 'memory', 50), 10);
 assert.equal(capMiniGameReward(independentCaps, 'sumTen', 240), 240);
+assert.equal(capMiniGameReward({ pointsEarnedByGame: { ladder: 2950 } }, 'ladder', 500), 50);
 assert.equal(capMiniGameReward({ pointsEarnedByGame: { memory: 1000, sumTen: 0 } }, 'memory', 1500), 1500);
+const cappedLadder = normalizeMiniGameProgress({
+  date: '2026-07-17', pointsEarned: 7000,
+  pointsEarnedByGame: { memory: 0, sumTen: 0, ladder: 7000 },
+}, new Date(2026, 6, 17, 12, 0, 0).getTime());
+assert.equal(cappedLadder.pointsEarnedByGame.ladder, 3000);
+assert.equal(cappedLadder.pointsEarned, 3000);
 const legacy = normalizeMiniGameProgress({
   date: '2026-07-17', pointsEarned: 3000, plays: 2, bestMemory: 10, bestSumTen: 5,
 }, new Date(2026, 6, 17, 12, 0, 0).getTime());
-assert.deepEqual(legacy.pointsEarnedByGame, { memory: 3000, sumTen: 0 });
+assert.deepEqual(legacy.pointsEarnedByGame, { memory: 3000, sumTen: 0, ladder: 0 });
 assert.equal(MINI_GAME_RULES.energyCost, 10);
+assert.equal(MINI_GAME_RULES.ladder.energyCost, 100);
+assert.deepEqual(MINI_GAME_RULES.ladder.rewards, [3000, 2000, 1500, 1000, 500, 50]);
 
-console.log('renewal minigame tests passed: 4x4 500P, 6x6 1500P, Cammon Apple, independent 3000P caps');
+console.log('renewal minigame tests passed: memory, Cammon Apple, user-choice lucky ladder');

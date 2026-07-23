@@ -1,4 +1,4 @@
-export const BALANCE_VERSION = '2026.07.21-soop-ratio';
+export const BALANCE_VERSION = '2026.07.23-hard-adventure-1';
 
 export const RARITY_ORDER = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
 
@@ -10,8 +10,8 @@ export const RARITIES = {
   B: { multiplier: 1.62, color: '#bb69e8' },
   A: { multiplier: 1.86, color: '#ef5f83' },
   S: { multiplier: 2.15, color: '#ff9b3f' },
-  SS: { multiplier: 2.52, color: '#ffd449' },
-  SSS: { multiplier: 3, color: '#d7ff35' },
+  SS: { multiplier: 2.9, color: '#ffd449' },
+  SSS: { multiplier: 4.6, color: '#d7ff35' },
   EX: { multiplier: 0, color: '#f7f7f2', displayOnly: true },
 };
 
@@ -93,10 +93,10 @@ export const PACKS = {
 export const SUPPORT_PACK = {
   name: '작전 지원 보급팩', price: 150, tenPrice: 1500,
   items: {
-    energySmall: 19, energyMedium: 11, energyLarge: 3,
-    enhance5: 16, enhance10: 6, destructionGuard: 1,
-    cardExpPotion: 8, exp30m: 14, exp2h: 9,
-    generalTicket: 6, eliteTicket: 3.5, raceTicket: 2, premiumTicket: 0.5,
+    energySmall: 14, energyMedium: 8, energyLarge: 2,
+    enhance5: 16, enhance10: 6, destructionGuard: 5,
+    cardExpPotion: 10, exp30m: 16, exp2h: 9,
+    generalTicket: 7, eliteTicket: 3.5, raceTicket: 2, premiumTicket: 0.5,
     adventureRunReset: 0.25, quickBattleReset: 0.75,
   },
   rareItems: [
@@ -105,7 +105,7 @@ export const SUPPORT_PACK = {
     'adventureRunReset', 'quickBattleReset',
   ],
   guaranteeRates: {
-    energyLarge: 10, enhance10: 24, destructionGuard: 3, exp2h: 28,
+    energyLarge: 7, enhance10: 24, destructionGuard: 6, exp2h: 28,
     generalTicket: 15, eliteTicket: 8, raceTicket: 5, premiumTicket: 2,
     adventureRunReset: 1, quickBattleReset: 4,
   },
@@ -118,8 +118,10 @@ export const SUPPORT_ITEMS = {
   enhance5: { name: '강화 촉진제', category: '강화', effect: '성공률 +5%p' },
   enhance10: { name: '고순도 강화 촉진제', category: '강화', effect: '성공률 +10%p' },
   destructionGuard: { name: '파괴 차단제', category: '강화', effect: '파괴 1회 차단' },
-  cardExpPotion: { name: '카드 EXP 포션', category: '경험치', effect: '선택 카드 EXP +300', cardExp: 300 },
-  cardExpPotionLarge: { name: '농축 카드 EXP 포션', category: '경험치', effect: '선택 카드 EXP +20', cardExp: 20 },
+  // 이름 주의: 효과값(cardExp)이 정본. Large가 +20, 무印이 +300으로 역전돼 있어
+  // 표시 이름만 서로 맞바꿈 (아이템 ID·서버 효과는 불변 — 유저 인벤토리 보존).
+  cardExpPotionLarge: { name: '카드 EXP 포션', category: '경험치', effect: '선택 카드 EXP +20', cardExp: 20 },
+  cardExpPotion: { name: '농축 카드 EXP 포션', category: '경험치', effect: '선택 카드 EXP +300', cardExp: 300 },
   exp30m: { name: '경험 신호 증폭제', category: '경험치', effect: '카드 EXP +50% · 30분', durationMinutes: 30 },
   exp2h: { name: '고출력 경험 신호 증폭제', category: '경험치', effect: '카드 EXP +50% · 2시간', durationMinutes: 120 },
   generalTicket: { name: '일반 카드팩 교환권', category: '교환권', effect: '일반팩 1개', pack: 'general' },
@@ -163,6 +165,31 @@ export const REGIONS = [
   { id: 3, name: '검게 물든 스튜디오', code: 'black-studio', hpBase: 1700000, attackBase: 6500, bossHp: 2800000, bossAttack: 8500 },
   { id: 4, name: '폭주한 데이터 요새', code: 'data-fortress', hpBase: 2500000, attackBase: 9000, bossHp: 4000000, bossAttack: 11000 },
   { id: 5, name: '악플 코어 심층부', code: 'malice-core', hpBase: 4200000, attackBase: 12500, bossHp: 9500000, bossAttack: 21000 },
+  {
+    id: 6, name: '붕괴한 신호 폐허', code: 'void-rift', mode: 'hard',
+    hpBase: 10500000, attackBase: 27000, bossHp: 14000000, bossAttack: 25000,
+    duration: 46, bossDuration: 56,
+  },
+  {
+    id: 7, name: '심연의 중계 감옥', code: 'abyss-relay', mode: 'hard',
+    hpBase: 12500000, attackBase: 28500, bossHp: 16500000, bossAttack: 26500,
+    duration: 48, bossDuration: 58,
+  },
+  {
+    id: 8, name: '악몽 송출 스튜디오', code: 'nightmare-studio', mode: 'hard',
+    hpBase: 14500000, attackBase: 30000, bossHp: 20000000, bossAttack: 28000,
+    duration: 50, bossDuration: 60,
+  },
+  {
+    id: 9, name: '오메가 데이터 성채', code: 'omega-fortress', mode: 'hard',
+    hpBase: 16500000, attackBase: 32000, bossHp: 24000000, bossAttack: 29500,
+    duration: 52, bossDuration: 62,
+  },
+  {
+    id: 10, name: '지옥 악플 코어', code: 'hell-core', mode: 'hard',
+    hpBase: 18500000, attackBase: 32000, bossHp: 28000000, bossAttack: 31500,
+    duration: 59, bossDuration: 64,
+  },
 ];
 
 const ENEMY_TYPES = ['crawler', 'jammer', 'leech', 'crusher'];
@@ -172,6 +199,7 @@ export const STAGES = REGIONS.flatMap((region, regionIndex) => Array.from({ leng
   const globalNumber = regionIndex * 10 + stageNumber;
   const boss = stageNumber === 10;
   const firstRegion = region.id === 1;
+  const hard = region.mode === 'hard';
   return {
     id: `${region.id}-${stageNumber}`,
     region: region.name,
@@ -179,15 +207,19 @@ export const STAGES = REGIONS.flatMap((region, regionIndex) => Array.from({ leng
     regionIndex,
     stageNumber,
     globalNumber,
+    mode: hard ? 'hard' : 'normal',
+    hard,
     enemyType: boss ? 'boss' : ENEMY_TYPES[(stageIndex + regionIndex) % ENEMY_TYPES.length],
     enemyCount: boss ? 1 : Math.min(7, 4 + Math.floor(stageNumber / 3)),
     enemyHp: Math.round(boss
       ? region.bossHp
-      : region.hpBase * Math.pow(firstRegion ? 1.08 : 1.025, stageIndex)),
+      : region.hpBase * Math.pow(hard ? 1.018 : firstRegion ? 1.08 : 1.025, stageIndex)),
     enemyAttack: Math.round(boss
       ? region.bossAttack
-      : region.attackBase * Math.pow(firstRegion ? 1.03 : 1.02, stageIndex)),
-    duration: boss ? 40 + regionIndex * 3 : 30 + regionIndex * 2 + (firstRegion ? stageIndex : 0),
+      : region.attackBase * Math.pow(hard ? 1.012 : firstRegion ? 1.03 : 1.02, stageIndex)),
+    duration: hard
+      ? (boss ? region.bossDuration : region.duration)
+      : (boss ? 40 + regionIndex * 3 : 30 + regionIndex * 2 + (firstRegion ? stageIndex : 0)),
     rewardPoints: 18 + globalNumber * 4,
     boss,
   };
@@ -208,16 +240,25 @@ export const GAME_RULES = {
 export const ADVENTURE_RULES = {
   maxRunsPerWindow: 3,
   runWindowMs: 4 * 60 * 60 * 1000,
+  modes: {
+    normal: { label: '일반 모험', startStage: 1, endStage: 50, stageCount: 50, unlockStage: 0 },
+    hard: { label: '하드 모험', startStage: 51, endStage: 100, stageCount: 50, unlockStage: 50 },
+  },
   runReward: {
     pointsBasePerStage: 20,
     pointsGrowthPerStage: 5.5,
     maxPointsPerRun: 8000,
     cardExpPerClearedStage: 1,
   },
+  hardRunReward: {
+    minPointsPerRun: 7000,
+    maxPointsPerRun: 20000,
+    cardExpPerClearedStage: 1,
+  },
 };
 
 export const REWARD_RULES = {
-  maxStage: 50,
+  maxStage: 100,
   maxActionEnergy: 120,
   offlineCapHours: 24,
   quickBattleHours: 2,
@@ -249,6 +290,13 @@ export const MINI_GAME_RULES = {
     advanced: { label: '6×6', pairs: 18, columns: 6, timeLimit: 150, completionReward: 1500 },
   },
   sumTen: { label: '캄몬사과게임', rows: 10, columns: 17, timeLimit: 120, baseReward: 40, rewardPerScore: 17, maxReward: 3000 },
+  ladder: {
+    label: '운명의 사다리',
+    columns: 6,
+    rungRows: 10,
+    energyCost: 100,
+    rewards: [3000, 2000, 1500, 1000, 500, 50],
+  },
 };
 
 export const WORLD_BOSS_RULES = {
@@ -257,6 +305,29 @@ export const WORLD_BOSS_RULES = {
   subtitle: '거대 악플 코어',
   timeZone: 'Asia/Seoul',
   scheduleHours: [17, 18, 19, 20],
+  attackEnergyCost: 10,
+  slotTiers: {
+    17: {
+      title: '신호 요새', name: 'SIGNAL//BASTION', difficultyMultiplier: 1,
+      maxHp: 5_000_000_000, serverDamagePerSecond: 2_766_667, clearDestructionGuardRate: 0.05,
+      image: 'assets/renewal/worldboss/boss-17-signal-bastion.webp',
+    },
+    18: {
+      title: '중계 포식자', name: 'RELAY//DEVOURER', difficultyMultiplier: 1.5,
+      maxHp: 7_500_000_000, serverDamagePerSecond: 4_150_001, clearDestructionGuardRate: 0.10,
+      image: 'assets/renewal/worldboss/boss-18-relay-devourer.webp',
+    },
+    19: {
+      title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 2.25,
+      maxHp: 11_250_000_000, serverDamagePerSecond: 6_225_001, clearDestructionGuardRate: 0.15,
+      image: 'assets/renewal/worldboss/boss-19-void-harvester.webp',
+    },
+    20: {
+      title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 3.375,
+      maxHp: 16_875_000_000, serverDamagePerSecond: 9_337_501, clearDestructionGuardRate: 0.20,
+      image: 'assets/renewal/worldboss/boss-20-malice-singularity.webp',
+    },
+  },
   // nolevel-1: 새 카드 전투력 스케일에 맞춰 공동 HP·서버 DPS 재튠.
   maxHp: 5_000_000_000,
   battleDuration: 60,
@@ -338,6 +409,7 @@ export const BALANCE_GOVERNANCE = {
   operatorTunable: [
     'WORLD_BOSS_RULES.eventId', 'WORLD_BOSS_RULES.maxHp', 'WORLD_BOSS_RULES.eventDurationSeconds',
     'WORLD_BOSS_RULES.timeZone', 'WORLD_BOSS_RULES.scheduleHours',
+    'WORLD_BOSS_RULES.attackEnergyCost', 'WORLD_BOSS_RULES.slotTiers',
     'WORLD_BOSS_RULES.serverDamagePerSecond', 'WORLD_BOSS_RULES.raidDurationSeconds',
     'WORLD_BOSS_RULES.rewardTiers',
   ],

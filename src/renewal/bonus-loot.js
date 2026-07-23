@@ -1,4 +1,5 @@
-import { BONUS_DROP_RULES, SUPPORT_ITEMS } from './config.js';
+import { BONUS_DROP_RULES, SUPPORT_ITEMS, WORLD_BOSS_RULES } from './config.js';
+import { getWorldBossTier } from './worldboss-schedule.js';
 import { weightedPick } from './shop.js';
 
 function safeRandom(random) {
@@ -30,6 +31,13 @@ export function rollAdventureBonusDrop(clearedStages, random = Math.random) {
 
 export function rollWorldBossBonusDrop(defeated, random = Math.random) {
   return rollDrop(BONUS_DROP_RULES.worldBoss[defeated ? 'cleared' : 'failed'], random);
+}
+
+export function rollWorldBossDestructionGuardDrop(eventId, defeated, random = Math.random) {
+  const rate = Number(getWorldBossTier(eventId, WORLD_BOSS_RULES).clearDestructionGuardRate) || 0;
+  if (!defeated || safeRandom(random) >= rate) return null;
+  const item = SUPPORT_ITEMS.destructionGuard;
+  return { itemId: 'destructionGuard', name: item.name, category: item.category, isPack: false };
 }
 
 export function grantBonusDrop(inventory, drop) {

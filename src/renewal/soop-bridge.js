@@ -7,6 +7,8 @@ const SDK_URLS = [
   'https://static.sooplive.com/asset/app/chat-sdk/chat-sdk.min.js',
 ];
 const DONATION_ACTIONS = new Set(['BALLOON_GIFTED', 'BATTLE_MISSION_GIFTED']);
+const DEFAULT_ACCESS_TOKEN_TTL_MS = 2 * 60 * 60 * 1000;
+const ACCESS_TOKEN_REFRESH_EARLY_MS = 10 * 60 * 1000;
 const config = globalThis.__CARD_GACHA_CONFIG__ ?? {};
 const endpoint = `${String(config.supabaseUrl ?? '').replace(/\/+$/, '')}/functions/v1/soop-bridge`;
 const publishableKey = String(config.supabasePublishableKey ?? '');
@@ -167,9 +169,70 @@ async function chatSdk() {
 const MAX_RECONNECT_ATTEMPTS = 4;
 let reconnectAttempts = 0;
 let reconnectTimer = null;
+let tokenRefreshTimer = null;
+let refreshPromise = null;
 let manualStop = false;
+let connectionSequence = 0;
+
+function updateBridgeSession(session) {
+  if (!session || typeof session !== 'string') return;
+  state.session = session;
+  sessionStorage.setItem('gachaS2BridgeSession', session);
+}
+
+function clearTokenRefreshTimer() {
+  if (!tokenRefreshTimer) return;
+  clearTimeout(tokenRefreshTimer);
+  tokenRefreshTimer = null;
+}
+
+function tokenRefreshDelay(credentials = state.credentials) {
+  const expiresAt = Number(credentials?.accessTokenExpiresAt);
+  const fallback = Date.now() + DEFAULT_ACCESS_TOKEN_TTL_MS;
+  const target = Number.isFinite(expiresAt) && expiresAt > Date.now() ? expiresAt : fallback;
+  return Math.max(60_000, target - Date.now() - ACCESS_TOKEN_REFRESH_EARLY_MS);
+}
+
+function scheduleTokenRefresh() {
+  clearTokenRefreshTimer();
+  if (!state.connected || !state.credentials || manualStop) return;
+  tokenRefreshTimer = setTimeout(() => {
+    tokenRefreshTimer = null;
+    void refreshActiveConnection();
+  }, tokenRefreshDelay());
+}
+
+function setCredentials(credentials) {
+  if (!credentials?.accessToken || !credentials?.clientId || !credentials?.soopId) throw new Error('SOOP 인증 정보가 올바르지 않습니다.');
+  state.credentials = {
+    ...credentials,
+    accessTokenExpiresAt: Number(credentials.accessTokenExpiresAt) || Date.now() + DEFAULT_ACCESS_TOKEN_TTL_MS,
+  };
+}
+
+function invalidateConnection() {
+  connectionSequence += 1;
+  try { state.sdk?.disconnect?.(); } catch {}
+}
+
+function isTokenError(code, message) {
+  return /(?:401|auth|token|expire|unauthori[sz]ed)/i.test(`${code ?? ''} ${message ?? ''}`);
+}
+
+async function refreshCredentials() {
+  if (refreshPromise) return refreshPromise;
+  refreshPromise = request('refreshToken')
+    .then((result) => {
+      updateBridgeSession(result.session);
+      setCredentials(result.credentials);
+      return result.credentials;
+    })
+    .finally(() => { refreshPromise = null; });
+  return refreshPromise;
+}
 
 async function connect() {
+  const connectionId = ++connectionSequence;
   try {
     notice('SOOP ChatSDK 연결 중');
     const ChatSDK = await chatSdk();
@@ -177,23 +240,40 @@ async function connect() {
     state.sdk.init?.();
     state.sdk.handleMessageReceived((action, message) => { void handleMessage(action, message); });
     state.sdk.handleChatClosed(() => {
+      if (connectionId !== connectionSequence) return;
       state.connected = false;
+      clearTokenRefreshTimer();
       render();
       if (manualStop) { manualStop = false; return; }
       notice('SOOP 연결 끊김 · 자동 재연결 시도 중', 'error');
       scheduleReconnect();
     });
-    state.sdk.handleError((code, message) => notice(`SOOP 오류: ${code || message || 'unknown'}`, 'error'));
+    state.sdk.handleError((code, message) => {
+      if (connectionId !== connectionSequence) return;
+      notice(`SOOP 오류: ${code || message || 'unknown'}`, 'error');
+      if (isTokenError(code, message)) {
+        state.connected = false;
+        clearTokenRefreshTimer();
+        render();
+        scheduleReconnect();
+      }
+    });
     state.sdk.setAuth(state.credentials.accessToken);
     await state.sdk.connect();
+    if (connectionId !== connectionSequence) return false;
     state.connected = true;
     reconnectAttempts = 0;
     render();
+    scheduleTokenRefresh();
     notice(`수집 중 · ${state.credentials.soopId}`, 'ok');
+    return true;
   } catch (error) {
+    if (connectionId !== connectionSequence) return false;
     state.connected = false;
+    clearTokenRefreshTimer();
     render();
     notice(error.message, 'error');
+    return false;
   }
 }
 
@@ -214,11 +294,25 @@ function scheduleReconnect() {
 
 async function reconnectWithFreshToken() {
   try {
-    const result = await request('refreshToken');
-    state.credentials = result.credentials;
-    await connect();
+    invalidateConnection();
+    await refreshCredentials();
+    if (!await connect()) scheduleReconnect();
   } catch (error) {
     notice(`SOOP 재연결 실패 · ${error.message}`, 'error');
+    scheduleReconnect();
+  }
+}
+
+async function refreshActiveConnection() {
+  if (!state.connected || manualStop) return;
+  invalidateConnection();
+  state.connected = false;
+  render();
+  try {
+    await refreshCredentials();
+    if (!await connect()) scheduleReconnect();
+  } catch (error) {
+    notice(`SOOP 토큰 갱신 실패 · ${error.message}`, 'error');
     scheduleReconnect();
   }
 }
@@ -226,8 +320,9 @@ async function reconnectWithFreshToken() {
 function disconnect() {
   manualStop = true;
   if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+  clearTokenRefreshTimer();
   reconnectAttempts = 0;
-  try { state.sdk?.disconnect?.(); } catch {}
+  invalidateConnection();
   state.connected = false;
   render();
   notice('수집 중지됨');
@@ -238,9 +333,8 @@ elements.bridgeAuthForm.addEventListener('submit', async (event) => {
   try {
     const result = await request('authenticate', { key: elements.bridgeKey.value });
     elements.bridgeKey.value = '';
-    state.session = result.session;
+    updateBridgeSession(result.session);
     state.soopId = result.soopId;
-    sessionStorage.setItem('gachaS2BridgeSession', state.session);
     sessionStorage.setItem('gachaS2BridgeSoopId', state.soopId);
     notice(`방송인 인증 완료 · ${state.soopId}`, 'ok');
     render();
@@ -272,7 +366,7 @@ async function consumeCallback() {
   if (!exchange) return;
   try {
     const result = await request('exchange', { exchange });
-    state.credentials = result.credentials;
+    setCredentials(result.credentials);
     notice(`SOOP 연결 완료 · ${state.credentials.soopId}`, 'ok');
   } catch (error) {
     notice(error.message, 'error');
@@ -281,4 +375,15 @@ async function consumeCallback() {
 
 if (state.session) notice(`방송인 인증 유지 중 · ${state.soopId}`, 'ok');
 render();
-void consumeCallback().finally(render);
+async function restoreCredentials() {
+  if (!state.session || state.credentials) return;
+  try {
+    await refreshCredentials();
+    notice(`SOOP connection restored · ${state.credentials.soopId}`, 'ok');
+  } catch {
+    // The session can legitimately expire while this tab is closed. The user
+    // can authenticate again without exposing any stored SOOP token.
+  }
+}
+
+void consumeCallback().then(restoreCredentials).finally(render);

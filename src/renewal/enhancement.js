@@ -13,8 +13,8 @@ export function getEnhancementOdds(card, booster = 'none') {
   return { target, success, destroy, fail: Math.max(0, 100 - success - destroy) };
 }
 
-export function availableDuplicateCount(cardId, copies, locks = {}) {
-  if (locks[cardId]) return 0;
+export function availableDuplicateCount(cardId, copies, locks = {}, lockExemptCardId = null) {
+  if (locks[cardId] && cardId !== lockExemptCardId) return 0;
   return Math.max(0, (copies[cardId] ?? 0) - 1);
 }
 
@@ -24,8 +24,11 @@ export function selectEnhancementMaterials(targetCard, cards, copies, locks = {}
   if (!rule) return { rule: null, selected: [], available: 0, ready: false };
 
   const candidates = cards
-    .filter((card) => card.rarity === rule.rarity && !locks[card.id])
-    .map((card) => ({ card, available: availableDuplicateCount(card.id, copies, locks) }))
+    .filter((card) => card.rarity === rule.rarity && (!locks[card.id] || card.id === targetCard.id))
+    .map((card) => ({
+      card,
+      available: availableDuplicateCount(card.id, copies, locks, targetCard.id),
+    }))
     .filter((entry) => entry.available > 0)
     .sort((left, right) => left.card.id.localeCompare(right.card.id));
   const selected = [];

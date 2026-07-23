@@ -26,6 +26,7 @@ assert.equal(merged.worldBoss.eventId, 'local-placeholder');
 
 const app = await readFile(new URL('../src/renewal/app.js', import.meta.url), 'utf8');
 const runtime = await readFile(new URL('../src/renewal/remote-runtime.js', import.meta.url), 'utf8');
+const commandRetry = await readFile(new URL('../src/renewal/server-command-retry.js', import.meta.url), 'utf8');
 for (const command of [
   'UPDATE_FORMATION', 'CLAIM_ADVENTURE_REWARDS', 'CLAIM_QUICK_BATTLE',
   'PURCHASE_PACK', 'PURCHASE_SUPPORT_PACK', 'USE_SUPPORT_ITEM', 'ENHANCE_CARD',
@@ -33,7 +34,11 @@ for (const command of [
   'ATTACK_WORLD_BOSS', 'CLAIM_WORLD_BOSS_REWARD', 'SET_REPRESENTATIVE_CARD', 'SET_CARD_LOCK',
 ]) assert.match(app, new RegExp(`GAME_COMMAND_TYPES\\.${command}`));
 assert.match(app, /if \(remoteMode\) await requireRemoteSnapshot\(\)/);
-assert.match(app, /applyServerSnapshot\(response\.snapshot\)/);
+assert.match(app, /executeCommandWithVersionRetry/);
+assert.match(app, /retryOnVersionConflict: options\.retryOnVersionConflict !== false/);
+assert.doesNotMatch(app, /executeServerCommand\([^\n]+retryOnVersionConflict: true/);
+assert.match(commandRetry, /applySnapshot\(response\.snapshot\)/);
+assert.match(commandRetry, /GAME_ERROR_CODES\.VERSION_CONFLICT/);
 assert.match(runtime, /from\('gacha_s2_live_events'\)/);
 assert.match(runtime, /event: 'INSERT'/);
 assert.match(runtime, /subscribeLiveEvents/);

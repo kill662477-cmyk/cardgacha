@@ -42,10 +42,11 @@ export function createDefaultState(now = Date.now()) {
     miniGames: {
       date: localDateKey(now),
       pointsEarned: 0,
-      pointsEarnedByGame: { memory: 0, sumTen: 0 },
+      pointsEarnedByGame: { memory: 0, sumTen: 0, ladder: 0 },
       plays: 0,
       bestMemory: 0,
       bestSumTen: 0,
+      bestLadder: 0,
     },
     worldBoss: createWorldBossProgress(now),
     exMilestoneClaims: {},

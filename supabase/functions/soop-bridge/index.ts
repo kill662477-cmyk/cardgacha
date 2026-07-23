@@ -4,6 +4,8 @@ const AUTH_URL = 'https://openapi.sooplive.com/auth/code';
 const TOKEN_URL = 'https://openapi.sooplive.com/auth/token';
 const STATION_URL = 'https://openapi.sooplive.com/user/stationinfo';
 const MAX_BODY_BYTES = 32 * 1024;
+const BRIDGE_SESSION_TTL_MS = 4 * 60 * 60 * 1000;
+const SOOP_ACCESS_TOKEN_TTL_MS = 2 * 60 * 60 * 1000;
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
@@ -130,10 +132,15 @@ function extractSoopLoginId(profileImageUrl: unknown) {
 
 function parseTokenPayload(payload: Record<string, unknown>, fallbackRefreshToken = '') {
   if (!payload?.access_token) throw new Error('TOKEN_EMPTY');
+  const expiresInSeconds = Number(payload.expires_in);
+  const tokenTtlMs = Number.isFinite(expiresInSeconds) && expiresInSeconds >= 60 && expiresInSeconds <= 24 * 60 * 60
+    ? Math.floor(expiresInSeconds * 1000)
+    : SOOP_ACCESS_TOKEN_TTL_MS;
   return {
     accessToken: String(payload.access_token),
     // SOOP may not rotate the refresh_token on every refresh; keep the prior one if omitted.
     refreshToken: payload.refresh_token ? String(payload.refresh_token) : fallbackRefreshToken,
+    accessTokenExpiresAt: Date.now() + tokenTtlMs,
   };
 }
 
@@ -270,7 +277,7 @@ Deno.serve(async (req: Request) => {
     if (!data?.ok) return json(req, { ok: false, code: data?.code, retryAfterSeconds: data?.retryAfterSeconds, error: data?.code === 'RATE_LIMITED' ? '잠시 후 다시 시도하세요.' : '유효하지 않은 브리지 KEY입니다.' }, data?.code === 'RATE_LIMITED' ? 429 : 401);
     const session = await signedToken({
       type: 'bridge', userId: data.userId, soopId: data.soopId,
-      nonce: randomToken(16), exp: Date.now() + 4 * 60 * 60 * 1000,
+      nonce: randomToken(16), exp: Date.now() + BRIDGE_SESSION_TTL_MS,
     });
     return json(req, { ok: true, session, soopId: data.soopId });
   }
@@ -302,6 +309,7 @@ Deno.serve(async (req: Request) => {
       credentials: {
         clientId: requiredEnv('SOOP_DONATION_CLIENT_ID'),
         accessToken: await decryptToken(data.ciphertext, data.iv),
+        accessTokenExpiresAt: Date.now() + SOOP_ACCESS_TOKEN_TTL_MS,
         soopId: data.soopId,
       },
     });
@@ -325,11 +333,16 @@ Deno.serve(async (req: Request) => {
         soop_refresh_token_iv: encryptedRefresh.iv,
         soop_refresh_updated_at: new Date().toISOString(),
       }).eq('user_id', session.userId);
+      const renewedSession = await signedToken({
+        type: 'bridge', userId: session.userId, soopId: session.soopId,
+        nonce: randomToken(16), exp: Date.now() + BRIDGE_SESSION_TTL_MS,
+      });
       return json(req, {
-        ok: true,
+        ok: true, session: renewedSession,
         credentials: {
           clientId: requiredEnv('SOOP_DONATION_CLIENT_ID'),
           accessToken: tokens.accessToken,
+          accessTokenExpiresAt: tokens.accessTokenExpiresAt,
           soopId: session.soopId,
         },
       });

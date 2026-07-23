@@ -1,4 +1,4 @@
-import { BALANCE_VERSION, STAGES } from './config.js';
+import { ADVENTURE_RULES, BALANCE_VERSION, STAGES } from './config.js';
 import { computeFormationPower, simulateBattle } from './battle.js';
 import { calculateCollectionBonuses } from './collection.js';
 import { simulateWorldBossAttempt } from './worldboss.js';
@@ -20,6 +20,7 @@ const DIRECT_RPCS = Object.freeze({
   [GAME_COMMAND_TYPES.FINISH_ADVENTURE_RUN]: 'gacha_s2_finish_adventure_run',
   [GAME_COMMAND_TYPES.START_MINIGAME]: 'gacha_s2_start_minigame',
   [GAME_COMMAND_TYPES.FINISH_MINIGAME]: 'gacha_s2_finish_minigame',
+  [GAME_COMMAND_TYPES.PLAY_LADDER]: 'gacha_s2_play_ladder',
   [GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD]: 'gacha_s2_claim_world_boss_reward',
   [GAME_COMMAND_TYPES.DISMANTLE_CARDS]: 'gacha_s2_dismantle_cards',
 });
@@ -92,6 +93,8 @@ function directArgs(userId, command) {
         p_input_log: payload.inputLog,
         p_claimed_score: payload.score,
       };
+    case GAME_COMMAND_TYPES.PLAY_LADDER:
+      return { ...args, p_lane: payload.lane };
     case GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD:
       return { ...args, p_event_id: payload.eventId };
     case GAME_COMMAND_TYPES.DISMANTLE_CARDS:
@@ -128,9 +131,9 @@ function formationFromSnapshot(snapshot, cardsById) {
   });
 }
 
-function verifiedAdventureClears(formation, bonuses) {
+function verifiedAdventureClears(formation, bonuses, mode = 'normal') {
   let cleared = 0;
-  for (const stage of STAGES) {
+  for (const stage of STAGES.filter((candidate) => candidate.mode === mode)) {
     if (!simulateBattle(formation, stage, bonuses).victory) break;
     cleared += 1;
   }
@@ -192,12 +195,23 @@ export function createServerCommandRouter(options) {
       if (command.type === GAME_COMMAND_TYPES.START_ADVENTURE_RUN
         || command.type === GAME_COMMAND_TYPES.CLAIM_QUICK_BATTLE) {
         const context = await verifiedContext(userId, command);
-        const clearedStages = verifiedAdventureClears(context.formation, context.bonuses);
+        const mode = command.payload.mode ?? 'normal';
+        if (mode === 'hard'
+          && Number(context.snapshot.clearedStage ?? 0) < ADVENTURE_RULES.modes.hard.unlockStage) {
+          return commandError(
+            command,
+            GAME_ERROR_CODES.COMMAND_REJECTED,
+            '하드 모험은 일반 모험 5-10 클리어 후 해금됩니다.',
+            clock,
+          );
+        }
+        const clearedStages = verifiedAdventureClears(context.formation, context.bonuses, mode);
         const digest = await sha256({
           balanceVersion: BALANCE_VERSION,
           commandId: command.commandId,
           type: command.type,
           userId,
+          mode,
           formation: context.formation.map((card) => ({ id: card.id, enhancement: card.enhancement })),
           bonuses: context.bonuses,
           clearedStages,
@@ -205,11 +219,13 @@ export function createServerCommandRouter(options) {
         const rpc = command.type === GAME_COMMAND_TYPES.START_ADVENTURE_RUN
           ? 'gacha_s2_start_adventure_run'
           : 'gacha_s2_claim_quick_battle';
-        return await gateway.rpc(rpc, {
+        const rpcArgs = {
           ...baseArgs(userId, command),
           p_verified_cleared_stages: clearedStages,
           p_verification_digest: digest,
-        });
+        };
+        rpcArgs.p_mode = mode;
+        return await gateway.rpc(rpc, rpcArgs);
       }
 
       if (command.type === GAME_COMMAND_TYPES.CLAIM_ADVENTURE_REWARDS) {

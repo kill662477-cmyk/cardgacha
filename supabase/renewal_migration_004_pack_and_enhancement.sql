@@ -398,7 +398,7 @@ begin
     on owned.user_id = p_user_id and owned.card_id = req.card_id
   left join public.gacha_s2_card_catalog catalog on catalog.card_id = req.card_id
   where owned.card_id is null
-    or owned.locked
+    or (owned.locked and req.card_id <> p_card_id)
     or catalog.rarity <> v_rule->>'rarity'
     or req.requested_count > owned.copies - 1;
   if v_invalid_materials > 0 then

@@ -4,11 +4,13 @@ import {
   applySumSelection,
   calculateMiniGameReward,
   capMiniGameReward,
+  createLadderBoard,
   createMemoryDeck,
   createSumTenBoard,
   evaluateSumSelection,
   hasValidSumMove,
   normalizeMiniGameProgress,
+  pickLadderReward,
   reshuffleSumTiles,
 } from './minigames.js';
 
@@ -23,7 +25,12 @@ function imagePath(card) {
   return `assets/cards/${encodeURIComponent(card.file)}`;
 }
 
-export function createMiniGameController({ cards, getState, persist, showToast, clock, serverCommands = null }) {
+function wait(ms) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+export function createMiniGameController({ cards, getState, persist, showToast, clock, random, serverCommands = null }) {
+  if (typeof random !== 'function') throw new TypeError('minigame random adapter is required');
   const elements = Object.fromEntries([
     'minigameScreen', 'miniGamePicker', 'miniGameDaily', 'miniGameDailyBar',
     'miniGameEyebrow', 'miniGameTitle', 'miniGameTimer', 'miniGameScore',
@@ -32,7 +39,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     'sumTenBoard', 'miniGameSelectionSum', 'miniGameResult', 'miniGameResultTitle',
     'miniGameResultScore', 'miniGameResultReward', 'miniGameMode', 'miniGameDifficulty',
     'miniGameBest', 'miniGamePlays', 'miniGameRemaining', 'miniGameStartButton',
-    'miniGameStopButton',
+    'miniGameStopButton', 'miniGameRewardCost', 'ladderShell', 'ladderChoiceCopy', 'ladderBoard',
   ].map((id) => [id, document.getElementById(id)]));
 
   let selectedGame = 'memory';
@@ -42,6 +49,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   let timer = 0;
   let resolvingMemory = false;
   let sumDrag = null;
+  let ladderResolving = false;
   let result = null;
   let sequence = 0;
 
@@ -61,9 +69,10 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
 
   function renderHeader() {
     const memory = selectedGame === 'memory';
-    elements.miniGameEyebrow.textContent = memory ? 'MEMORY SIGNAL' : 'CAMMON APPLE';
-    elements.miniGameTitle.textContent = memory ? '카드 짝맞추기' : MINI_GAME_RULES.sumTen.label;
-    elements.miniGameTimer.textContent = formatTime(session ? sessionRemaining() : (
+    const ladder = selectedGame === 'ladder';
+    elements.miniGameEyebrow.textContent = memory ? 'MEMORY SIGNAL' : ladder ? 'LUCKY LADDER' : 'CAMMON APPLE';
+    elements.miniGameTitle.textContent = memory ? '카드 짝맞추기' : ladder ? MINI_GAME_RULES.ladder.label : MINI_GAME_RULES.sumTen.label;
+    elements.miniGameTimer.textContent = ladder ? '--:--' : formatTime(session ? sessionRemaining() : (
       memory ? MINI_GAME_RULES.memory[memoryDifficulty].timeLimit : MINI_GAME_RULES.sumTen.timeLimit
     ));
     elements.miniGameScore.textContent = number.format(currentScore());
@@ -71,22 +80,26 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
 
   function renderControls() {
     const daily = progress();
+    const ladder = selectedGame === 'ladder';
     const earned = daily.pointsEarnedByGame[selectedGame] ?? 0;
     const remaining = Math.max(0, MINI_GAME_RULES.dailyPointCapPerGame - earned);
     const busy = Boolean(session);
+    const energyCost = ladder ? MINI_GAME_RULES.ladder.energyCost : MINI_GAME_RULES.energyCost;
     elements.miniGameDaily.textContent = `${number.format(earned)} / ${number.format(MINI_GAME_RULES.dailyPointCapPerGame)} P`;
-    elements.miniGameDailyBar.style.width = `${earned / MINI_GAME_RULES.dailyPointCapPerGame * 100}%`;
-    elements.miniGameBest.textContent = number.format(selectedGame === 'memory' ? daily.bestMemory : daily.bestSumTen);
+    elements.miniGameDailyBar.style.width = `${Math.min(100, earned / MINI_GAME_RULES.dailyPointCapPerGame * 100)}%`;
+    elements.miniGameBest.textContent = number.format(selectedGame === 'memory' ? daily.bestMemory : ladder ? daily.bestLadder : daily.bestSumTen);
     elements.miniGamePlays.textContent = `${number.format(daily.plays)}회`;
     elements.miniGameRemaining.textContent = `${number.format(remaining)} P`;
     elements.miniGameDifficulty.hidden = selectedGame !== 'memory';
+    elements.miniGameMode.hidden = ladder;
     elements.miniGameStartButton.hidden = busy;
     elements.miniGameStopButton.hidden = !busy;
-    elements.miniGameStartButton.disabled = selectedMode === 'reward' && (
-      getState().actionEnergy < MINI_GAME_RULES.energyCost || remaining <= 0
-    );
-    elements.miniGameStartButton.querySelector('span').textContent = selectedMode === 'reward' ? '보상 게임 시작' : '연습 시작';
-    elements.miniGameStartButton.dataset.mode = selectedMode;
+    elements.miniGameStopButton.disabled = ladderResolving;
+    elements.miniGameStartButton.disabled = (ladder || selectedMode === 'reward')
+      && (getState().actionEnergy < energyCost || remaining <= 0);
+    elements.miniGameStartButton.querySelector('span').textContent = ladder ? '출발점 선택하기' : selectedMode === 'reward' ? '보상 게임 시작' : '연습 시작';
+    elements.miniGameStartButton.dataset.mode = ladder ? 'reward' : selectedMode;
+    elements.miniGameRewardCost.textContent = `-${energyCost} 행동력`;
     elements.miniGamePicker.querySelectorAll('[data-minigame-select]').forEach((button) => {
       button.classList.toggle('active', button.dataset.minigameSelect === selectedGame);
       button.disabled = busy;
@@ -103,35 +116,46 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
 
   function renderReady() {
     const rules = MINI_GAME_RULES.memory[memoryDifficulty];
+    const ladder = selectedGame === 'ladder';
     const previewCard = cards.find((card) => card.id === 'kimyunhwan-2') ?? cards.find((card) => card.rarity !== 'EX');
     elements.miniGameEmpty.hidden = false;
     elements.memoryBoard.hidden = true;
     elements.sumTenShell.hidden = true;
+    elements.ladderShell.hidden = true;
     elements.miniGameResult.hidden = true;
     elements.miniGameReadyVisual.dataset.game = selectedGame;
     elements.miniGameReadyVisual.innerHTML = selectedGame === 'memory'
       ? `<div class="memory-ready-preview"><i class="back"></i><figure style="--rarity:${RARITIES[previewCard.rarity].color}"><img src="${imagePath(previewCard)}" alt=""><b>${previewCard.rarity}</b></figure><figure style="--rarity:${RARITIES[previewCard.rarity].color}"><img src="${imagePath(previewCard)}" alt=""><b>${previewCard.rarity}</b></figure></div>`
-      : `<div class="sum-ready-preview">${[1, 9, 4, 6, 3, 7, 8, 2, 5].map((value, index) => `<i style="--index:${index}"><b>${value}</b></i>`).join('')}<span>10</span></div>`;
-    elements.miniGameReadyTitle.textContent = selectedGame === 'memory' ? '같은 카드 신호를 찾아라' : '합계 10 카드백을 지워라';
+      : ladder
+        ? `<div class="ladder-ready-preview">${MINI_GAME_RULES.ladder.rewards.map((reward) => `<i>${number.format(reward)}P</i>`).join('')}<b>?</b></div>`
+        : `<div class="sum-ready-preview">${[1, 9, 4, 6, 3, 7, 8, 2, 5].map((value, index) => `<i style="--index:${index}"><b>${value}</b></i>`).join('')}<span>10</span></div>`;
+    elements.miniGameReadyTitle.textContent = selectedGame === 'memory' ? '같은 카드 신호를 찾아라' : ladder ? '출발점은 직접, 결과는 운명' : '합계 10 카드백을 지워라';
     elements.miniGameReadyCopy.textContent = selectedGame === 'memory'
       ? `카드 2장을 뒤집어 같은 인물의 짝을 완성합니다. 클리어 보상 ${number.format(rules.completionReward)}P.`
-      : `드래그한 사각형 안의 숫자 합이 10이면 카드백 조각이 제거됩니다. 최대 ${number.format(MINI_GAME_RULES.sumTen.maxReward)}P.`;
+      : ladder
+        ? '1~6번 출발점 중 하나를 고르면 사다리가 시작됩니다. 선택 순간 행동력 100이 소비됩니다.'
+        : `드래그한 사각형 안의 숫자 합이 10이면 카드백 조각이 제거됩니다. 최대 ${number.format(MINI_GAME_RULES.sumTen.maxReward)}P.`;
     elements.miniGameStatus.textContent = selectedGame === 'memory'
       ? `${rules.label} · ${rules.pairs} PAIRS · ${rules.timeLimit} SEC`
-      : `${MINI_GAME_RULES.sumTen.columns}×${MINI_GAME_RULES.sumTen.rows} · ${MINI_GAME_RULES.sumTen.timeLimit} SEC`;
-    elements.miniGameReadyMode.textContent = selectedMode === 'reward'
-      ? `보상 모드 · 행동력 ${MINI_GAME_RULES.energyCost} · 게임별 일일 최대 ${number.format(MINI_GAME_RULES.dailyPointCapPerGame)} P`
+      : ladder
+        ? MINI_GAME_RULES.ladder.rewards.map((reward) => `${number.format(reward)}P`).join(' · ')
+        : `${MINI_GAME_RULES.sumTen.columns}×${MINI_GAME_RULES.sumTen.rows} · ${MINI_GAME_RULES.sumTen.timeLimit} SEC`;
+    elements.miniGameReadyMode.textContent = ladder
+      ? `보상 전용 · 행동력 ${MINI_GAME_RULES.ladder.energyCost} · 6개 보상 동일 확률`
+      : selectedMode === 'reward'
+        ? `보상 모드 · 행동력 ${MINI_GAME_RULES.energyCost} · 게임별 일일 최대 ${number.format(MINI_GAME_RULES.dailyPointCapPerGame)} P`
       : '연습 모드 · 행동력 소모 없음 · 포인트 보상 없음';
-    elements.miniGameReadyMode.dataset.mode = selectedMode;
+    elements.miniGameReadyMode.dataset.mode = ladder ? 'reward' : selectedMode;
   }
 
   function renderResult() {
     elements.miniGameEmpty.hidden = true;
     elements.memoryBoard.hidden = true;
     elements.sumTenShell.hidden = true;
+    elements.ladderShell.hidden = true;
     elements.miniGameResult.hidden = false;
     elements.miniGameResultTitle.textContent = result.title;
-    elements.miniGameResultScore.textContent = `${number.format(result.score)} SCORE`;
+    elements.miniGameResultScore.textContent = result.scoreLabel ?? `${number.format(result.score)} SCORE`;
     elements.miniGameResultReward.textContent = result.mode === 'practice' ? 'PRACTICE' : `+${number.format(result.reward)} P`;
   }
 
@@ -139,6 +163,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     elements.miniGameEmpty.hidden = true;
     elements.miniGameResult.hidden = true;
     elements.sumTenShell.hidden = true;
+    elements.ladderShell.hidden = true;
     elements.memoryBoard.hidden = false;
     elements.memoryBoard.style.setProperty('--columns', session.columns);
     elements.memoryBoard.innerHTML = session.deck.map((card, index) => {
@@ -161,6 +186,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     elements.miniGameEmpty.hidden = true;
     elements.miniGameResult.hidden = true;
     elements.memoryBoard.hidden = true;
+    elements.ladderShell.hidden = true;
     elements.sumTenShell.hidden = false;
     elements.sumTenBoard.style.setProperty('--columns', session.columns);
     elements.sumTenBoard.style.setProperty('--rows', session.rows);
@@ -169,11 +195,40 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     elements.miniGameSelectionSum.parentElement.classList.remove('invalid');
   }
 
+  function ladderX(lane, columns = MINI_GAME_RULES.ladder.columns) {
+    return `${lane / (columns - 1) * 100}%`;
+  }
+
+  function ladderY(row, rungRows = MINI_GAME_RULES.ladder.rungRows) {
+    return `${(row + 1) / (rungRows + 1) * 100}%`;
+  }
+
+  function renderLadder() {
+    elements.miniGameEmpty.hidden = true;
+    elements.miniGameResult.hidden = true;
+    elements.memoryBoard.hidden = true;
+    elements.sumTenShell.hidden = true;
+    elements.ladderShell.hidden = false;
+    const columns = MINI_GAME_RULES.ladder.columns;
+    const choosing = session.phase === 'choose';
+    const board = session.board;
+    elements.ladderChoiceCopy.textContent = choosing ? '1~6번 출발점 중 하나를 직접 선택하세요' : session.phase === 'resolved' ? `당첨 +${number.format(session.reward)}P` : '사다리 추적 중...';
+    const rails = Array.from({ length: columns }, (_, lane) => `<i class="ladder-rail" style="--x:${ladderX(lane)}"></i>`).join('');
+    const rungs = board ? board.rows.flatMap((edges, row) => edges.map((edge) => `<i class="ladder-rung" style="--x:${ladderX(edge)};--y:${ladderY(row, board.rungRows)}"></i>`)).join('') : '';
+    const token = board ? `<b class="ladder-token" id="ladderToken" style="--x:${ladderX(session.phase === 'resolved' ? board.endLane : board.startLane)};--y:${session.phase === 'resolved' ? '100%' : '0%'}">${board.startLane + 1}</b>` : '';
+    const rewards = board ? board.rewards : MINI_GAME_RULES.ladder.rewards;
+    elements.ladderBoard.innerHTML = `
+      <div class="ladder-top">${Array.from({ length: columns }, (_, lane) => `<button type="button" data-ladder-lane="${lane}" class="${session.startLane === lane ? 'selected' : ''}" ${choosing ? '' : 'disabled'}>${lane + 1}</button>`).join('')}</div>
+      <div class="ladder-track">${rails}${rungs}${token}</div>
+      <div class="ladder-bottom">${rewards.map((reward, lane) => `<span class="${board ? '' : 'hidden-reward'}${session.phase === 'resolved' && board?.endLane === lane ? ' winner' : ''}">${board ? `${number.format(reward)}P` : '?'}</span>`).join('')}</div>`;
+  }
+
   function render() {
     renderHeader();
     renderControls();
     if (session?.game === 'memory') renderMemory();
     else if (session?.game === 'sumTen') renderSumTen();
+    else if (session?.game === 'ladder') renderLadder();
     else if (result) renderResult();
     else renderReady();
     window.lucide?.createIcons();
@@ -191,13 +246,21 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     daily.pointsEarned += reward;
     daily.pointsEarnedByGame[game] += reward;
     if (game === 'memory') daily.bestMemory = Math.max(daily.bestMemory, score);
-    else daily.bestSumTen = Math.max(daily.bestSumTen, score);
+    else if (game === 'sumTen') daily.bestSumTen = Math.max(daily.bestSumTen, score);
+    else daily.bestLadder = Math.max(daily.bestLadder, reward);
     state.points += reward;
     persist('finishMinigame');
   }
 
   async function finishGame({ completed = false, aborted = false } = {}) {
     if (!session) return;
+    if (session.game === 'ladder') {
+      if (ladderResolving) return;
+      result = { mode: 'reward', score: 0, scoreLabel: '선택 취소', reward: 0, title: '게임 종료' };
+      session = null;
+      render();
+      return;
+    }
     stopTimer();
     const finished = session;
     const remainingSeconds = sessionRemaining();
@@ -243,6 +306,17 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   async function startGame() {
     const state = getState();
     const daily = progress();
+    if (selectedGame === 'ladder') {
+      if ((daily.pointsEarnedByGame.ladder ?? 0) >= MINI_GAME_RULES.dailyPointCapPerGame) {
+        return showToast('오늘 운명의 사다리 보상 한도 도달');
+      }
+      if (state.actionEnergy < MINI_GAME_RULES.ladder.energyCost) return showToast('행동력 100 필요');
+      result = null;
+      sequence += 1;
+      session = { id: sequence, game: 'ladder', mode: 'reward', phase: 'choose', score: 0, startLane: null, board: null };
+      render();
+      return;
+    }
     if (selectedMode === 'reward') {
       if ((daily.pointsEarnedByGame[selectedGame] ?? 0) >= MINI_GAME_RULES.dailyPointCapPerGame) {
         return showToast(`오늘 ${selectedGame === 'memory' ? '카드 짝맞추기' : MINI_GAME_RULES.sumTen.label} 보상 한도 도달`);
@@ -305,6 +379,81 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     render();
     stopTimer();
     timer = window.setInterval(tick, 1000);
+  }
+
+  async function chooseLadderLane(lane) {
+    if (!session || session.game !== 'ladder' || session.phase !== 'choose' || ladderResolving) return;
+    if (!Number.isInteger(lane) || lane < 0 || lane >= MINI_GAME_RULES.ladder.columns) return;
+    if ((progress().pointsEarnedByGame.ladder ?? 0) >= MINI_GAME_RULES.dailyPointCapPerGame) {
+      session = null;
+      render();
+      return showToast('오늘 운명의 사다리 보상 한도 도달');
+    }
+    if (getState().actionEnergy < MINI_GAME_RULES.ladder.energyCost) return showToast('행동력 100 필요');
+    const sessionId = session.id;
+    ladderResolving = true;
+    session.phase = 'resolving';
+    session.startLane = lane;
+    render();
+
+    let reward;
+    let rolledReward;
+    let seed;
+    if (serverCommands?.playLadder) {
+      const response = await serverCommands.playLadder({ lane });
+      if (!response?.ok) {
+        if (session?.id === sessionId) {
+          if ((progress().pointsEarnedByGame.ladder ?? 0) >= MINI_GAME_RULES.dailyPointCapPerGame) session = null;
+          else {
+            session.phase = 'choose';
+            session.startLane = null;
+          }
+        }
+        ladderResolving = false;
+        render();
+        return showToast(response?.message || '사다리 요청 처리 실패');
+      }
+      reward = Number(response.result?.rewardPoints ?? 0);
+      rolledReward = Number(response.result?.rolledRewardPoints ?? reward);
+      seed = response.serverSeed ?? response.result?.serverSeed ?? `${clock.now()}:${sessionId}`;
+    } else {
+      rolledReward = pickLadderReward(random());
+      reward = capMiniGameReward(progress(), 'ladder', rolledReward);
+      seed = `${clock.now()}:${sessionId}:${lane}:${rolledReward}`;
+      const state = getState();
+      state.actionEnergy -= MINI_GAME_RULES.ladder.energyCost;
+      state.lastEnergyAt = clock.now();
+      saveResult('ladder', reward, reward);
+    }
+    if (!session || session.id !== sessionId) return;
+    session.reward = reward;
+    session.rolledReward = rolledReward;
+    session.score = reward;
+    session.board = createLadderBoard(seed, lane, rolledReward);
+    render();
+
+    const token = document.getElementById('ladderToken');
+    for (const point of session.board.path.slice(1)) {
+      await wait(point.row === session.board.rungRows ? 180 : 135);
+      if (!session || session.id !== sessionId) return;
+      token?.style.setProperty('--x', ladderX(point.lane, session.board.columns));
+      token?.style.setProperty('--y', point.row === session.board.rungRows ? '100%' : ladderY(point.row, session.board.rungRows));
+    }
+    session.phase = 'resolved';
+    ladderResolving = false;
+    render();
+    await wait(850);
+    if (!session || session.id !== sessionId) return;
+    result = {
+      mode: 'reward',
+      score: reward,
+      scoreLabel: rolledReward > reward ? `${lane + 1}번 경로 · 일일 한도 적용` : `${lane + 1}번 경로`,
+      reward,
+      title: '사다리 당첨',
+    };
+    session = null;
+    render();
+    showToast(`사다리 보상 +${number.format(reward)}P`);
   }
 
   function flipMemoryCard(index) {
@@ -450,6 +599,10 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   elements.sumTenBoard.addEventListener('pointermove', moveSumDrag);
   elements.sumTenBoard.addEventListener('pointerup', endSumDrag);
   elements.sumTenBoard.addEventListener('pointercancel', endSumDrag);
+  elements.ladderBoard.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-ladder-lane]');
+    if (button) chooseLadderLane(Number(button.dataset.ladderLane));
+  });
 
   progress();
   return { render, tick };

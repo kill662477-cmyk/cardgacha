@@ -98,10 +98,11 @@ function buildImportedState(user, rank, importedAt) {
   state.miniGames = {
     date: new Date(importedAt).toISOString().slice(0, 10),
     pointsEarned: 0,
-    pointsEarnedByGame: { memory: 0, sumTen: 0 },
+    pointsEarnedByGame: { memory: 0, sumTen: 0, ladder: 0 },
     plays: 0,
     bestMemory: 0,
     bestSumTen: 0,
+    bestLadder: 0,
   };
   state.worldBoss.attempts = 0;
   state.worldBoss.bestDamage = 0;

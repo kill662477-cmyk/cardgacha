@@ -16,7 +16,7 @@ assert.match(normalized, /create unique index if not exists uq_gacha_s2_one_acti
 assert.match(normalized, /where active/);
 assert.match(normalized, /rarity in \('f','e','d','c','b','a','s','ss','sss','ex'\)/);
 assert.match(normalized, /rarity = 'ex' and race = 'ex' and archetype is null and is_group/);
-assert.match(normalized, /v_total <> 214/);
+assert.match(normalized, /v_total <> 221/);
 assert.match(normalized, /count\(distinct archetype\) <> 8/);
 assert.match(normalized, /gacha_s2_player_cards_catalog_fk/);
 assert.match(normalized, /foreign key \(card_id\) references public\.gacha_s2_card_catalog\(card_id\)/);
@@ -28,7 +28,7 @@ assert.doesNotMatch(normalized, /grant (?:select|insert|update|delete|all).*gach
 const catalogSeed = sql.match(/insert into public\.gacha_s2_card_catalog \([\s\S]*?\)\nvalues\n([\s\S]*?)\non conflict \(card_id\)/i)?.[1];
 assert.ok(catalogSeed, 'catalog seed block missing');
 const rows = catalogSeed.split('\n').filter((line) => line.startsWith('  ('));
-assert.equal(rows.length, 214);
+assert.equal(rows.length, 221);
 const seededIds = rows.map((line) => line.match(/^  \('([^']+)'/)?.[1]);
 assert.deepEqual(seededIds, [...cards.map((card) => card.id)].sort((left, right) => left.localeCompare(right)));
 assert.equal((sql.match(/'[0-9a-f]{64}'/g) ?? []).length >= 4, true, 'config and catalog hashes must be embedded and verified');

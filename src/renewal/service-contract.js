@@ -15,6 +15,7 @@ export const GAME_COMMAND_TYPES = Object.freeze({
   SET_CARD_LOCK: 'setCardLock',
   START_MINIGAME: 'startMinigame',
   FINISH_MINIGAME: 'finishMinigame',
+  PLAY_LADDER: 'playLadder',
   ATTACK_WORLD_BOSS: 'attackWorldBoss',
   CLAIM_WORLD_BOSS_REWARD: 'claimWorldBossReward',
 });
@@ -54,9 +55,9 @@ function validatePayload(type, payload, issues) {
   const allowedFields = {
     [GAME_COMMAND_TYPES.UPDATE_FORMATION]: ['formation'],
     [GAME_COMMAND_TYPES.CLAIM_ADVENTURE_REWARDS]: ['mode'],
-    [GAME_COMMAND_TYPES.START_ADVENTURE_RUN]: [],
+    [GAME_COMMAND_TYPES.START_ADVENTURE_RUN]: ['mode'],
     [GAME_COMMAND_TYPES.FINISH_ADVENTURE_RUN]: ['runId'],
-    [GAME_COMMAND_TYPES.CLAIM_QUICK_BATTLE]: [],
+    [GAME_COMMAND_TYPES.CLAIM_QUICK_BATTLE]: ['mode'],
     [GAME_COMMAND_TYPES.PURCHASE_PACK]: ['productId', 'quantity', 'race'],
     [GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK]: ['quantity'],
     [GAME_COMMAND_TYPES.USE_SUPPORT_ITEM]: ['itemId', 'targetCardId', 'race', 'count'],
@@ -66,6 +67,7 @@ function validatePayload(type, payload, issues) {
     [GAME_COMMAND_TYPES.SET_CARD_LOCK]: ['cardId', 'locked'],
     [GAME_COMMAND_TYPES.START_MINIGAME]: ['game', 'difficulty'],
     [GAME_COMMAND_TYPES.FINISH_MINIGAME]: ['runId', 'inputLog', 'score'],
+    [GAME_COMMAND_TYPES.PLAY_LADDER]: ['lane'],
     [GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS]: ['eventId'],
     [GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD]: ['eventId'],
   };
@@ -86,7 +88,14 @@ function validatePayload(type, payload, issues) {
       if (payload.mode !== 'offline') addIssue(issues, 'payload.mode', 'offline required');
       break;
     case GAME_COMMAND_TYPES.START_ADVENTURE_RUN:
+      if (payload.mode !== undefined && !['normal', 'hard'].includes(payload.mode)) {
+        addIssue(issues, 'payload.mode', 'normal 또는 hard 필요');
+      }
+      break;
     case GAME_COMMAND_TYPES.CLAIM_QUICK_BATTLE:
+      if (payload.mode !== undefined && !['normal', 'hard'].includes(payload.mode)) {
+        addIssue(issues, 'payload.mode', 'normal 또는 hard 필요');
+      }
       break;
     case GAME_COMMAND_TYPES.FINISH_ADVENTURE_RUN:
       validateString(issues, payload.runId, 'payload.runId', 100);
@@ -164,6 +173,9 @@ function validatePayload(type, payload, issues) {
         }
       });
       if (!isNonNegativeInteger(payload.score)) addIssue(issues, 'payload.score', '0 이상 정수 필요');
+      break;
+    case GAME_COMMAND_TYPES.PLAY_LADDER:
+      if (!isNonNegativeInteger(payload.lane) || payload.lane > 5) addIssue(issues, 'payload.lane', '0~5 출발점 필요');
       break;
     case GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS:
       validateString(issues, payload.eventId, 'payload.eventId', 100);

@@ -22,6 +22,18 @@ assert.equal(getEnhancementGate(target, selection, 0).ready, true);
 const consumed = consumeSelectedMaterials(copies, selection.selected);
 assert.equal(consumed['c-1'] + consumed['c-2'], copies['c-1'] + copies['c-2'] - 3);
 
+const lockedF = { id: 'locked-f', rarity: 'F', enhancement: 0, exp: 100 };
+const sameCardSelection = selectEnhancementMaterials(
+  lockedF,
+  [lockedF, { id: 'other-f', rarity: 'F' }],
+  { 'locked-f': 2, 'other-f': 2 },
+  { 'locked-f': true, 'other-f': true },
+);
+assert.deepEqual(sameCardSelection.selected, ['locked-f'], 'locked target duplicates may be used as material');
+assert.equal(sameCardSelection.available, 1);
+assert.equal(availableDuplicateCount('locked-f', { 'locked-f': 1 }, { 'locked-f': true }, 'locked-f'), 0, 'target base copy must remain');
+assert.equal(availableDuplicateCount('other-f', { 'other-f': 2 }, { 'other-f': true }, 'locked-f'), 0, 'other locked cards stay protected');
+
 assert.deepEqual(getEnhancementOdds({ rarity: 'F', enhancement: 3 }), { target: 4, success: 80, destroy: 0, fail: 20 });
 assert.deepEqual(getEnhancementOdds({ rarity: 'F', enhancement: 8 }), { target: 9, success: 30, destroy: 15, fail: 55 });
 assert.deepEqual(getEnhancementOdds({ rarity: 'SSS', enhancement: 8 }), { target: 9, success: 12, destroy: 15, fail: 73 });

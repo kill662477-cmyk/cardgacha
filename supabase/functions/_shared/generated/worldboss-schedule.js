@@ -16,6 +16,22 @@ function buildSlot(year, month, date, hour, rules) {
   };
 }
 
+export function worldBossHourFromEventId(eventId) {
+  const match = String(eventId ?? '').match(/-([0-9]{2})$/);
+  return match ? Number(match[1]) : WORLD_BOSS_RULES.scheduleHours[0];
+}
+
+export function getWorldBossTier(eventId, rules = WORLD_BOSS_RULES) {
+  const hour = worldBossHourFromEventId(eventId);
+  return rules.slotTiers?.[hour] ?? rules.slotTiers?.[rules.scheduleHours[0]] ?? {
+    title: rules.subtitle,
+    name: rules.name,
+    difficultyMultiplier: 1,
+    maxHp: rules.maxHp,
+    serverDamagePerSecond: rules.serverDamagePerSecond,
+  };
+}
+
 export function kstSlotLabel(ms) {
   const kst = new Date(ms + KST_OFFSET_MS);
   return `${pad2(kst.getUTCHours())}:${pad2(kst.getUTCMinutes())}`;

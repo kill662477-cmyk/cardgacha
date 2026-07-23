@@ -8,7 +8,7 @@ const formation = cards.slice(0, 5);
 
 assert.equal(cards.length, 20, 'demo card pool must contain 20 cards');
 assert.equal(new Set(cards.map((card) => card.id)).size, 20, 'demo card ids must be unique');
-assert.equal(STAGES.length, 50, 'expanded adventure must contain 50 stages');
+assert.equal(STAGES.length, 100, 'normal and hard adventure must contain 100 stages');
 
 Object.entries(PACKS).forEach(([packId, pack]) => {
   const total = Object.values(pack.rates).reduce((sum, rate) => sum + rate, 0);
@@ -38,6 +38,12 @@ assert.equal(getRaceSynergy(raceDeck(5)).atk, 1.12);
 const roleCard = (archetype) => ({ id: `role-${archetype}`, rarity: 'SSS', enhancement: 0, archetype, race: 'Z' });
 assert.ok(computeCardPower(roleCard('combo')) > computeCardPower(roleCard('sustain')), 'displayed power must reflect combat throughput instead of raw HP alone');
 assert.equal(getFormationAmplifier([roleCard('amplify'), roleCard('quick')]), 1.04);
+
+for (const archetype of ['quick', 'heavy', 'combo', 'area', 'boss', 'amplify', 'weaken', 'sustain']) {
+  const sssPlusThree = computeCardPower({ id: `tier-check-${archetype}`, rarity: 'SSS', enhancement: 3, archetype, race: 'Z' });
+  const sPlusNine = computeCardPower({ id: `tier-check-${archetype}`, rarity: 'S', enhancement: 9, archetype, race: 'Z' });
+  assert.ok(sssPlusThree > sPlusNine, `SSS +3 ${archetype} must exceed S +9 at equal conditions`);
+}
 
 const areaDeck = Array.from({ length: 5 }, (_, index) => ({ ...roleCard('area'), id: `area-${index}` }));
 const target = { id: 'area-target', enemyHp: 999_999_999, enemyAttack: 0, duration: 10 };

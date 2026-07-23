@@ -8,9 +8,12 @@ import {
   calculateAdventureRunReward,
   claimAdventureExMilestones,
   createAdventureRun,
+  adventureModeRules,
   getAdventureRunLimitStatus,
+  isAdventureModeUnlocked,
   normalizeAdventureRun,
   normalizeAdventureRuns,
+  normalizeAdventureMode,
   recordAdventureRun,
 } from './adventure.js';
 import {
@@ -50,6 +53,7 @@ import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './re
 import { GAME_COMMAND_TYPES } from './service-contract.js';
 import { createRequestCoordinator, REQUEST_PHASES } from './request-coordinator.js?v=202607211025';
 import { createMiniGameController } from './minigame-controller.js?v=202607211525';
+import { executeCommandWithVersionRetry } from './server-command-retry.js';
 import { createWorldBossController } from './worldboss-controller.js';
 import { createRankingController } from './ranking-controller.js';
 import { createFxController } from './fx-controller.js';
@@ -60,7 +64,8 @@ import { createLiveTickerController } from './live-ticker-controller.js';
 
 const number = new Intl.NumberFormat('ko-KR');
 const CARD_BACK_PATH = 'assets/card-back.jpg';
-const SCREEN_IDS = new Set(['shop', 'enhance', 'collection', 'ranking', 'adventure', 'worldboss']);
+// 'inventory'는 별도 DOM 없이 shopScreen을 보유아이템 탭으로 열어주는 별칭 화면.
+const SCREEN_IDS = new Set(['shop', 'inventory', 'enhance', 'collection', 'ranking', 'adventure', 'worldboss', 'minigame']);
 // Temporary: world boss disabled to cap Supabase free-tier realtime/edge load until Pro (2026-07-24). Flip to true + redeploy to re-enable.
 const WORLD_BOSS_ENABLED = true;
 const elements = {};
@@ -87,10 +92,12 @@ let toastTimer = 0;
 let rewardMode = 'offline';
 let rewardPreview = null;
 let activeScreen = SCREEN_IDS.has(window.location.hash.slice(1)) ? window.location.hash.slice(1) : 'adventure';
+let selectedAdventureMode = 'normal';
 let selectedEnhanceCardId = null;
 let selectedBooster = 'none';
 let selectedMaterialOption = 0;
 let enhanceFilter = 'all';
+let enhanceSort = 'smart';
 let enhancementResult = null;
 let collectionOwnership = 'all';
 let collectionRace = 'all';
@@ -157,8 +164,8 @@ const SYSTEM_STATES = {
   },
   conflict: {
     eyebrow: 'REVISION CONFLICT',
-    title: '다른 기기에서 기록 변경됨',
-    message: '최신 서버 기록을 불러온 뒤 현재 화면을 다시 확인해야 합니다.',
+    title: '최신 기록 동기화 필요',
+    message: '서버 기록이 먼저 변경되었습니다. 최신 기록을 불러온 뒤 다시 시도해 주세요.',
     code: 'STATE // NEWER REVISION FOUND',
     retry: true,
     retryLabel: '최신 기록 불러오기',
@@ -194,6 +201,7 @@ function cacheElements() {
     'stageLabel', 'stageMeter', 'battleState', 'battleClock', 'enemyName', 'enemyHpBar', 'enemyHpText',
     'enemyRow', 'partyGrid', 'synergyChip', 'resultBanner', 'stageNodes',
     'cardExpPerMinute', 'runPointReward', 'nextAdventureRecharge', 'autoBattleButton',
+    'adventureModeNormal', 'adventureModeHard', 'adventureModeLock',
     'formationButton', 'quickBattleButton', 'quickBattleCount', 'claimButton', 'pendingReward',
     'formationDialog', 'selectedFormation', 'inventoryGrid', 'selectionCount',
     'confirmFormation', 'clearFormation', 'toast', 'attackEcho', 'battlefield', 'offlineTime', 'offlineSummary',
@@ -288,14 +296,19 @@ function applyServerSnapshot(snapshot) {
   const migrated = migrateGameState(snapshot);
   if (!migrated.ok) throw new Error(`Snapshot migration failed: ${migrated.issues[0]?.message}`);
   state = mergeServerSnapshot(migrated.state, state);
+  ensureValidAdventureProgress();
   return state;
 }
 
-async function executeServerCommand(type, payload) {
-  const response = await gameService.sendCommand(type, payload, state.revision);
-  if (response?.ok && response.snapshot) applyServerSnapshot(response.snapshot);
-  else if (response?.code === 'VERSION_CONFLICT' && response.latestSnapshot) applyServerSnapshot(response.latestSnapshot);
-  return response;
+async function executeServerCommand(type, payload, options = {}) {
+  return executeCommandWithVersionRetry({
+    type,
+    payload,
+    retryOnVersionConflict: options.retryOnVersionConflict !== false,
+    sendCommand: (commandType, commandPayload, revision) => gameService.sendCommand(commandType, commandPayload, revision),
+    getRevision: () => state.revision,
+    applySnapshot: applyServerSnapshot,
+  });
 }
 
 // SOOP 숲 로그인 콜백(#soopauth= / #soopautherr=)을 fragment에서 읽는다.
@@ -511,15 +524,19 @@ function representativeCard() {
 
 function ensureValidAdventureProgress() {
   state.adventureRun = normalizeAdventureRun(state.adventureRun);
+  state.clearedStage = Math.max(0, Math.min(STAGES.length, Number(state.clearedStage) || 0));
+  if (state.adventureRun.active) selectedAdventureMode = state.adventureRun.mode;
+  selectedAdventureMode = normalizeAdventureMode(selectedAdventureMode);
+  if (!isAdventureModeUnlocked(selectedAdventureMode, state.clearedStage)) selectedAdventureMode = 'normal';
   if (!state.adventureRun.active) state.autoBattle = false;
+  const modeRules = adventureModeRules(selectedAdventureMode);
   state.currentStage = state.adventureRun.active
     ? Math.max(1, Math.min(STAGES.length, state.adventureRun.currentStage))
-    : 1;
-  state.clearedStage = Math.max(0, Math.min(STAGES.length, Number(state.clearedStage) || 0));
+    : modeRules.startStage;
 }
 
 function productionStageNumber() {
-  return Math.max(1, Math.min(STAGES.length, state.clearedStage || 1));
+  return Math.max(1, Math.min(ADVENTURE_RULES.modes.normal.endStage, state.clearedStage || 1));
 }
 
 function ownedCards() {
@@ -621,16 +638,19 @@ function synchronizeTimedState(now = gameService.now()) {
 function renderStage() {
   const stage = STAGES[state.currentStage - 1];
   const rates = rewardRates(productionStageNumber());
-  elements.regionLabel.textContent = `지역 ${stage.regionIndex + 1} · ${stage.region}`;
+  elements.regionLabel.textContent = `${stage.hard ? 'HARD · ' : ''}지역 ${stage.regionIndex + 1} · ${stage.region}`;
   elements.stageLabel.textContent = stage.id;
   elements.stageMeter.style.width = `${stage.stageNumber * 10}%`;
   elements.battlefield.dataset.region = stage.regionCode;
+  elements.battlefield.dataset.mode = stage.mode;
   // nolevel-1: 계정 EXP 분당 표시 제거. 카드 EXP 분당만 표시.
   if (elements.expPerMinute) elements.expPerMinute.textContent = rates.cardExpPerMinute.toFixed(2);
   elements.cardExpPerMinute.textContent = rates.cardExpPerMinute.toFixed(2);
   const activeRun = normalizeAdventureRun(state.adventureRun);
-  const runPoints = calculateAdventureRunReward(activeRun.clearedStages).points;
-  elements.runPointReward.textContent = `${number.format(runPoints)} / ${number.format(ADVENTURE_RULES.runReward.maxPointsPerRun)} P`;
+  const displayMode = activeRun.active ? activeRun.mode : selectedAdventureMode;
+  const modeReward = displayMode === 'hard' ? ADVENTURE_RULES.hardRunReward : ADVENTURE_RULES.runReward;
+  const runPoints = calculateAdventureRunReward(activeRun.clearedStages, displayMode).points;
+  elements.runPointReward.textContent = `${number.format(runPoints)} / ${number.format(modeReward.maxPointsPerRun)} P`;
   elements.stageNodes.innerHTML = stageWindow(state.currentStage).map((globalNumber) => {
     const nodeStage = STAGES[globalNumber - 1];
     const complete = globalNumber <= state.clearedStage;
@@ -644,14 +664,24 @@ function renderStage() {
 
 function renderEnemies(stage) {
   const count = stage.boss ? 1 : Math.min(stage.enemyCount, 5);
-  const enemyClass = stage.boss ? `boss boss-${stage.regionCode}` : stage.enemyType;
-  const enemyLabels = { crawler: '신호 포식체', jammer: '전파 교란체', leech: '데이터 흡수체', crusher: '중계 파쇄체' };
+  const enemyClass = stage.boss ? `boss boss-${stage.regionCode}` : `${stage.hard ? 'hard-' : ''}${stage.enemyType}`;
+  const enemyLabels = {
+    crawler: stage.hard ? '공허 추적체' : '신호 포식체',
+    jammer: stage.hard ? '심연 교란체' : '전파 교란체',
+    leech: stage.hard ? '악몽 흡수체' : '데이터 흡수체',
+    crusher: stage.hard ? '오메가 파쇄체' : '중계 파쇄체',
+  };
   const bossLabels = {
     'signal-city': '도시 포식 코어',
     'relay-base': '침묵의 중계 거신',
     'black-studio': '검은 송출 집행자',
     'data-fortress': '데이터 요새 관리자',
     'malice-core': '거대 악플러 코어',
+    'void-rift': '공허 균열 감시자',
+    'abyss-relay': '심연 중계 집행자',
+    'nightmare-studio': '악몽 송출 군주',
+    'omega-fortress': '오메가 성채 파괴자',
+    'hell-core': '지옥 악플 코어',
   };
   elements.enemyName.textContent = stage.boss
     ? `${bossLabels[stage.regionCode]} · BOSS`
@@ -703,17 +733,29 @@ function renderHeader() {
   elements.quickBattleCount.textContent = `${state.quickBattle.count}/${REWARD_RULES.quickBattleDailyLimit}`;
   const adventureStatus = getAdventureRunLimitStatus(state.adventureRuns, gameService.now());
   const activeRun = normalizeAdventureRun(state.adventureRun);
+  const hardUnlocked = isAdventureModeUnlocked('hard', state.clearedStage);
+  const displayMode = activeRun.active ? activeRun.mode : selectedAdventureMode;
+  elements.adventureModeNormal.classList.toggle('active', displayMode === 'normal');
+  elements.adventureModeHard.classList.toggle('active', displayMode === 'hard');
+  elements.adventureModeNormal.disabled = activeRun.active;
+  elements.adventureModeHard.disabled = activeRun.active || !hardUnlocked;
+  elements.adventureModeHard.setAttribute('aria-disabled', String(activeRun.active || !hardUnlocked));
+  elements.adventureModeLock.textContent = hardUnlocked ? '5-10 클리어 완료 · 하드 해금' : '일반 모험 5-10 클리어 시 해금';
+  elements.adventureModeLock.classList.toggle('unlocked', hardUnlocked);
   // 자동전투 진행 중 빠른전투를 누르면 진행 중이던 스테이지 전투가 무효 처리되던 버그(battleToken 무효화) 방지.
   elements.quickBattleButton.disabled = state.autoBattle && activeRun.active;
-  elements.quickBattleButton.title = elements.quickBattleButton.disabled ? '모험 진행 중에는 사용할 수 없음' : '';
+  elements.quickBattleButton.title = elements.quickBattleButton.disabled
+    ? '모험 진행 중에는 사용할 수 없음'
+    : `${adventureModeRules(displayMode).label} 기준 즉시 정산`;
   elements.autoBattleButton.classList.toggle('active', state.autoBattle);
   elements.autoBattleButton.disabled = !activeRun.active && adventureStatus.remaining <= 0;
-  let autoBattleText = `모험 시작 · ${adventureStatus.remaining}/${ADVENTURE_RULES.maxRunsPerWindow}`;
+  const modeLabel = adventureModeRules(displayMode).label;
+  let autoBattleText = `${modeLabel} 시작 · ${adventureStatus.remaining}/${ADVENTURE_RULES.maxRunsPerWindow}`;
   if (!activeRun.active && adventureStatus.remaining < ADVENTURE_RULES.maxRunsPerWindow && adventureStatus.resetsInMs > 0) {
     autoBattleText += ` (${formatCompactDuration(Math.ceil(adventureStatus.resetsInMs / 1000))})`;
   }
   elements.autoBattleButton.querySelector('span').textContent = activeRun.active
-    ? `${state.autoBattle ? '진행 중' : '계속하기'} · ${activeRun.clearedStages}단계`
+    ? `${state.autoBattle ? '진행 중' : '계속하기'} · ${modeLabel} ${activeRun.clearedStages}단계`
     : autoBattleText;
   
   if (adventureStatus.remaining < ADVENTURE_RULES.maxRunsPerWindow && adventureStatus.resetsInMs > 0) {
@@ -818,7 +860,7 @@ function finishAdventureRun(reason) {
       const response = await executeServerCommand(GAME_COMMAND_TYPES.FINISH_ADVENTURE_RUN, { runId });
       if (!response?.ok) return response;
       state.autoBattle = false;
-      state.currentStage = 1;
+      state.currentStage = adventureModeRules(selectedAdventureMode).startStage;
       renderAll();
       const result = response.result ?? {};
       showToast(`${result.clearedStages ?? 0}단계 보상 · +${number.format(result.points ?? 0)}P · 카드 EXP +${number.format(result.cardExp ?? 0)}`);
@@ -826,7 +868,7 @@ function finishAdventureRun(reason) {
     });
   }
   const run = normalizeAdventureRun(state.adventureRun);
-  const reward = calculateAdventureRunReward(run.clearedStages);
+  const reward = calculateAdventureRunReward(run.clearedStages, run.mode);
   const bonusDrop = rollAdventureBonusDrop(run.clearedStages, gameService.random);
   const cardExp = gameService.now() < (state.activeBuffs?.cardExpEndAt ?? 0)
     ? Math.ceil(reward.cardExp * 1.5)
@@ -836,7 +878,7 @@ function finishAdventureRun(reason) {
   state.supportItems = grantBonusDrop(state.supportItems, bonusDrop);
   state.cardProgress = applyCardExperience(state.cardProgress, formationCards(), cardExp);
   state.adventureRun = normalizeAdventureRun(null);
-  state.currentStage = 1;
+  state.currentStage = adventureModeRules(selectedAdventureMode).startStage;
   state.autoBattle = false;
   gameService.claimAdventureRewards(state);
   renderAll();
@@ -899,7 +941,7 @@ async function runBattle() {
     state.clearedStage = Math.max(state.clearedStage, state.currentStage);
     grantAdventureExRewards();
     showResult(true, state.adventureRun.clearedStages);
-    if (stage.globalNumber >= STAGES.length) {
+    if (stage.globalNumber >= adventureModeRules(activeRun.mode).endStage) {
       finishAdventureRun('complete');
       return;
     }
@@ -980,12 +1022,12 @@ async function confirmFormation() {
   });
 }
 
-function simulateInstantRunClears() {
+function simulateInstantRunClears(mode = selectedAdventureMode) {
   const formation = formationCards();
   if (formation.length !== GAME_RULES.formationSize) return 0;
   const bonuses = currentCombatBonuses();
   let cleared = 0;
-  for (const stage of STAGES) {
+  for (const stage of STAGES.filter((candidate) => candidate.mode === normalizeAdventureMode(mode))) {
     if (simulateBattle(formation, stage, bonuses).victory) cleared += 1;
     else break;
   }
@@ -995,11 +1037,13 @@ function simulateInstantRunClears() {
 function buildRewardPreview(mode, now = gameService.now()) {
   if (mode === 'quick') {
     // 빠른 전투는 스테이지 전투 연출을 생략한 즉시 모험 런이다.
-    const clearedStages = simulateInstantRunClears();
-    const reward = calculateAdventureRunReward(clearedStages);
+    const adventureMode = selectedAdventureMode;
+    const clearedStages = simulateInstantRunClears(adventureMode);
+    const reward = calculateAdventureRunReward(clearedStages, adventureMode);
     const boosted = now < (state.activeBuffs?.cardExpEndAt ?? 0);
     return {
       mode: 'quick',
+      adventureMode,
       clearedStages,
       elapsedSeconds: 0,
       // nolevel-1: accountExp 제거. 카드 EXP·포인트만.
@@ -1027,7 +1071,9 @@ function renderRewardDialog() {
   const quick = rewardPreview.mode === 'quick';
   const runStatus = getAdventureRunLimitStatus(state.adventureRuns, gameService.now());
   elements.rewardEyebrow.textContent = quick ? '즉시 작전 정산' : '누적 작전 결과';
-  elements.rewardTitle.textContent = quick ? '빠른 전투 · 즉시 클리어' : '오프라인 보상';
+  elements.rewardTitle.textContent = quick
+    ? `${adventureModeRules(rewardPreview.adventureMode).label} 빠른 전투 · 즉시 클리어`
+    : '오프라인 보상';
   if (!quick) elements.rewardDuration.textContent = formatDuration(rewardPreview.elapsedSeconds);
   // nolevel-1: 보상 다이얼로그에서 계정 EXP 행 제거.
   if (elements.rewardAccountExp) elements.rewardAccountExp.textContent = '';
@@ -1040,7 +1086,7 @@ function renderRewardDialog() {
       <b class="reward-card-exp">EXP +${number.format(rewardPreview.cardExp)}</b>
     </figure>`).join('');
   elements.rewardNote.textContent = quick
-    ? `현재 편성 즉시 전투 · ${rewardPreview.clearedStages}단계 클리어 · 행동력 ${REWARD_RULES.quickBattleEnergy} · 모험 ${Math.max(0, runStatus.remaining)}회 남음`
+    ? `${adventureModeRules(rewardPreview.adventureMode).label} 현재 편성 즉시 전투 · ${rewardPreview.clearedStages}단계 클리어 · 행동력 ${REWARD_RULES.quickBattleEnergy} · 모험 ${Math.max(0, runStatus.remaining)}회 남음`
     : '편성된 카드 5장에 동일한 카드 경험치가 지급됨. 최대 누적 24시간.';
   // nolevel-1: totalReward에서 accountExp 제거.
   const totalReward = rewardPreview.cardExp + rewardPreview.points;
@@ -1089,7 +1135,9 @@ function confirmReward() {
       const type = rewardMode === 'quick'
         ? GAME_COMMAND_TYPES.CLAIM_QUICK_BATTLE
         : GAME_COMMAND_TYPES.CLAIM_ADVENTURE_REWARDS;
-      const payload = rewardMode === 'quick' ? {} : { mode: 'offline' };
+      const payload = rewardMode === 'quick'
+        ? { mode: rewardPreview.adventureMode ?? selectedAdventureMode }
+        : { mode: 'offline' };
       const response = await executeServerCommand(type, payload);
       if (!response?.ok) return response;
       rewardPreview = response.result ?? rewardPreview;
@@ -1187,7 +1235,13 @@ function renderEnhancementList() {
     hasExp: card.exp > 0,
     inDeck: deckIds.has(card.id),
     power: computeCardPower(card, combatBonuses),
-  })).sort((left, right) => Number(right.isRep) - Number(left.isRep) || Number(right.hasExp) - Number(left.hasExp) || Number(right.inDeck) - Number(left.inDeck) || right.card.exp - left.card.exp || Number(right.ready) - Number(left.ready) || right.power - left.power || left.card.member.localeCompare(right.card.member, 'ko'));
+  })).sort((left, right) => {
+    // 명시적 정렬(전투력/EXP/강화차수 내림차순) 선택 시 그 기준을 최우선으로.
+    if (enhanceSort === 'power') return right.power - left.power || right.card.exp - left.card.exp;
+    if (enhanceSort === 'exp') return right.card.exp - left.card.exp || right.power - left.power;
+    if (enhanceSort === 'enhancement') return right.card.enhancement - left.card.enhancement || right.power - left.power;
+    return Number(right.isRep) - Number(left.isRep) || Number(right.hasExp) - Number(left.hasExp) || Number(right.inDeck) - Number(left.inDeck) || right.card.exp - left.card.exp || Number(right.ready) - Number(left.ready) || right.power - left.power || left.card.member.localeCompare(right.card.member, 'ko');
+  });
   const visible = enhanceFilter === 'ready' ? available.filter((entry) => entry.ready) : available;
   elements.enhanceOwnedCount.textContent = `${available.length}종`;
   elements.enhanceTargetList.innerHTML = visible.map(({ card, ready, power }) => {
@@ -1232,7 +1286,9 @@ function renderEnhancementFocus(card) {
   elements.enhanceCardPreview.innerHTML = `<article class="enhance-preview-card card-visual" data-rarity="${card.rarity}" data-stars="${card.enhancement}" style="--rarity:${RARITIES[card.rarity].color}">
     <img class="card-photo" src="${imagePath(card)}" alt="${card.member}"><div class="preview-shade"></div>${cardVisualChrome(card)}<strong>${card.member}</strong>
   </article>`;
-  elements.enhanceCardMeta.textContent = `${card.race} · ${ARCHETYPES[card.archetype].label} · 보유 ${state.cardCopies[card.id]}장`;
+  const focusPower = computeCardPower(card, combatBonuses);
+  const focusBasePower = computeCardPower({ ...card, enhancement: 0 }, combatBonuses);
+  elements.enhanceCardMeta.innerHTML = `${card.race} · ${ARCHETYPES[card.archetype].label} · 보유 ${state.cardCopies[card.id]}장<br>전투력 ${number.format(focusPower)} <small class="power-breakdown">(기본 ${number.format(focusBasePower)}${focusPower > focusBasePower ? ` + 강화 ${number.format(focusPower - focusBasePower)}` : ''})</small>`;
   elements.enhanceExpText.textContent = required === 0 ? 'MAX' : `${number.format(card.exp)} / ${number.format(required)}`;
   elements.enhanceExpBar.style.width = `${expPercent}%`;
   elements.cardExpPotionLargeCount.textContent = state.supportItems.cardExpPotionLarge ?? 0;
@@ -1254,6 +1310,13 @@ function renderEnhancementFocus(card) {
 function renderEnhancementConsole(card) {
   const maxed = !card || card.enhancement >= 9;
   const target = card ? Math.min(9, card.enhancement + 1) : 1;
+  // 촉진 아이템 선택은 연속 시도 간 유지하되, 소진되었거나 현재 단계에서
+  // 못 쓰는 상태가 되면 자동으로 해제한다.
+  if (selectedBooster !== 'none') {
+    const boosterGone = (state.supportItems[selectedBooster] ?? 0) <= 0;
+    const boosterWrongLevel = (selectedBooster === 'enhance5' || selectedBooster === 'enhance10') ? target < 4 : selectedBooster === 'destructionGuard' && target < 7;
+    if (maxed || boosterGone || boosterWrongLevel) selectedBooster = 'none';
+  }
   const options = card ? (MATERIAL_RULES[card.rarity] ?? []) : [];
   if (selectedMaterialOption >= options.length) selectedMaterialOption = 0;
   const materials = card ? getMaterialSelection(card) : { rule: null, selected: [], available: 0, ready: false };
@@ -1308,6 +1371,7 @@ function renderEnhancement() {
   renderEnhancementFocus(card);
   renderEnhancementConsole(card);
   document.querySelectorAll('[data-enhance-filter]').forEach((button) => button.classList.toggle('active', button.dataset.enhanceFilter === enhanceFilter));
+  document.querySelectorAll('[data-enhance-sort]').forEach((button) => button.classList.toggle('active', button.dataset.enhanceSort === enhanceSort));
   window.lucide?.createIcons();
 }
 
@@ -1388,12 +1452,13 @@ function renderCollectionSelected(bonuses) {
   const copies = state.cardCopies[card.id] ?? 0;
   const stats = computeCardStats(card, bonuses);
   const power = computeCardPower(card, bonuses);
+  const basePower = computeCardPower({ ...card, enhancement: 0 }, bonuses);
   const art = registered ? imagePath(card) : CARD_BACK_PATH;
   elements.collectionSelected.innerHTML = `
     <div class="collection-selected-card card-visual${registered ? '' : ' unregistered'}" data-rarity="${card.rarity}" style="--rarity:${RARITIES[card.rarity].color}"><img class="card-photo" src="${art}" alt="${registered ? card.member : '미등록 카드 뒷면'}">${cardVisualChrome(card, { showEnhancement: registered })}</div>
     <div class="collection-selected-copy" style="--rarity:${RARITIES[card.rarity].color}">
       <div class="card-copy-marks">${rarityMarkMarkup(card.rarity)}${registered ? enhancementStarMarkup(card.enhancement, { inline: true }) : ''}</div><h2>${registered ? card.member : '미등록 카드'}</h2><span>${card.race} · ${ARCHETYPES[card.archetype]?.label ?? '전시 전용'}</span>
-      ${stats ? `<dl><div class="power"><dt>전투력</dt><dd>${number.format(power)}</dd></div><div><dt>공격력</dt><dd>${number.format(stats.atk)}</dd></div><div><dt>체력</dt><dd>${number.format(stats.hp)}</dd></div><div><dt>방어력</dt><dd>${number.format(stats.def)}</dd></div></dl>` : '<dl><div><dt>용도</dt><dd>도감 전시 전용</dd></div></dl>'}
+      ${stats ? `<dl><div class="power"><dt>전투력</dt><dd>${number.format(power)} <small class="power-breakdown">(기본 ${number.format(basePower)}${power > basePower ? ` + 강화 ${number.format(power - basePower)}` : ''})</small></dd></div><div><dt>공격력</dt><dd>${number.format(stats.atk)}</dd></div><div><dt>체력</dt><dd>${number.format(stats.hp)}</dd></div><div><dt>방어력</dt><dd>${number.format(stats.def)}</dd></div></dl>` : '<dl><div><dt>용도</dt><dd>도감 전시 전용</dd></div></dl>'}
       <div class="registered${registered ? '' : ' missing'}">${registered ? `등록 완료 · 현재 ${copies}장 보유${card.id === state.representativeCardId ? ' · 대표카드' : ''}` : '최초 획득 시 영구 등록'}</div>
     </div>`;
 }
@@ -1416,8 +1481,11 @@ function renderCardDetail(cardId) {
     ? `도감 등록 · ${copies > 0 ? `보유 ${copies}장` : '현재 미보유'}`
     : '미등록 카드';
   const detailArt = registered ? imagePath(card) : CARD_BACK_PATH;
+  const detailPower = stats ? computeCardPower(card, currentCombatBonuses()) : 0;
+  const detailBasePower = stats ? computeCardPower({ ...card, enhancement: 0 }, currentCombatBonuses()) : 0;
   const statsMarkup = stats ? `
     <dl class="card-detail-stats">
+      <div class="power-line"><dt>전투력</dt><dd>${number.format(detailPower)} <small class="power-breakdown">(기본 ${number.format(detailBasePower)}${detailPower > detailBasePower ? ` + 강화 ${number.format(detailPower - detailBasePower)}` : ''})</small></dd></div>
       <div><dt>공격력</dt><dd>${number.format(stats.atk)}</dd></div>
       <div><dt>체력</dt><dd>${number.format(stats.hp)}</dd></div>
       <div><dt>방어력</dt><dd>${number.format(stats.def)}</dd></div>
@@ -1635,15 +1703,23 @@ const ITEM_IMAGES = {
   energyLarge: 'assets/renewal/shop/battery.webp',
   enhance5: 'assets/renewal/shop/enhance-catalyst.webp',
   enhance10: 'assets/renewal/shop/enhance-catalyst.webp',
-  destructionGuard: 'assets/renewal/shop/destruction-guard.webp',
   exp30m: 'assets/renewal/shop/exp-amplifier.webp',
   exp2h: 'assets/renewal/shop/exp-amplifier.webp',
   cardExpPotion: 'assets/renewal/shop/exp-amplifier.webp',
+  cardExpPotionLarge: 'assets/renewal/shop/exp-amplifier.webp',
   generalTicket: 'assets/renewal/shop/pack-ticket.webp',
   eliteTicket: 'assets/renewal/shop/pack-ticket.webp',
   raceTicket: 'assets/renewal/shop/pack-ticket.webp',
   premiumTicket: 'assets/renewal/shop/pack-ticket.webp',
 };
+
+// 파괴 차단제는 촉진제 webp와 헷갈려서(둘 다 병 모양) 전용 실드 아이콘으로 렌더.
+function supportItemIconMarkup(itemId, item) {
+  if (itemId === 'destructionGuard') return '<i data-lucide="shield-ban" class="guard-item-icon"></i>';
+  return ITEM_IMAGES[itemId]
+    ? `<img src="${ITEM_IMAGES[itemId]}" alt="">`
+    : `<i data-lucide="${ITEM_ICONS[item.category] ?? 'box'}"></i>`;
+}
 
 function shopPackImage(packKey, race = selectedShopRace) {
   return packKey === 'race' ? PACK_IMAGES[race] : PACK_IMAGES[packKey];
@@ -1683,7 +1759,7 @@ function shopItemMarkup(itemId) {
   const count = state.supportItems[itemId] ?? 0;
   const directlyUsable = Boolean(item.energy || item.durationMinutes || item.pack || item.cardExp || item.reset);
   return `<article class="shop-item-row">
-    <div class="shop-item-icon">${ITEM_IMAGES[itemId] ? `<img src="${ITEM_IMAGES[itemId]}" alt="">` : `<i data-lucide="${ITEM_ICONS[item.category] ?? 'box'}"></i>`}</div>
+    <div class="shop-item-icon">${supportItemIconMarkup(itemId, item)}</div>
     <div class="shop-item-copy"><b>${item.name}</b><span>${item.effect}</span><small>보유 ${count}개</small></div>
     <button class="shop-item-action" type="button" data-use-shop-item="${itemId}" ${count <= 0 || !directlyUsable ? 'disabled' : ''}>${item.pack ? '교환' : item.cardExp ? '강화' : '사용'}</button>
   </article>`;
@@ -1705,9 +1781,10 @@ function renderShopDetail() {
     elements.shopDetailSummary.innerHTML = `<strong>${number.format(SUPPORT_PACK.price)} P</strong><span>1회 1개 · 10회 희귀 보급품 최소 1개</span>`;
     elements.shopProbabilityList.innerHTML = Object.entries(SUPPORT_PACK.items).map(([itemId, rate]) => {
       const item = SUPPORT_ITEMS[itemId];
-      return `<div class="shop-rate-row"><b>${item.name}</b><span>${rate}%</span><small>${item.effect}</small></div>`;
+      const rare = SUPPORT_PACK.rareItems.includes(itemId);
+      return `<div class="shop-rate-row${rare ? ' rare' : ''}"><b>${rare ? '★ ' : ''}${item.name}</b><span>${rate}%</span><small>${item.effect}</small></div>`;
     }).join('');
-    elements.shopDetailNote.textContent = '10회 결과의 앞 9개에 희귀 보급품이 없을 때만 10번째 보장 전용 확률표 적용.';
+    elements.shopDetailNote.textContent = `10회 결과의 앞 9개에 희귀 보급품이 없을 때만 10번째 보장 전용 확률표 적용. 희귀 보급품 기준: ${SUPPORT_PACK.rareItems.map((id) => SUPPORT_ITEMS[id].name).join(', ')}.`;
   } else {
     elements.shopDetailTitle.textContent = '아이템 사용 규칙';
     elements.shopDetailSummary.innerHTML = `<strong>${Object.values(state.supportItems).reduce((sum, count) => sum + count, 0)}개</strong><span>현재 보유 보급품</span>`;
@@ -1766,15 +1843,18 @@ function showCardPackResults(packKey, cardIds, paidPoints, ticket = false) {
 }
 
 function showSupportResults(itemIds, paidPoints) {
+  const rareSet = new Set(SUPPORT_PACK.rareItems);
+  const rareCount = itemIds.filter((itemId) => rareSet.has(itemId)).length;
   elements.shopResultTitle.textContent = `${SUPPORT_PACK.name} 결과`;
-  elements.shopResultSummary.textContent = `${itemIds.length}개 획득 · ${number.format(paidPoints)}P 사용`;
+  elements.shopResultSummary.textContent = `${itemIds.length}개 획득 · ${number.format(paidPoints)}P 사용${rareCount > 0 ? ` · 희귀 ${rareCount}개` : ''}`;
   elements.shopResultGrid.dataset.resultType = 'items';
   elements.shopResultGrid.classList.remove('bulk');
   elements.shopResultGrid.style.removeProperty('--result-columns');
   elements.shopResultGrid.style.removeProperty('--result-card-width');
-  elements.shopResultGrid.innerHTML = itemIds.map((itemId) => {
+  elements.shopResultGrid.innerHTML = itemIds.map((itemId, index) => {
     const item = SUPPORT_ITEMS[itemId];
-    return `<article class="shop-result-item"><i data-lucide="${ITEM_ICONS[item.category] ?? 'box'}"></i><b>${item.name}</b><span>${item.effect}</span></article>`;
+    const rare = rareSet.has(itemId);
+    return `<article class="shop-result-item${rare ? ' rare' : ''}" style="--reveal-delay:${index * 60}ms">${rare ? '<em class="rare-badge">RARE</em>' : ''}${supportItemIconMarkup(itemId, item)}<b>${item.name}</b><span>${item.effect}</span></article>`;
   }).join('');
   window.lucide?.createIcons();
   elements.shopResultDialog.showModal();
@@ -2000,8 +2080,11 @@ function showScreen(screen) {
   }
   battleToken += 1;
   battleRunning = false;
+  const shopFamily = screen === 'shop' || screen === 'inventory';
+  if (screen === 'inventory') shopTab = 'inventory';
+  else if (screen === 'shop' && shopTab === 'inventory') shopTab = 'cards';
   elements.adventureScreen.hidden = screen !== 'adventure';
-  elements.shopScreen.hidden = screen !== 'shop';
+  elements.shopScreen.hidden = !shopFamily;
   elements.enhanceScreen.hidden = screen !== 'enhance';
   elements.collectionScreen.hidden = screen !== 'collection';
   elements.worldBossScreen.hidden = screen !== 'worldboss';
@@ -2009,7 +2092,7 @@ function showScreen(screen) {
   elements.rankingScreen.hidden = screen !== 'ranking';
   worldBossController?.setActive(screen === 'worldboss');
   document.querySelectorAll('.nav-item').forEach((button) => button.classList.toggle('active', button.dataset.screen === screen));
-  if (screen === 'shop') renderShop();
+  if (shopFamily) renderShop();
   else if (screen === 'enhance') renderEnhancement();
   else if (screen === 'collection') renderCollection();
   else if (screen === 'worldboss') worldBossController?.render();
@@ -2098,8 +2181,6 @@ async function executeEnhancementAttempt(triggerButton = elements.enhanceAttempt
           : outcome === 'destroy' ? `강화 파괴 · ${card.member} 강화 수치 초기화` : '강화 실패',
       };
       elements.enhanceConfirmDialog.close();
-      selectedBooster = 'none';
-      selectedMaterialOption = 0;
       renderHeader();
       renderEnhancement();
       await fxController?.playEnhancement({
@@ -2132,8 +2213,6 @@ async function executeEnhancementAttempt(triggerButton = elements.enhanceAttempt
     gameService.enhanceCard(state);
     elements.enhanceConfirmDialog.close();
     if ((state.cardCopies[card.id] ?? 0) <= 0) selectedEnhanceCardId = null;
-    selectedBooster = 'none';
-    selectedMaterialOption = 0;
     renderHeader();
     renderEnhancement();
     await fxController?.playEnhancement({
@@ -2149,13 +2228,27 @@ async function executeEnhancementAttempt(triggerButton = elements.enhanceAttempt
   });
 }
 
+function selectAdventureMode(mode) {
+  const normalized = normalizeAdventureMode(mode);
+  const activeRun = normalizeAdventureRun(state.adventureRun);
+  if (activeRun.active) return showToast('진행 중인 모험을 먼저 종료하세요.');
+  if (!isAdventureModeUnlocked(normalized, state.clearedStage)) {
+    return showToast('일반 모험 5-10 클리어 후 하드 모험이 해금됩니다.');
+  }
+  selectedAdventureMode = normalized;
+  state.currentStage = adventureModeRules(normalized).startStage;
+  battleToken += 1;
+  battleRunning = false;
+  renderAll();
+}
+
 function bindEvents() {
-  if (sessionStorage.getItem('mail_launch_thanks_20260721_read') === 'true') {
+  if (sessionStorage.getItem('mail_ss_sss_buff_reward_20260723_read') === 'true') {
     elements.mailBadge.hidden = true;
   }
   elements.profileCardButton.addEventListener('click', openRepresentativeCardDetail);
   elements.mailButton.addEventListener('click', () => {
-    sessionStorage.setItem('mail_launch_thanks_20260721_read', 'true');
+    sessionStorage.setItem('mail_ss_sss_buff_reward_20260723_read', 'true');
     elements.mailBadge.hidden = true;
     elements.mailDialog.showModal();
   });
@@ -2189,6 +2282,8 @@ function bindEvents() {
     }
     window.location.replace(`${window.location.pathname}${window.location.search}`);
   });
+  elements.adventureModeNormal.addEventListener('click', () => selectAdventureMode('normal'));
+  elements.adventureModeHard.addEventListener('click', () => selectAdventureMode('hard'));
   elements.autoBattleButton.addEventListener('click', async () => {
     if (state.autoBattle) {
       state.autoBattle = false;
@@ -2200,17 +2295,17 @@ function bindEvents() {
     if (!activeRun.active) {
       if (remoteMode) {
         const response = await runUiOperation('startAdventureRun', elements.autoBattleButton, () => (
-          executeServerCommand(GAME_COMMAND_TYPES.START_ADVENTURE_RUN, {})
+          executeServerCommand(GAME_COMMAND_TYPES.START_ADVENTURE_RUN, { mode: selectedAdventureMode })
         ));
         if (!response?.ok) return;
-        state.currentStage = 1;
+        state.currentStage = adventureModeRules(selectedAdventureMode).startStage;
       } else {
         const now = gameService.now();
         const runStatus = getAdventureRunLimitStatus(state.adventureRuns, now);
         if (runStatus.remaining <= 0) return showToast('4시간당 모험 3회 완료');
         state.adventureRuns = recordAdventureRun(state.adventureRuns, now);
-        state.adventureRun = createAdventureRun(now);
-        state.currentStage = 1;
+        state.adventureRun = createAdventureRun(now, selectedAdventureMode);
+        state.currentStage = adventureModeRules(selectedAdventureMode).startStage;
       }
     }
     state.autoBattle = true;
@@ -2240,7 +2335,11 @@ function bindEvents() {
       const label = button.querySelector('span');
       if (label) label.textContent = '준비중';
     }
-    button.addEventListener('click', () => showScreen(button.dataset.screen));
+    button.addEventListener('click', () => {
+      // 편성은 화면이 아니라 다이얼로그 — 어느 화면에서든 바로 편성 변경.
+      if (button.dataset.screen === 'formation') return openFormation();
+      showScreen(button.dataset.screen);
+    });
   });
   elements.enhanceTargetList.addEventListener('click', (event) => {
     const button = event.target.closest('[data-enhance-card-id]');
@@ -2254,6 +2353,12 @@ function bindEvents() {
   document.querySelectorAll('[data-enhance-filter]').forEach((button) => {
     button.addEventListener('click', () => {
       enhanceFilter = button.dataset.enhanceFilter;
+      renderEnhancement();
+    });
+  });
+  document.querySelectorAll('[data-enhance-sort]').forEach((button) => {
+    button.addEventListener('click', () => {
+      enhanceSort = button.dataset.enhanceSort;
       renderEnhancement();
     });
   });
@@ -2350,7 +2455,7 @@ function bindEvents() {
       const result = response?.result;
       if (result && result.dismantledCards > 0) {
         const items = [];
-        if (result.gainedPotions > 0) items.push(`대형 경험치 포션 x${result.gainedPotions}`);
+        if (result.gainedPotions > 0) items.push(`${SUPPORT_ITEMS[DISMANTLE_RULES.potionItem].name} x${result.gainedPotions}`);
         if (result.gainedPoints > 0) items.push(`${number.format(result.gainedPoints)} P`);
         elements.dismantleResult.hidden = false;
         elements.dismantleResult.innerHTML = `<p>총 ${result.dismantledCards}장 분해 완료</p><ul>${items.map(item => `<li>${item} 획득</li>`).join('') || '<li>획득한 아이템이 없습니다.</li>'}</ul>`;
@@ -2388,7 +2493,7 @@ function bindEvents() {
         state.supportItems.cardExpPotionLarge = (state.supportItems.cardExpPotionLarge ?? 0) + gainedPotions;
         state.points += gainedPoints;
         const items = [];
-        if (gainedPotions > 0) items.push(`대형 경험치 포션 x${gainedPotions}`);
+        if (gainedPotions > 0) items.push(`${SUPPORT_ITEMS[DISMANTLE_RULES.potionItem].name} x${gainedPotions}`);
         if (gainedPoints > 0) items.push(`${number.format(gainedPoints)} P`);
         
         elements.dismantleResult.hidden = false;
@@ -2479,6 +2584,7 @@ async function init() {
       cards,
       getState: () => state,
       clock: gameService,
+      random: () => gameService.random(),
       persist: (operation) => runUiOperation(operation, null, () => {
         if (typeof gameService[operation] === 'function') gameService[operation](state);
         renderHeader();
@@ -2489,6 +2595,9 @@ async function init() {
         )),
         finishMinigame: (payload) => runUiOperation('finishMinigame', null, () => (
           executeServerCommand(GAME_COMMAND_TYPES.FINISH_MINIGAME, payload)
+        )),
+        playLadder: (payload) => runUiOperation('playLadder', null, () => (
+          executeServerCommand(GAME_COMMAND_TYPES.PLAY_LADDER, payload)
         )),
       } : null,
       showToast,
@@ -2533,10 +2642,10 @@ async function init() {
     if (!remoteMode) {
       ensureCardProgress();
       applyLocalTestProfile(state, cards, window.location.hostname);
-      ensureValidAdventureProgress();
       ensureValidFormation();
       ensureValidRepresentativeCard();
     }
+    ensureValidAdventureProgress();
     assertValidGameState(state, { cardIds: cardsById.keys(), requireOwnedCards: true });
     if (!remoteMode) gameService.persistSnapshot(state);
     renderAll();

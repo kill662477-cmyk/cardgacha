@@ -3,6 +3,11 @@ import { readFile } from 'node:fs/promises';
 
 const sql = await readFile(new URL('../supabase/renewal_migration_001_accounts_reset.sql', import.meta.url), 'utf8');
 const normalized = sql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
+const globalRewardSql = await readFile(
+  new URL('../supabase/migrations/20260723000076_ss_sss_buff_new_ss_cards_global_reward_50k.sql', import.meta.url),
+  'utf8',
+);
+const indexHtml = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 
 for (const sourceTable of [
   'gacha_users',
@@ -40,5 +45,14 @@ assert.match(normalized, /alter table public\.gacha_s2_streamer_bridges enable r
 assert.match(normalized, /revoke all on table public\.gacha_s2_accounts from public, anon, authenticated/);
 assert.match(normalized, /revoke all on table public\.gacha_s2_streamer_bridges from public, anon, authenticated/);
 assert.match(normalized, /grant execute on function public\.gacha_s2_import_season1_accounts\(uuid, integer, integer\) to service_role/);
+
+assert.match(globalRewardSql, /lock table public\.gacha_s2_player_states in share row exclusive mode/);
+assert.match(globalRewardSql, /points_granted integer not null default 50000/);
+assert.match(globalRewardSql, /set points = state\.points \+ reward\.points_granted/);
+assert.match(globalRewardSql, /and reward\.points_after is null/);
+assert.match(globalRewardSql, /v_reward_total <> v_reward_count::bigint \* 50000/);
+assert.match(globalRewardSql, /revoke all on table public\.gacha_s2_ss_sss_buff_reward_20260723/);
+assert.match(indexHtml, /\[업데이트 기념 보상\] SS·SSS 상향 및 신규 SS 카드 추가/);
+assert.match(indexHtml, /현재 모든 계정에 50,000 P/);
 
 console.log('renewal database migration tests passed: read-only source, account and bridge carryover, clean game state');

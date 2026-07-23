@@ -2,7 +2,11 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const sql = await readFile(new URL('../supabase/renewal_migration_004_pack_and_enhancement.sql', import.meta.url), 'utf8');
+const supportBalanceSql = await readFile(new URL('../supabase/migrations/20260722000058_support_pack_probability_balance.sql', import.meta.url), 'utf8');
+const sameCardMaterialSql = await readFile(new URL('../supabase/migrations/20260723000068_allow_same_card_enhancement_material.sql', import.meta.url), 'utf8');
 const normalized = sql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
+const supportBalance = supportBalanceSql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
+const sameCardMaterial = sameCardMaterialSql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const pack = normalized.slice(
   normalized.indexOf('create or replace function public.gacha_s2_purchase_pack'),
   normalized.indexOf('create or replace function public.gacha_s2_enhance_card'),
@@ -51,7 +55,7 @@ assert.match(enhance, /p_target_enhancement <> v_target\.enhancement \+ 1/);
 assert.match(enhance, /'exprequirements'->>\(v_target\.enhancement\)/);
 assert.match(enhance, /jsonb_array_elements\(v_config->'materialrules'->\(v_target\.rarity\)\)/);
 assert.match(enhance, /req\.requested_count > owned\.copies - 1/);
-assert.match(enhance, /owned\.locked/);
+assert.match(enhance, /owned\.locked and req\.card_id <> p_card_id/);
 assert.match(enhance, /p_target_enhancement = 9.*plusninepointcost/s);
 assert.match(enhance, /v_booster in \('enhance5','enhance10'\) and p_target_enhancement < 4/);
 assert.match(enhance, /v_booster = 'destructionguard' and p_target_enhancement < 7/);
@@ -86,5 +90,18 @@ for (const fn of [
   assert.match(normalized, new RegExp(`grant execute on function public\\.${fn} to service_role`));
   assert.doesNotMatch(normalized, new RegExp(`grant execute on function public\\.${fn} to (?:anon|authenticated)`));
 }
+
+assert.match(supportBalance, /2026\.07\.22-support-pack-balance-1/);
+assert.match(supportBalance, /"energysmall":14/);
+assert.match(supportBalance, /"energymedium":8/);
+assert.match(supportBalance, /"energylarge":2/);
+assert.match(supportBalance, /"destructionguard":5/);
+assert.match(supportBalance, /"energylarge":7/);
+assert.match(supportBalance, /"destructionguard":6/);
+assert.match(supportBalance, /update public\.gacha_s2_balance_versions set active = false where active/);
+
+assert.match(sameCardMaterial, /pg_get_functiondef\(v_signature\)/);
+assert.match(sameCardMaterial, /owned\.locked and req\.card_id <> p_card_id/);
+assert.match(sameCardMaterial, /owned\.copies - 1 validation still preserves the target's base copy|locked-material guard was not found/);
 
 console.log('renewal pack/enhancement RPC tests passed: server RNG, atomic economy, replay, revision, service-role boundary');

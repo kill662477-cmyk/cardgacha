@@ -72,7 +72,7 @@ create table if not exists public.gacha_s2_minigame_runs (
   claimed_score integer check (claimed_score is null or claimed_score >= 0),
   verified_score integer check (verified_score is null or verified_score >= 0),
   completed boolean,
-  reward_points integer not null default 0 check (reward_points between 0 and 1500),
+  reward_points integer not null default 0 check (reward_points between 0 and 3000),
   started_at timestamptz not null default now(),
   expires_at timestamptz not null,
   finished_at timestamptz,
@@ -1113,7 +1113,7 @@ begin
   end if;
   if exists (
     select 1 from public.gacha_s2_minigame_runs
-    where user_id = p_user_id and status = 'active' and expires_at + interval '15 seconds' >= now()
+    where user_id = p_user_id and status = 'active' and expires_at >= now()
   ) then
     return public.gacha_s2_command_error(p_idempotency_key, 'COMMAND_REJECTED', '진행 중인 보상 미니게임이 있습니다.', v_revision, null, null);
   end if;
@@ -1156,7 +1156,7 @@ begin
 
   update public.gacha_s2_minigame_runs
   set status = 'expired', finished_at = now()
-  where user_id = p_user_id and status = 'active' and expires_at + interval '15 seconds' < now();
+  where user_id = p_user_id and status = 'active' and expires_at < now();
   insert into public.gacha_s2_minigame_daily (user_id, play_date, game)
   values (p_user_id, v_today, p_game)
   on conflict (user_id, play_date, game) do nothing;

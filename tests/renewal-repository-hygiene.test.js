@@ -69,7 +69,7 @@ assert.doesNotMatch(index, /api\//);
 const cards = JSON.parse(fs.readFileSync(at('data', 'renewal-cards.json'), 'utf8'));
 const catalogFiles = [...new Set(cards.map((card) => card.file))].sort();
 const assetFiles = fs.readdirSync(at('assets', 'cards')).sort();
-assert.equal(cards.length, 214);
+assert.equal(cards.length, 221);
 assert.deepEqual(assetFiles, catalogFiles, 'assets/cards must exactly match the season2 catalog');
 
 const staticSources = [

@@ -46,11 +46,12 @@ function rarityDeck(rarity, enhancement) {
     .slice(0, 5);
 }
 const cardOnlyBonuses = { attack: 0, hp: 0, defense: 0, bossDamage: 0, idle: 0 };
-const clearsAll = (deck, bonuses) => STAGES.every((stage) => simulateBattle(deck, stage, bonuses).victory);
+const normalStages = STAGES.filter((stage) => stage.mode === 'normal');
+const clearsAll = (deck, bonuses) => normalStages.every((stage) => simulateBattle(deck, stage, bonuses).victory);
 const stallsBeforeEnd = (deck, bonuses) => !simulateBattle(deck, STAGES[49], bonuses).victory;
 const reaches = (deck, bonuses = cardOnlyBonuses) => {
   let cleared = 0;
-  for (const stage of STAGES) {
+  for (const stage of normalStages) {
     if (!simulateBattle(deck, stage, bonuses).victory) break;
     cleared = stage.globalNumber;
   }
@@ -67,7 +68,7 @@ const isolatedRarityDeck = (rarity, enhancement = 0) => fixedArchetypes.map((arc
   race: 'Z',
 }));
 const zeroStarReach = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'].map((rarity) => reaches(isolatedRarityDeck(rarity)));
-assert.deepEqual(zeroStarReach, [3, 5, 8, 10, 11, 18, 20, 24, 30], 'zero-star rarity progression must not collapse into a region-2 dead zone');
+assert.deepEqual(zeroStarReach, [3, 5, 8, 10, 11, 18, 20, 30, 40], 'zero-star rarity progression must reflect the SS/SSS rarity retune');
 
 const combatRarities = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
 for (let rarityIndex = 1; rarityIndex < combatRarities.length; rarityIndex += 1) {

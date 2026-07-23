@@ -17,6 +17,10 @@ const cards = JSON.parse(fs.readFileSync(new URL('../data/renewal-demo-cards.jso
 Object.values(PACKS).forEach((pack) => assert.ok(Math.abs(Object.values(pack.rates).reduce((sum, rate) => sum + rate, 0) - 100) < 1e-9));
 assert.equal(Object.values(SUPPORT_PACK.items).reduce((sum, rate) => sum + rate, 0), 100);
 assert.equal(Object.values(SUPPORT_PACK.guaranteeRates).reduce((sum, rate) => sum + rate, 0), 100);
+assert.equal(SUPPORT_PACK.items.energySmall + SUPPORT_PACK.items.energyMedium + SUPPORT_PACK.items.energyLarge, 24);
+assert.equal(SUPPORT_PACK.items.destructionGuard, 5);
+assert.equal(SUPPORT_PACK.guaranteeRates.energyLarge, 7);
+assert.equal(SUPPORT_PACK.guaranteeRates.destructionGuard, 6);
 
 const general = drawCardPack('general', cards, { random: () => 0 });
 assert.equal(general.length, PACKS.general.count);

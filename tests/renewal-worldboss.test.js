@@ -10,7 +10,7 @@ import {
   recordWorldBossAttempt,
   simulateWorldBossAttempt,
 } from '../src/renewal/worldboss.js';
-import { kstSlotLabel, resolveWorldBossSlot } from '../src/renewal/worldboss-schedule.js';
+import { getWorldBossTier, kstSlotLabel, resolveWorldBossSlot } from '../src/renewal/worldboss-schedule.js';
 
 const cards = JSON.parse(await fs.readFile(new URL('../data/renewal-demo-cards.json', import.meta.url), 'utf8'));
 const worldBossCss = await fs.readFile(new URL('../styles/renewal/main.css', import.meta.url), 'utf8');
@@ -67,6 +67,15 @@ const atOpen = resolveWorldBossSlot(kst(2026, 7, 17, 17, 0, 0));
 assert.equal(atOpen.live, true);
 assert.equal(atOpen.slot.id, 'noise-zero-20260717-17');
 assert.equal(getWorldBossSnapshot(createWorldBossProgress(kst(2026, 7, 17, 17, 0, 0)), kst(2026, 7, 17, 17, 0, 0)).active, true);
+assert.equal(getWorldBossTier(atOpen.slot.id).maxHp, 5_000_000_000, '17:00 stays at the original baseline');
+assert.equal(getWorldBossTier('noise-zero-20260717-18').maxHp, 7_500_000_000);
+assert.equal(getWorldBossTier('noise-zero-20260717-19').maxHp, 11_250_000_000);
+assert.equal(getWorldBossTier('noise-zero-20260717-20').maxHp, 16_875_000_000);
+assert.deepEqual(
+  WORLD_BOSS_RULES.scheduleHours.map((hour) => getWorldBossTier(`noise-zero-20260717-${hour}`).clearDestructionGuardRate),
+  [0.05, 0.10, 0.15, 0.20],
+  'clear-only destruction guard chances scale with each slot difficulty',
+);
 
 // 17:29:00 -> raid live but <=60s remain -> canStartAttempt false
 const lateSnapshot = getWorldBossSnapshot(createWorldBossProgress(kst(2026, 7, 17, 17, 29, 0)), kst(2026, 7, 17, 17, 29, 0));
@@ -115,5 +124,8 @@ assert.throws(() => recordWorldBossAttempt(progress, 1, kst(2026, 7, 17, 18, 0, 
 
 assert.match(worldBossCss, /\.worldboss-core > b:not\(\.worldboss-damage\)/, 'damage number must not inherit the boss-name box');
 assert.match(worldBossCss, /\.worldboss-damage \{[^}]*background: transparent;/, 'damage number background stays transparent');
+for (const hour of WORLD_BOSS_RULES.scheduleHours) {
+  assert.match(worldBossCss, new RegExp(`data-slot-hour="${hour}"`), `${hour}:00 boss image selector must exist`);
+}
 
 console.log(`renewal world boss tests passed: 30m raid + 30m result, ${WORLD_BOSS_RULES.maxAttempts} attempts, ${first.totalDamage} first damage, reward ${claimed.reward.points}P, slot ${progress.eventId}`);

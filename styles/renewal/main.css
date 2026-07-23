@@ -334,9 +334,9 @@ button[aria-busy="true"]::after {
 .quick-button { border-color: #708d79 !important; color: var(--cyan) !important; }
 .reward-button { border-color: #b7d927 !important; background: var(--acid) !important; color: #070a09 !important; }
 
-.enhance-screen { display: grid; grid-template-columns: 280px minmax(330px, 1fr) 370px; min-width: 0; min-height: 0; overflow: hidden; background: #080b09; }
+.enhance-screen { display: grid; grid-template-columns: 310px minmax(330px, 1fr) 370px; min-width: 0; min-height: 0; overflow: hidden; background: #080b09; }
 .enhance-catalog, .enhance-focus, .enhance-console { min-width: 0; min-height: 0; overflow: hidden; border-right: 1px solid var(--line); }
-.enhance-catalog { display: grid; grid-template-rows: auto auto minmax(0, 1fr); background: #090d0a; }
+.enhance-catalog { display: grid; grid-template-rows: auto auto auto minmax(0, 1fr); background: #090d0a; }
 .enhance-section-head { display: flex; justify-content: space-between; align-items: center; min-height: 72px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
 .enhance-section-head span { color: var(--acid); font-size: 9px; font-weight: 900; }
 .enhance-section-head h1, .enhance-section-head h2 { margin: 3px 0 0; font-size: 20px; }
@@ -1348,7 +1348,7 @@ button[aria-busy="true"]::after {
   .brand-lockup strong { font-size: 9px; }
   .brand-lockup span { font-size: 6px; }
   .adventure-screen { grid-template-columns: minmax(600px, 1fr) 276px; }
-  .enhance-screen { grid-template-columns: 230px minmax(290px, 1fr) 330px; }
+  .enhance-screen { grid-template-columns: 260px minmax(290px, 1fr) 330px; }
   .collection-screen { grid-template-columns: 215px minmax(350px, 1fr) 280px; }
   .shop-screen { grid-template-columns: 190px minmax(390px, 1fr) 280px; }
   .panel-section { padding: 18px 15px; }
@@ -1376,7 +1376,7 @@ button[aria-busy="true"]::after {
   .nav-item span { font-size: 8px; letter-spacing: -.02em; }
   .nav-item[data-screen="worldboss"]::after { top: 3px; right: 2px; }
   .adventure-screen { grid-column: 1; grid-row: 2; display: block; min-height: calc(100svh - 130px); }
-  .enhance-screen { grid-column: 1; grid-row: 2; grid-template-columns: 210px minmax(280px, 1fr) 310px; min-height: calc(100svh - 130px); overflow-x: auto; }
+  .enhance-screen { grid-column: 1; grid-row: 2; grid-template-columns: 240px minmax(280px, 1fr) 310px; min-height: calc(100svh - 130px); overflow-x: auto; }
   .collection-screen { grid-column: 1; grid-row: 2; grid-template-columns: 190px minmax(330px, 1fr) 260px; min-height: calc(100svh - 130px); overflow-x: auto; }
   .shop-screen { grid-column: 1; grid-row: 2; grid-template-columns: 180px minmax(370px, 1fr) 260px; min-height: calc(100svh - 130px); overflow-x: auto; }
   .minigame-screen { grid-column: 1; grid-row: 2; grid-template-columns: 150px minmax(420px, 1fr) 210px; min-height: calc(100svh - 130px); overflow-x: auto; }
@@ -1429,7 +1429,7 @@ button[aria-busy="true"]::after {
   .inventory-grid { padding: 8px; gap: 6px; }
   .inventory-card { grid-template-columns: 42px minmax(0,1fr); min-height: 60px; }
   .inventory-card img { width: 42px; height: 48px; }
-  .enhance-screen { grid-template-columns: 180px minmax(250px, 1fr) 280px; }
+  .enhance-screen { grid-template-columns: 210px minmax(250px, 1fr) 280px; }
   .collection-screen { grid-template-columns: 170px minmax(290px, 1fr) 240px; }
   .shop-screen { grid-template-columns: 160px minmax(320px, 1fr) 230px; }
   .minigame-screen { grid-template-columns: 135px minmax(400px, 1fr) 190px; }
@@ -1451,7 +1451,7 @@ button[aria-busy="true"]::after {
   .nav-item svg { width: 17px; height: 17px; }
   .nav-item span { font-size: 8px; }
   .adventure-screen { min-height: calc(100svh - 104px); }
-  .enhance-screen { grid-template-columns: 180px 215px minmax(300px, 1fr); min-height: calc(100svh - 104px); }
+  .enhance-screen { grid-template-columns: 200px 215px minmax(300px, 1fr); min-height: calc(100svh - 104px); }
   .collection-screen { grid-template-columns: 160px minmax(390px, 1fr) 230px; min-height: calc(100svh - 104px); }
   .shop-screen { grid-template-columns: 115px minmax(650px, 1fr); min-height: calc(100svh - 104px); }
   .shop-screen .shop-detail { display: none; }

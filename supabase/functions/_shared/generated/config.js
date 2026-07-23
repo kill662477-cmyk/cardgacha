@@ -164,30 +164,36 @@ export const REGIONS = [
   { id: 2, name: '침묵한 중계기지', code: 'relay-base', hpBase: 1100000, attackBase: 4500, bossHp: 1820000, bossAttack: 6000 },
   { id: 3, name: '검게 물든 스튜디오', code: 'black-studio', hpBase: 1700000, attackBase: 6500, bossHp: 2800000, bossAttack: 8500 },
   { id: 4, name: '폭주한 데이터 요새', code: 'data-fortress', hpBase: 2500000, attackBase: 9000, bossHp: 4000000, bossAttack: 11000 },
-  { id: 5, name: '악플 코어 심층부', code: 'malice-core', hpBase: 4200000, attackBase: 12500, bossHp: 9500000, bossAttack: 21000 },
+  // balance-tune: 5-10 최종 보스를 SS 7강 + 도감 80% 스펙으로 클리어 가능하게 하향
+  // (9,500,000 -> 8,250,000). S 9성 풀도감 테스트 덱은 여전히 막힘.
+  { id: 5, name: '악플 코어 심층부', code: 'malice-core', hpBase: 4200000, attackBase: 12500, bossHp: 8250000, bossAttack: 21000 },
+  // balance-tune: 하드 모험 올클리어 기준을 SSS 올 7강 + 풀도감 스펙에 맞춤.
+  // 카드 천장(SSS 4.6배 × 9강 3배) 대비 과튜닝돼 있던 HP를 원래의 약 0.675배로
+  // 하향, 공격력 0.85배(생존 여유). SSS 7강 풀도감이 딱 100 올클, 도감 80%면
+  // 88에서 벽 · SS 9성 풀도감은 하드 중반(75)에서 막힘.
   {
     id: 6, name: '붕괴한 신호 폐허', code: 'void-rift', mode: 'hard',
-    hpBase: 10500000, attackBase: 27000, bossHp: 14000000, bossAttack: 25000,
+    hpBase: 7090000, attackBase: 22950, bossHp: 9450000, bossAttack: 21250,
     duration: 46, bossDuration: 56,
   },
   {
     id: 7, name: '심연의 중계 감옥', code: 'abyss-relay', mode: 'hard',
-    hpBase: 12500000, attackBase: 28500, bossHp: 16500000, bossAttack: 26500,
+    hpBase: 8440000, attackBase: 24225, bossHp: 11140000, bossAttack: 22525,
     duration: 48, bossDuration: 58,
   },
   {
     id: 8, name: '악몽 송출 스튜디오', code: 'nightmare-studio', mode: 'hard',
-    hpBase: 14500000, attackBase: 30000, bossHp: 20000000, bossAttack: 28000,
+    hpBase: 9790000, attackBase: 25500, bossHp: 13500000, bossAttack: 23800,
     duration: 50, bossDuration: 60,
   },
   {
     id: 9, name: '오메가 데이터 성채', code: 'omega-fortress', mode: 'hard',
-    hpBase: 16500000, attackBase: 32000, bossHp: 24000000, bossAttack: 29500,
+    hpBase: 11140000, attackBase: 27200, bossHp: 16200000, bossAttack: 25075,
     duration: 52, bossDuration: 62,
   },
   {
     id: 10, name: '지옥 악플 코어', code: 'hell-core', mode: 'hard',
-    hpBase: 18500000, attackBase: 32000, bossHp: 28000000, bossAttack: 31500,
+    hpBase: 12490000, attackBase: 27200, bossHp: 18900000, bossAttack: 26775,
     duration: 59, bossDuration: 64,
   },
 ];

@@ -2243,12 +2243,12 @@ function selectAdventureMode(mode) {
 }
 
 function bindEvents() {
-  if (sessionStorage.getItem('mail_ss_sss_buff_reward_20260723_read') === 'true') {
+  if (sessionStorage.getItem('mail_nangck_win_50k_20260724_read') === 'true') {
     elements.mailBadge.hidden = true;
   }
   elements.profileCardButton.addEventListener('click', openRepresentativeCardDetail);
   elements.mailButton.addEventListener('click', () => {
-    sessionStorage.setItem('mail_ss_sss_buff_reward_20260723_read', 'true');
+    sessionStorage.setItem('mail_nangck_win_50k_20260724_read', 'true');
     elements.mailBadge.hidden = true;
     elements.mailDialog.showModal();
   });
@@ -2570,7 +2570,7 @@ async function init() {
   setSystemState('loading');
   fxController = createFxController({ soundEnabled: state.soundEnabled !== false, random: gameService.random });
   try {
-    const response = await fetch('data/renewal-cards.json');
+    const response = await fetch('data/renewal-cards.json?v=202607241130');
     if (!response.ok) throw new Error(`Card data request failed: ${response.status}`);
     cards = await response.json();
     cardsById = new Map(cards.map((card) => [card.id, card]));

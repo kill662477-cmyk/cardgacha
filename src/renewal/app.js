@@ -493,7 +493,7 @@ function isPlayableCard(card) {
 }
 
 function formationCards() {
-  return state.formation.map((id) => cardsById.get(id)).filter((card) => isPlayableCard(card) && (state.cardCopies[card.id] ?? 0) > 0).map(cardWithProgress);
+  return state.formation.map((id) => cardsById.get(id)).filter((card) => isPlayableCard(card) && isFieldableCard(card.id)).map(cardWithProgress);
 }
 
 function ensureCardProgress() {
@@ -508,7 +508,7 @@ function ensureCardProgress() {
 }
 
 function ensureValidFormation() {
-  const owned = (id) => isPlayableCard(cardsById.get(id)) && (state.cardCopies[id] ?? 0) > 0;
+  const owned = (id) => isPlayableCard(cardsById.get(id)) && isFieldableCard(id);
   const unique = [...new Set(state.formation)].filter(owned);
   if (unique.length < GAME_RULES.formationSize) {
     cards.forEach((card) => {
@@ -551,6 +551,16 @@ function productionStageNumber() {
 
 function ownedCards() {
   return cards.filter((card) => (state.cardCopies[card.id] ?? 0) > 0);
+}
+
+// 편성 가능 조건: 보유(카피 1장 이상) + 도감 등록. 정상 계정은 보유 시 항상 도감이
+// 등록되므로 영향이 없고, 도감에 없는 카드(테스트 조작 등)는 출전에서 제외된다.
+function isFieldableCard(id) {
+  return (state.cardCopies[id] ?? 0) > 0 && Boolean(state.collectionRecords[id]);
+}
+
+function fieldableCards() {
+  return cards.filter((card) => isFieldableCard(card.id));
 }
 
 function currentCollectionBonuses() {
@@ -975,7 +985,7 @@ function renderFormationDialog() {
     return `<div class="selected-card" data-name="${card.member}" style="--rarity:${RARITIES[card.rarity].color};background-image:url('${imagePath(card)}')"></div>`;
   }).join('');
   const combatBonuses = currentCombatBonuses();
-  const formationCandidates = ownedCards().filter(isPlayableCard).map(cardWithProgress).map((card) => ({
+  const formationCandidates = fieldableCards().filter(isPlayableCard).map(cardWithProgress).map((card) => ({
     card,
     stats: computeCardStats(card, combatBonuses),
     power: computeCardPower(card, combatBonuses),

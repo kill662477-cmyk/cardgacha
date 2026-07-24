@@ -52,7 +52,7 @@ assert.match(globalRewardSql, /set points = state\.points \+ reward\.points_gran
 assert.match(globalRewardSql, /and reward\.points_after is null/);
 assert.match(globalRewardSql, /v_reward_total <> v_reward_count::bigint \* 50000/);
 assert.match(globalRewardSql, /revoke all on table public\.gacha_s2_ss_sss_buff_reward_20260723/);
-assert.match(indexHtml, /\[업데이트 기념 보상\] SS·SSS 상향 및 신규 SS 카드 추가/);
+assert.match(indexHtml, /\[낭CK 낭니팀 승리 기념\] 전 계정 50,000 P 지급/);
 assert.match(indexHtml, /현재 모든 계정에 50,000 P/);
 
 console.log('renewal database migration tests passed: read-only source, account and bridge carryover, clean game state');

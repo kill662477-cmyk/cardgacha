@@ -2654,7 +2654,14 @@ async function init() {
     if (elements.logoutButton) elements.logoutButton.hidden = !remoteMode;
     // 모바일에서 로그인 후 게임 진입 시 가로모드/전체화면 가이드 표시.
     showOrientGuideIfNeeded();
-    await liveTickerController.start();
+    // 라이브 티커는 realtime 웹소켓 연결이라 트래픽 몰림 시 가장 잘 실패한다.
+    // 여기서 throw하면 게임 진입 자체가 빨간 "연결 실패" 화면으로 죽으므로,
+    // 비필수 기능인 라이브 피드 실패는 격리해 게임 로딩을 막지 않는다.
+    try {
+      await liveTickerController.start();
+    } catch (error) {
+      console.warn('[init] live ticker start failed (non-fatal):', error);
+    }
     startTimedUpdates();
     if (activeScreen !== 'worldboss') void worldBossController?.checkRewardAvailability();
     const canPreviewState = ['localhost', '127.0.0.1'].includes(window.location.hostname) && SYSTEM_STATES[systemStatePreview];

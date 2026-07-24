@@ -6,9 +6,10 @@ import { buildBalancePayload, buildCatalogMigration, loadCards } from '../script
 const cards = loadCards();
 const sql = await readFile(new URL('../supabase/renewal_migration_002_catalog_and_balance.sql', import.meta.url), 'utf8');
 const generated = buildCatalogMigration(cards);
-const normalized = sql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
+const normalizedSql = sql.replace(/\r\n/g, '\n');
+const normalized = normalizedSql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 
-assert.equal(sql, generated, 'catalog migration must be regenerated after card or balance changes');
+assert.equal(normalizedSql, generated, 'catalog migration must be regenerated after card or balance changes');
 assert.equal(buildBalancePayload().balanceVersion, BALANCE_VERSION);
 assert.match(normalized, /create table if not exists public\.gacha_s2_balance_versions/);
 assert.match(normalized, /create table if not exists public\.gacha_s2_card_catalog/);
@@ -25,12 +26,12 @@ assert.match(normalized, /alter table public\.gacha_s2_card_catalog enable row l
 assert.match(normalized, /revoke all on table public\.gacha_s2_card_catalog from public, anon, authenticated/);
 assert.doesNotMatch(normalized, /grant (?:select|insert|update|delete|all).*gacha_s2_card_catalog.*(?:anon|authenticated)/);
 
-const catalogSeed = sql.match(/insert into public\.gacha_s2_card_catalog \([\s\S]*?\)\nvalues\n([\s\S]*?)\non conflict \(card_id\)/i)?.[1];
+const catalogSeed = normalizedSql.match(/insert into public\.gacha_s2_card_catalog \([\s\S]*?\)\nvalues\n([\s\S]*?)\non conflict \(card_id\)/i)?.[1];
 assert.ok(catalogSeed, 'catalog seed block missing');
 const rows = catalogSeed.split('\n').filter((line) => line.startsWith('  ('));
 assert.equal(rows.length, 224);
 const seededIds = rows.map((line) => line.match(/^  \('([^']+)'/)?.[1]);
 assert.deepEqual(seededIds, [...cards.map((card) => card.id)].sort((left, right) => left.localeCompare(right)));
-assert.equal((sql.match(/'[0-9a-f]{64}'/g) ?? []).length >= 4, true, 'config and catalog hashes must be embedded and verified');
+assert.equal((normalizedSql.match(/'[0-9a-f]{64}'/g) ?? []).length >= 4, true, 'config and catalog hashes must be embedded and verified');
 
 console.log(`renewal database catalog tests passed: ${cards.length} cards, balance ${BALANCE_VERSION}, deterministic seed`);

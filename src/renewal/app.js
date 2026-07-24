@@ -2263,12 +2263,12 @@ function selectAdventureMode(mode) {
 }
 
 function bindEvents() {
-  if (sessionStorage.getItem('mail_login_incident_30k_20260724_read') === 'true') {
+  if (sessionStorage.getItem('mail_escore_finals_30k_20260724_read') === 'true') {
     elements.mailBadge.hidden = true;
   }
   elements.profileCardButton.addEventListener('click', openRepresentativeCardDetail);
   elements.mailButton.addEventListener('click', () => {
-    sessionStorage.setItem('mail_login_incident_30k_20260724_read', 'true');
+    sessionStorage.setItem('mail_escore_finals_30k_20260724_read', 'true');
     elements.mailBadge.hidden = true;
     elements.mailDialog.showModal();
   });

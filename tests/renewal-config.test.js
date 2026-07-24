@@ -70,10 +70,10 @@ assert.equal(WORLD_BOSS_RULES.timeZone, 'Asia/Seoul');
 assert.deepEqual(WORLD_BOSS_RULES.scheduleHours, [17, 18, 19, 20]);
 assert.equal(WORLD_BOSS_RULES.attackEnergyCost, 10);
 assert.deepEqual(Object.values(WORLD_BOSS_RULES.slotTiers).map(({ difficultyMultiplier, maxHp }) => [difficultyMultiplier, maxHp]), [
-  [1, 6_500_000_000],
-  [1.5, 9_750_000_000],
-  [2.25, 14_625_000_000],
-  [3.375, 21_937_500_000],
+  [1, 13_000_000_000],
+  [1.5, 19_500_000_000],
+  [2.25, 29_250_000_000],
+  [3.375, 43_875_000_000],
 ]);
 assert.deepEqual(Object.values(WORLD_BOSS_RULES.slotTiers).map(({ clearDestructionGuardRate }) => clearDestructionGuardRate), [0.05, 0.10, 0.15, 0.20]);
 assert.equal(WORLD_BOSS_RULES.raidDurationSeconds, 30 * 60);

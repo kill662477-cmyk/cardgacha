@@ -313,37 +313,38 @@ export const WORLD_BOSS_RULES = {
   scheduleHours: [17, 18, 19, 20],
   attackEnergyCost: 10,
   slotTiers: {
-    // balance-tune: 난이도 상향 위해 슬롯별 maxHp를 기존의 1.3배로 올림(서버 DPS는 유지 -> 처치 난이도 상승).
+    // balance-tune: 난이도 재상향. 직전(1.3배) 대비 maxHp·serverDPS를 함께 2배로 올려
+    // 처치 요구 딜(갭)이 정확히 2배 상승(슬롯17 기준 26M -> 52M).
     17: {
       title: '신호 요새', name: 'SIGNAL//BASTION', difficultyMultiplier: 1,
-      maxHp: 6_500_000_000, serverDamagePerSecond: 3_596_667, clearDestructionGuardRate: 0.05,
+      maxHp: 13_000_000_000, serverDamagePerSecond: 7_193_334, clearDestructionGuardRate: 0.05,
       image: 'assets/renewal/worldboss/boss-17-signal-bastion.webp',
     },
     18: {
       title: '중계 포식자', name: 'RELAY//DEVOURER', difficultyMultiplier: 1.5,
-      maxHp: 9_750_000_000, serverDamagePerSecond: 5_395_001, clearDestructionGuardRate: 0.10,
+      maxHp: 19_500_000_000, serverDamagePerSecond: 10_790_002, clearDestructionGuardRate: 0.10,
       image: 'assets/renewal/worldboss/boss-18-relay-devourer.webp',
     },
     19: {
       title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 2.25,
-      maxHp: 14_625_000_000, serverDamagePerSecond: 8_092_501, clearDestructionGuardRate: 0.15,
+      maxHp: 29_250_000_000, serverDamagePerSecond: 16_185_002, clearDestructionGuardRate: 0.15,
       image: 'assets/renewal/worldboss/boss-19-void-harvester.webp',
     },
     20: {
       title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 3.375,
-      maxHp: 21_937_500_000, serverDamagePerSecond: 12_138_751, clearDestructionGuardRate: 0.20,
+      maxHp: 43_875_000_000, serverDamagePerSecond: 24_277_502, clearDestructionGuardRate: 0.20,
       image: 'assets/renewal/worldboss/boss-20-malice-singularity.webp',
     },
   },
-  // nolevel-1: 새 카드 전투력 스케일에 맞춰 공동 HP·서버 DPS 재튠. (기본 maxHp도 1.3배)
-  maxHp: 6_500_000_000,
+  // nolevel-1: 새 카드 전투력 스케일에 맞춰 공동 HP·서버 DPS 재튠. (기본 maxHp는 직전 1.3배 -> 2배)
+  maxHp: 13_000_000_000,
   battleDuration: 60,
   maxAttempts: 3,
   eventDurationSeconds: 60 * 60,
   raidDurationSeconds: 30 * 60,
-  // balance-tune: maxHp·serverDPS를 함께 1.3배 -> 처치 요구 개인/공동 딜(갭)이 정확히 1.3배로
-  // 상승(단순 HP만 올리면 DPS가 HP의 99.6%를 먹어 갭이 폭증하므로 DPS도 같이 스케일).
-  serverDamagePerSecond: 3_596_667,
+  // balance-tune: maxHp·serverDPS를 함께 스케일(직전 1.3배 -> 2배) -> 처치 요구 개인/공동 딜(갭)이
+  // 정확히 2배 상승(단순 HP만 올리면 DPS가 HP의 99.6%를 먹어 갭이 폭증하므로 DPS도 같이 스케일).
+  serverDamagePerSecond: 7_193_334,
   cardExpPerAttempt: 25,
   // balance-tune: 상위 딜 구간 차등 보상 확장. 4,000만딜 3만포 / 3,000만딜 2만포.
   rewardTiers: [

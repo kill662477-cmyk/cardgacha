@@ -166,8 +166,8 @@ async function chatSdk() {
   throw lastError ?? new Error('SOOP ChatSDK를 불러오지 못했습니다.');
 }
 
-const MAX_RECONNECT_ATTEMPTS = 4;
 let reconnectAttempts = 0;
+let shouldStayConnected = false;
 let reconnectTimer = null;
 let tokenRefreshTimer = null;
 let refreshPromise = null;
@@ -232,6 +232,7 @@ async function refreshCredentials() {
 }
 
 async function connect() {
+  manualStop = false;
   const connectionId = ++connectionSequence;
   try {
     notice('SOOP ChatSDK 연결 중');
@@ -262,6 +263,7 @@ async function connect() {
     await state.sdk.connect();
     if (connectionId !== connectionSequence) return false;
     state.connected = true;
+    shouldStayConnected = true;
     reconnectAttempts = 0;
     render();
     scheduleTokenRefresh();
@@ -278,26 +280,34 @@ async function connect() {
 }
 
 function scheduleReconnect() {
-  if (reconnectTimer) return;
-  if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-    notice('SOOP 자동 재연결 실패 · 다시 연동해주세요', 'error');
-    return;
-  }
+  if (reconnectTimer || manualStop) return;
   reconnectAttempts += 1;
+  // 방송 오버레이는 자가복구되어야 하므로 영구 포기하지 않고 30초 상한 백오프로 계속 재시도한다.
   const delayMs = Math.min(30_000, 3_000 * reconnectAttempts);
-  notice(`SOOP 재연결 대기 중 (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`, '');
+  notice(`SOOP 재연결 대기 중 (${reconnectAttempts}회)`, '');
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null;
     void reconnectWithFreshToken();
   }, delayMs);
 }
 
+function accessTokenNearExpiry() {
+  const expiresAt = Number(state.credentials?.accessTokenExpiresAt);
+  return !Number.isFinite(expiresAt) || expiresAt - Date.now() <= ACCESS_TOKEN_REFRESH_EARLY_MS;
+}
+
 async function reconnectWithFreshToken() {
   try {
     invalidateConnection();
-    await refreshCredentials();
+    // 단순 채팅 끊김에는 기존 토큰으로 재연결한다. refresh 엔드포인트 장애가 재연결을
+    // 막지 않도록, 자격이 없거나 만료가 임박할 때만 토큰을 새로 받는다.
+    if (!state.credentials || accessTokenNearExpiry()) await refreshCredentials();
     if (!await connect()) scheduleReconnect();
   } catch (error) {
+    // 토큰 갱신이 실패해도 기존 자격이 남아 있으면 그대로 재연결을 시도한다.
+    if (state.credentials) {
+      try { if (await connect()) return; } catch { /* fall through to backoff */ }
+    }
     notice(`SOOP 재연결 실패 · ${error.message}`, 'error');
     scheduleReconnect();
   }
@@ -319,6 +329,7 @@ async function refreshActiveConnection() {
 
 function disconnect() {
   manualStop = true;
+  shouldStayConnected = false;
   if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
   clearTokenRefreshTimer();
   reconnectAttempts = 0;
@@ -353,6 +364,19 @@ elements.soopAuthButton.addEventListener('click', async () => {
 });
 elements.collectButton.addEventListener('click', () => { void connect(); });
 elements.stopButton.addEventListener('click', disconnect);
+
+// OBS 브라우저 소스/백그라운드 탭은 웹소켓·타이머가 정지돼 연결이 끊기고 백오프 타이머도
+// 지연된다. 탭이 다시 보이거나 네트워크가 복구되면 즉시 재연결을 시도해 방치 시간을 없앤다.
+function wakeReconnect() {
+  if (manualStop || !shouldStayConnected || state.connected) return;
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+  reconnectAttempts = 0;
+  void reconnectWithFreshToken();
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') wakeReconnect();
+});
+window.addEventListener('online', wakeReconnect);
 
 async function consumeCallback() {
   const fragment = new URLSearchParams(location.hash.slice(1));

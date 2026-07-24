@@ -55,9 +55,9 @@ function sqlValue(value) {
 }
 
 function validateCards(cards) {
-  if (!Array.isArray(cards) || cards.length !== 221) throw new Error(`Expected 221 cards, received ${cards?.length ?? 'invalid'}`);
+  if (!Array.isArray(cards) || cards.length !== 224) throw new Error(`Expected 224 cards, received ${cards?.length ?? 'invalid'}`);
   if (new Set(cards.map((card) => card.id)).size !== cards.length) throw new Error('Duplicate card ID');
-  const expectedRarityCounts = { F: 25, E: 24, D: 25, C: 24, B: 23, A: 26, S: 25, SS: 25, SSS: 16, EX: 8 };
+  const expectedRarityCounts = { F: 25, E: 24, D: 25, C: 24, B: 23, A: 26, S: 25, SS: 25, SSS: 19, EX: 8 };
   Object.entries(expectedRarityCounts).forEach(([rarity, expected]) => {
     const actual = cards.filter((card) => card.rarity === rarity).length;
     if (actual !== expected) throw new Error(`${rarity} count mismatch: expected ${expected}, received ${actual}`);
@@ -221,7 +221,7 @@ declare
   v_catalog_hash text;
 begin
   select count(*) into v_total from public.gacha_s2_card_catalog;
-  if v_total <> 221 then raise exception 'Season 2 catalog must contain exactly 221 cards, found %', v_total; end if;
+  if v_total <> 224 then raise exception 'Season 2 catalog must contain exactly 224 cards, found %', v_total; end if;
   if (select count(*) from public.gacha_s2_card_catalog where rarity = 'EX') <> 8 then
     raise exception 'Season 2 catalog must contain exactly 8 EX cards';
   end if;

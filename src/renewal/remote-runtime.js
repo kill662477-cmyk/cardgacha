@@ -1,6 +1,6 @@
 import { createClient } from '../vendor/supabase.js';
-import { createAuthSessionService } from './auth-session-service.js';
-import { createSupabaseGameService } from './supabase-game-service.js';
+import { createAuthSessionService } from './auth-session-service.js?v=202607241835';
+import { createSupabaseGameService } from './supabase-game-service.js?v=202607241835';
 
 export function readRemoteConfig(source = globalThis.__CARD_GACHA_CONFIG__) {
   if (globalThis.location && new URLSearchParams(globalThis.location.search).has('local')) {

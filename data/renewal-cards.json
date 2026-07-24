@@ -2871,5 +2871,44 @@
     "copies": 0,
     "sourceRarity": "MUR",
     "group": false
+  },
+  {
+    "id": "byeonhyeonje-7",
+    "member": "변현제",
+    "file": "byeonhyeonje-7-r1.jpg",
+    "rarity": "SSS",
+    "race": "프로토스",
+    "archetype": "quick",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "FUR",
+    "group": false
+  },
+  {
+    "id": "sate-5",
+    "member": "사테",
+    "file": "sate-5-r1.png",
+    "rarity": "SSS",
+    "race": "테란",
+    "archetype": "heavy",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "FUR",
+    "group": false
+  },
+  {
+    "id": "arisongi-11",
+    "member": "아리송이",
+    "file": "arisongi-11-r2.jpg",
+    "rarity": "SSS",
+    "race": "프로토스",
+    "archetype": "area",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "FUR",
+    "group": false
   }
 ]

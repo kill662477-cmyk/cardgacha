@@ -36,7 +36,17 @@ export function createSupabaseGameService(options = {}) {
   if (typeof fetchImpl !== 'function') throw new Error('Fetch implementation is required.');
 
   async function request(body) {
-    const accessToken = await getAccessToken();
+    let accessToken;
+    try {
+      accessToken = await getAccessToken();
+    } catch (error) {
+      return createGameError({
+        code: GAME_ERROR_CODES.OFFLINE,
+        message: '로그인 세션을 확인하지 못했습니다.',
+        serverTime: clock.now(),
+        details: { message: error?.message ?? String(error) },
+      });
+    }
     if (typeof accessToken !== 'string' || !accessToken) {
       return createGameError({
         code: GAME_ERROR_CODES.AUTH_REQUIRED,

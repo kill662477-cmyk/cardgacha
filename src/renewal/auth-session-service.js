@@ -11,7 +11,13 @@ export function createAuthSessionService(options = {}) {
   if (!auth || typeof auth.getSession !== 'function' || typeof auth.signInAnonymously !== 'function' || typeof auth.signOut !== 'function') throw new Error('Supabase Auth client required.');
 
   async function ensureSession() {
-    const current = await auth.getSession();
+    let current = null;
+    try {
+      current = await auth.getSession();
+    } catch {
+      // A stale persisted refresh token or blocked browser storage must not
+      // abort the whole app bootstrap. Anonymous sign-in can replace it.
+    }
     if (current?.data?.session?.access_token) return current.data.session;
     const created = await auth.signInAnonymously();
     if (created?.error || !created?.data?.session?.access_token) throw new Error('ANONYMOUS_AUTH_FAILED');
@@ -51,8 +57,12 @@ export function createAuthSessionService(options = {}) {
   }
 
   async function getAccessToken() {
-    const result = await auth.getSession();
-    return result?.data?.session?.access_token ?? null;
+    try {
+      const result = await auth.getSession();
+      return result?.data?.session?.access_token ?? null;
+    } catch {
+      return null;
+    }
   }
 
   async function signOut() {

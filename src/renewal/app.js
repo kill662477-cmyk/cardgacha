@@ -49,8 +49,8 @@ import {
 } from './rewards.js';
 import { assertValidGameState, migrateGameState } from './state-schema.js';
 import { createLocalGameService } from './local-game-service.js';
-import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './remote-runtime.js';
-import { GAME_COMMAND_TYPES } from './service-contract.js';
+import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './remote-runtime.js?v=202607241835';
+import { GAME_COMMAND_TYPES, isRetryableGameError } from './service-contract.js';
 import { createRequestCoordinator, REQUEST_PHASES } from './request-coordinator.js?v=202607211025';
 import { createMiniGameController } from './minigame-controller.js?v=202607211525';
 import { executeCommandWithVersionRetry } from './server-command-retry.js';
@@ -337,7 +337,7 @@ async function completeSoopAuth(exchangeCode, { onError } = {}) {
       else elements.loginError.textContent = message;
       return false;
     }
-    const loaded = await gameService.loadSnapshot();
+    const loaded = await loadRemoteSnapshotWithRetry();
     if (!loaded?.ok || !loaded.snapshot) throw new Error(loaded?.code ?? 'SNAPSHOT_FAILED');
     applyServerSnapshot(loaded.snapshot);
     return true;
@@ -352,6 +352,16 @@ async function completeSoopAuth(exchangeCode, { onError } = {}) {
   }
 }
 
+async function loadRemoteSnapshotWithRetry(maxAttempts = 3) {
+  let loaded = null;
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    loaded = await gameService.loadSnapshot();
+    if (loaded?.ok || !isRetryableGameError(loaded)) return loaded;
+    if (attempt + 1 < maxAttempts) await wait(250 * (attempt + 1));
+  }
+  return loaded;
+}
+
 async function requireRemoteSnapshot() {
   // SOOP 숲 로그인 콜백이 fragment에 있으면 가장 먼저 처리한다.
   const soopCallback = readSoopAuthHash();
@@ -362,7 +372,7 @@ async function requireRemoteSnapshot() {
 
   const existingToken = await remoteRuntime.auth.getAccessToken();
   if (existingToken) {
-    const loaded = await gameService.loadSnapshot();
+    const loaded = await loadRemoteSnapshotWithRetry();
     if (loaded?.ok && loaded.snapshot) return applyServerSnapshot(loaded.snapshot);
   }
   setSystemState('auth');
@@ -394,7 +404,7 @@ async function requireRemoteSnapshot() {
           return;
         }
         elements.loginKeyInput.value = '';
-        const loaded = await gameService.loadSnapshot();
+        const loaded = await loadRemoteSnapshotWithRetry();
         if (!loaded?.ok || !loaded.snapshot) throw new Error(loaded?.code ?? 'SNAPSHOT_FAILED');
         applyServerSnapshot(loaded.snapshot);
         elements.loginDialog.close();
@@ -2243,12 +2253,12 @@ function selectAdventureMode(mode) {
 }
 
 function bindEvents() {
-  if (sessionStorage.getItem('mail_nangck_win_50k_20260724_read') === 'true') {
+  if (sessionStorage.getItem('mail_login_incident_30k_20260724_read') === 'true') {
     elements.mailBadge.hidden = true;
   }
   elements.profileCardButton.addEventListener('click', openRepresentativeCardDetail);
   elements.mailButton.addEventListener('click', () => {
-    sessionStorage.setItem('mail_nangck_win_50k_20260724_read', 'true');
+    sessionStorage.setItem('mail_login_incident_30k_20260724_read', 'true');
     elements.mailBadge.hidden = true;
     elements.mailDialog.showModal();
   });
@@ -2570,14 +2580,18 @@ async function init() {
   setSystemState('loading');
   fxController = createFxController({ soundEnabled: state.soundEnabled !== false, random: gameService.random });
   try {
-    const response = await fetch('data/renewal-cards.json?v=202607241130');
+    const response = await fetch('data/renewal-cards.json?v=202607241915');
     if (!response.ok) throw new Error(`Card data request failed: ${response.status}`);
     cards = await response.json();
     cardsById = new Map(cards.map((card) => [card.id, card]));
     if (remoteMode) await requireRemoteSnapshot();
     if (remoteMode) {
-      const status = await gameService.getBridgeStatus();
-      if (status?.ok !== false) bridgeStatus = status;
+      try {
+        const status = await gameService.getBridgeStatus();
+        if (status?.ok !== false) bridgeStatus = status;
+      } catch (error) {
+        console.warn('[init] bridge status failed (non-fatal):', error);
+      }
     }
     if (elements.apiLinkButton) elements.apiLinkButton.hidden = remoteMode && !bridgeStatus.canUseDonationBridge;
     miniGameController = createMiniGameController({

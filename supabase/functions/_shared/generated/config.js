@@ -313,38 +313,39 @@ export const WORLD_BOSS_RULES = {
   scheduleHours: [17, 18, 19, 20],
   attackEnergyCost: 10,
   slotTiers: {
-    // balance-tune: 난이도 재상향. 직전(1.3배) 대비 maxHp·serverDPS를 함께 2배로 올려
-    // 처치 요구 딜(갭)이 정확히 2배 상승(슬롯17 기준 26M -> 52M).
+    // balance-tune: 서버 자동딜(서버DPS) 완전 폐지 -> 이제 참가자 전원의 합산 딜만으로
+    // 처치 여부가 갈린다(0으로 두면 서버RPC가 자동으로 자동딜 0으로 계산, 로직 변경 불필요).
+    // maxHp는 지정값(17:40억/18:45억/19:60억/20:65억)으로 고정 -> 참여가 부족한 회차는 실패 가능.
     17: {
       title: '신호 요새', name: 'SIGNAL//BASTION', difficultyMultiplier: 1,
-      maxHp: 13_000_000_000, serverDamagePerSecond: 7_193_334, clearDestructionGuardRate: 0.05,
+      maxHp: 4_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.05,
       image: 'assets/renewal/worldboss/boss-17-signal-bastion.webp',
     },
     18: {
-      title: '중계 포식자', name: 'RELAY//DEVOURER', difficultyMultiplier: 1.5,
-      maxHp: 19_500_000_000, serverDamagePerSecond: 10_790_002, clearDestructionGuardRate: 0.10,
+      title: '중계 포식자', name: 'RELAY//DEVOURER', difficultyMultiplier: 1.125,
+      maxHp: 4_500_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.10,
       image: 'assets/renewal/worldboss/boss-18-relay-devourer.webp',
     },
     19: {
-      title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 2.25,
-      maxHp: 29_250_000_000, serverDamagePerSecond: 16_185_002, clearDestructionGuardRate: 0.15,
+      title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 1.5,
+      maxHp: 6_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.15,
       image: 'assets/renewal/worldboss/boss-19-void-harvester.webp',
     },
     20: {
-      title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 3.375,
-      maxHp: 43_875_000_000, serverDamagePerSecond: 24_277_502, clearDestructionGuardRate: 0.20,
+      title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 1.625,
+      maxHp: 6_500_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.20,
       image: 'assets/renewal/worldboss/boss-20-malice-singularity.webp',
     },
   },
-  // nolevel-1: 새 카드 전투력 스케일에 맞춰 공동 HP·서버 DPS 재튠. (기본 maxHp는 직전 1.3배 -> 2배)
-  maxHp: 13_000_000_000,
+  // nolevel-1: 서버DPS 폐지로 공동 HP가 곧 참가자 합산딜 목표치. 기본값은 17시 슬롯과 동일.
+  maxHp: 4_000_000_000,
   battleDuration: 60,
   maxAttempts: 3,
   eventDurationSeconds: 60 * 60,
   raidDurationSeconds: 30 * 60,
-  // balance-tune: maxHp·serverDPS를 함께 스케일(직전 1.3배 -> 2배) -> 처치 요구 개인/공동 딜(갭)이
-  // 정확히 2배 상승(단순 HP만 올리면 DPS가 HP의 99.6%를 먹어 갭이 폭증하므로 DPS도 같이 스케일).
-  serverDamagePerSecond: 7_193_334,
+  // balance-tune: 서버 자동딜 폐지(0) -> 처치는 순수 참가자 합산딜 vs maxHp 비교로만 결정되어
+  // 참여·화력이 부족한 회차는 실패할 수 있다.
+  serverDamagePerSecond: 0,
   cardExpPerAttempt: 25,
   // balance-tune: 상위 딜 구간 차등 보상 확장. 4,000만딜 3만포 / 3,000만딜 2만포.
   rewardTiers: [

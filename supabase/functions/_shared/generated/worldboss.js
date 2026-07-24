@@ -49,6 +49,8 @@ export function getWorldBossSnapshot(progress, now = Date.now()) {
     WORLD_BOSS_RULES.raidDurationSeconds,
     Math.floor((now - normalized.startedAt) / 1000),
   ));
+  // balance-tune: 서버 자동딜(serverDamagePerSecond) 폐지 -> 모든 슬롯 0으로 설정되어
+  // 이 항은 항상 0. 처치 여부는 오직 참가자 합산딜(totalDamage)만으로 결정된다.
   const serverDamage = Math.floor(elapsedSeconds * tier.serverDamagePerSecond);
   const totalDamage = Math.min(tier.maxHp, serverDamage + normalized.totalDamage);
   const currentHp = Math.max(0, tier.maxHp - totalDamage);

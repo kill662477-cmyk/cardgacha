@@ -9,9 +9,13 @@ export const EMBLEM_GLYPHS = Object.freeze({
 // 이미지 에셋이 있는 커스텀 엠블럼(PDB-16 7.2). 키가 여기 있으면 이모지 대신 이미지를 쓴다.
 // 새 엠블럼을 추가할 때는 assets/renewal/guild/emblems/<key>.png(256x256) 배치 +
 // gacha_s2_guild_emblems 행 삽입 + 여기 한 줄이면 된다.
+// 파일명을 그대로 두고 이미지를 교체하면(크롭 조정 등) 브라우저가 옛 파일을 계속 쓴다.
+// 그래서 경로에 버전을 붙인다. 이미지를 새로 만들 때마다 이 값을 올릴 것.
+const EMBLEM_ASSET_VERSION = '202607260110';
+
 export const EMBLEM_IMAGES = Object.freeze({
-  ilsin: 'assets/renewal/guild/emblems/ilsin.png',
-  chiri: 'assets/renewal/guild/emblems/chiri.png',
+  ilsin: `assets/renewal/guild/emblems/ilsin.png?v=${EMBLEM_ASSET_VERSION}`,
+  chiri: `assets/renewal/guild/emblems/chiri.png?v=${EMBLEM_ASSET_VERSION}`,
 });
 
 // textContent 로 넣는 자리에서 쓰는 문자 표현. 이미지 엠블럼도 텍스트 문맥에서는 기호로 대체된다.

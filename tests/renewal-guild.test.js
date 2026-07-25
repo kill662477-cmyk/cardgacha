@@ -291,8 +291,13 @@ console.log('renewal guild M2 tests passed: 10 levels, GP trigger, daily cap, bu
 // 마크업 경로가 살아 있는지와 사용자 입력 이스케이프가 유지되는지 함께 잠근다.
 const emblemSource = await readFile(new URL('../src/renewal/guild-emblem.js', import.meta.url), 'utf8');
 assert.match(emblemSource, /EMBLEM_IMAGES/, '이미지 엠블럼 화이트리스트가 있어야 한다');
-assert.match(emblemSource, /ilsin: 'assets\/renewal\/guild\/emblems\/ilsin\.png'/);
-assert.match(emblemSource, /chiri: 'assets\/renewal\/guild\/emblems\/chiri\.png'/);
+assert.match(emblemSource, /ilsin: `assets\/renewal\/guild\/emblems\/ilsin\.png\?v=/);
+assert.match(emblemSource, /chiri: `assets\/renewal\/guild\/emblems\/chiri\.png\?v=/);
+assert.match(
+  emblemSource,
+  /EMBLEM_ASSET_VERSION/,
+  '파일명을 유지한 채 이미지를 교체하면 캐시 때문에 옛 크롭이 계속 보인다',
+);
 
 const guildControllerSource = await readFile(new URL('../src/renewal/guild-controller.js', import.meta.url), 'utf8');
 assert.match(

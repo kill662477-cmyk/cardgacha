@@ -25,7 +25,7 @@ import {
   resolveEnhancement,
   selectEnhancementMaterials,
 } from './enhancement.js';
-import { applyGuildBuff, buildCollectionModel, calculateCollectionBonuses, groupCollectionCardsByMember } from './collection.js';
+import { buildCollectionModel, calculateCollectionBonuses, groupCollectionCardsByMember } from './collection.js';
 import {
   addCardResults,
   addSupportResults,
@@ -56,7 +56,6 @@ import { createMiniGameController } from './minigame-controller.js?v=20260721152
 import { executeCommandWithVersionRetry } from './server-command-retry.js';
 import { createWorldBossController } from './worldboss-controller.js';
 import { createRankingController } from './ranking-controller.js';
-import { createGuildController } from './guild-controller.js';
 import { createFxController } from './fx-controller.js';
 import { cardVisualChrome, enhancementLabel, enhancementStarMarkup, rarityMarkMarkup } from './card-visual.js';
 import { applyLocalTestProfile } from './local-test-profile.js';
@@ -66,7 +65,7 @@ import { createLiveTickerController } from './live-ticker-controller.js';
 const number = new Intl.NumberFormat('ko-KR');
 const CARD_BACK_PATH = 'assets/card-back.jpg';
 // 'inventory'는 별도 DOM 없이 shopScreen을 보유아이템 탭으로 열어주는 별칭 화면.
-const SCREEN_IDS = new Set(['shop', 'inventory', 'enhance', 'collection', 'ranking', 'guild', 'adventure', 'worldboss', 'minigame']);
+const SCREEN_IDS = new Set(['shop', 'inventory', 'enhance', 'collection', 'ranking', 'adventure', 'worldboss', 'minigame']);
 // Temporary: world boss disabled to cap Supabase free-tier realtime/edge load until Pro (2026-07-24). Flip to true + redeploy to re-enable.
 const WORLD_BOSS_ENABLED = true;
 const elements = {};
@@ -112,7 +111,6 @@ let dismantleRarity = null;
 let miniGameController = null;
 let worldBossController = null;
 let rankingController = null;
-let guildController = null;
 let liveTickerController = null;
 let fxController = null;
 let bridgeStatus = { canUseDonationBridge: false, soopId: null };
@@ -199,10 +197,6 @@ function cacheElements() {
   [
     'nickname', 'combatPower', 'energyValue', 'pointValue', 'profileCardButton', 'apiLinkButton', 'logoutButton',
     'mailButton', 'mailDialog', 'mailBadge', 'worldBossNavBadge',
-    'guildScreen', 'guildHome', 'guildBrowse', 'guildEmblem', 'guildTagLine', 'guildName', 'guildMeta',
-    'guildActions', 'guildNotice', 'guildRequestsBox', 'guildRequestCount', 'guildRequestList',
-    'guildMemberCount', 'guildMemberList', 'guildPenalty', 'guildCreateBox', 'guildCreateForm',
-    'guildCreateName', 'guildCreateTag', 'guildEmblemPicker', 'guildList',
     'profileCardImage', 'profileCardFallback', 'soundToggleButton', 'regionLabel',
     'stageLabel', 'stageMeter', 'battleState', 'battleClock', 'enemyName', 'enemyHpBar', 'enemyHpText',
     'enemyRow', 'partyGrid', 'synergyChip', 'resultBanner', 'stageNodes',
@@ -574,9 +568,8 @@ function currentCollectionBonuses() {
 }
 
 function currentCombatBonuses() {
-  // nolevel-1: accountLevelMultiplier 제거. 도감 보너스 + 길드 버프(PDB-16 M2)를 사용한다.
-  // 서버 verifiedContext 와 같은 applyGuildBuff 를 써야 전투 재현 검증이 어긋나지 않는다.
-  return applyGuildBuff(currentCollectionBonuses(), state.guildBuff);
+  // nolevel-1: accountLevelMultiplier 제거. 도감 보너스만 사용.
+  return currentCollectionBonuses();
 }
 
 function cardMarkup(card, index) {
@@ -2125,7 +2118,6 @@ function showScreen(screen) {
   else if (screen === 'worldboss') worldBossController?.render();
   else if (screen === 'minigame') miniGameController?.render();
   else if (screen === 'ranking') rankingController?.render();
-  else if (screen === 'guild') void guildController?.load();
   else {
     renderAll();
     if (state.autoBattle) setTimeout(runBattle, 350);
@@ -2665,25 +2657,6 @@ async function init() {
       getFormation: formationCards,
       getCombatPower: () => computeFormationPower(formationCards(), currentCombatBonuses()),
       gameService,
-    });
-    guildController = createGuildController({
-      getState: () => state,
-      gameService,
-      serverCommands: remoteMode ? {
-        createGuild: (payload) => executeServerCommand(GAME_COMMAND_TYPES.CREATE_GUILD, payload),
-        disbandGuild: () => executeServerCommand(GAME_COMMAND_TYPES.DISBAND_GUILD, {}),
-        updateGuildSettings: (payload) => executeServerCommand(GAME_COMMAND_TYPES.UPDATE_GUILD_SETTINGS, payload),
-        requestJoinGuild: (payload) => executeServerCommand(GAME_COMMAND_TYPES.REQUEST_JOIN_GUILD, payload),
-        cancelJoinRequest: (payload) => executeServerCommand(GAME_COMMAND_TYPES.CANCEL_JOIN_REQUEST, payload),
-        resolveJoinRequest: (payload) => executeServerCommand(GAME_COMMAND_TYPES.RESOLVE_JOIN_REQUEST, payload),
-        leaveGuild: () => executeServerCommand(GAME_COMMAND_TYPES.LEAVE_GUILD, {}),
-        kickGuildMember: (payload) => executeServerCommand(GAME_COMMAND_TYPES.KICK_GUILD_MEMBER, payload),
-        setGuildMemberRole: (payload) => executeServerCommand(GAME_COMMAND_TYPES.SET_GUILD_MEMBER_ROLE, payload),
-        claimGuildWeeklyReward: () => executeServerCommand(GAME_COMMAND_TYPES.CLAIM_GUILD_WEEKLY_REWARD, {}),
-        attackGuildRaid: () => executeServerCommand(GAME_COMMAND_TYPES.ATTACK_GUILD_RAID, {}),
-        claimGuildRaidReward: () => executeServerCommand(GAME_COMMAND_TYPES.CLAIM_GUILD_RAID_REWARD, {}),
-      } : null,
-      showToast,
     });
     liveTickerController = createLiveTickerController({
       runtime: remoteRuntime,

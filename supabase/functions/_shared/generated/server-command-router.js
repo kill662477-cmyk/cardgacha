@@ -1,6 +1,6 @@
 import { ADVENTURE_RULES, BALANCE_VERSION, STAGES } from './config.js';
 import { computeFormationPower, simulateBattle } from './battle.js';
-import { calculateCollectionBonuses } from './collection.js';
+import { applyGuildBuff, calculateCollectionBonuses } from './collection.js';
 import { simulateWorldBossAttempt } from './worldboss.js';
 import {
   GAME_COMMAND_TYPES,
@@ -23,6 +23,18 @@ const DIRECT_RPCS = Object.freeze({
   [GAME_COMMAND_TYPES.PLAY_LADDER]: 'gacha_s2_play_ladder',
   [GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD]: 'gacha_s2_claim_world_boss_reward',
   [GAME_COMMAND_TYPES.DISMANTLE_CARDS]: 'gacha_s2_dismantle_cards',
+  // 길드(PDB-16 M1). 전부 서버 상태만 바꾸므로 클라 재현 검증이 필요 없다.
+  [GAME_COMMAND_TYPES.CREATE_GUILD]: 'gacha_s2_create_guild',
+  [GAME_COMMAND_TYPES.DISBAND_GUILD]: 'gacha_s2_disband_guild',
+  [GAME_COMMAND_TYPES.UPDATE_GUILD_SETTINGS]: 'gacha_s2_update_guild_settings',
+  [GAME_COMMAND_TYPES.REQUEST_JOIN_GUILD]: 'gacha_s2_request_join_guild',
+  [GAME_COMMAND_TYPES.CANCEL_JOIN_REQUEST]: 'gacha_s2_cancel_join_request',
+  [GAME_COMMAND_TYPES.RESOLVE_JOIN_REQUEST]: 'gacha_s2_resolve_join_request',
+  [GAME_COMMAND_TYPES.LEAVE_GUILD]: 'gacha_s2_leave_guild',
+  [GAME_COMMAND_TYPES.KICK_GUILD_MEMBER]: 'gacha_s2_kick_guild_member',
+  [GAME_COMMAND_TYPES.SET_GUILD_MEMBER_ROLE]: 'gacha_s2_set_guild_member_role',
+  [GAME_COMMAND_TYPES.CLAIM_GUILD_WEEKLY_REWARD]: 'gacha_s2_claim_guild_weekly_reward',
+  [GAME_COMMAND_TYPES.CLAIM_GUILD_RAID_REWARD]: 'gacha_s2_claim_guild_raid_reward',
 });
 
 function canonicalJson(value) {
@@ -99,6 +111,30 @@ function directArgs(userId, command) {
       return { ...args, p_event_id: payload.eventId };
     case GAME_COMMAND_TYPES.DISMANTLE_CARDS:
       return { ...args, p_rarity: payload.rarity };
+    case GAME_COMMAND_TYPES.CREATE_GUILD:
+      return {
+        ...args,
+        p_name: payload.name,
+        p_tag: payload.tag ?? null,
+        p_emblem: payload.emblem ?? null,
+      };
+    case GAME_COMMAND_TYPES.UPDATE_GUILD_SETTINGS:
+      return {
+        ...args,
+        p_notice: payload.notice ?? '',
+        p_emblem: payload.emblem ?? null,
+        p_join_mode: payload.joinMode ?? null,
+      };
+    case GAME_COMMAND_TYPES.REQUEST_JOIN_GUILD:
+    case GAME_COMMAND_TYPES.CANCEL_JOIN_REQUEST:
+      return { ...args, p_guild_id: payload.guildId };
+    case GAME_COMMAND_TYPES.RESOLVE_JOIN_REQUEST:
+      return { ...args, p_target_user_id: payload.targetUserId, p_approve: payload.approve };
+    case GAME_COMMAND_TYPES.KICK_GUILD_MEMBER:
+      return { ...args, p_target_user_id: payload.targetUserId };
+    case GAME_COMMAND_TYPES.SET_GUILD_MEMBER_ROLE:
+      return { ...args, p_target_user_id: payload.targetUserId, p_role: payload.role };
+    // DISBAND_GUILD, LEAVE_GUILD, CLAIM_GUILD_WEEKLY_REWARD 는 추가 인자가 없어 default(baseArgs)로 처리된다.
     default:
       return args;
   }
@@ -172,9 +208,11 @@ export function createServerCommandRouter(options) {
     }
     const formation = formationFromSnapshot(snapshot, cardsById);
     const calculated = calculateCollectionBonuses(cards, snapshot.collectionRecords ?? {});
-    const bonuses = Object.fromEntries(
+    const base = Object.fromEntries(
       ['attack', 'hp', 'defense', 'bossDamage', 'idle', 'combatTotal'].map((key) => [key, calculated[key]]),
     );
+    // 길드 스탯 버프는 스냅샷에 실려 오므로 클라이언트와 같은 값으로 합산된다.
+    const bonuses = applyGuildBuff(base, snapshot.guildBuff);
     return { command, snapshot, formation, bonuses };
   }
 
@@ -233,6 +271,35 @@ export function createServerCommandRouter(options) {
         return await gateway.rpc('gacha_s2_claim_idle_reward', {
           ...baseArgs(userId, command),
           p_idle_bonus: context.bonuses.idle,
+        });
+      }
+
+      if (command.type === GAME_COMMAND_TYPES.ATTACK_GUILD_RAID) {
+        // 길드 레이드는 월드보스와 같은 합산딜 구조라 전투 시뮬레이션을 그대로 재사용한다.
+        const context = await verifiedContext(userId, command);
+        const status = await gateway.rpc('gacha_s2_get_guild_raid_status', { p_user_id: userId });
+        const raidId = status?.raid?.raidId ?? null;
+        if (!raidId) {
+          return commandError(command, GAME_ERROR_CODES.COMMAND_REJECTED, '지금은 길드 레이드 시간이 아닙니다.', clock);
+        }
+        const attemptNumber = Number(status?.me?.attempts ?? 0) + 1;
+        const battle = simulateWorldBossAttempt(context.formation, context.bonuses, attemptNumber, raidId);
+        const digest = await sha256({
+          balanceVersion: BALANCE_VERSION,
+          commandId: command.commandId,
+          type: command.type,
+          userId,
+          raidId,
+          attemptNumber,
+          formation: context.formation.map((card) => ({ id: card.id, enhancement: card.enhancement })),
+          bonuses: context.bonuses,
+          damageByCard: battle.damageByCard,
+          totalDamage: battle.totalDamage,
+        });
+        return await gateway.rpc('gacha_s2_attack_guild_raid', {
+          ...baseArgs(userId, command),
+          p_verified_damage: battle.totalDamage,
+          p_verification_digest: digest,
         });
       }
 

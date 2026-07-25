@@ -58,6 +58,7 @@
         <button class="nav-item" type="button" data-screen="enhance"><i data-lucide="chevrons-up"></i><span>강화</span></button>
         <button class="nav-item" type="button" data-screen="collection"><i data-lucide="book-open"></i><span>도감</span></button>
         <button class="nav-item" type="button" data-screen="ranking"><i data-lucide="trophy"></i><span>랭킹</span></button>
+        <button class="nav-item" type="button" data-screen="guild"><i data-lucide="shield"></i><span>길드</span></button>
         <button class="nav-item active" type="button" data-screen="adventure"><i data-lucide="compass"></i><span>모험</span></button>
         <button class="nav-item" type="button" data-screen="formation"><i data-lucide="users"></i><span>편성</span></button>
         <button class="nav-item" type="button" data-screen="worldboss" style="position: relative;"><i data-lucide="radio-tower"></i><span>월드보스</span><span id="worldBossNavBadge" hidden style="position: absolute; top: 2px; right: 2px; background: var(--color-danger, #e11d48); color: white; font-size: 9px; font-weight: 800; border-radius: 50%; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; line-height: 1;">!</span></button>
@@ -401,6 +402,84 @@
         </section>
         <p class="ranking-note">현재 편성 카드의 등급, 강화 단계, 종족 시너지와 도감 전투 보너스를 합산한 전투력 기준.</p>
       </aside>
+    </main>
+
+    <main class="guild-screen" id="guildScreen" hidden>
+      <!-- 소속 길드가 있을 때 -->
+      <section class="guild-home" id="guildHome" hidden>
+        <header class="guild-heading">
+          <div class="guild-identity">
+            <div class="guild-emblem" id="guildEmblem" aria-hidden="true"></div>
+            <div>
+              <span id="guildTagLine">GUILD</span>
+              <h1 id="guildName">-</h1>
+              <small id="guildMeta">-</small>
+            </div>
+          </div>
+          <div class="guild-actions" id="guildActions"></div>
+        </header>
+        <p class="guild-notice" id="guildNotice" hidden></p>
+
+        <section class="guild-raid" id="guildRaidBox" hidden>
+          <div class="guild-weekly-head">
+            <h2>길드 레이드</h2>
+            <span id="guildRaidPhase"></span>
+          </div>
+          <small id="guildRaidNote">매주 수·토 21:00 KST · 처치 성공 시 길드원 전원 보상</small>
+          <div class="guild-raid-hp"><i id="guildRaidHpBar"></i></div>
+          <div class="guild-raid-actions">
+            <button class="confirm-button" type="button" id="guildRaidAttack" hidden>공격</button>
+            <button class="confirm-button" type="button" id="guildRaidClaim" hidden>보상 받기</button>
+          </div>
+          <ul class="guild-raid-participants" id="guildRaidParticipants"></ul>
+        </section>
+
+        <section class="guild-weekly" id="guildWeeklyBox" hidden>
+          <div class="guild-weekly-head">
+            <h2>주간 공동목표</h2>
+            <button class="confirm-button" type="button" id="guildWeeklyClaim" hidden>보상 받기 80,000 P</button>
+          </div>
+          <small id="guildWeeklyNote">길드원 모두가 함께 채웁니다 · 매주 월요일 초기화</small>
+          <ul class="guild-weekly-list" id="guildWeeklyList"></ul>
+        </section>
+
+        <section class="guild-requests" id="guildRequestsBox" hidden>
+          <h2>가입 신청 <span id="guildRequestCount">0</span></h2>
+          <ul class="guild-request-list" id="guildRequestList"></ul>
+        </section>
+
+        <section class="guild-members">
+          <div class="guild-members-head">
+            <h2>길드원 <span id="guildMemberCount">0</span></h2>
+            <small>기여도는 길드원 모두에게 공개됩니다</small>
+          </div>
+          <ul class="guild-member-list" id="guildMemberList"></ul>
+        </section>
+      </section>
+
+      <!-- 소속 길드가 없을 때 -->
+      <section class="guild-browse" id="guildBrowse" hidden>
+        <header class="guild-heading">
+          <div><span>GUILD</span><h1>길드</h1></div>
+        </header>
+        <p class="guild-penalty" id="guildPenalty" hidden></p>
+
+        <section class="guild-create" id="guildCreateBox" hidden>
+          <h2>길드 만들기</h2>
+          <small>방송인 계정만 길드를 만들 수 있습니다</small>
+          <form id="guildCreateForm" class="guild-create-form">
+            <input type="text" id="guildCreateName" placeholder="길드 이름 (2~20자)" maxlength="20" required>
+            <input type="text" id="guildCreateTag" placeholder="태그 (선택, 최대 6자)" maxlength="6">
+            <div class="guild-emblem-picker" id="guildEmblemPicker"></div>
+            <button class="confirm-button" type="submit">길드 생성</button>
+          </form>
+        </section>
+
+        <section class="guild-list-box">
+          <h2>길드 목록</h2>
+          <ul class="guild-list" id="guildList"></ul>
+        </section>
+      </section>
     </main>
 
     <main class="minigame-screen" id="minigameScreen" hidden>

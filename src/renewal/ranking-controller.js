@@ -8,9 +8,9 @@ const number = new Intl.NumberFormat('ko-KR');
 
 // 소속 길드를 "엠블럼 [태그] 이름" 형태로 보여 준다. 무소속이면 빈 문자열.
 // 이미지 엠블럼을 쓰려면 innerHTML 이어야 하므로, 길드명·태그는 반드시 이스케이프한다.
-function guildBadgeMarkup(guild) {
+function guildBadgeMarkup(guild, { showTag = true } = {}) {
   if (!guild || !guild.name) return '';
-  const tag = guild.tag ? `[${escapeHtml(guild.tag)}] ` : '';
+  const tag = showTag && guild.tag ? `[${escapeHtml(guild.tag)}] ` : '';
   return `<span class="ranking-guild-badge">${emblemMarkup(guild.emblem, 'ranking-guild-emblem')}${tag}${escapeHtml(guild.name)}</span>`;
 }
 const PODIUM_CARD_IDS = ['kimyunhwan-2', 'tomato-1', 'jidudu-1'];
@@ -21,6 +21,7 @@ export function createRankingController({ cards = [], getState, getFormation, ge
     'rankingMyRank', 'rankingMyPercentile', 'rankingMyPower', 'rankingTopFiftyGap',
     'rankingProgressBar', 'rankingFormation',
     'rankerDeckDialog', 'rankerDeckEyebrow', 'rankerDeckTitle', 'rankerDeckPower', 'rankerDeckGrid',
+    'rankerDeckGuild',
   ].map((id) => [id, document.getElementById(id)]));
   const cardsById = new Map(cards.map((card) => [card.id, card]));
   let renderSequence = 0;
@@ -46,11 +47,12 @@ export function createRankingController({ cards = [], getState, getFormation, ge
       const enhancement = typeof item === 'string' ? 0 : Number(item?.enhancement) || 0;
       return { ...card, enhancement };
     }).filter(Boolean);
-    const guildBadge = guildBadgeMarkup(entry.guild);
-    elements.rankerDeckEyebrow.innerHTML = guildBadge
-      ? `${entry.rank}위 · ${escapeHtml(entry.nickname)} · ${guildBadge}`
-      : `${entry.rank}위 · ${escapeHtml(entry.nickname)}`;
-    elements.rankerDeckTitle.textContent = `${escapeHtml(entry.nickname)}님의 편성`;
+    elements.rankerDeckEyebrow.textContent = `${entry.rank}위 · ${entry.nickname}`;
+    // 길드는 별도 줄로 크게 보여 준다. 태그는 길어서 여기선 빼고 엠블럼 + 길드명만 쓴다.
+    const guildBadge = guildBadgeMarkup(entry.guild, { showTag: false });
+    elements.rankerDeckGuild.hidden = !guildBadge;
+    elements.rankerDeckGuild.innerHTML = guildBadge;
+    elements.rankerDeckTitle.textContent = `${entry.nickname}님의 편성`;
     elements.rankerDeckPower.textContent = `전투력 ${number.format(entry.power)}`;
     elements.rankerDeckGrid.innerHTML = deck.length ? deck.map((card) => `<figure class="card-visual" data-rarity="${card.rarity}" data-stars="${card.enhancement}" style="--rarity:${RARITIES[card.rarity].color}">
       <img class="card-photo" src="${imagePath(card)}" alt="${escapeHtml(card.member)}">${cardVisualChrome(card)}<figcaption>${escapeHtml(card.member)}</figcaption>

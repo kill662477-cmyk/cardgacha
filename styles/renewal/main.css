@@ -1953,6 +1953,13 @@ button[aria-busy="true"]::after {
 .guild-emblem-option .guild-emblem-option-mark { width: 100%; height: 100%; }
 .ranking-guild-badge { display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; }
 .ranking-guild-emblem.guild-emblem-image { width: 1.35em; height: 1.35em; border-radius: 50%; }
+/* 랭커 편성 모달 헤더: 왼쪽 = 순위·닉네임 + 길드, 오른쪽 = "OOO님의 편성". */
+.ranker-deck-dialog .dialog-shell > header { gap: 14px; align-items: center; }
+.ranker-deck-ident { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.ranker-deck-guild { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: 15px; font-weight: 850; }
+.ranker-deck-guild .ranking-guild-badge { gap: 7px; overflow: hidden; }
+.ranker-deck-guild .ranking-guild-emblem.guild-emblem-image { width: 30px; height: 30px; }
+.ranker-deck-dialog .dialog-shell h2 { margin: 0; flex: none; text-align: right; }
 
 .guild-empty { padding: 18px; text-align: center; color: var(--muted); font-size: .82rem; }
 .guild-sort { display: flex; gap: 6px; margin-left: auto; }

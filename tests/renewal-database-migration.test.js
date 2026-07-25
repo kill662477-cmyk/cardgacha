@@ -52,7 +52,7 @@ assert.match(globalRewardSql, /set points = state\.points \+ reward\.points_gran
 assert.match(globalRewardSql, /and reward\.points_after is null/);
 assert.match(globalRewardSql, /v_reward_total <> v_reward_count::bigint \* 50000/);
 assert.match(globalRewardSql, /revoke all on table public\.gacha_s2_ss_sss_buff_reward_20260723/);
-assert.match(indexHtml, /\[이스코어 결승 기념\] 전 계정 30,000 P 지급/);
+assert.match(indexHtml, /\[ASL 본선 진출 기념\] 전 계정 30,000 P 지급/);
 assert.match(indexHtml, /30,000 포인트<\/strong>를 특별 지급/);
 
 console.log('renewal database migration tests passed: read-only source, account and bridge carryover, clean game state');

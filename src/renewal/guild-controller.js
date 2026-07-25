@@ -36,6 +36,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
     'guildActions', 'guildNotice', 'guildRequestsBox', 'guildRequestCount', 'guildRequestList',
     'guildMemberCount', 'guildMemberList', 'guildPenalty', 'guildCreateBox', 'guildCreateForm',
     'guildCreateName', 'guildCreateTag', 'guildEmblemPicker', 'guildList',
+    'guildWeeklyBox', 'guildWeeklyClaim', 'guildWeeklyList', 'guildWeeklyNote',
   ].map((id) => [id, document.getElementById(id)]));
 
   let guildState = null;
@@ -107,6 +108,30 @@ export function createGuildController({ getState, gameService, serverCommands = 
     }).join('') || '<li class="guild-empty">길드원이 없습니다</li>';
   }
 
+  function renderWeekly(weekly) {
+    if (!elements.guildWeeklyBox) return;
+    if (!weekly || !Array.isArray(weekly.goals) || !weekly.goals.length) {
+      elements.guildWeeklyBox.hidden = true;
+      return;
+    }
+    elements.guildWeeklyBox.hidden = false;
+    elements.guildWeeklyList.innerHTML = weekly.goals.map((g) => {
+      const ratio = g.target > 0 ? Math.min(100, Math.round((g.progress / g.target) * 100)) : 0;
+      return `<li class="guild-weekly-goal${g.complete ? ' complete' : ''}">
+        <div class="guild-weekly-label"><strong>${escapeHtml(g.label)}</strong>
+          <span>${number.format(g.progress)} / ${number.format(g.target)}</span></div>
+        <div class="guild-weekly-bar"><i style="width:${ratio}%"></i></div>
+        <small>1인 최대 ${number.format(g.memberCap)}회까지 집계</small>
+      </li>`;
+    }).join('');
+    // 달성했고 아직 안 받았을 때만 수령 버튼을 노출한다.
+    const claimable = Boolean(weekly.allComplete) && !weekly.claimed;
+    elements.guildWeeklyClaim.hidden = !claimable;
+    elements.guildWeeklyNote.textContent = weekly.claimed
+      ? '이번 주 보상을 받았습니다 · 매주 월요일 초기화'
+      : (weekly.allComplete ? '목표 달성! 보상을 받으세요' : '길드원 모두가 함께 채웁니다 · 매주 월요일 초기화');
+  }
+
   function renderSortControls() {
     const head = document.querySelector('.guild-members-head');
     if (!head) return;
@@ -175,6 +200,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
     }
     elements.guildActions.innerHTML = actions.join('');
 
+    renderWeekly(guildState.weekly);
     renderRequests(guildState.joinRequests);
     renderMembers(guildState.members);
     renderSortControls();
@@ -183,6 +209,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
   function renderBrowse() {
     elements.guildHome.hidden = true;
     elements.guildBrowse.hidden = false;
+    if (elements.guildWeeklyBox) elements.guildWeeklyBox.hidden = true;
 
     const penaltyUntil = guildState?.penaltyUntil;
     if (Number.isFinite(penaltyUntil) && penaltyUntil > Date.now()) {
@@ -276,6 +303,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
       else if (guildReject) void run(() => serverCommands.resolveJoinRequest({ targetUserId: guildReject, approve: false }));
       else if (guildRole) void run(() => serverCommands.setGuildMemberRole({ targetUserId: guildRole, role: target.dataset.roleNext }));
       else if (guildJoinmode) void run(() => serverCommands.updateGuildSettings({ notice: guildState?.guild?.notice ?? '', joinMode: guildJoinmode }));
+      else if (target.id === 'guildWeeklyClaim') void run(() => serverCommands.claimGuildWeeklyReward());
       else if (target.hasAttribute('data-guild-leave')) void run(() => serverCommands.leaveGuild());
       else if (target.hasAttribute('data-guild-disband')) {
         if (window.confirm('길드를 해산하면 모든 길드원이 탈퇴 처리됩니다. 계속할까요?')) {

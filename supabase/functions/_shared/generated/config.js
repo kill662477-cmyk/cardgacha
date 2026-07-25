@@ -380,6 +380,19 @@ export const GUILD_RULES = {
   dailyGpCapPerMember: 200,
   // 포인트 기부로 공헌도를 보충할 수 있다(인플레 완화 밸브).
   donation: { pointsPerGp: 500, dailyPointCap: 50_000 },
+  // 주간 공동목표(PDB-16 3.2). 월요일 00:00 KST 리셋.
+  // 목표치는 인원 비례이며(기준 30명), 1인이 목표의 8% 넘게 기여해도 그 초과분은
+  // 집계하지 않는다. 소수 고인물이 혼자 끝내지 못하게 하고 라이트 유저의 기여 여지를 남긴다.
+  weekly: {
+    memberBaseline: 30,
+    memberContributionCap: 0.08,
+    rewardPoints: 80_000,
+    goals: [
+      { key: 'adventure', label: '모험 클리어', source: 'adventure', perMember: 10 },
+      { key: 'minigame', label: '미니게임 플레이', source: 'minigame', perMember: 7 },
+      { key: 'worldboss', label: '월드보스 공격', source: 'worldboss', perMember: 4 },
+    ],
+  },
   levels: [
     { level: 1, requiredGp: 0, memberLimit: 30, atk: 0, hp: 0, def: 0, points: 0 },
     { level: 2, requiredGp: 3_000, memberLimit: 40, atk: 0.02, hp: 0, def: 0, points: 0 },

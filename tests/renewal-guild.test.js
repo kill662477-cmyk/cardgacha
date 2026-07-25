@@ -14,6 +14,7 @@ const join = squash(await read('supabase/migrations/20260725000095_guild_m1_rpc_
 const member = squash(await read('supabase/migrations/20260725000096_guild_m1_rpc_member.sql'));
 const gpLevels = squash(await read('supabase/migrations/20260725000097_guild_m2_gp_levels.sql'));
 const snapshotSql = squash(await read('supabase/migrations/20260725000098_guild_m2_snapshot_buff.sql'));
+const weekly = squash(await read('supabase/migrations/20260725000099_guild_m3_weekly_goals.sql'));
 const router = await read('src/renewal/server-command-router.js');
 const edge = await read('supabase/functions/game-command/index.ts');
 
@@ -184,4 +185,31 @@ const appJs = await read('src/renewal/app.js');
 assert.match(appJs, /applyGuildBuff\(currentCollectionBonuses\(\), state\.guildBuff\)/);
 
 console.log('renewal guild M1 tests passed: 5 tables, 9 commands, revision-bump guard, penalty/limit rules');
+// ── M3: 주간 공동목표 ─────────────────────────────────────
+assert.equal(GUILD_RULES.weekly.rewardPoints, 80_000);
+assert.equal(GUILD_RULES.weekly.memberContributionCap, 0.08, '개인 기여 상한 8%');
+assert.equal(GUILD_RULES.weekly.memberBaseline, 30);
+assert.equal(GUILD_RULES.weekly.goals.length, 3);
+assert.deepEqual(GUILD_RULES.weekly.goals.map((g) => g.source), ['adventure', 'minigame', 'worldboss']);
+
+// 주간 리셋은 cron 없이 week_start_kst 키로 갈린다(월요일 시작).
+assert.match(weekly, /date_trunc\('week', \(p_now at time zone 'asia\/seoul'\)\)/);
+// 진행도는 별도 저장 없이 기여 내역에서 집계하고, 개인 상한을 적용한 뒤 합산해야 한다.
+assert.match(weekly, /sum\(least\(per_user\.actions, v_cap\)\)/,
+  '개인별 상한 적용 후 합산이어야 소수 인원이 혼자 목표를 끝낼 수 없다');
+assert.match(weekly, /v_cap := greatest\(1, ceil\(v_target \* 0\.08\)::integer\)/);
+assert.match(weekly, /v_target := ceil\(v_goal\.per_member::numeric \* v_members\)::integer/, '목표치 인원 비례');
+// 주간 경계: 해당 주 7일만 집계.
+assert.match(weekly, /c\.day_kst >= v_week and c\.day_kst < v_week \+ 7/);
+// GP 는 하루 상한을 받지만 수행 횟수(actions)는 상한과 무관하게 세야 한다.
+assert.match(weekly, /add column if not exists actions integer not null default 0/);
+assert.match(weekly, /actions = public\.gacha_s2_guild_contributions\.actions \+ 1/);
+// 보상은 전원 지급이므로 개인별 수령 기록으로 중복을 막는다.
+assert.match(weekly, /create table if not exists public\.gacha_s2_guild_weekly_claims/);
+assert.match(weekly, /이번 주 보상을 이미 받았습니다/);
+assert.match(weekly, /주간 목표를 아직 달성하지 못했습니다/);
+assert.match(weekly, /v_points constant integer := 80000/);
+assert.match(router, /'gacha_s2_claim_guild_weekly_reward'/);
+
+console.log('renewal guild M3 tests passed: weekly goals, 8% member cap, week boundary, claim guard');
 console.log('renewal guild M2 tests passed: 10 levels, GP trigger, daily cap, buff merge parity');

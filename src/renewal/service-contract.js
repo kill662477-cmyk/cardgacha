@@ -28,6 +28,7 @@ export const GAME_COMMAND_TYPES = Object.freeze({
   LEAVE_GUILD: 'leaveGuild',
   KICK_GUILD_MEMBER: 'kickGuildMember',
   SET_GUILD_MEMBER_ROLE: 'setGuildMemberRole',
+  CLAIM_GUILD_WEEKLY_REWARD: 'claimGuildWeeklyReward',
 });
 
 export const GAME_ERROR_CODES = Object.freeze({

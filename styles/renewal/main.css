@@ -1950,3 +1950,17 @@ button[aria-busy="true"]::after {
   background: transparent; color: var(--muted); border: 1px solid var(--line);
 }
 .guild-sort button.selected { color: var(--cyan); border-color: var(--cyan); }
+.guild-weekly { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+.guild-weekly-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.guild-weekly-head h2 { margin: 0; font-size: .95rem; }
+.guild-weekly-head button { width: auto; padding: 8px 14px; font-size: .78rem; }
+.guild-weekly > small { display: block; margin: 4px 0 10px; color: var(--muted); font-size: .74rem; }
+.guild-weekly-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.guild-weekly-goal { display: grid; gap: 5px; padding: 10px 12px; border-radius: 11px; background: var(--panel-soft); border: 1px solid var(--line); }
+.guild-weekly-goal.complete { border-color: color-mix(in srgb, var(--acid, #b6ff3b) 55%, transparent); }
+.guild-weekly-label { display: flex; justify-content: space-between; gap: 8px; font-size: .84rem; }
+.guild-weekly-label span { color: var(--muted); }
+.guild-weekly-bar { height: 6px; border-radius: 999px; background: var(--panel); overflow: hidden; }
+.guild-weekly-bar i { display: block; height: 100%; background: var(--cyan); }
+.guild-weekly-goal.complete .guild-weekly-bar i { background: var(--acid, #b6ff3b); }
+.guild-weekly-goal small { color: var(--muted); font-size: .7rem; }

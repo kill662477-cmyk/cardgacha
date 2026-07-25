@@ -2679,6 +2679,7 @@ async function init() {
         leaveGuild: () => executeServerCommand(GAME_COMMAND_TYPES.LEAVE_GUILD, {}),
         kickGuildMember: (payload) => executeServerCommand(GAME_COMMAND_TYPES.KICK_GUILD_MEMBER, payload),
         setGuildMemberRole: (payload) => executeServerCommand(GAME_COMMAND_TYPES.SET_GUILD_MEMBER_ROLE, payload),
+        claimGuildWeeklyReward: () => executeServerCommand(GAME_COMMAND_TYPES.CLAIM_GUILD_WEEKLY_REWARD, {}),
       } : null,
       showToast,
     });

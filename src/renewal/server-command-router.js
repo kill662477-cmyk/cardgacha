@@ -33,6 +33,7 @@ const DIRECT_RPCS = Object.freeze({
   [GAME_COMMAND_TYPES.LEAVE_GUILD]: 'gacha_s2_leave_guild',
   [GAME_COMMAND_TYPES.KICK_GUILD_MEMBER]: 'gacha_s2_kick_guild_member',
   [GAME_COMMAND_TYPES.SET_GUILD_MEMBER_ROLE]: 'gacha_s2_set_guild_member_role',
+  [GAME_COMMAND_TYPES.CLAIM_GUILD_WEEKLY_REWARD]: 'gacha_s2_claim_guild_weekly_reward',
 });
 
 function canonicalJson(value) {
@@ -132,7 +133,7 @@ function directArgs(userId, command) {
       return { ...args, p_target_user_id: payload.targetUserId };
     case GAME_COMMAND_TYPES.SET_GUILD_MEMBER_ROLE:
       return { ...args, p_target_user_id: payload.targetUserId, p_role: payload.role };
-    // DISBAND_GUILD, LEAVE_GUILD 는 추가 인자가 없어 default(baseArgs)로 처리된다.
+    // DISBAND_GUILD, LEAVE_GUILD, CLAIM_GUILD_WEEKLY_REWARD 는 추가 인자가 없어 default(baseArgs)로 처리된다.
     default:
       return args;
   }

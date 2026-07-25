@@ -186,6 +186,22 @@ assert.match(router, /applyGuildBuff\(base, snapshot\.guildBuff\)/);
 const appJs = await read('src/renewal/app.js');
 assert.match(appJs, /applyGuildBuff\(currentCollectionBonuses\(\), state\.guildBuff\)/);
 
+
+// 네비에 화면을 추가하면 showScreen 에서 그 화면을 토글해 줘야 한다.
+// SCREEN_IDS 에만 넣고 토글을 빠뜨리면 탭은 눌리는데 화면이 비어 있다(실제로 겪음).
+const appSource = await read('src/renewal/app.js');
+// 화면 id 와 elements 키가 다른 경우가 있어(worldboss -> worldBossScreen) 쌍으로 적는다.
+for (const [screen, element] of [
+  ['adventure', 'adventureScreen'], ['enhance', 'enhanceScreen'], ['collection', 'collectionScreen'],
+  ['worldboss', 'worldBossScreen'], ['minigame', 'minigameScreen'], ['ranking', 'rankingScreen'],
+  ['guild', 'guildScreen'],
+]) {
+  assert.match(appSource, new RegExp(`elements\.${element}\.hidden = screen !== '${screen}'`),
+    `showScreen 이 ${screen} 화면을 토글하지 않는다 — 탭을 눌러도 빈 화면이 된다`);
+}
+// shop/inventory 는 같은 화면을 공유하므로 shopFamily 로 처리한다.
+assert.match(appSource, /elements\.shopScreen\.hidden = !shopFamily/);
+
 console.log('renewal guild M1 tests passed: 5 tables, 9 commands, revision-bump guard, penalty/limit rules');
 // ── M3: 주간 공동목표 ─────────────────────────────────────
 assert.equal(GUILD_RULES.weekly.rewardPoints, 80_000);

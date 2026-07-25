@@ -2117,6 +2117,7 @@ function showScreen(screen) {
   elements.worldBossScreen.hidden = screen !== 'worldboss';
   elements.minigameScreen.hidden = screen !== 'minigame';
   elements.rankingScreen.hidden = screen !== 'ranking';
+  elements.guildScreen.hidden = screen !== 'guild';
   worldBossController?.setActive(screen === 'worldboss');
   document.querySelectorAll('.nav-item').forEach((button) => button.classList.toggle('active', button.dataset.screen === screen));
   if (shopFamily) renderShop();
@@ -2598,7 +2599,7 @@ async function init() {
   setSystemState('loading');
   fxController = createFxController({ soundEnabled: state.soundEnabled !== false, random: gameService.random });
   try {
-    const response = await fetch('data/renewal-cards.json?v=202607251330');
+    const response = await fetch('data/renewal-cards.json?v=202607251345');
     if (!response.ok) throw new Error(`Card data request failed: ${response.status}`);
     cards = await response.json();
     cardsById = new Map(cards.map((card) => [card.id, card]));

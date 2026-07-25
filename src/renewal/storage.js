@@ -58,6 +58,8 @@ export function createDefaultState(now = Date.now()) {
     activeFormationPresetId: null,
     miniGameRuns: [],
     powerRanking: { seasonId: 'local-preview', snapshotAt: 0, power: 0, rank: null, population: 1500 },
+    // 소속이 없으면 전부 0이라 전투 계산이 이전과 동일하다.
+    guildBuff: { guildId: null, level: 0, atk: 0, hp: 0, def: 0, points: 0 },
   };
 }
 

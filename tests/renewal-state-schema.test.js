@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import fs from 'node:fs';
 import {
   CLIENT_CACHE_FIELDS,
@@ -196,15 +196,24 @@ function topLevelSnapshotKeys(sql) {
   return keys;
 }
 
-const snapshotSql = await readFile(
-  new URL('../supabase/migrations/20260718000003_renewal_migration_003_command_foundation.sql', import.meta.url),
-  'utf8',
-);
-const snapshotKeys = topLevelSnapshotKeys(snapshotSql);
-assert.ok(snapshotKeys.length > 20, '스냅샷 최상위 키를 추출하지 못했다(파서 확인 필요)');
+// 스냅샷 함수를 재정의하는 마이그레이션은 여러 개일 수 있으므로 전부 검사한다.
+// 하나라도 선언되지 않은 필드를 내려보내면 그 시점부터 로그인이 막힌다.
+const migrationsDir = new URL('../supabase/migrations/', import.meta.url);
 const declaredFields = new Set([...SERVER_AUTHORITY_FIELDS, ...CLIENT_CACHE_FIELDS]);
-const undeclared = snapshotKeys.filter((key) => !declaredFields.has(key));
-assert.deepEqual(undeclared, [],
-  `스냅샷이 내려보내는 필드가 v2 목록에 없다: ${undeclared.join(', ')} — SERVER_AUTHORITY_FIELDS 에 추가해야 로그인이 막히지 않는다`);
+let checkedSnapshotDefs = 0;
+let lastSnapshotKeyCount = 0;
+for (const file of (await readdir(migrationsDir)).filter((name) => name.endsWith('.sql'))) {
+  const sql = await readFile(new URL(file, migrationsDir), 'utf8');
+  if (!sql.includes('gacha_s2_get_player_snapshot(p_user_id uuid)')) continue;
+  const keys = topLevelSnapshotKeys(sql);
+  if (keys.length === 0) continue;
+  checkedSnapshotDefs += 1;
+  lastSnapshotKeyCount = keys.length;
+  const undeclared = keys.filter((key) => !declaredFields.has(key));
+  assert.deepEqual(undeclared, [],
+    `${file} 의 스냅샷이 v2 목록에 없는 필드를 내려보낸다: ${undeclared.join(', ')} — SERVER_AUTHORITY_FIELDS 에 먼저 추가해야 로그인이 막히지 않는다`);
+}
+assert.ok(checkedSnapshotDefs > 0, '스냅샷 정의를 하나도 찾지 못했다(경로/파서 확인 필요)');
+assert.ok(lastSnapshotKeyCount > 20, '스냅샷 최상위 키를 추출하지 못했다(파서 확인 필요)');
 
-console.log(`snapshot contract ok: ${snapshotKeys.length} keys all declared`);
+console.log(`snapshot contract ok: ${checkedSnapshotDefs} definition(s), ${lastSnapshotKeyCount} keys all declared`);

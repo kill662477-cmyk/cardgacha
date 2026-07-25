@@ -14,6 +14,9 @@ export const SERVER_AUTHORITY_FIELDS = Object.freeze([
   'supportItems', 'activeBuffs', 'shopTransactions', 'enhancementAttempts',
   'miniGames', 'worldBoss', 'exMilestoneClaims', 'representativeCardId', 'formation',
   'formationPresets', 'activeFormationPresetId', 'miniGameRuns', 'powerRanking',
+  // 길드 버프(PDB-16 M2). 서버 스냅샷이 내려보내므로 반드시 여기 선언돼야 한다.
+  // 빠뜨리면 validateGameState 가 "v2에 선언되지 않은 필드"로 거부해 로그인이 막힌다.
+  'guildBuff',
 ]);
 
 export const CLIENT_CACHE_FIELDS = Object.freeze(['currentStage', 'autoBattle', 'soundEnabled']);

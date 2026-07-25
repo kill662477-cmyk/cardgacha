@@ -27,7 +27,7 @@
 - `docs/PDB-13-ADVENTURE-MINIGAME-RPC.md`: 모험 검증·빠른 전투·서버 보드 미니게임 원자 처리 기준
 - `docs/PDB-14-WORLD-BOSS-RPC.md`: KST 월드보스 회차·공동 HP·개인 시도·결과 보상 기준
 - `docs/PDB-15-SUPABASE-GAME-SERVICE.md`: 브라우저 원격 어댑터·인증 Edge 명령 라우터 기준
-- `docs/PDB-16-GUILD-CONTENT.md`: 길드 컨텐츠 기획(스트리머 개설·승인제 가입, 레벨버프·공동목표·레이드·대항전) — **기획 초안, 미구현**
+- `docs/PDB-16-GUILD-CONTENT.md`: 길드 컨텐츠 기획(스트리머 개설, 승인/자동 가입, 레벨·스탯버프·공동목표·레이드) — **기획 확정, 구현 미착수**. 대항전은 부록 A로 보류
 - `supabase/renewal_migration_001_accounts_reset.sql`: 리뷰용 시즌2 계정·브릿지 이관 migration, 운영 미실행
 - `supabase/renewal_migration_002_catalog_and_balance.sql`: 생성형 카드·밸런스 카탈로그 migration, 운영 미실행
 - `supabase/renewal_migration_003_command_foundation.sql`: 서버 스냅샷·명령 기반·편성 RPC migration, 운영 미실행

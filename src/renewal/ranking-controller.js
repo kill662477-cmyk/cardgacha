@@ -4,6 +4,20 @@ import { cardVisualChrome } from './card-visual.js';
 import { escapeHtml } from './html.js';
 
 const number = new Intl.NumberFormat('ko-KR');
+
+// 길드 엠블럼 표시 기호. guild-controller.js 와 같은 세트를 쓴다.
+const GUILD_EMBLEM_GLYPHS = Object.freeze({
+  shield: '🛡', bolt: '⚡', star: '★', crown: '♛',
+  flame: '🔥', blade: '⚔', hexcore: '⬢', signal: '📡',
+});
+
+// 소속 길드를 "엠블럼 [태그] 이름" 형태로 보여 준다. 무소속이면 빈 문자열.
+function guildBadgeText(guild) {
+  if (!guild || !guild.name) return '';
+  const glyph = GUILD_EMBLEM_GLYPHS[guild.emblem] ?? GUILD_EMBLEM_GLYPHS.shield;
+  const tag = guild.tag ? `[${guild.tag}] ` : '';
+  return `${glyph} ${tag}${guild.name}`;
+}
 const PODIUM_CARD_IDS = ['kimyunhwan-2', 'tomato-1', 'jidudu-1'];
 
 export function createRankingController({ cards = [], getState, getFormation, getCombatPower, gameService }) {
@@ -37,7 +51,10 @@ export function createRankingController({ cards = [], getState, getFormation, ge
       const enhancement = typeof item === 'string' ? 0 : Number(item?.enhancement) || 0;
       return { ...card, enhancement };
     }).filter(Boolean);
-    elements.rankerDeckEyebrow.textContent = `${entry.rank}위 · ${entry.nickname}`;
+    const guildBadge = guildBadgeText(entry.guild);
+    elements.rankerDeckEyebrow.textContent = guildBadge
+      ? `${entry.rank}위 · ${entry.nickname} · ${guildBadge}`
+      : `${entry.rank}위 · ${entry.nickname}`;
     elements.rankerDeckTitle.textContent = `${escapeHtml(entry.nickname)}님의 편성`;
     elements.rankerDeckPower.textContent = `전투력 ${number.format(entry.power)}`;
     elements.rankerDeckGrid.innerHTML = deck.length ? deck.map((card) => `<figure class="card-visual" data-rarity="${card.rarity}" data-stars="${card.enhancement}" style="--rarity:${RARITIES[card.rarity].color}">
@@ -93,7 +110,10 @@ export function createRankingController({ cards = [], getState, getFormation, ge
       </article>`;
     }).join('');
     elements.rankingList.innerHTML = ranking.leaders.slice(3).map(rowMarkup).join('');
-    elements.rankingNickname.textContent = ranking.player.nickname ?? state.nickname;
+    const myGuildBadge = guildBadgeText(ranking.player.guild);
+    elements.rankingNickname.textContent = myGuildBadge
+      ? `${ranking.player.nickname ?? state.nickname}  ${myGuildBadge}`
+      : (ranking.player.nickname ?? state.nickname);
     elements.rankingMyRank.textContent = ranking.player.rank ? number.format(ranking.player.rank) : '-';
     elements.rankingMyPercentile.textContent = `상위 ${Number(ranking.player.topPercent ?? 100).toFixed(1)}%`;
     elements.rankingMyPower.textContent = number.format(ranking.player.power ?? 0);

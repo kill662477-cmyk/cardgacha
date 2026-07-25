@@ -18,6 +18,7 @@ export const EMBLEM_IMAGES = Object.freeze({
   chiri: `assets/renewal/guild/emblems/chiri.png?v=${EMBLEM_ASSET_VERSION}`,
   byungdan: `assets/renewal/guild/emblems/byungdan.png?v=${EMBLEM_ASSET_VERSION}`,
   harang: `assets/renewal/guild/emblems/harang.png?v=${EMBLEM_ASSET_VERSION}`,
+  calmsnal: `assets/renewal/guild/emblems/calmsnal.png?v=${EMBLEM_ASSET_VERSION}`,
 });
 
 // textContent 로 넣는 자리에서 쓰는 문자 표현. 이미지 엠블럼도 텍스트 문맥에서는 기호로 대체된다.

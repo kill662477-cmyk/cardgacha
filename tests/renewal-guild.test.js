@@ -295,6 +295,7 @@ assert.match(emblemSource, /ilsin: `assets\/renewal\/guild\/emblems\/ilsin\.png\
 assert.match(emblemSource, /chiri: `assets\/renewal\/guild\/emblems\/chiri\.png\?v=/);
 assert.match(emblemSource, /byungdan: `assets\/renewal\/guild\/emblems\/byungdan\.png\?v=/);
 assert.match(emblemSource, /harang: `assets\/renewal\/guild\/emblems\/harang\.png\?v=/);
+assert.match(emblemSource, /calmsnal: `assets\/renewal\/guild\/emblems\/calmsnal\.png\?v=/);
 assert.match(
   emblemSource,
   /EMBLEM_ASSET_VERSION/,

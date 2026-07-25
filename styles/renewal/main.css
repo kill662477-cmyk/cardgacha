@@ -1856,3 +1856,91 @@ button[aria-busy="true"]::after {
 @media (hover: hover) and (pointer: fine) and (min-width: 900px) {
   .orient-guide { display: none !important; }
 }
+
+/* ── 길드 (PDB-16 M1) ─────────────────────────────────────── */
+.guild-screen {
+  display: flex; flex-direction: column; gap: 16px;
+  padding: 16px; overflow-y: auto;
+}
+.guild-heading {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 12px; flex-wrap: wrap;
+}
+.guild-heading span { font: var(--font-label); color: var(--muted); letter-spacing: .12em; }
+.guild-heading h1 { margin: 2px 0 0; font-size: 1.35rem; }
+.guild-heading small { color: var(--muted); }
+.guild-identity { display: flex; align-items: center; gap: 12px; }
+.guild-emblem {
+  width: 56px; height: 56px; flex: none; border-radius: 14px;
+  display: grid; place-items: center; font-size: 1.8rem;
+  background: var(--panel-soft); border: 1px solid var(--line-bright);
+}
+.guild-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.guild-actions button, .guild-member-actions button, .guild-request div button, .guild-list-item button {
+  padding: 7px 12px; border-radius: 9px; font-size: .78rem; font-weight: 700;
+  background: var(--panel-soft); color: var(--fg, inherit);
+  border: 1px solid var(--line-bright); cursor: pointer;
+}
+.guild-actions button:hover, .guild-member-actions button:hover,
+.guild-request div button:hover, .guild-list-item button:hover { border-color: var(--cyan); }
+.guild-actions button.danger, .guild-member-actions button.danger, .guild-request div button.danger {
+  border-color: color-mix(in srgb, crimson 55%, transparent); color: #ff8095;
+}
+.guild-list-item button:disabled { opacity: .45; cursor: not-allowed; }
+
+.guild-notice, .guild-penalty {
+  margin: 0; padding: 12px 14px; border-radius: 12px; font-size: .86rem;
+  background: var(--panel-soft); border: 1px solid var(--line);
+  white-space: pre-wrap;
+}
+.guild-penalty { border-color: color-mix(in srgb, crimson 45%, transparent); color: #ff8095; }
+
+.guild-requests, .guild-members, .guild-create, .guild-list-box {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 14px; padding: 14px;
+}
+.guild-requests h2, .guild-members h2, .guild-create h2, .guild-list-box h2 {
+  margin: 0 0 10px; font-size: .95rem;
+}
+.guild-members-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.guild-members-head small { color: var(--muted); font-size: .72rem; }
+.guild-create small { display: block; margin: -6px 0 10px; color: var(--muted); font-size: .75rem; }
+
+.guild-member-list, .guild-request-list, .guild-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.guild-member, .guild-request, .guild-list-item {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 12px; border-radius: 11px;
+  background: var(--panel-soft); border: 1px solid var(--line);
+}
+.guild-member-main { display: flex; align-items: center; gap: 8px; min-width: 140px; }
+.guild-member-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-left: auto; color: var(--muted); font-size: .74rem; }
+.guild-member-actions { display: flex; gap: 6px; }
+.guild-request { justify-content: space-between; }
+.guild-request div { display: flex; gap: 6px; }
+
+.guild-role { font-size: .68rem; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line-bright); color: var(--muted); }
+.guild-role-owner { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 50%, transparent); }
+.guild-role-officer { color: var(--cyan); border-color: color-mix(in srgb, var(--cyan) 50%, transparent); }
+
+.guild-list-emblem {
+  width: 38px; height: 38px; flex: none; border-radius: 10px; display: grid; place-items: center;
+  font-size: 1.2rem; background: var(--panel); border: 1px solid var(--line-bright);
+}
+.guild-list-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.guild-list-main em { font-style: normal; color: var(--muted); font-size: .8rem; }
+.guild-list-main small { color: var(--muted); font-size: .74rem; }
+.guild-list-item button { margin-left: auto; }
+
+.guild-create-form { display: grid; gap: 10px; }
+.guild-create-form input {
+  padding: 10px 12px; border-radius: 10px; font-size: .88rem;
+  background: var(--panel-soft); border: 1px solid var(--line); color: inherit;
+}
+.guild-emblem-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+.guild-emblem-option {
+  width: 44px; height: 44px; border-radius: 11px; font-size: 1.25rem; cursor: pointer;
+  background: var(--panel-soft); border: 1px solid var(--line);
+}
+.guild-emblem-option.selected { border-color: var(--cyan); box-shadow: 0 0 0 2px color-mix(in srgb, var(--cyan) 30%, transparent); }
+
+.guild-empty { padding: 18px; text-align: center; color: var(--muted); font-size: .82rem; }

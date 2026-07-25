@@ -18,6 +18,16 @@ export const GAME_COMMAND_TYPES = Object.freeze({
   PLAY_LADDER: 'playLadder',
   ATTACK_WORLD_BOSS: 'attackWorldBoss',
   CLAIM_WORLD_BOSS_REWARD: 'claimWorldBossReward',
+  // 길드(PDB-16 M1)
+  CREATE_GUILD: 'createGuild',
+  DISBAND_GUILD: 'disbandGuild',
+  UPDATE_GUILD_SETTINGS: 'updateGuildSettings',
+  REQUEST_JOIN_GUILD: 'requestJoinGuild',
+  CANCEL_JOIN_REQUEST: 'cancelJoinRequest',
+  RESOLVE_JOIN_REQUEST: 'resolveJoinRequest',
+  LEAVE_GUILD: 'leaveGuild',
+  KICK_GUILD_MEMBER: 'kickGuildMember',
+  SET_GUILD_MEMBER_ROLE: 'setGuildMemberRole',
 });
 
 export const GAME_ERROR_CODES = Object.freeze({

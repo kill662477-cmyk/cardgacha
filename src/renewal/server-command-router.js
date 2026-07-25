@@ -23,6 +23,16 @@ const DIRECT_RPCS = Object.freeze({
   [GAME_COMMAND_TYPES.PLAY_LADDER]: 'gacha_s2_play_ladder',
   [GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD]: 'gacha_s2_claim_world_boss_reward',
   [GAME_COMMAND_TYPES.DISMANTLE_CARDS]: 'gacha_s2_dismantle_cards',
+  // 길드(PDB-16 M1). 전부 서버 상태만 바꾸므로 클라 재현 검증이 필요 없다.
+  [GAME_COMMAND_TYPES.CREATE_GUILD]: 'gacha_s2_create_guild',
+  [GAME_COMMAND_TYPES.DISBAND_GUILD]: 'gacha_s2_disband_guild',
+  [GAME_COMMAND_TYPES.UPDATE_GUILD_SETTINGS]: 'gacha_s2_update_guild_settings',
+  [GAME_COMMAND_TYPES.REQUEST_JOIN_GUILD]: 'gacha_s2_request_join_guild',
+  [GAME_COMMAND_TYPES.CANCEL_JOIN_REQUEST]: 'gacha_s2_cancel_join_request',
+  [GAME_COMMAND_TYPES.RESOLVE_JOIN_REQUEST]: 'gacha_s2_resolve_join_request',
+  [GAME_COMMAND_TYPES.LEAVE_GUILD]: 'gacha_s2_leave_guild',
+  [GAME_COMMAND_TYPES.KICK_GUILD_MEMBER]: 'gacha_s2_kick_guild_member',
+  [GAME_COMMAND_TYPES.SET_GUILD_MEMBER_ROLE]: 'gacha_s2_set_guild_member_role',
 });
 
 function canonicalJson(value) {
@@ -99,6 +109,30 @@ function directArgs(userId, command) {
       return { ...args, p_event_id: payload.eventId };
     case GAME_COMMAND_TYPES.DISMANTLE_CARDS:
       return { ...args, p_rarity: payload.rarity };
+    case GAME_COMMAND_TYPES.CREATE_GUILD:
+      return {
+        ...args,
+        p_name: payload.name,
+        p_tag: payload.tag ?? null,
+        p_emblem: payload.emblem ?? null,
+      };
+    case GAME_COMMAND_TYPES.UPDATE_GUILD_SETTINGS:
+      return {
+        ...args,
+        p_notice: payload.notice ?? '',
+        p_emblem: payload.emblem ?? null,
+        p_join_mode: payload.joinMode ?? null,
+      };
+    case GAME_COMMAND_TYPES.REQUEST_JOIN_GUILD:
+    case GAME_COMMAND_TYPES.CANCEL_JOIN_REQUEST:
+      return { ...args, p_guild_id: payload.guildId };
+    case GAME_COMMAND_TYPES.RESOLVE_JOIN_REQUEST:
+      return { ...args, p_target_user_id: payload.targetUserId, p_approve: payload.approve };
+    case GAME_COMMAND_TYPES.KICK_GUILD_MEMBER:
+      return { ...args, p_target_user_id: payload.targetUserId };
+    case GAME_COMMAND_TYPES.SET_GUILD_MEMBER_ROLE:
+      return { ...args, p_target_user_id: payload.targetUserId, p_role: payload.role };
+    // DISBAND_GUILD, LEAVE_GUILD 는 추가 인자가 없어 default(baseArgs)로 처리된다.
     default:
       return args;
   }

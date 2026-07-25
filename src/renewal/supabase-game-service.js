@@ -157,6 +157,20 @@ export function createSupabaseGameService(options = {}) {
     return response;
   }
 
+  // 길드 상태(PDB-16). 스냅샷을 건드리지 않고 월드보스 상태와 같은 방식으로 분리 조회한다.
+  async function getGuildState(guildId = null) {
+    const response = await request({ kind: 'guildState', guildId });
+    if (response.ok === false) return response;
+    if (!response.state || typeof response.state !== 'object') {
+      return createGameError({
+        code: GAME_ERROR_CODES.INTERNAL_ERROR,
+        message: '길드 정보 응답이 올바르지 않습니다.',
+        serverTime: clock.now(),
+      });
+    }
+    return response.state;
+  }
+
   async function getPowerRanking() {
     const response = await request({ kind: 'powerRanking' });
     if (response.ok === false) return response;
@@ -179,6 +193,7 @@ export function createSupabaseGameService(options = {}) {
   const service = {
     loadSnapshot,
     getWorldBossStatus,
+    getGuildState,
     getPowerRanking,
     getBridgeStatus,
     executeCommand,

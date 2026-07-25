@@ -61,7 +61,8 @@ begin
       'penaltyUntil', case when v_penalty is null then null
         else floor(extract(epoch from v_penalty) * 1000)::bigint end,
       'guild', null,
-      'guilds', public.gacha_s2_list_guilds()
+      'guilds', public.gacha_s2_list_guilds(),
+      'emblems', public.gacha_s2_list_guild_emblems()
     );
   end if;
 
@@ -126,7 +127,9 @@ begin
       from public.gacha_s2_guild_join_requests r
       join public.gacha_s2_guilds g on g.guild_id = r.guild_id
       where r.user_id = p_user_id and r.status = 'pending' and g.disbanded_at is null
-    ), '[]'::jsonb)
+    ), '[]'::jsonb),
+    'guilds', public.gacha_s2_list_guilds(),
+    'emblems', public.gacha_s2_list_guild_emblems()
   );
 end;
 $$;

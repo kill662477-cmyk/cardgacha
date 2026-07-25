@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { GAME_COMMAND_TYPES } from '../src/renewal/service-contract.js';
+import { GAME_COMMAND_TYPES, validateGameCommand } from '../src/renewal/service-contract.js';
 import { GUILD_RULES, guildLevelFor } from '../src/renewal/config.js';
 import { applyGuildBuff } from '../src/renewal/collection.js';
 
@@ -201,6 +201,27 @@ for (const [screen, element] of [
 }
 // shop/inventory 는 같은 화면을 공유하므로 shopFamily 로 처리한다.
 assert.match(appSource, /elements\.shopScreen\.hidden = !shopFamily/);
+
+
+// 명령 타입을 GAME_COMMAND_TYPES 에 추가하면 payload 계약(allowedFields + validatePayload
+// switch)에도 반드시 등록해야 한다. 빠뜨리면 서버로 가기 전에 "지원하지 않는 명령"으로
+// 거부된다 — 길드 생성이 실제로 이 이유로 막혔다.
+for (const type of Object.values(GAME_COMMAND_TYPES)) {
+  const result = validateGameCommand({
+    contractVersion: 1,
+    commandId: 'contract-guard-0001',
+    idempotencyKey: 'contract-guard-0001',
+    type,
+    expectedRevision: 0,
+    payload: {},
+    clientSentAt: Date.now(),
+  });
+  const unsupported = result.issues.some(
+    (issue) => issue.path === 'type' && issue.message === '지원하지 않는 명령',
+  );
+  assert.equal(unsupported, false,
+    `${type} 이 payload 계약에 등록되지 않았다 — allowedFields 와 validatePayload 에 추가해야 한다`);
+}
 
 console.log('renewal guild M1 tests passed: 5 tables, 9 commands, revision-bump guard, penalty/limit rules');
 // ── M3: 주간 공동목표 ─────────────────────────────────────

@@ -319,6 +319,8 @@ begin
       'guild', null,
       'guilds', public.gacha_s2_list_guilds(),
       'emblems', public.gacha_s2_list_guild_emblems(),
+      -- 길드는 방송인만 만들 수 있다. 클라가 생성 폼을 보일지 판단할 근거가 필요하다.
+      'canCreateGuild', coalesce((select is_streamer from public.gacha_s2_accounts where id = p_user_id), false),
       'weekly', null
     );
   end if;
@@ -387,6 +389,7 @@ begin
     ), '[]'::jsonb),
     'guilds', public.gacha_s2_list_guilds(),
     'emblems', public.gacha_s2_list_guild_emblems(),
+    'canCreateGuild', coalesce((select is_streamer from public.gacha_s2_accounts where id = p_user_id), false),
     -- 주간 공동목표 진행도와 본인 수령 여부(PDB-16 3.2)
     'weekly', case when v_is_member then
       public.gacha_s2_guild_weekly_progress(v_guild.guild_id)

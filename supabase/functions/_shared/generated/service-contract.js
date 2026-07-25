@@ -83,6 +83,19 @@ function validatePayload(type, payload, issues) {
     [GAME_COMMAND_TYPES.PLAY_LADDER]: ['lane'],
     [GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS]: ['eventId'],
     [GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD]: ['eventId'],
+    // 길드(PDB-16). 인자가 없는 명령도 빈 배열로 반드시 선언해야 한다.
+    [GAME_COMMAND_TYPES.CREATE_GUILD]: ['name', 'tag', 'emblem'],
+    [GAME_COMMAND_TYPES.DISBAND_GUILD]: [],
+    [GAME_COMMAND_TYPES.UPDATE_GUILD_SETTINGS]: ['notice', 'emblem', 'joinMode'],
+    [GAME_COMMAND_TYPES.REQUEST_JOIN_GUILD]: ['guildId'],
+    [GAME_COMMAND_TYPES.CANCEL_JOIN_REQUEST]: ['guildId'],
+    [GAME_COMMAND_TYPES.RESOLVE_JOIN_REQUEST]: ['targetUserId', 'approve'],
+    [GAME_COMMAND_TYPES.LEAVE_GUILD]: [],
+    [GAME_COMMAND_TYPES.KICK_GUILD_MEMBER]: ['targetUserId'],
+    [GAME_COMMAND_TYPES.SET_GUILD_MEMBER_ROLE]: ['targetUserId', 'role'],
+    [GAME_COMMAND_TYPES.CLAIM_GUILD_WEEKLY_REWARD]: [],
+    [GAME_COMMAND_TYPES.ATTACK_GUILD_RAID]: [],
+    [GAME_COMMAND_TYPES.CLAIM_GUILD_RAID_REWARD]: [],
   };
   const allowed = new Set(allowedFields[type] ?? []);
   Object.keys(payload).forEach((field) => {
@@ -195,6 +208,42 @@ function validatePayload(type, payload, issues) {
       break;
     case GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD:
       validateString(issues, payload.eventId, 'payload.eventId', 100);
+      break;
+    case GAME_COMMAND_TYPES.CREATE_GUILD:
+      validateString(issues, payload.name, 'payload.name', 20);
+      if (payload.tag !== undefined && payload.tag !== null) validateString(issues, payload.tag, 'payload.tag', 6);
+      if (payload.emblem !== undefined && payload.emblem !== null) validateString(issues, payload.emblem, 'payload.emblem', 32);
+      break;
+    case GAME_COMMAND_TYPES.UPDATE_GUILD_SETTINGS:
+      if (payload.notice !== undefined && payload.notice !== null && typeof payload.notice !== 'string') {
+        addIssue(issues, 'payload.notice', '문자열 필요');
+      }
+      if (payload.emblem !== undefined && payload.emblem !== null) validateString(issues, payload.emblem, 'payload.emblem', 32);
+      if (payload.joinMode !== undefined && payload.joinMode !== null && !['approval', 'auto'].includes(payload.joinMode)) {
+        addIssue(issues, 'payload.joinMode', 'approval 또는 auto 필요');
+      }
+      break;
+    case GAME_COMMAND_TYPES.REQUEST_JOIN_GUILD:
+    case GAME_COMMAND_TYPES.CANCEL_JOIN_REQUEST:
+      validateString(issues, payload.guildId, 'payload.guildId', 64);
+      break;
+    case GAME_COMMAND_TYPES.RESOLVE_JOIN_REQUEST:
+      validateString(issues, payload.targetUserId, 'payload.targetUserId', 64);
+      if (typeof payload.approve !== 'boolean') addIssue(issues, 'payload.approve', 'boolean 필요');
+      break;
+    case GAME_COMMAND_TYPES.KICK_GUILD_MEMBER:
+      validateString(issues, payload.targetUserId, 'payload.targetUserId', 64);
+      break;
+    case GAME_COMMAND_TYPES.SET_GUILD_MEMBER_ROLE:
+      validateString(issues, payload.targetUserId, 'payload.targetUserId', 64);
+      if (!['officer', 'member'].includes(payload.role)) addIssue(issues, 'payload.role', 'officer 또는 member 필요');
+      break;
+    // 추가 인자가 없는 길드 명령들.
+    case GAME_COMMAND_TYPES.DISBAND_GUILD:
+    case GAME_COMMAND_TYPES.LEAVE_GUILD:
+    case GAME_COMMAND_TYPES.CLAIM_GUILD_WEEKLY_REWARD:
+    case GAME_COMMAND_TYPES.ATTACK_GUILD_RAID:
+    case GAME_COMMAND_TYPES.CLAIM_GUILD_RAID_REWARD:
       break;
     default:
       addIssue(issues, 'type', '지원하지 않는 명령');

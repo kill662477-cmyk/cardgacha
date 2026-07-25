@@ -292,6 +292,7 @@ console.log('renewal guild M2 tests passed: 10 levels, GP trigger, daily cap, bu
 const emblemSource = await readFile(new URL('../src/renewal/guild-emblem.js', import.meta.url), 'utf8');
 assert.match(emblemSource, /EMBLEM_IMAGES/, '이미지 엠블럼 화이트리스트가 있어야 한다');
 assert.match(emblemSource, /ilsin: 'assets\/renewal\/guild\/emblems\/ilsin\.png'/);
+assert.match(emblemSource, /chiri: 'assets\/renewal\/guild\/emblems\/chiri\.png'/);
 
 const guildControllerSource = await readFile(new URL('../src/renewal/guild-controller.js', import.meta.url), 'utf8');
 assert.match(

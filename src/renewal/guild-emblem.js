@@ -11,6 +11,7 @@ export const EMBLEM_GLYPHS = Object.freeze({
 // gacha_s2_guild_emblems 행 삽입 + 여기 한 줄이면 된다.
 export const EMBLEM_IMAGES = Object.freeze({
   ilsin: 'assets/renewal/guild/emblems/ilsin.png',
+  chiri: 'assets/renewal/guild/emblems/chiri.png',
 });
 
 // textContent 로 넣는 자리에서 쓰는 문자 표현. 이미지 엠블럼도 텍스트 문맥에서는 기호로 대체된다.

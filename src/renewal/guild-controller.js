@@ -1,20 +1,11 @@
 import { escapeHtml } from './html.js';
 import { guildLevelFor } from './config.js';
+import { EMBLEM_GLYPHS, emblemMarkup } from './guild-emblem.js';
 
 const number = new Intl.NumberFormat('ko-KR');
 
 const ROLE_LABELS = Object.freeze({ owner: '길드장', officer: '부길드장', member: '길드원' });
 
-// 기본 엠블럼 8종의 표시용 기호. 실제 이미지 에셋이 준비되면
-// assets/renewal/guild/emblems/<key>.png 를 우선 사용하도록 교체한다(PDB-16 7.2).
-const EMBLEM_GLYPHS = Object.freeze({
-  shield: '🛡', bolt: '⚡', star: '★', crown: '♛',
-  flame: '🔥', blade: '⚔', hexcore: '⬢', signal: '📡',
-});
-
-function emblemGlyph(key) {
-  return EMBLEM_GLYPHS[key] ?? EMBLEM_GLYPHS.shield;
-}
 
 function formatDate(ms) {
   if (!Number.isFinite(ms)) return '-';
@@ -83,7 +74,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
       : Object.keys(EMBLEM_GLYPHS).map((key) => ({ key, label: key }));
     elements.guildEmblemPicker.innerHTML = list.map(({ key, label }) => `
       <button type="button" class="guild-emblem-option${key === selectedEmblem ? ' selected' : ''}"
-        data-emblem="${escapeHtml(key)}" title="${escapeHtml(label ?? key)}">${emblemGlyph(key)}</button>
+        data-emblem="${escapeHtml(key)}" title="${escapeHtml(label ?? key)}">${emblemMarkup(key, 'guild-emblem-option-mark')}</button>
     `).join('');
   }
 
@@ -210,7 +201,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
     const role = guildState.membership?.role;
     elements.guildHome.hidden = false;
     elements.guildBrowse.hidden = true;
-    elements.guildEmblem.textContent = emblemGlyph(guild.emblem);
+    elements.guildEmblem.innerHTML = emblemMarkup(guild.emblem, 'guild-emblem-mark');
     elements.guildTagLine.textContent = guild.tag ? `[${guild.tag}] GUILD` : 'GUILD';
     elements.guildName.textContent = guild.name ?? '-';
     const tier = guildLevelFor(guild.totalGp ?? 0);
@@ -280,7 +271,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
       const pending = myRequests.has(g.guildId);
       return `
       <li class="guild-list-item">
-        <div class="guild-list-emblem">${emblemGlyph(g.emblem)}</div>
+        <div class="guild-list-emblem">${emblemMarkup(g.emblem, 'guild-list-emblem-mark')}</div>
         <div class="guild-list-main">
           <strong>${escapeHtml(g.name ?? '-')}${g.tag ? ` <em>[${escapeHtml(g.tag)}]</em>` : ''}</strong>
           <small>Lv.${g.level} · ${number.format(g.memberCount ?? 0)}/${g.memberLimit}명 · ${escapeHtml(g.ownerNickname ?? '')}</small>

@@ -286,3 +286,42 @@ assert.match(router, /simulateWorldBossAttempt\(context\.formation, context\.bon
 console.log('renewal guild M4 tests passed: raid slots, active-member HP, roster snapshot, reward split');
 console.log('renewal guild M3 tests passed: weekly goals, 8% member cap, week boundary, claim guard');
 console.log('renewal guild M2 tests passed: 10 levels, GP trigger, daily cap, buff merge parity');
+
+// 커스텀 이미지 엠블럼(PDB-16 7.2). 이모지만 그리던 자리를 이미지로 바꿨으므로,
+// 마크업 경로가 살아 있는지와 사용자 입력 이스케이프가 유지되는지 함께 잠근다.
+const emblemSource = await readFile(new URL('../src/renewal/guild-emblem.js', import.meta.url), 'utf8');
+assert.match(emblemSource, /EMBLEM_IMAGES/, '이미지 엠블럼 화이트리스트가 있어야 한다');
+assert.match(emblemSource, /ilsin: 'assets\/renewal\/guild\/emblems\/ilsin\.png'/);
+
+const guildControllerSource = await readFile(new URL('../src/renewal/guild-controller.js', import.meta.url), 'utf8');
+assert.match(
+  guildControllerSource,
+  /elements\.guildEmblem\.innerHTML = emblemMarkup\(/,
+  'textContent 로 두면 이미지 엠블럼이 문자열로 새어 나온다',
+);
+assert.doesNotMatch(
+  guildControllerSource,
+  /const EMBLEM_GLYPHS = Object\.freeze/,
+  '이모지 세트는 guild-emblem.js 한 곳에만 있어야 한다',
+);
+
+const rankingSourceEmblem = await readFile(new URL('../src/renewal/ranking-controller.js', import.meta.url), 'utf8');
+assert.match(rankingSourceEmblem, /guildBadgeMarkup/);
+assert.match(
+  rankingSourceEmblem,
+  /escapeHtml\(guild\.name\)/,
+  'innerHTML 로 바뀌었으므로 길드명을 반드시 이스케이프해야 한다',
+);
+assert.match(rankingSourceEmblem, /escapeHtml\(guild\.tag\)/);
+
+const ilsinMigration = await readFile(
+  new URL('../supabase/migrations/20260725000107_guild_emblem_ilsin.sql', import.meta.url),
+  'utf8',
+);
+assert.match(
+  ilsinMigration,
+  /values \('ilsin', '유일신', 900, false\)/,
+  'active=false 여야 다른 길드 선택 목록에 노출되지 않는다',
+);
+
+console.log('guild custom emblem tests passed: image whitelist, markup render, escaping, inactive listing');

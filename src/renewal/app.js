@@ -2263,12 +2263,12 @@ function selectAdventureMode(mode) {
 }
 
 function bindEvents() {
-  if (sessionStorage.getItem('mail_escore_finals_30k_20260724_read') === 'true') {
+  if (sessionStorage.getItem('mail_asl_season_off_60k_20260725_read') === 'true') {
     elements.mailBadge.hidden = true;
   }
   elements.profileCardButton.addEventListener('click', openRepresentativeCardDetail);
   elements.mailButton.addEventListener('click', () => {
-    sessionStorage.setItem('mail_escore_finals_30k_20260724_read', 'true');
+    sessionStorage.setItem('mail_asl_season_off_60k_20260725_read', 'true');
     elements.mailBadge.hidden = true;
     elements.mailDialog.showModal();
   });

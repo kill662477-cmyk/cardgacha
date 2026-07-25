@@ -157,6 +157,14 @@ Deno.serve(async (req: Request) => {
       return json(req, { ok: false, code: 'INTERNAL_ERROR', message: '길드 정보를 불러오지 못했습니다.' }, 500);
     }
   }
+  if (body.kind === 'guildRaidStatus') {
+    try {
+      const status = await gateway.rpc('gacha_s2_get_guild_raid_status', { p_user_id: userId });
+      return json(req, { ok: true, serverTime: Date.now(), status });
+    } catch {
+      return json(req, { ok: false, code: 'INTERNAL_ERROR', message: '길드 레이드 정보를 불러오지 못했습니다.' }, 500);
+    }
+  }
   if (body.kind === 'bridgeStatus') {
     try {
       const status = await gateway.rpc('gacha_s2_get_bridge_status', { p_user_id: userId });

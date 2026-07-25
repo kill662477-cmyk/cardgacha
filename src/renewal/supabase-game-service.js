@@ -171,6 +171,12 @@ export function createSupabaseGameService(options = {}) {
     return response.state;
   }
 
+  async function getGuildRaidStatus() {
+    const response = await request({ kind: 'guildRaidStatus' });
+    if (response.ok === false) return response;
+    return response.status ?? { active: false, raid: null };
+  }
+
   async function getPowerRanking() {
     const response = await request({ kind: 'powerRanking' });
     if (response.ok === false) return response;
@@ -194,6 +200,7 @@ export function createSupabaseGameService(options = {}) {
     loadSnapshot,
     getWorldBossStatus,
     getGuildState,
+    getGuildRaidStatus,
     getPowerRanking,
     getBridgeStatus,
     executeCommand,

@@ -380,6 +380,22 @@ export const GUILD_RULES = {
   dailyGpCapPerMember: 200,
   // 포인트 기부로 공헌도를 보충할 수 있다(인플레 완화 밸브).
   donation: { pointsPerGp: 500, dailyPointCap: 50_000 },
+  // 길드 레이드(PDB-16 3.3). 월드보스와 같은 합산딜 구조이나 보상 구조가 다르다.
+  // 처치하면 참여 여부와 무관하게 길드원 전원이 보상을 받고, 대신 난이도를 다수 참여
+  // 전제로 잡는다. HP 는 참여자 수가 아니라 "활동 길드원 수" 기준으로 고정해야
+  // 참여가 적을수록 어려워진다(참여자 비례로 두면 몇 명이 오든 난이도가 같아진다).
+  raid: {
+    scheduleIsoDays: [3, 6], // 수요일, 토요일
+    hourKst: 21,
+    raidDurationSeconds: 30 * 60,
+    resultDurationSeconds: 30 * 60,
+    maxAttempts: 3,
+    // 월드보스 실측(시도당 약 1,000만 딜 × 인당 3회)에 목표 참여율 0.7 을 곱한 값.
+    hpPerActiveMember: 21_000_000,
+    activeWindowDays: 7,
+    successPoints: 50_000,
+    failurePoints: 15_000,
+  },
   // 주간 공동목표(PDB-16 3.2). 월요일 00:00 KST 리셋.
   // 목표치는 인원 비례이며(기준 30명), 1인이 목표의 8% 넘게 기여해도 그 초과분은
   // 집계하지 않는다. 소수 고인물이 혼자 끝내지 못하게 하고 라이트 유저의 기여 여지를 남긴다.

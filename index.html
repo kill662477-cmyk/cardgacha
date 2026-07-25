@@ -420,6 +420,20 @@
         </header>
         <p class="guild-notice" id="guildNotice" hidden></p>
 
+        <section class="guild-raid" id="guildRaidBox" hidden>
+          <div class="guild-weekly-head">
+            <h2>길드 레이드</h2>
+            <span id="guildRaidPhase"></span>
+          </div>
+          <small id="guildRaidNote">매주 수·토 21:00 KST · 처치 성공 시 길드원 전원 보상</small>
+          <div class="guild-raid-hp"><i id="guildRaidHpBar"></i></div>
+          <div class="guild-raid-actions">
+            <button class="confirm-button" type="button" id="guildRaidAttack" hidden>공격</button>
+            <button class="confirm-button" type="button" id="guildRaidClaim" hidden>보상 받기</button>
+          </div>
+          <ul class="guild-raid-participants" id="guildRaidParticipants"></ul>
+        </section>
+
         <section class="guild-weekly" id="guildWeeklyBox" hidden>
           <div class="guild-weekly-head">
             <h2>주간 공동목표</h2>

@@ -15,6 +15,8 @@ const member = squash(await read('supabase/migrations/20260725000096_guild_m1_rp
 const gpLevels = squash(await read('supabase/migrations/20260725000097_guild_m2_gp_levels.sql'));
 const snapshotSql = squash(await read('supabase/migrations/20260725000098_guild_m2_snapshot_buff.sql'));
 const weekly = squash(await read('supabase/migrations/20260725000099_guild_m3_weekly_goals.sql'));
+const raidSchema = squash(await read('supabase/migrations/20260725000100_guild_m4_raid_schema.sql'));
+const raidRpc = squash(await read('supabase/migrations/20260725000101_guild_m4_raid_rpc.sql'));
 const router = await read('src/renewal/server-command-router.js');
 const edge = await read('supabase/functions/game-command/index.ts');
 
@@ -211,5 +213,39 @@ assert.match(weekly, /주간 목표를 아직 달성하지 못했습니다/);
 assert.match(weekly, /v_points constant integer := 80000/);
 assert.match(router, /'gacha_s2_claim_guild_weekly_reward'/);
 
+// ── M4: 길드 레이드 ───────────────────────────────────────
+assert.deepEqual(GUILD_RULES.raid.scheduleIsoDays, [3, 6], '수·토');
+assert.equal(GUILD_RULES.raid.hourKst, 21);
+assert.equal(GUILD_RULES.raid.maxAttempts, 3);
+assert.equal(GUILD_RULES.raid.hpPerActiveMember, 21_000_000);
+assert.equal(GUILD_RULES.raid.successPoints, 50_000);
+assert.equal(GUILD_RULES.raid.failurePoints, 15_000);
+
+// HP 는 참여자 수가 아니라 활동 길드원 수 기준이어야 다수 참여 유인이 생긴다.
+assert.match(raidSchema, /greatest\(v_active, 1\)::bigint \* 21000000/);
+assert.match(raidSchema, /last_contributed_at >= p_now - interval '7 days'/, '활동 길드원 7일 기준');
+assert.match(raidSchema, /active_member_count integer not null/, 'HP 산정 근거 스냅샷');
+// 보상 명단은 시작 시점 소속 전원. 처치 후 가입해 보상만 받는 것을 막는다.
+assert.match(raidSchema, /insert into public\.gacha_s2_guild_raid_players \(raid_id, user_id\) select v_raid\.raid_id, m\.user_id/);
+assert.match(raidSchema, /extract\(isodow from v_start\) in \(3, 6\)/, '수·토만');
+assert.match(raidSchema, /unique \(guild_id, starts_at\)/, '회차 중복 생성 방지');
+
+// 서버가 재현 검증한 딜만 받는다.
+assert.match(raidRpc, /p_verification_digest !~ '\^\[0-9a-f\]\{64\}\$'/);
+assert.match(raidRpc, /if v_player\.attempts >= 3 then/, '개인 3회 제한');
+assert.match(raidRpc, /이번 회차 참여 대상이 아닙니다/, '회차 시작 후 가입자 차단');
+// 성공 시 전원, 실패 시 참여자만.
+assert.match(raidRpc, /if v_defeated then v_points := 50000; elsif v_player\.attempts > 0 then v_points := 15000;/);
+assert.match(raidRpc, /레이드에 실패했고 참여 기록이 없어 받을 보상이 없습니다/);
+assert.match(raidRpc, /이미 보상을 받았습니다/, '중복 수령 차단');
+// 미참여자도 명단에 나와야 누가 빠졌는지 알 수 있다.
+assert.match(raidRpc, /create or replace function public\.gacha_s2_get_guild_raid_status/);
+assert.match(raidRpc, /'participants', coalesce\(\(/);
+assert.match(router, /'gacha_s2_claim_guild_raid_reward'/);
+assert.match(router, /gacha_s2_attack_guild_raid/);
+assert.match(router, /simulateWorldBossAttempt\(context\.formation, context\.bonuses, attemptNumber, raidId\)/,
+  '레이드 전투는 월드보스 시뮬레이션을 재사용한다');
+
+console.log('renewal guild M4 tests passed: raid slots, active-member HP, roster snapshot, reward split');
 console.log('renewal guild M3 tests passed: weekly goals, 8% member cap, week boundary, claim guard');
 console.log('renewal guild M2 tests passed: 10 levels, GP trigger, daily cap, buff merge parity');

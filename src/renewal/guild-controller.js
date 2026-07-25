@@ -37,9 +37,12 @@ export function createGuildController({ getState, gameService, serverCommands = 
     'guildMemberCount', 'guildMemberList', 'guildPenalty', 'guildCreateBox', 'guildCreateForm',
     'guildCreateName', 'guildCreateTag', 'guildEmblemPicker', 'guildList',
     'guildWeeklyBox', 'guildWeeklyClaim', 'guildWeeklyList', 'guildWeeklyNote',
+    'guildRaidBox', 'guildRaidPhase', 'guildRaidNote', 'guildRaidHpBar',
+    'guildRaidAttack', 'guildRaidClaim', 'guildRaidParticipants',
   ].map((id) => [id, document.getElementById(id)]));
 
   let guildState = null;
+  let raidState = null;
   let selectedEmblem = 'shield';
   // 기여가 낮은 길드원을 바로 찾을 수 있도록 오름차순 정렬을 제공한다(PDB-16 2.6).
   let memberSort = 'role';
@@ -58,10 +61,15 @@ export function createGuildController({ getState, gameService, serverCommands = 
     if (loading) return;
     loading = true;
     try {
-      const result = await gameService.getGuildState();
-      guildState = result?.ok === false ? null : result;
+      const [state, raid] = await Promise.all([
+        gameService.getGuildState(),
+        gameService.getGuildRaidStatus?.() ?? Promise.resolve(null),
+      ]);
+      guildState = state?.ok === false ? null : state;
+      raidState = raid?.ok === false ? null : raid;
     } catch {
       guildState = null;
+      raidState = null;
     } finally {
       loading = false;
       render();
@@ -106,6 +114,39 @@ export function createGuildController({ getState, gameService, serverCommands = 
         </div>` : ''}
       </li>`;
     }).join('') || '<li class="guild-empty">길드원이 없습니다</li>';
+  }
+
+  function renderRaid() {
+    if (!elements.guildRaidBox) return;
+    const raid = raidState?.raid;
+    if (!raid) {
+      elements.guildRaidBox.hidden = true;
+      return;
+    }
+    elements.guildRaidBox.hidden = false;
+    const active = Boolean(raidState.active);
+    const resultsOpen = Boolean(raidState.resultsOpen);
+    const me = raidState.me ?? { attempts: 0, claimed: false };
+    const ratio = raid.maxHp > 0 ? Math.max(0, Math.min(100, (raid.currentHp / raid.maxHp) * 100)) : 0;
+    elements.guildRaidHpBar.style.width = `${ratio}%`;
+    elements.guildRaidPhase.textContent = raid.defeated ? '처치 성공'
+      : active ? '전투 중' : resultsOpen ? '결과 공개' : '대기';
+    elements.guildRaidNote.textContent =
+      `${number.format(raid.currentHp)} / ${number.format(raid.maxHp)}`
+      + ` · 활동 길드원 ${number.format(raid.activeMemberCount ?? 0)}명 기준`
+      + ` · 내 공격 ${me.attempts ?? 0}/3`;
+
+    elements.guildRaidAttack.hidden = !(active && (me.attempts ?? 0) < 3);
+    // 성공하면 미참여자도 받을 수 있고, 실패하면 참여자만 받을 수 있다.
+    const claimable = resultsOpen && !me.claimed && (raid.defeated || (me.attempts ?? 0) > 0);
+    elements.guildRaidClaim.hidden = !claimable;
+
+    const rows = Array.isArray(raidState.participants) ? raidState.participants : [];
+    elements.guildRaidParticipants.innerHTML = rows.map((p) => `
+      <li class="guild-raid-participant${p.attempts > 0 ? '' : ' absent'}">
+        <strong>${escapeHtml(p.nickname ?? '-')}</strong>
+        <span>${p.attempts > 0 ? `${p.attempts}/3 · ${number.format(p.totalDamage)}` : '미참여'}</span>
+      </li>`).join('') || '<li class="guild-empty">참여 기록이 없습니다</li>';
   }
 
   function renderWeekly(weekly) {
@@ -200,6 +241,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
     }
     elements.guildActions.innerHTML = actions.join('');
 
+    renderRaid();
     renderWeekly(guildState.weekly);
     renderRequests(guildState.joinRequests);
     renderMembers(guildState.members);
@@ -210,6 +252,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
     elements.guildHome.hidden = true;
     elements.guildBrowse.hidden = false;
     if (elements.guildWeeklyBox) elements.guildWeeklyBox.hidden = true;
+    if (elements.guildRaidBox) elements.guildRaidBox.hidden = true;
 
     const penaltyUntil = guildState?.penaltyUntil;
     if (Number.isFinite(penaltyUntil) && penaltyUntil > Date.now()) {
@@ -303,6 +346,8 @@ export function createGuildController({ getState, gameService, serverCommands = 
       else if (guildReject) void run(() => serverCommands.resolveJoinRequest({ targetUserId: guildReject, approve: false }));
       else if (guildRole) void run(() => serverCommands.setGuildMemberRole({ targetUserId: guildRole, role: target.dataset.roleNext }));
       else if (guildJoinmode) void run(() => serverCommands.updateGuildSettings({ notice: guildState?.guild?.notice ?? '', joinMode: guildJoinmode }));
+      else if (target.id === 'guildRaidAttack') void run(() => serverCommands.attackGuildRaid());
+      else if (target.id === 'guildRaidClaim') void run(() => serverCommands.claimGuildRaidReward());
       else if (target.id === 'guildWeeklyClaim') void run(() => serverCommands.claimGuildWeeklyReward());
       else if (target.hasAttribute('data-guild-leave')) void run(() => serverCommands.leaveGuild());
       else if (target.hasAttribute('data-guild-disband')) {

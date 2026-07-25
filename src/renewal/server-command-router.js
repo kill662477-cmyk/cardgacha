@@ -34,6 +34,7 @@ const DIRECT_RPCS = Object.freeze({
   [GAME_COMMAND_TYPES.KICK_GUILD_MEMBER]: 'gacha_s2_kick_guild_member',
   [GAME_COMMAND_TYPES.SET_GUILD_MEMBER_ROLE]: 'gacha_s2_set_guild_member_role',
   [GAME_COMMAND_TYPES.CLAIM_GUILD_WEEKLY_REWARD]: 'gacha_s2_claim_guild_weekly_reward',
+  [GAME_COMMAND_TYPES.CLAIM_GUILD_RAID_REWARD]: 'gacha_s2_claim_guild_raid_reward',
 });
 
 function canonicalJson(value) {
@@ -270,6 +271,35 @@ export function createServerCommandRouter(options) {
         return await gateway.rpc('gacha_s2_claim_idle_reward', {
           ...baseArgs(userId, command),
           p_idle_bonus: context.bonuses.idle,
+        });
+      }
+
+      if (command.type === GAME_COMMAND_TYPES.ATTACK_GUILD_RAID) {
+        // 길드 레이드는 월드보스와 같은 합산딜 구조라 전투 시뮬레이션을 그대로 재사용한다.
+        const context = await verifiedContext(userId, command);
+        const status = await gateway.rpc('gacha_s2_get_guild_raid_status', { p_user_id: userId });
+        const raidId = status?.raid?.raidId ?? null;
+        if (!raidId) {
+          return commandError(command, GAME_ERROR_CODES.COMMAND_REJECTED, '지금은 길드 레이드 시간이 아닙니다.', clock);
+        }
+        const attemptNumber = Number(status?.me?.attempts ?? 0) + 1;
+        const battle = simulateWorldBossAttempt(context.formation, context.bonuses, attemptNumber, raidId);
+        const digest = await sha256({
+          balanceVersion: BALANCE_VERSION,
+          commandId: command.commandId,
+          type: command.type,
+          userId,
+          raidId,
+          attemptNumber,
+          formation: context.formation.map((card) => ({ id: card.id, enhancement: card.enhancement })),
+          bonuses: context.bonuses,
+          damageByCard: battle.damageByCard,
+          totalDamage: battle.totalDamage,
+        });
+        return await gateway.rpc('gacha_s2_attack_guild_raid', {
+          ...baseArgs(userId, command),
+          p_verified_damage: battle.totalDamage,
+          p_verification_digest: digest,
         });
       }
 

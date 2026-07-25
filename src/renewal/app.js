@@ -2680,6 +2680,8 @@ async function init() {
         kickGuildMember: (payload) => executeServerCommand(GAME_COMMAND_TYPES.KICK_GUILD_MEMBER, payload),
         setGuildMemberRole: (payload) => executeServerCommand(GAME_COMMAND_TYPES.SET_GUILD_MEMBER_ROLE, payload),
         claimGuildWeeklyReward: () => executeServerCommand(GAME_COMMAND_TYPES.CLAIM_GUILD_WEEKLY_REWARD, {}),
+        attackGuildRaid: () => executeServerCommand(GAME_COMMAND_TYPES.ATTACK_GUILD_RAID, {}),
+        claimGuildRaidReward: () => executeServerCommand(GAME_COMMAND_TYPES.CLAIM_GUILD_RAID_REWARD, {}),
       } : null,
       showToast,
     });

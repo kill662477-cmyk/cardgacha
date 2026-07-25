@@ -360,6 +360,50 @@ export const WORLD_BOSS_RULES = {
   ],
 };
 
+// 길드(PDB-16 M2). 길드원의 일상 플레이가 공헌도(GP)로 쌓이고, 누적 GP로 길드 레벨이 오른다.
+// 버프는 길드원 전원에게 상시 적용되며, 무소속 유저를 무력화하지 않도록 상한을 +5% 선으로 묶는다.
+export const GUILD_RULES = {
+  defaultMemberLimit: 30,
+  maxOfficers: 2,
+  maxPendingRequests: 3,
+  leavePenaltyDays: 3,
+  // 명령 1회당 지급하는 공헌도. 기존 RPC 를 고치지 않고 감사 로그 트리거로 적립하므로
+  // "스테이지 몇 개" 같은 세부 결과가 아니라 명령 단위로 센다.
+  gpPerCommand: {
+    finishAdventureRun: 5,
+    finishMinigame: 2,
+    playLadder: 2,
+    attackWorldBoss: 10,
+    attackGuildRaid: 15,
+  },
+  // 소수 인원이 혼자 레벨을 올리지 못하도록 하루 개인 적립 상한을 둔다.
+  dailyGpCapPerMember: 200,
+  // 포인트 기부로 공헌도를 보충할 수 있다(인플레 완화 밸브).
+  donation: { pointsPerGp: 500, dailyPointCap: 50_000 },
+  levels: [
+    { level: 1, requiredGp: 0, memberLimit: 30, atk: 0, hp: 0, def: 0, points: 0 },
+    { level: 2, requiredGp: 3_000, memberLimit: 40, atk: 0.02, hp: 0, def: 0, points: 0 },
+    { level: 3, requiredGp: 8_000, memberLimit: 50, atk: 0.02, hp: 0.02, def: 0, points: 0 },
+    { level: 4, requiredGp: 15_000, memberLimit: 50, atk: 0.03, hp: 0.02, def: 0.02, points: 0 },
+    { level: 5, requiredGp: 25_000, memberLimit: 50, atk: 0.03, hp: 0.03, def: 0.03, points: 0 },
+    { level: 6, requiredGp: 36_000, memberLimit: 50, atk: 0.04, hp: 0.03, def: 0.03, points: 0 },
+    { level: 7, requiredGp: 50_000, memberLimit: 50, atk: 0.04, hp: 0.04, def: 0.03, points: 0.03 },
+    { level: 8, requiredGp: 70_000, memberLimit: 50, atk: 0.04, hp: 0.04, def: 0.04, points: 0.03 },
+    { level: 9, requiredGp: 92_000, memberLimit: 50, atk: 0.05, hp: 0.04, def: 0.04, points: 0.04 },
+    { level: 10, requiredGp: 120_000, memberLimit: 50, atk: 0.05, hp: 0.05, def: 0.04, points: 0.05 },
+  ],
+};
+
+export function guildLevelFor(totalGp) {
+  const gp = Number.isFinite(totalGp) ? totalGp : 0;
+  let current = GUILD_RULES.levels[0];
+  for (const tier of GUILD_RULES.levels) {
+    if (gp >= tier.requiredGp) current = tier;
+    else break;
+  }
+  return current;
+}
+
 export const SOOP_RULES = {
   pointsPerBalloon: 5,
 };

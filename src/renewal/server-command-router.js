@@ -1,6 +1,6 @@
 import { ADVENTURE_RULES, BALANCE_VERSION, STAGES } from './config.js';
 import { computeFormationPower, simulateBattle } from './battle.js';
-import { calculateCollectionBonuses } from './collection.js';
+import { applyGuildBuff, calculateCollectionBonuses } from './collection.js';
 import { simulateWorldBossAttempt } from './worldboss.js';
 import {
   GAME_COMMAND_TYPES,
@@ -206,9 +206,11 @@ export function createServerCommandRouter(options) {
     }
     const formation = formationFromSnapshot(snapshot, cardsById);
     const calculated = calculateCollectionBonuses(cards, snapshot.collectionRecords ?? {});
-    const bonuses = Object.fromEntries(
+    const base = Object.fromEntries(
       ['attack', 'hp', 'defense', 'bossDamage', 'idle', 'combatTotal'].map((key) => [key, calculated[key]]),
     );
+    // 길드 스탯 버프는 스냅샷에 실려 오므로 클라이언트와 같은 값으로 합산된다.
+    const bonuses = applyGuildBuff(base, snapshot.guildBuff);
     return { command, snapshot, formation, bonuses };
   }
 

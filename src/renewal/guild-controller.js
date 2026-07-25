@@ -1,4 +1,5 @@
 import { escapeHtml } from './html.js';
+import { guildLevelFor } from './config.js';
 
 const number = new Intl.NumberFormat('ko-KR');
 
@@ -39,6 +40,8 @@ export function createGuildController({ getState, gameService, serverCommands = 
 
   let guildState = null;
   let selectedEmblem = 'shield';
+  // 기여가 낮은 길드원을 바로 찾을 수 있도록 오름차순 정렬을 제공한다(PDB-16 2.6).
+  let memberSort = 'role';
   let loading = false;
 
   const isRemote = Boolean(serverCommands);
@@ -76,7 +79,9 @@ export function createGuildController({ getState, gameService, serverCommands = 
   }
 
   function renderMembers(members) {
-    const rows = Array.isArray(members) ? members : [];
+    let rows = Array.isArray(members) ? [...members] : [];
+    if (memberSort === 'gpAsc') rows.sort((a, b) => (a.weeklyGp ?? 0) - (b.weeklyGp ?? 0));
+    else if (memberSort === 'gpDesc') rows.sort((a, b) => (b.weeklyGp ?? 0) - (a.weeklyGp ?? 0));
     elements.guildMemberCount.textContent = number.format(rows.length);
     const canManage = ['owner', 'officer'].includes(guildState?.membership?.role);
     const isOwner = guildState?.membership?.role === 'owner';
@@ -100,6 +105,20 @@ export function createGuildController({ getState, gameService, serverCommands = 
         </div>` : ''}
       </li>`;
     }).join('') || '<li class="guild-empty">길드원이 없습니다</li>';
+  }
+
+  function renderSortControls() {
+    const head = document.querySelector('.guild-members-head');
+    if (!head) return;
+    let box = head.querySelector('.guild-sort');
+    if (!box) {
+      box = document.createElement('div');
+      box.className = 'guild-sort';
+      head.appendChild(box);
+    }
+    const options = [['role', '역할순'], ['gpAsc', '기여 낮은순'], ['gpDesc', '기여 높은순']];
+    box.innerHTML = options.map(([key, label]) =>
+      `<button type="button" data-guild-sort="${key}"${key === memberSort ? ' class="selected"' : ''}>${label}</button>`).join('');
   }
 
   function renderRequests(requests) {
@@ -128,8 +147,17 @@ export function createGuildController({ getState, gameService, serverCommands = 
     elements.guildEmblem.textContent = emblemGlyph(guild.emblem);
     elements.guildTagLine.textContent = guild.tag ? `[${guild.tag}] GUILD` : 'GUILD';
     elements.guildName.textContent = guild.name ?? '-';
+    const tier = guildLevelFor(guild.totalGp ?? 0);
+    const buffs = [
+      tier.atk ? `공격 +${(tier.atk * 100).toFixed(0)}%` : null,
+      tier.hp ? `체력 +${(tier.hp * 100).toFixed(0)}%` : null,
+      tier.def ? `방어 +${(tier.def * 100).toFixed(0)}%` : null,
+      tier.points ? `포인트 +${(tier.points * 100).toFixed(0)}%` : null,
+    ].filter(Boolean);
     elements.guildMeta.textContent =
-      `Lv.${guild.level} · ${number.format(guild.memberCount ?? 0)}/${guild.memberLimit}명 · ${ROLE_LABELS[role] ?? '길드원'}`;
+      `Lv.${guild.level} · ${number.format(guild.memberCount ?? 0)}/${guild.memberLimit}명 · ${ROLE_LABELS[role] ?? '길드원'}`
+      + ` · 누적 ${number.format(guild.totalGp ?? 0)} GP`
+      + (buffs.length ? ` · ${buffs.join(' / ')}` : ' · 버프 없음');
     if (guild.notice) {
       elements.guildNotice.hidden = false;
       elements.guildNotice.textContent = guild.notice;
@@ -149,6 +177,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
 
     renderRequests(guildState.joinRequests);
     renderMembers(guildState.members);
+    renderSortControls();
   }
 
   function renderBrowse() {
@@ -238,7 +267,8 @@ export function createGuildController({ getState, gameService, serverCommands = 
     document.getElementById('guildScreen')?.addEventListener('click', (event) => {
       const target = event.target.closest('button');
       if (!target) return;
-      const { guildJoin, guildCancel, guildKick, guildApprove, guildReject, guildRole, guildJoinmode } = target.dataset;
+      const { guildJoin, guildCancel, guildKick, guildApprove, guildReject, guildRole, guildJoinmode, guildSort } = target.dataset;
+      if (guildSort) { memberSort = guildSort; renderMembers(guildState?.members); renderSortControls(); return; }
       if (guildJoin) void run(() => serverCommands.requestJoinGuild({ guildId: guildJoin }));
       else if (guildCancel) void run(() => serverCommands.cancelJoinRequest({ guildId: guildCancel }));
       else if (guildKick) void run(() => serverCommands.kickGuildMember({ targetUserId: guildKick }));

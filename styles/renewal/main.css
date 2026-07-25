@@ -1944,3 +1944,9 @@ button[aria-busy="true"]::after {
 .guild-emblem-option.selected { border-color: var(--cyan); box-shadow: 0 0 0 2px color-mix(in srgb, var(--cyan) 30%, transparent); }
 
 .guild-empty { padding: 18px; text-align: center; color: var(--muted); font-size: .82rem; }
+.guild-sort { display: flex; gap: 6px; margin-left: auto; }
+.guild-sort button {
+  padding: 4px 9px; border-radius: 8px; font-size: .7rem; cursor: pointer;
+  background: transparent; color: var(--muted); border: 1px solid var(--line);
+}
+.guild-sort button.selected { color: var(--cyan); border-color: var(--cyan); }

@@ -25,7 +25,7 @@ import {
   resolveEnhancement,
   selectEnhancementMaterials,
 } from './enhancement.js';
-import { buildCollectionModel, calculateCollectionBonuses, groupCollectionCardsByMember } from './collection.js';
+import { applyGuildBuff, buildCollectionModel, calculateCollectionBonuses, groupCollectionCardsByMember } from './collection.js';
 import {
   addCardResults,
   addSupportResults,
@@ -574,8 +574,9 @@ function currentCollectionBonuses() {
 }
 
 function currentCombatBonuses() {
-  // nolevel-1: accountLevelMultiplier 제거. 도감 보너스만 사용.
-  return currentCollectionBonuses();
+  // nolevel-1: accountLevelMultiplier 제거. 도감 보너스 + 길드 버프(PDB-16 M2)를 사용한다.
+  // 서버 verifiedContext 와 같은 applyGuildBuff 를 써야 전투 재현 검증이 어긋나지 않는다.
+  return applyGuildBuff(currentCollectionBonuses(), state.guildBuff);
 }
 
 function cardMarkup(card, index) {

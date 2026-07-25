@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { GAME_COMMAND_TYPES } from '../src/renewal/service-contract.js';
+import { GUILD_RULES, guildLevelFor } from '../src/renewal/config.js';
+import { applyGuildBuff } from '../src/renewal/collection.js';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const squash = (sql) => sql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
@@ -10,6 +12,8 @@ const query = squash(await read('supabase/migrations/20260725000093_guild_m1_que
 const owner = squash(await read('supabase/migrations/20260725000094_guild_m1_rpc_owner.sql'));
 const join = squash(await read('supabase/migrations/20260725000095_guild_m1_rpc_join.sql'));
 const member = squash(await read('supabase/migrations/20260725000096_guild_m1_rpc_member.sql'));
+const gpLevels = squash(await read('supabase/migrations/20260725000097_guild_m2_gp_levels.sql'));
+const snapshotSql = squash(await read('supabase/migrations/20260725000098_guild_m2_snapshot_buff.sql'));
 const router = await read('src/renewal/server-command-router.js');
 const edge = await read('supabase/functions/game-command/index.ts');
 
@@ -120,4 +124,64 @@ assert.match(router, /case GAME_COMMAND_TYPES\.SET_GUILD_MEMBER_ROLE:[\s\S]*?p_r
 assert.match(edge, /body\.kind === 'guildState'/, 'edge 에 길드 조회 kind 누락');
 assert.match(edge, /gacha_s2_get_guild_state/);
 
+// ── M2: 공헌도·레벨·버프 ──────────────────────────────────
+assert.equal(GUILD_RULES.levels.length, 10);
+assert.equal(GUILD_RULES.levels[0].memberLimit, 30);
+// 정원 확장은 레벨 2·3에 앞당겨 초기 성장 체감을 준다.
+assert.equal(GUILD_RULES.levels[1].memberLimit, 40, '레벨2 정원 40');
+assert.equal(GUILD_RULES.levels[2].memberLimit, 50, '레벨3 정원 50');
+// 무소속 유저를 무력화하지 않도록 스탯 버프 상한을 +5% 로 묶는다.
+for (const tier of GUILD_RULES.levels) {
+  for (const key of ['atk', 'hp', 'def', 'points']) {
+    assert.ok(tier[key] <= 0.05, `레벨 ${tier.level} 의 ${key} 버프가 5% 를 넘는다`);
+  }
+}
+// 카드 EXP 버프는 채택하지 않았다(체감이 없어 스탯 버프로 대체).
+assert.ok(GUILD_RULES.levels.every((tier) => !('cardExp' in tier)));
+assert.equal(GUILD_RULES.leavePenaltyDays, 3);
+assert.equal(GUILD_RULES.maxOfficers, 2);
+assert.equal(GUILD_RULES.maxPendingRequests, 3);
+assert.equal(guildLevelFor(0).level, 1);
+assert.equal(guildLevelFor(2999).level, 1);
+assert.equal(guildLevelFor(3000).level, 2);
+assert.equal(guildLevelFor(120000).level, 10);
+assert.equal(guildLevelFor(999999).level, 10, '최대 레벨을 넘지 않는다');
+
+// 버프 합산은 도감 상한 적용 "뒤"에 더해져야 도감 보너스가 깎이지 않는다.
+const baseBonus = { attack: 0.10, hp: 0.08, defense: 0.05, bossDamage: 0.02, idle: 0.03, combatTotal: 0.25 };
+const buffed = applyGuildBuff(baseBonus, { atk: 0.04, hp: 0.04, def: 0.03, points: 0.03 });
+assert.equal(buffed.attack, 0.14);
+assert.equal(buffed.hp, 0.12);
+assert.equal(buffed.defense, 0.08);
+assert.equal(buffed.bossDamage, 0.02, 'bossDamage 는 길드 버프 대상이 아니다');
+assert.equal(buffed.idle, 0.03, 'idle 은 길드 버프 대상이 아니다');
+assert.equal(baseBonus.attack, 0.10, 'applyGuildBuff 는 원본을 변경하지 않는다');
+// 무소속이면 계산 결과가 이전과 완전히 같아야 한다.
+assert.equal(applyGuildBuff(baseBonus, { atk: 0, hp: 0, def: 0 }), baseBonus);
+assert.equal(applyGuildBuff(baseBonus, null), baseBonus);
+
+// GP 는 기존 RPC 를 고치지 않고 감사 로그 트리거로 적립한다(회귀 위험 차단).
+assert.match(gpLevels, /create trigger gacha_s2_guild_gp_trigger after insert on public\.gacha_s2_command_audit/);
+assert.match(gpLevels, /when 'finishadventurerun' then v_gp := 5/);
+assert.match(gpLevels, /when 'attackworldboss' then v_gp := 10/);
+assert.match(gpLevels, /v_cap constant integer := 200/, '하루 개인 적립 상한');
+assert.match(gpLevels, /if v_today >= v_cap then return new; end if;/);
+// 정원은 절대 줄지 않아야 한다(이미 가입한 길드원 보호).
+assert.match(gpLevels, /member_limit = greatest\(coalesce\(v_limit, 30\), member_limit, v_members\)/);
+assert.match(gpLevels, /create table if not exists public\.gacha_s2_guild_levels/);
+assert.match(gpLevels, /create table if not exists public\.gacha_s2_guild_contributions/);
+assert.match(gpLevels, /create or replace function public\.gacha_s2_guild_buff/);
+
+// 스냅샷은 guildBuff 만 덧붙이고 기존 필드를 유지해야 한다.
+assert.match(snapshotSql, /'guildbuff', public\.gacha_s2_guild_buff\(s\.user_id\)/);
+for (const field of ['schemaversion', 'revision', 'points', 'cardcopies', 'collectionrecords',
+  'supportitems', 'worldboss', 'formation', 'powerranking']) {
+  assert.match(snapshotSql, new RegExp(`'${field}'`), `스냅샷에서 ${field} 가 사라졌다`);
+}
+// 서버와 클라이언트가 같은 합산 함수를 써야 전투 재현 검증이 어긋나지 않는다.
+assert.match(router, /applyGuildBuff\(base, snapshot\.guildBuff\)/);
+const appJs = await read('src/renewal/app.js');
+assert.match(appJs, /applyGuildBuff\(currentCollectionBonuses\(\), state\.guildBuff\)/);
+
 console.log('renewal guild M1 tests passed: 5 tables, 9 commands, revision-bump guard, penalty/limit rules');
+console.log('renewal guild M2 tests passed: 10 levels, GP trigger, daily cap, buff merge parity');

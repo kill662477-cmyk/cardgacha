@@ -1,17 +1,21 @@
 -- 길드 M1 명령 RPC: 생성 · 해산 · 설정 변경 (PDB-16)
 --
 -- 기존 명령과 동일하게 멱등키 + expectedRevision + 감사 로그를 지킨다.
--- 다만 길드 명령은 gacha_s2_player_states 를 변경하지 않으므로 revision 을 올리지 않는다.
--- 올리면 진행 중인 다른 명령에 불필요한 VERSION_CONFLICT 를 유발할 뿐 이득이 없다.
--- 길드 상태는 gacha_s2_get_guild_state 로 별도 조회한다.
+-- 길드 상태 자체는 gacha_s2_get_guild_state 로 별도 조회한다.
+--
+-- revision 취급: 길드 명령은 gacha_s2_player_states 를 직접 바꾸지 않지만, revision 은
+-- 반드시 1 올린다. gacha_s2_command_audit 에 CHECK (committed_revision = expected_revision + 1)
+-- 이 걸려 있어, 올리지 않으면 감사 로그 삽입이 실패해 모든 길드 명령이 거부된다.
+-- 명령 하나당 revision 1 증가는 이 프로젝트의 명령 계약 자체이므로 그대로 따른다.
 
--- 길드 명령 공통 성공 응답. 각 RPC 의 반복을 줄인다.
+-- 길드 명령 공통 성공 응답. revision 증가·스냅샷·멱등 기록·감사 로그를 한곳에서 처리해
+-- 각 RPC 의 반복과 실수를 줄인다.
 create or replace function public.gacha_s2_guild_command_ok(
   p_user_id uuid,
   p_idempotency_key text,
   p_command_type text,
   p_request_hash text,
-  p_revision bigint,
+  p_expected_revision bigint,
   p_result jsonb
 ) returns jsonb
 language plpgsql
@@ -19,14 +23,21 @@ security definer
 set search_path = public, pg_temp
 as $$
 declare
+  v_revision bigint;
   v_response jsonb;
 begin
+  update public.gacha_s2_player_states
+  set revision = revision + 1, updated_at = now()
+  where user_id = p_user_id
+  returning revision into v_revision;
+
+  -- 스냅샷은 revision 을 올린 뒤에 만들어야 응답의 revision 과 일치한다.
   v_response := jsonb_build_object(
     'contractVersion', 1,
     'ok', true,
     'commandId', p_idempotency_key,
     'idempotencyKey', p_idempotency_key,
-    'revision', p_revision,
+    'revision', v_revision,
     'serverTime', public.gacha_s2_now_ms(),
     'serverSeed', 0,
     'snapshot', public.gacha_s2_get_player_snapshot(p_user_id),
@@ -42,7 +53,7 @@ begin
   insert into public.gacha_s2_command_audit (
     user_id, command_id, command_type, request_hash, expected_revision, committed_revision
   ) values (
-    p_user_id, p_idempotency_key, p_command_type, p_request_hash, p_revision, p_revision
+    p_user_id, p_idempotency_key, p_command_type, p_request_hash, p_expected_revision, v_revision
   );
 
   return v_response;

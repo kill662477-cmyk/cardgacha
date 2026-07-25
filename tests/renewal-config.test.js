@@ -70,10 +70,10 @@ assert.equal(WORLD_BOSS_RULES.timeZone, 'Asia/Seoul');
 assert.deepEqual(WORLD_BOSS_RULES.scheduleHours, [17, 18, 19, 20]);
 assert.equal(WORLD_BOSS_RULES.attackEnergyCost, 10);
 assert.deepEqual(Object.values(WORLD_BOSS_RULES.slotTiers).map(({ difficultyMultiplier, maxHp }) => [difficultyMultiplier, maxHp]), [
-  [1, 4_000_000_000],
-  [1.125, 4_500_000_000],
-  [1.5, 6_000_000_000],
-  [1.625, 6_500_000_000],
+  [1, 5_500_000_000],
+  [1.091, 6_000_000_000],
+  [1.182, 6_500_000_000],
+  [1.273, 7_000_000_000],
 ]);
 // balance-tune: 서버 자동딜 폐지 -> 모든 슬롯 serverDamagePerSecond는 0.
 assert.deepEqual(Object.values(WORLD_BOSS_RULES.slotTiers).map(({ serverDamagePerSecond }) => serverDamagePerSecond), [0, 0, 0, 0]);

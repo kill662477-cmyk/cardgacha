@@ -315,30 +315,31 @@ export const WORLD_BOSS_RULES = {
   slotTiers: {
     // balance-tune: 서버 자동딜(서버DPS) 완전 폐지 -> 이제 참가자 전원의 합산 딜만으로
     // 처치 여부가 갈린다(0으로 두면 서버RPC가 자동으로 자동딜 0으로 계산, 로직 변경 불필요).
-    // maxHp는 지정값(17:40억/18:45억/19:60억/20:65억)으로 고정 -> 참여가 부족한 회차는 실패 가능.
+    // maxHp는 지정값(17:55억/18:60억/19:65억/20:70억)으로 고정 -> 참여가 부족한 회차는 실패 가능.
+    // difficultyMultiplier는 표시 전용(worldboss-controller 안내 문구)이라 17시 대비 HP 비율로 맞춘다.
     17: {
       title: '신호 요새', name: 'SIGNAL//BASTION', difficultyMultiplier: 1,
-      maxHp: 4_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.05,
+      maxHp: 5_500_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.05,
       image: 'assets/renewal/worldboss/boss-17-signal-bastion.webp',
     },
     18: {
-      title: '중계 포식자', name: 'RELAY//DEVOURER', difficultyMultiplier: 1.125,
-      maxHp: 4_500_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.10,
+      title: '중계 포식자', name: 'RELAY//DEVOURER', difficultyMultiplier: 1.091,
+      maxHp: 6_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.10,
       image: 'assets/renewal/worldboss/boss-18-relay-devourer.webp',
     },
     19: {
-      title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 1.5,
-      maxHp: 6_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.15,
+      title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 1.182,
+      maxHp: 6_500_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.15,
       image: 'assets/renewal/worldboss/boss-19-void-harvester.webp',
     },
     20: {
-      title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 1.625,
-      maxHp: 6_500_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.20,
+      title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 1.273,
+      maxHp: 7_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.20,
       image: 'assets/renewal/worldboss/boss-20-malice-singularity.webp',
     },
   },
   // nolevel-1: 서버DPS 폐지로 공동 HP가 곧 참가자 합산딜 목표치. 기본값은 17시 슬롯과 동일.
-  maxHp: 4_000_000_000,
+  maxHp: 5_500_000_000,
   battleDuration: 60,
   maxAttempts: 3,
   eventDurationSeconds: 60 * 60,

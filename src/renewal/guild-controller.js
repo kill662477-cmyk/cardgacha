@@ -24,6 +24,7 @@ function relativeDays(ms) {
 export function createGuildController({ getState, gameService, serverCommands = null, showToast }) {
   const elements = Object.fromEntries([
     'guildHome', 'guildBrowse', 'guildEmblem', 'guildTagLine', 'guildName', 'guildMeta',
+    'guildShowBrowse', 'guildShowHome',
     'guildActions', 'guildNotice', 'guildRequestsBox', 'guildRequestCount', 'guildRequestList',
     'guildMemberCount', 'guildMemberList', 'guildPenalty', 'guildCreateBox', 'guildCreateForm',
     'guildCreateName', 'guildCreateTag', 'guildEmblemPicker', 'guildList',
@@ -196,6 +197,10 @@ export function createGuildController({ getState, gameService, serverCommands = 
       </li>`).join('') || '<li class="guild-empty">대기 중인 신청이 없습니다</li>';
   }
 
+  // 소속 길드가 있을 때 'home'(내 길드) / 'browse'(다른 길드 목록) 중 무엇을 볼지.
+  // 무소속이면 항상 browse 이므로 이 값은 무시된다.
+  let guildView = 'home';
+
   function renderHome() {
     const guild = guildState.guild;
     const role = guildState.membership?.role;
@@ -245,14 +250,18 @@ export function createGuildController({ getState, gameService, serverCommands = 
     renderSortControls();
   }
 
-  function renderBrowse() {
+  // isMember 면 "구경만" 하는 상태다. 가입/생성 수단을 감추고 돌아가기 버튼을 띄운다.
+  function renderBrowse(isMember = false) {
     elements.guildHome.hidden = true;
     elements.guildBrowse.hidden = false;
+    if (elements.guildShowHome) elements.guildShowHome.hidden = !isMember;
     if (elements.guildWeeklyBox) elements.guildWeeklyBox.hidden = true;
     if (elements.guildRaidBox) elements.guildRaidBox.hidden = true;
 
     const penaltyUntil = guildState?.penaltyUntil;
-    if (Number.isFinite(penaltyUntil) && penaltyUntil > Date.now()) {
+    if (isMember) {
+      elements.guildPenalty.hidden = true;
+    } else if (Number.isFinite(penaltyUntil) && penaltyUntil > Date.now()) {
       const hours = Math.ceil((penaltyUntil - Date.now()) / 3_600_000);
       elements.guildPenalty.hidden = false;
       elements.guildPenalty.textContent = `길드 탈퇴 후 재가입 제한 중입니다 (약 ${hours}시간 남음)`;
@@ -260,7 +269,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
       elements.guildPenalty.hidden = true;
     }
 
-    const isStreamer = Boolean(getState?.()?.isStreamer ?? guildState?.canCreateGuild);
+    const isStreamer = !isMember && Boolean(getState?.()?.isStreamer ?? guildState?.canCreateGuild);
     elements.guildCreateBox.hidden = !isStreamer;
     if (isStreamer) renderEmblemPicker(guildState?.emblems);
 
@@ -269,6 +278,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
     elements.guildList.innerHTML = guilds.map((g) => {
       const full = (g.memberCount ?? 0) >= g.memberLimit;
       const pending = myRequests.has(g.guildId);
+      const mine = isMember && g.guildId === guildState?.guild?.guildId;
       return `
       <li class="guild-list-item">
         <div class="guild-list-emblem">${emblemMarkup(g.emblem, 'guild-list-emblem-mark')}</div>
@@ -276,9 +286,13 @@ export function createGuildController({ getState, gameService, serverCommands = 
           <strong>${escapeHtml(g.name ?? '-')}${g.tag ? ` <em>[${escapeHtml(g.tag)}]</em>` : ''}</strong>
           <small>Lv.${g.level} · ${number.format(g.memberCount ?? 0)}/${g.memberLimit}명 · ${escapeHtml(g.ownerNickname ?? '')}</small>
         </div>
-        ${pending
-          ? `<button type="button" data-guild-cancel="${escapeHtml(g.guildId)}">신청 취소</button>`
-          : `<button type="button" data-guild-join="${escapeHtml(g.guildId)}" ${full ? 'disabled' : ''}>${full ? '정원 마감' : (g.joinMode === 'auto' ? '즉시 가입' : '가입 신청')}</button>`}
+        ${mine
+          ? '<span class="guild-list-mine">내 길드</span>'
+          : isMember
+            ? ''
+            : pending
+              ? `<button type="button" data-guild-cancel="${escapeHtml(g.guildId)}">신청 취소</button>`
+              : `<button type="button" data-guild-join="${escapeHtml(g.guildId)}" ${full ? 'disabled' : ''}>${full ? '정원 마감' : (g.joinMode === 'auto' ? '즉시 가입' : '가입 신청')}</button>`}
       </li>`;
     }).join('') || '<li class="guild-empty">아직 만들어진 길드가 없습니다</li>';
   }
@@ -293,8 +307,10 @@ export function createGuildController({ getState, gameService, serverCommands = 
       elements.guildList.innerHTML = '<li class="guild-empty">길드는 서버 연결 후 이용할 수 있습니다</li>';
       return;
     }
-    if (guildState?.guild && guildState?.membership) renderHome();
-    else renderBrowse();
+    const isMember = Boolean(guildState?.guild && guildState?.membership);
+    if (!isMember) guildView = 'home';
+    if (isMember && guildView === 'home') renderHome();
+    else renderBrowse(isMember);
   }
 
   async function run(operation) {
@@ -312,6 +328,17 @@ export function createGuildController({ getState, gameService, serverCommands = 
   }
 
   function bindEvents() {
+    // 소속 길드가 있어도 다른 길드 현황을 볼 수 있게 두 화면을 오간다.
+    // 서버는 가입 여부와 무관하게 목록을 내려주므로 추가 요청이 필요 없다.
+    elements.guildShowBrowse?.addEventListener('click', () => {
+      guildView = 'browse';
+      render();
+    });
+    elements.guildShowHome?.addEventListener('click', () => {
+      guildView = 'home';
+      render();
+    });
+
     elements.guildCreateForm?.addEventListener('submit', (event) => {
       event.preventDefault();
       const name = elements.guildCreateName.value.trim();

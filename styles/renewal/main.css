@@ -1997,3 +1997,12 @@ button[aria-busy="true"]::after {
 .guild-joinmode button { padding: 5px 11px; border-radius: 7px; font-size: .75rem; font-weight: 700; cursor: pointer; background: transparent; color: var(--muted); border: 1px solid transparent; }
 .guild-joinmode button.selected { color: var(--bg, #0b0f0d); background: var(--cyan); border-color: var(--cyan); }
 .guild-joinmode button:not(.selected):hover { color: inherit; border-color: var(--line-bright); }
+
+/* 소속 길드가 있어도 다른 길드 목록을 볼 수 있게 하는 전환 버튼(내 길드 화면 하단). */
+.guild-view-switch { display: flex; justify-content: flex-end; margin: -4px 0 10px; }
+.guild-view-switch button {
+  padding: 7px 12px; border-radius: 9px; font-size: .78rem; font-weight: 700;
+  background: var(--panel-soft); border: 1px solid var(--line-bright); color: var(--text);
+}
+/* 목록에서 자기 길드 표시. 가입 버튼 자리를 대신한다. */
+.guild-list-mine { margin-left: auto; color: var(--acid); font-size: .78rem; font-weight: 850; white-space: nowrap; }

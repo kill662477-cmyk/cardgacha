@@ -333,3 +333,28 @@ assert.match(
 );
 
 console.log('guild custom emblem tests passed: image whitelist, markup render, escaping, inactive listing');
+
+// 소속 길드가 있어도 다른 길드 목록을 볼 수 있어야 한다.
+// 버튼을 index.html 에만 넣고 컨트롤러에 연결하지 않으면 눌러도 아무 일이 없다.
+const guildBrowseHtml = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+for (const id of ['guildShowBrowse', 'guildShowHome']) {
+  assert.match(guildBrowseHtml, new RegExp(`id="${id}"`), `${id} 버튼이 화면에 있어야 한다`);
+  assert.match(
+    guildControllerSource,
+    new RegExp(`elements\.${id}\?\.addEventListener`),
+    `${id} 버튼에 클릭 처리가 연결돼야 한다`,
+  );
+  assert.match(
+    guildControllerSource,
+    new RegExp(`'${id}'`),
+    `${id} 가 elements 목록에 등록돼야 한다`,
+  );
+}
+assert.match(
+  guildControllerSource,
+  /renderBrowse\(isMember\)/,
+  '소속 여부를 넘겨야 목록에서 가입 버튼과 생성 폼을 감출 수 있다',
+);
+assert.match(guildControllerSource, /guild-list-mine/, '목록에서 내 길드를 표시해야 한다');
+
+console.log('guild browse-while-member tests passed: buttons wired, member-aware list');

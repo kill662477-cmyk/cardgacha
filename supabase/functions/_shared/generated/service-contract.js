@@ -128,7 +128,8 @@ function validatePayload(type, payload, issues) {
       break;
     case GAME_COMMAND_TYPES.PURCHASE_PACK:
       validateString(issues, payload.productId, 'payload.productId', 80);
-      if (![1, 10].includes(payload.quantity)) addIssue(issues, 'payload.quantity', '1 또는 10 필요');
+      // 100개 묶음은 서버 RPC(gacha_s2_purchase_pack)도 함께 허용해야 한다. 한쪽만 넓히면 거절된다.
+      if (![1, 10, 100].includes(payload.quantity)) addIssue(issues, 'payload.quantity', '1, 10 또는 100 필요');
       if (payload.race !== null && payload.race !== undefined && !['저그', '테란', '프로토스'].includes(payload.race)) {
         addIssue(issues, 'payload.race', '유효한 종족 또는 null 필요');
       }

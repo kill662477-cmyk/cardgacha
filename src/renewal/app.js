@@ -236,6 +236,7 @@ function cacheElements() {
     'shopTitle', 'shopRaceSelector', 'shopProductGrid', 'shopInventoryGrid',
     'shopDetailTitle', 'shopDetailSummary', 'shopProbabilityList', 'shopDetailNote',
     'shopResultDialog', 'shopResultTitle', 'shopResultSummary', 'shopResultGrid',
+    'shopResultPager', 'shopResultPageLabel',
     'minigameScreen', 'worldBossScreen', 'rankingScreen',
     'systemStateLayer', 'systemStateEyebrow', 'systemStateTitle', 'systemStateMessage', 'systemStateCode', 'systemStateRetry',
     'rewardDurationBlock', 'rewardBreakdown', 'rewardEmptyState',
@@ -1769,7 +1770,7 @@ function cardPackProductMarkup(productId) {
   return `<article class="shop-product${selected ? ' selected' : ''}" data-shop-product="${productId}" style="--accent:${product.accent}">
     <div class="shop-product-visual"><img src="${shopPackImage(product.packKey, product.race)}" alt="${packName}"></div>
     <div class="shop-product-copy"><span>${product.eyebrow}</span><h3>${packName}</h3><p><b>${number.format(pack.price)}P</b><i>${pack.count}장 · 확정 등급 없음</i></p></div>
-    <div class="shop-buy-row"><button type="button" data-buy-card-pack="${product.packKey}"${raceAttribute} data-buy-count="1" ${state.points < pack.price ? 'disabled' : ''}><b>1개 구매</b><small>${number.format(pack.price)}P · ${pack.count}장</small></button><button type="button" data-buy-card-pack="${product.packKey}"${raceAttribute} data-buy-count="10" ${state.points < pack.price * 10 ? 'disabled' : ''}><b>10개 구매</b><small>${number.format(pack.price * 10)}P · ${pack.count * 10}장</small></button></div>
+    <div class="shop-buy-row"><button type="button" data-buy-card-pack="${product.packKey}"${raceAttribute} data-buy-count="1" ${state.points < pack.price ? 'disabled' : ''}><b>1개 구매</b><small>${number.format(pack.price)}P · ${pack.count}장</small></button><button type="button" data-buy-card-pack="${product.packKey}"${raceAttribute} data-buy-count="10" ${state.points < pack.price * 10 ? 'disabled' : ''}><b>10개 구매</b><small>${number.format(pack.price * 10)}P · ${pack.count * 10}장</small></button><button type="button" data-buy-card-pack="${product.packKey}"${raceAttribute} data-buy-count="100" ${state.points < pack.price * 100 ? 'disabled' : ''}><b>100개 구매</b><small>${number.format(pack.price * 100)}P · ${pack.count * 100}장</small></button></div>
   </article>`;
 }
 
@@ -1853,19 +1854,39 @@ function renderShop() {
   window.lucide?.createIcons();
 }
 
-function showCardPackResults(packKey, cardIds, paidPoints, ticket = false) {
-  const grouped = cardIds.reduce((map, id) => map.set(id, (map.get(id) ?? 0) + 1), new Map());
-  const layout = cardResultGridLayout(cardIds.length);
-  elements.shopResultTitle.textContent = `${PACKS[packKey].name} 개봉`;
-  elements.shopResultSummary.textContent = `${cardIds.length}장 획득 · ${ticket ? '교환권 사용' : `${number.format(paidPoints)}P 사용`} · ${grouped.size}종`;
+// 100팩(최대 400장)을 한 화면에 전부 그리면 카드 이미지가 수백 장 붙어 무겁고 읽히지도 않는다.
+// 그래서 한 페이지에 이만큼만 그리고 나머지는 페이지를 넘겨 본다.
+const CARD_RESULT_PAGE_SIZE = 50;
+const cardResultPaging = { cardIds: [], page: 0 };
+
+function renderCardResultPage() {
+  const { cardIds, page } = cardResultPaging;
+  const pageCount = Math.max(1, Math.ceil(cardIds.length / CARD_RESULT_PAGE_SIZE));
+  const start = page * CARD_RESULT_PAGE_SIZE;
+  const pageCards = cardIds.slice(start, start + CARD_RESULT_PAGE_SIZE);
+  const layout = cardResultGridLayout(pageCards.length);
   elements.shopResultGrid.dataset.resultType = 'cards';
   elements.shopResultGrid.classList.toggle('bulk', layout.bulk);
   elements.shopResultGrid.style.setProperty('--result-columns', layout.columns);
   elements.shopResultGrid.style.setProperty('--result-card-width', layout.cardWidth);
-  elements.shopResultGrid.innerHTML = cardIds.map((id) => {
+  elements.shopResultGrid.innerHTML = pageCards.map((id) => {
     const card = cardsById.get(id);
-    return `<article class="shop-result-card card-visual" style="--rarity:${RARITIES[card.rarity].color}"><img class="card-photo" src="${imagePath(card)}" alt=""><div class="shop-result-shade"></div>${cardVisualChrome(card)}<span class="shop-result-name">${card.member}</span></article>`;
+    return `<article class="shop-result-card card-visual" style="--rarity:${RARITIES[card.rarity].color}"><img class="card-photo" src="${imagePath(card)}" alt="" loading="lazy"><div class="shop-result-shade"></div>${cardVisualChrome(card)}<span class="shop-result-name">${card.member}</span></article>`;
   }).join('');
+  elements.shopResultPager.hidden = pageCount <= 1;
+  elements.shopResultPageLabel.textContent = `${page + 1} / ${pageCount} · ${start + 1}~${start + pageCards.length}번째`;
+  elements.shopResultPager.querySelector('[data-result-page="prev"]').disabled = page <= 0;
+  elements.shopResultPager.querySelector('[data-result-page="next"]').disabled = page >= pageCount - 1;
+  elements.shopResultGrid.scrollTop = 0;
+}
+
+function showCardPackResults(packKey, cardIds, paidPoints, ticket = false) {
+  const grouped = cardIds.reduce((map, id) => map.set(id, (map.get(id) ?? 0) + 1), new Map());
+  elements.shopResultTitle.textContent = `${PACKS[packKey].name} 개봉`;
+  elements.shopResultSummary.textContent = `${cardIds.length}장 획득 · ${ticket ? '교환권 사용' : `${number.format(paidPoints)}P 사용`} · ${grouped.size}종`;
+  cardResultPaging.cardIds = cardIds;
+  cardResultPaging.page = 0;
+  renderCardResultPage();
   elements.shopResultDialog.showModal();
 }
 
@@ -1875,6 +1896,9 @@ function showSupportResults(itemIds, paidPoints) {
   elements.shopResultTitle.textContent = `${SUPPORT_PACK.name} 결과`;
   elements.shopResultSummary.textContent = `${itemIds.length}개 획득 · ${number.format(paidPoints)}P 사용${rareCount > 0 ? ` · 희귀 ${rareCount}개` : ''}`;
   elements.shopResultGrid.dataset.resultType = 'items';
+  // 보급품 결과는 최대 10개라 페이지가 필요 없다. 카드 결과에서 켜 둔 페이저를 끈다.
+  elements.shopResultPager.hidden = true;
+  cardResultPaging.cardIds = [];
   elements.shopResultGrid.classList.remove('bulk');
   elements.shopResultGrid.style.removeProperty('--result-columns');
   elements.shopResultGrid.style.removeProperty('--result-card-width');
@@ -2568,6 +2592,17 @@ function bindEvents() {
   elements.shopInventoryGrid.addEventListener('click', (event) => {
     const button = event.target.closest('[data-use-shop-item]');
     if (button && !button.disabled) activateShopItem(button.dataset.useShopItem);
+  });
+  elements.shopResultPager.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-result-page]');
+    if (!button) return;
+    // 다이얼로그는 아무 데나 클릭하면 닫힌다. 페이지 이동은 닫히면 안 되므로 전파를 끊는다.
+    event.stopPropagation();
+    if (button.disabled) return;
+    const pageCount = Math.max(1, Math.ceil(cardResultPaging.cardIds.length / CARD_RESULT_PAGE_SIZE));
+    const next = cardResultPaging.page + (button.dataset.resultPage === 'next' ? 1 : -1);
+    cardResultPaging.page = Math.min(Math.max(next, 0), pageCount - 1);
+    renderCardResultPage();
   });
   elements.shopResultDialog.addEventListener('click', (event) => {
     if (event.button === 0 && elements.shopResultDialog.open) elements.shopResultDialog.close();

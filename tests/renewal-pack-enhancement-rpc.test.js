@@ -105,3 +105,34 @@ assert.match(sameCardMaterial, /owned\.locked and req\.card_id <> p_card_id/);
 assert.match(sameCardMaterial, /owned\.copies - 1 validation still preserves the target's base copy|locked-material guard was not found/);
 
 console.log('renewal pack/enhancement RPC tests passed: server RNG, atomic economy, replay, revision, service-role boundary');
+
+// 100개 묶음 구매(20260725000106). 서버 RPC 와 클라이언트 계약이 함께 100 을 허용해야 하며,
+// 한쪽만 넓히면 구매가 거절된다.
+const quantity100Sql = await readFile(
+  new URL('../supabase/migrations/20260725000106_pack_quantity_100.sql', import.meta.url),
+  'utf8',
+);
+const quantity100 = quantity100Sql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
+assert.match(quantity100, /p_quantity not in \(1, 10, 100\)/);
+assert.match(quantity100, /v_total_cost := v_pack_price \* p_quantity/);
+assert.match(quantity100, /v_total_draws := v_pack_count \* p_quantity/);
+assert.match(quantity100, /for update/);
+assert.match(quantity100, /revoke all on function public\.gacha_s2_purchase_pack/);
+
+const contractSource = await readFile(new URL('../src/renewal/service-contract.js', import.meta.url), 'utf8');
+assert.match(
+  contractSource,
+  /\[1, 10, 100\]\.includes\(payload\.quantity\)/,
+  '클라이언트 계약이 100 을 허용하지 않으면 서버에 도달하기 전에 거절된다',
+);
+
+const appSource = await readFile(new URL('../src/renewal/app.js', import.meta.url), 'utf8');
+assert.match(appSource, /data-buy-count="100"/, '상점에 100개 구매 버튼이 있어야 한다');
+assert.match(appSource, /CARD_RESULT_PAGE_SIZE/, '100팩 결과는 페이지로 나눠 그려야 한다');
+assert.match(
+  appSource,
+  /elements\.shopResultPager\.addEventListener/,
+  '페이저 클릭은 다이얼로그 닫기보다 먼저 처리돼야 한다',
+);
+
+console.log('pack quantity 100 tests passed: server rpc, client contract, shop button, paged results');

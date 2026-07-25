@@ -525,6 +525,10 @@ button[aria-busy="true"]::after {
 .shop-result-card .shop-result-shade { position: absolute; inset: 62% 0 0; z-index: 1; background: linear-gradient(transparent, rgba(2,3,2,.9)); }
 .shop-result-card > b { position: absolute; top: 5px; left: 5px; color: var(--rarity); font-size: 12px; text-shadow: 0 0 7px var(--rarity); }
 .shop-result-card .shop-result-name { position: absolute; left: 7px; right: 7px; bottom: 7px; z-index: 5; overflow: hidden; font-size: 10px; font-weight: 850; text-overflow: ellipsis; text-shadow: 0 2px 3px #000; white-space: nowrap; }
+.shop-result-pager { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 10px 14px 14px; border-top: 1px solid var(--line); }
+.shop-result-pager button { min-width: 92px; min-height: 38px; padding: 0 14px; border: 1px solid var(--line); background: #0d120e; color: var(--acid); font-size: 12px; font-weight: 850; }
+.shop-result-pager button:disabled { color: #4a534c; opacity: .5; }
+.shop-result-pager span { min-width: 150px; font-size: 11px; font-weight: 850; letter-spacing: .04em; text-align: center; }
 .shop-result-item { position: relative; display: grid; place-items: center; min-height: 92px; padding: 8px; border: 1px solid var(--line); background: #0d120e; text-align: center; animation: result-item-reveal .34s ease both; animation-delay: var(--reveal-delay, 0ms); }
 .shop-result-item svg { width: 24px; color: var(--acid); }
 .shop-result-item img { width: 30px; height: 30px; object-fit: contain; filter: drop-shadow(0 3px 4px rgba(0,0,0,.5)); }

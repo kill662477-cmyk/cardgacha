@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import fs from 'node:fs';
 import {
   CLIENT_CACHE_FIELDS,
@@ -165,3 +166,45 @@ storage.set(storageKey, JSON.stringify(incompleteV1));
 assert.equal(loadState().revision, 0, 'v2 states with missing declared fields must be rejected instead of patched');
 
 console.log('renewal state schema tests passed: v0/v1 migration, v2 validation, authority boundary, corrupt-state rejection');
+
+// ── 서버 스냅샷 ↔ 클라 화이트리스트 계약 ──────────────────────────────
+// validateGameState 는 SERVER_AUTHORITY_FIELDS/CLIENT_CACHE_FIELDS 에 없는 필드를
+// "v2에 선언되지 않은 필드"로 거부한다. 따라서 서버 스냅샷 RPC 가 내려보내는
+// 최상위 키는 전부 이 목록 안에 있어야 한다.
+//
+// 이 검사가 없어서 2026-07-25 에 장애가 났다. 길드 기능이 스냅샷에 guildBuff 를
+// 추가했는데 목록을 갱신하지 않아, 로그인한 모든 사용자가 init 단계에서 튕겼다.
+// 기존 테스트는 클라 fixture 의 키만 대조해 계약의 한쪽만 보고 있었다.
+function topLevelSnapshotKeys(sql) {
+  const fnAt = sql.indexOf('gacha_s2_get_player_snapshot(p_user_id uuid)');
+  const start = sql.indexOf('jsonb_build_object(', fnAt);
+  if (start < 0) return [];
+  let depth = 0;
+  let expectKey = true;
+  const keys = [];
+  for (let i = start + 'jsonb_build_object'.length; i < sql.length; i += 1) {
+    const ch = sql[i];
+    if (ch === '(') depth += 1;
+    else if (ch === ')') { depth -= 1; if (depth === 0) break; }
+    else if (ch === ',' && depth === 1) expectKey = !expectKey;
+    else if (ch === "'" && depth === 1 && expectKey) {
+      const end = sql.indexOf("'", i + 1);
+      keys.push(sql.slice(i + 1, end));
+      i = end;
+    }
+  }
+  return keys;
+}
+
+const snapshotSql = await readFile(
+  new URL('../supabase/migrations/20260718000003_renewal_migration_003_command_foundation.sql', import.meta.url),
+  'utf8',
+);
+const snapshotKeys = topLevelSnapshotKeys(snapshotSql);
+assert.ok(snapshotKeys.length > 20, '스냅샷 최상위 키를 추출하지 못했다(파서 확인 필요)');
+const declaredFields = new Set([...SERVER_AUTHORITY_FIELDS, ...CLIENT_CACHE_FIELDS]);
+const undeclared = snapshotKeys.filter((key) => !declaredFields.has(key));
+assert.deepEqual(undeclared, [],
+  `스냅샷이 내려보내는 필드가 v2 목록에 없다: ${undeclared.join(', ')} — SERVER_AUTHORITY_FIELDS 에 추가해야 로그인이 막히지 않는다`);
+
+console.log(`snapshot contract ok: ${snapshotKeys.length} keys all declared`);

@@ -1974,3 +1974,8 @@ button[aria-busy="true"]::after {
 .guild-raid-participant { display: flex; justify-content: space-between; gap: 8px; padding: 7px 11px; border-radius: 9px; background: var(--panel-soft); border: 1px solid var(--line); font-size: .8rem; }
 .guild-raid-participant.absent { opacity: .5; }
 .guild-raid-participant span { color: var(--muted); font-size: .75rem; }
+.guild-joinmode { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px; border-radius: 10px; background: var(--panel-soft); border: 1px solid var(--line); }
+.guild-joinmode > span { font-size: .72rem; color: var(--muted); margin-right: 2px; }
+.guild-joinmode button { padding: 5px 11px; border-radius: 7px; font-size: .75rem; font-weight: 700; cursor: pointer; background: transparent; color: var(--muted); border: 1px solid transparent; }
+.guild-joinmode button.selected { color: var(--bg, #0b0f0d); background: var(--cyan); border-color: var(--cyan); }
+.guild-joinmode button:not(.selected):hover { color: inherit; border-color: var(--line-bright); }

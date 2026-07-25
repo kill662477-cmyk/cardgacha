@@ -233,8 +233,14 @@ export function createGuildController({ getState, gameService, serverCommands = 
 
     const actions = [];
     if (role === 'owner') {
-      actions.push(`<button type="button" data-guild-joinmode="${guild.joinMode === 'auto' ? 'approval' : 'auto'}">
-        가입 ${guild.joinMode === 'auto' ? '자동승인 켜짐' : '승인제'}</button>`);
+      // 버튼 하나가 눌릴 때마다 글자가 바뀌면 "지금 상태"인지 "누르면 될 상태"인지 헷갈린다.
+      // 두 모드를 나란히 놓고 현재 것을 활성 표시하는 토글로 보여 준다.
+      const mode = guild.joinMode === 'auto' ? 'auto' : 'approval';
+      actions.push(`<div class="guild-joinmode" role="group" aria-label="가입 방식">
+        <span>가입</span>
+        <button type="button" data-guild-joinmode="approval"${mode === 'approval' ? ' class="selected" aria-pressed="true"' : ''}>승인제</button>
+        <button type="button" data-guild-joinmode="auto"${mode === 'auto' ? ' class="selected" aria-pressed="true"' : ''}>자동승인</button>
+      </div>`);
       actions.push('<button type="button" class="danger" data-guild-disband>길드 해산</button>');
     } else {
       actions.push('<button type="button" class="danger" data-guild-leave>길드 탈퇴</button>');
@@ -345,7 +351,10 @@ export function createGuildController({ getState, gameService, serverCommands = 
       else if (guildApprove) void run(() => serverCommands.resolveJoinRequest({ targetUserId: guildApprove, approve: true }));
       else if (guildReject) void run(() => serverCommands.resolveJoinRequest({ targetUserId: guildReject, approve: false }));
       else if (guildRole) void run(() => serverCommands.setGuildMemberRole({ targetUserId: guildRole, role: target.dataset.roleNext }));
-      else if (guildJoinmode) void run(() => serverCommands.updateGuildSettings({ notice: guildState?.guild?.notice ?? '', joinMode: guildJoinmode }));
+      else if (guildJoinmode) {
+        if (guildJoinmode === (guildState?.guild?.joinMode ?? 'approval')) return;
+        void run(() => serverCommands.updateGuildSettings({ notice: guildState?.guild?.notice ?? '', joinMode: guildJoinmode }));
+      }
       else if (target.id === 'guildRaidAttack') void run(() => serverCommands.attackGuildRaid());
       else if (target.id === 'guildRaidClaim') void run(() => serverCommands.claimGuildRaidReward());
       else if (target.id === 'guildWeeklyClaim') void run(() => serverCommands.claimGuildWeeklyReward());

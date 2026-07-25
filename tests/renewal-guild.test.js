@@ -293,6 +293,8 @@ const emblemSource = await readFile(new URL('../src/renewal/guild-emblem.js', im
 assert.match(emblemSource, /EMBLEM_IMAGES/, '이미지 엠블럼 화이트리스트가 있어야 한다');
 assert.match(emblemSource, /ilsin: `assets\/renewal\/guild\/emblems\/ilsin\.png\?v=/);
 assert.match(emblemSource, /chiri: `assets\/renewal\/guild\/emblems\/chiri\.png\?v=/);
+assert.match(emblemSource, /byungdan: `assets\/renewal\/guild\/emblems\/byungdan\.png\?v=/);
+assert.match(emblemSource, /harang: `assets\/renewal\/guild\/emblems\/harang\.png\?v=/);
 assert.match(
   emblemSource,
   /EMBLEM_ASSET_VERSION/,

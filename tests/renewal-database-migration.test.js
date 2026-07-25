@@ -56,3 +56,21 @@ assert.match(indexHtml, /\[ASL 본선 진출 기념\] 전 계정 30,000 P 지급
 assert.match(indexHtml, /30,000 포인트<\/strong>를 특별 지급/);
 
 console.log('renewal database migration tests passed: read-only source, account and bridge carryover, clean game state');
+
+// 신규 가입 시작 포인트 200,000 (20260726000111).
+// 소급 지급은 전용 테이블로 멱등성을 잡고, 앞으로의 가입자는 컬럼 기본값으로 처리한다.
+const newPlayerPointsSql = await readFile(
+  new URL('../supabase/migrations/20260726000111_new_player_starting_points_200k.sql', import.meta.url),
+  'utf8',
+);
+assert.match(newPlayerPointsSql, /lock table public\.gacha_s2_player_states in share row exclusive mode/);
+assert.match(newPlayerPointsSql, /points_granted integer not null default 200000/);
+assert.match(newPlayerPointsSql, /and reward\.points_after is null/);
+assert.match(
+  newPlayerPointsSql,
+  /alter column points set default 200000/,
+  '기본값을 안 바꾸면 앞으로 가입하는 사람은 여전히 5,000 으로 시작한다',
+);
+assert.match(newPlayerPointsSql, /revoke all on table public\.gacha_s2_new_player_reward_20260726/);
+
+console.log('new player starting points tests passed: idempotent grant, column default');

@@ -126,3 +126,25 @@ export function calculateCollectionBonuses(cards, records = {}) {
   }
   return { ...bonuses, combatTotal: finalCombatTotal, model };
 }
+
+// 길드 버프(PDB-16 M2)를 도감 보너스에 합산한다.
+// 도감 보너스의 combatBonusCap 을 적용한 "뒤"에 더하므로, 길드 버프 때문에 도감 보너스가
+// 깎이지 않는다. 길드는 도감과 별개의 가산 보너스다.
+// 서버(verifiedContext)와 클라이언트가 반드시 같은 함수를 써야 전투 재현 검증이 어긋나지 않는다.
+export function applyGuildBuff(bonuses, guildBuff) {
+  const buff = guildBuff ?? {};
+  const atk = Number(buff.atk) || 0;
+  const hp = Number(buff.hp) || 0;
+  const def = Number(buff.def) || 0;
+  if (!atk && !hp && !def) return bonuses;
+  const merged = {
+    ...bonuses,
+    attack: Number(((bonuses.attack ?? 0) + atk).toFixed(6)),
+    hp: Number(((bonuses.hp ?? 0) + hp).toFixed(6)),
+    defense: Number(((bonuses.defense ?? 0) + def).toFixed(6)),
+  };
+  merged.combatTotal = Number((
+    merged.attack + merged.hp + merged.defense + (merged.bossDamage ?? 0)
+  ).toFixed(6));
+  return merged;
+}

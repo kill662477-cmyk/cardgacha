@@ -124,7 +124,7 @@ const requestCoordinator = createRequestCoordinator({
 
 const ARCHETYPE_DESCRIPTIONS = {
   quick: '빠른 공격 주기로 꾸준한 피해를 누적합니다. 공격속도 +28%.',
-  heavy: '느리지만 강한 일격을 가합니다. 공격력 +28%, 치명타 피해 +20%p.',
+  heavy: '느리지만 강한 일격을 가합니다. 공격력 +31%, 치명타 확률 +12%p, 치명타 피해 +20%p.',
   combo: '연속 타격으로 기본 피해를 증폭합니다. 연타 피해 계수 1.18배.',
   area: '여러 적이 등장하는 웨이브에 강합니다. 광역 피해 계수 1.22배.',
   boss: '보스 대상 공격이 강화됩니다. 보스 피해 계수 1.28배.',

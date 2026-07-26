@@ -17,13 +17,17 @@ export const RARITIES = {
 
 export const ARCHETYPES = {
   quick: { label: '속공', atk: 0.9, hp: 0.94, def: 0.9, speed: 1.28, crit: 0.05 },
-  heavy: { label: '강타', atk: 1.28, hp: 1.04, def: 1, speed: 0.78, critDamage: 0.2 },
+  // 강타: critDamage 는 치명타가 터져야 의미가 있는데 기본 확률이 8% 뿐이라 사실상 죽은 보정이었다.
+  // 확률을 20%로 올려 특성이 실제로 작동하게 하고, 그만큼 딜 손실을 atk 로 메운다.
+  heavy: { label: '강타', atk: 1.31, hp: 1.04, def: 1, speed: 0.78, crit: 0.12, critDamage: 0.2 },
   combo: { label: '연타', atk: 0.96, hp: 0.96, def: 0.94, speed: 1.12, multiHit: 1.1 },
   area: { label: '광역', atk: 1.04, hp: 0.98, def: 0.94, speed: 0.94, area: 1.18 },
   boss: { label: '보스', atk: 1.08, hp: 1.03, def: 1, speed: 0.91, bossDamage: 1.28 },
   amplify: { label: '증폭', atk: 1.02, hp: 0.95, def: 0.92, speed: 1, crit: 0.09, amplify: 0.04 },
   weaken: { label: '약화', atk: 0.92, hp: 1.02, def: 1.02, speed: 1.03, weaken: 0.15 },
-  sustain: { label: '생존', atk: 0.91, hp: 1.24, def: 1.18, speed: 0.88, recovery: 0.08 },
+  // 생존: 딜이 연타 대비 67.7% 로 8종 중 최하위였다. 속도를 올리면 회복까지 강해지므로
+  // atk 만 올려 딜을 79 수준으로 맞춘다(표시 전투력 86.7 -> 94.8).
+  sustain: { label: '생존', atk: 1.06, hp: 1.24, def: 1.18, speed: 0.88, recovery: 0.08 },
 };
 
 export const ENHANCEMENT = {

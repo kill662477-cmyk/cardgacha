@@ -13,8 +13,10 @@ const maxedTopDeck = topDeck.map((card) => ({ ...card, enhancement: 9 }));
 const maxedLowDeck = lowDeck.map((card) => ({ ...card, enhancement: 9 }));
 const fullCollection = calculateCollectionBonuses(allCards, Object.fromEntries(allCards.map((card) => [card.id, true])));
 
-assert.equal(simulateBattle(lowDeck, STAGES[1]).victory, true, 'unmaxed low deck should clear 1-2');
-assert.equal(simulateBattle(lowDeck, STAGES[2]).victory, false, 'unmaxed low deck should stop at 1-3');
+// 저성능 덱은 지역 1 안에서 막혀야 한다. 벽 위치가 1-3 에서 1-4 로 한 칸 밀린 것은
+// 생존 특성 공격력 상향(0.91 -> 1.06)의 의도된 결과다. 이 덱에 D/sustain 카드가 들어 있다.
+assert.equal(simulateBattle(lowDeck, STAGES[2]).victory, true, 'unmaxed low deck should clear 1-3');
+assert.equal(simulateBattle(lowDeck, STAGES[3]).victory, false, 'unmaxed low deck should stop at 1-4');
 assert.equal(simulateBattle(midDeck, STAGES[9]).victory, true, 'mid deck should clear the first region');
 assert.equal(simulateBattle(topDeck, STAGES[9]).victory, true, 'top deck should clear the first region');
 assert.equal(simulateBattle(topDeck, STAGES[10]).victory, true, 'top deck may enter region 2');
@@ -68,7 +70,9 @@ const isolatedRarityDeck = (rarity, enhancement = 0) => fixedArchetypes.map((arc
   race: 'Z',
 }));
 const zeroStarReach = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'].map((rarity) => reaches(isolatedRarityDeck(rarity)));
-assert.deepEqual(zeroStarReach, [3, 5, 8, 10, 11, 18, 20, 30, 40], 'zero-star rarity progression must reflect the SS/SSS rarity retune');
+// 검증 덱 5장 중 2장(강타·생존)이 상향 대상이라 저·중등급 도달 구간이 2~3 스테이지 늘었다.
+// 고등급 종착점(SS 30 / SSS 40)은 그대로라 엔드게임 벽은 유지된다.
+assert.deepEqual(zeroStarReach, [4, 6, 8, 10, 12, 20, 20, 30, 40], 'zero-star rarity progression must reflect the SS/SSS rarity retune and the heavy/sustain buff');
 
 const combatRarities = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
 for (let rarityIndex = 1; rarityIndex < combatRarities.length; rarityIndex += 1) {

@@ -1,5 +1,5 @@
 import { escapeHtml } from './html.js';
-import { guildLevelFor } from './config.js';
+import { GUILD_RULES, guildLevelFor } from './config.js';
 import { EMBLEM_GLYPHS, emblemMarkup } from './guild-emblem.js';
 
 const number = new Intl.NumberFormat('ko-KR');
@@ -25,6 +25,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
   const elements = Object.fromEntries([
     'guildHome', 'guildBrowse', 'guildEmblem', 'guildTagLine', 'guildName', 'guildMeta',
     'guildShowBrowse', 'guildShowHome',
+    'guildLevelProgress', 'guildLevelTitle', 'guildLevelRemain', 'guildLevelBar', 'guildLevelNext',
     'guildActions', 'guildNotice', 'guildRequestsBox', 'guildRequestCount', 'guildRequestList',
     'guildMemberCount', 'guildMemberList', 'guildPenalty', 'guildCreateBox', 'guildCreateForm',
     'guildCreateName', 'guildCreateTag', 'guildEmblemPicker', 'guildList',
@@ -201,6 +202,40 @@ export function createGuildController({ getState, gameService, serverCommands = 
   // 무소속이면 항상 browse 이므로 이 값은 무시된다.
   let guildView = 'home';
 
+  // 다음 레벨까지 남은 공헌도와 그 레벨에서 열리는 것을 보여 준다.
+  // 레벨업 조건이 화면 어디에도 없어서 얼마나 더 모아야 하는지 알 수 없었다.
+  function renderLevelProgress(guild, tier) {
+    if (!elements.guildLevelProgress) return;
+    const totalGp = guild.totalGp ?? 0;
+    const next = GUILD_RULES.levels.find((row) => row.requiredGp > totalGp);
+    elements.guildLevelProgress.hidden = false;
+    if (!next) {
+      elements.guildLevelTitle.textContent = `Lv.${tier.level} · 최고 레벨`;
+      elements.guildLevelRemain.textContent = `누적 ${number.format(totalGp)} GP`;
+      elements.guildLevelBar.style.width = '100%';
+      elements.guildLevelNext.textContent = '더 올릴 레벨이 없습니다.';
+      return;
+    }
+    const floor = tier.requiredGp ?? 0;
+    const span = Math.max(1, next.requiredGp - floor);
+    const ratio = Math.max(0, Math.min(100, ((totalGp - floor) / span) * 100));
+    elements.guildLevelTitle.textContent = `Lv.${tier.level} → Lv.${next.level}`;
+    elements.guildLevelRemain.textContent =
+      `${number.format(totalGp)} / ${number.format(next.requiredGp)} GP · ${number.format(next.requiredGp - totalGp)} 남음`;
+    elements.guildLevelBar.style.width = `${ratio}%`;
+    // 다음 레벨에서 실제로 달라지는 것만 적는다. 그대로인 항목은 빼야 정보가 읽힌다.
+    const gains = [];
+    if (next.memberLimit > tier.memberLimit) gains.push(`정원 ${tier.memberLimit} → ${next.memberLimit}명`);
+    for (const [key, label] of [['atk', '공격'], ['hp', '체력'], ['def', '방어'], ['points', '포인트']]) {
+      if ((next[key] ?? 0) > (tier[key] ?? 0)) {
+        gains.push(`${label} +${((next[key] ?? 0) * 100).toFixed(0)}%`);
+      }
+    }
+    elements.guildLevelNext.textContent = gains.length
+      ? `Lv.${next.level} 달성 시 · ${gains.join(' · ')}`
+      : `Lv.${next.level} 달성까지 ${number.format(next.requiredGp - totalGp)} GP`;
+  }
+
   function renderHome() {
     const guild = guildState.guild;
     const role = guildState.membership?.role;
@@ -220,6 +255,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
       `Lv.${guild.level} · ${number.format(guild.memberCount ?? 0)}/${guild.memberLimit}명 · ${ROLE_LABELS[role] ?? '길드원'}`
       + ` · 누적 ${number.format(guild.totalGp ?? 0)} GP`
       + (buffs.length ? ` · ${buffs.join(' / ')}` : ' · 버프 없음');
+    renderLevelProgress(guild, tier);
     if (guild.notice) {
       elements.guildNotice.hidden = false;
       elements.guildNotice.textContent = guild.notice;

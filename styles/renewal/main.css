@@ -2030,3 +2030,12 @@ button[aria-busy="true"]::after {
   .formation-preset-save { width: 100%; }
   .formation-preset-save input { flex: 1; width: auto; }
 }
+
+/* 길드 레벨 진행. 다음 레벨까지 남은 공헌도와 그때 열리는 것을 보여 준다. */
+.guild-level-progress { display: grid; gap: 6px; margin: 0 0 12px; padding: 12px 14px; border: 1px solid var(--line-bright); border-radius: 11px; background: var(--panel-soft); }
+.guild-level-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.guild-level-head strong { font-size: .92rem; font-weight: 850; }
+.guild-level-head span { color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; }
+.guild-level-bar { height: 8px; border-radius: 999px; background: var(--panel); overflow: hidden; }
+.guild-level-bar > i { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--acid); transition: width .3s ease; }
+.guild-level-progress small { color: var(--muted); font-size: .76rem; }

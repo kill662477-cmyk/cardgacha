@@ -359,3 +359,19 @@ assert.match(
 assert.match(guildControllerSource, /guild-list-mine/, '목록에서 내 길드를 표시해야 한다');
 
 console.log('guild browse-while-member tests passed: buttons wired, member-aware list');
+
+// 길드 레벨 진행 표시. 다음 레벨까지 필요한 GP 를 화면 어디에서도 알 수 없었다.
+const guildHtml = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+for (const id of ['guildLevelProgress', 'guildLevelTitle', 'guildLevelRemain', 'guildLevelBar', 'guildLevelNext']) {
+  assert.ok(guildHtml.includes(`id="${id}"`), `${id} 가 화면에 있어야 한다`);
+  assert.ok(guildControllerSource.includes(`'${id}'`), `${id} 가 elements 목록에 있어야 한다`);
+}
+assert.ok(guildControllerSource.includes('renderLevelProgress(guild, tier)'), '길드 홈에서 호출돼야 한다');
+// 레벨 표는 config 에서 읽어야 한다. 하드코딩하면 밸런스 조정과 어긋난다.
+assert.ok(guildControllerSource.includes('GUILD_RULES.levels.find'), '다음 레벨은 config 에서 찾아야 한다');
+assert.ok(guildControllerSource.includes("import { GUILD_RULES, guildLevelFor } from './config.js';"),
+  'GUILD_RULES import 이 없으면 ReferenceError 로 길드 화면이 통째로 죽는다');
+// 최고 레벨에서 next 가 없을 때 분기가 있어야 한다.
+assert.ok(guildControllerSource.includes('최고 레벨'), '최고 레벨 분기 누락');
+
+console.log('guild level progress tests passed: markup, elements, config-driven, max-level branch');

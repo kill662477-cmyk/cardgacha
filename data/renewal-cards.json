@@ -2910,5 +2910,57 @@
     "copies": 0,
     "sourceRarity": "FUR",
     "group": false
+  },
+  {
+    "id": "parksubeom-6",
+    "member": "박수범",
+    "file": "parksubeom-6.jpg",
+    "rarity": "SSS",
+    "race": "프로토스",
+    "archetype": "boss",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "FUR",
+    "group": false
+  },
+  {
+    "id": "vitaming-16",
+    "member": "비타밍",
+    "file": "vitaming-16.png",
+    "rarity": "SS",
+    "race": "테란",
+    "archetype": "amplify",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "MUR",
+    "group": false
+  },
+  {
+    "id": "jidongwon-8",
+    "member": "지동원",
+    "file": "jidongwon-8.jpg",
+    "rarity": "SSS",
+    "race": "테란",
+    "archetype": "amplify",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "FUR",
+    "group": false
+  },
+  {
+    "id": "arisongi-12",
+    "member": "아리송이",
+    "file": "arisongi-12.jpg",
+    "rarity": "SS",
+    "race": "프로토스",
+    "archetype": "boss",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "MUR",
+    "group": false
   }
 ]

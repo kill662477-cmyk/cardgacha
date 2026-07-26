@@ -18,6 +18,19 @@ const fetchImpl = async (url, options) => {
       headers: { 'Content-Type': 'application/json' },
     });
   }
+  if (body.kind === 'guildApplicantProfile') {
+    return Response.json({
+      ok: true,
+      serverTime: now,
+      profile: {
+        ok: true,
+        userId: body.targetUserId,
+        nickname: '신청자',
+        formation: [],
+        registeredCardIds: [],
+      },
+    });
+  }
   const response = createGameSuccess({
     command: body.command,
     revision: 8,
@@ -57,10 +70,19 @@ assert.equal(calls[1].options.headers.apikey, 'sb_publishable_browser_safe');
 assert.equal(calls[1].body.command.commandId, 'formation-command-001');
 assert.equal(JSON.stringify(calls).includes('service_role'), false);
 
+const applicantUserId = '00000000-0000-4000-8000-000000000001';
+const applicantProfile = await service.getGuildApplicantProfile(applicantUserId);
+assert.equal(applicantProfile.nickname, '신청자');
+assert.equal(calls[2].body.kind, 'guildApplicantProfile');
+assert.equal(calls[2].body.targetUserId, applicantUserId);
+const invalidApplicant = await service.getGuildApplicantProfile('not-a-uuid');
+assert.equal(invalidApplicant.code, 'VALIDATION_FAILED');
+assert.equal(calls.length, 3, 'invalid applicant ID must not issue a request');
+
 token = '';
 const unauthenticated = await service.loadSnapshot();
 assert.equal(unauthenticated.code, 'AUTH_REQUIRED');
-assert.equal(calls.length, 2, 'missing session must not issue a request');
+assert.equal(calls.length, 3, 'missing session must not issue a request');
 
 const mismatchedService = createSupabaseGameService({
   projectUrl: 'https://project.supabase.co',

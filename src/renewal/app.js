@@ -2777,6 +2777,7 @@ async function init() {
       gameService,
     });
     guildController = createGuildController({
+      cards,
       getState: () => state,
       gameService,
       serverCommands: remoteMode ? {

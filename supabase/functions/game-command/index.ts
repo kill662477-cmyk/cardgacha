@@ -1,8 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import cards from '../_shared/generated/cards.json' with { type: 'json' };
-import { createServerCommandRouter } from '../_shared/generated/server-command-router.js';
+import {
+  buildGuildApplicantProfile,
+  createServerCommandRouter,
+} from '../_shared/generated/server-command-router.js';
 
 const MAX_BODY_BYTES = 128 * 1024;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function allowedOrigins() {
   return new Set((Deno.env.get('GAME_ALLOWED_ORIGINS') ?? '')
@@ -229,6 +233,26 @@ Deno.serve(async (req: Request) => {
     } catch (error) {
       await logFailure('guildState', 'INTERNAL_ERROR', 500, 'guildState', error);
       return respond({ ok: false, code: 'INTERNAL_ERROR', message: '길드 정보를 불러오지 못했습니다.' }, 500);
+    }
+  }
+  if (body.kind === 'guildApplicantProfile') {
+    if (typeof body.targetUserId !== 'string' || !UUID_PATTERN.test(body.targetUserId)) {
+      return respond({ ok: false, code: 'VALIDATION_FAILED', message: '신청자 정보가 올바르지 않습니다.' }, 400);
+    }
+    try {
+      const profile = await gateway.rpc('gacha_s2_get_guild_applicant_profile', {
+        p_user_id: userId,
+        p_target_user_id: body.targetUserId,
+      }) as Record<string, unknown>;
+      if (profile?.ok === false) return respond(profile, statusFor(profile));
+      return respond({
+        ok: true,
+        serverTime: Date.now(),
+        profile: buildGuildApplicantProfile(profile, cards),
+      });
+    } catch (error) {
+      await logFailure('guildApplicantProfile', 'INTERNAL_ERROR', 500, 'guildApplicantProfile', error);
+      return respond({ ok: false, code: 'INTERNAL_ERROR', message: '신청자 정보를 불러오지 못했습니다.' }, 500);
     }
   }
   if (body.kind === 'guildRaidStatus') {

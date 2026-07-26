@@ -8,6 +8,7 @@ import {
 export const SUPABASE_GAME_SERVICE_METHODS = Object.freeze([
   'loadSnapshot',
   'getWorldBossStatus',
+  'getGuildApplicantProfile',
   'getPowerRanking',
   'getBridgeStatus',
   'executeCommand',
@@ -17,6 +18,8 @@ export const SUPABASE_GAME_SERVICE_METHODS = Object.freeze([
 function endpointFor(projectUrl) {
   return `${projectUrl.replace(/\/+$/, '')}/functions/v1/game-command`;
 }
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function defaultIdempotencyKey() {
   if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
@@ -171,6 +174,26 @@ export function createSupabaseGameService(options = {}) {
     return response.state;
   }
 
+  async function getGuildApplicantProfile(targetUserId) {
+    if (typeof targetUserId !== 'string' || !UUID_PATTERN.test(targetUserId)) {
+      return createGameError({
+        code: GAME_ERROR_CODES.VALIDATION_FAILED,
+        message: '신청자 정보가 올바르지 않습니다.',
+        serverTime: clock.now(),
+      });
+    }
+    const response = await request({ kind: 'guildApplicantProfile', targetUserId });
+    if (response.ok === false) return response;
+    if (!response.profile || typeof response.profile !== 'object') {
+      return createGameError({
+        code: GAME_ERROR_CODES.INTERNAL_ERROR,
+        message: '신청자 정보 응답이 올바르지 않습니다.',
+        serverTime: clock.now(),
+      });
+    }
+    return response.profile;
+  }
+
   async function getGuildRaidStatus() {
     const response = await request({ kind: 'guildRaidStatus' });
     if (response.ok === false) return response;
@@ -200,6 +223,7 @@ export function createSupabaseGameService(options = {}) {
     loadSnapshot,
     getWorldBossStatus,
     getGuildState,
+    getGuildApplicantProfile,
     getGuildRaidStatus,
     getPowerRanking,
     getBridgeStatus,

@@ -19,6 +19,7 @@ const raidSchema = squash(await read('supabase/migrations/20260725000100_guild_m
 const raidRpc = squash(await read('supabase/migrations/20260725000101_guild_m4_raid_rpc.sql'));
 const pendingJoinState = squash(await read('supabase/migrations/20260726121500_guild_pending_join_state.sql'));
 const penaltyException = squash(await read('supabase/migrations/20260726123000_clear_mstz_sonsilba_guild_penalty.sql'));
+const applicantProfile = squash(await read('supabase/migrations/20260727000001_guild_applicant_profile.sql'));
 const router = await read('src/renewal/server-command-router.js');
 const edge = await read('supabase/functions/game-command/index.ts');
 
@@ -93,6 +94,17 @@ assert.match(query, /'joinedat', floor\(extract\(epoch from m\.joined_at\)/, '�
 assert.match(query, /'lastcontributedat'/, '마지막 활동일 노출');
 // 가입 신청 목록은 승인 권한자에게만 노출.
 assert.match(query, /'joinrequests', case when v_can_manage then/);
+assert.match(applicantProfile, /m\.role in \('owner', 'officer'\)/, '길드장·부길드장만 신청자 상세를 조회해야 한다');
+assert.match(
+  applicantProfile,
+  /r\.guild_id = v_guild_id and r\.user_id = p_target_user_id and r\.status = 'pending'/,
+  '현재 승인 대기 중인 신청자만 조회해야 한다',
+);
+assert.match(applicantProfile, /'formation', coalesce\(\(/, '현재 덱 정보 누락');
+assert.match(applicantProfile, /'registeredcardids', coalesce\(\(/, '현재 전투력 계산용 도감 정보 누락');
+assert.match(applicantProfile, /'guildbuff', public\.gacha_s2_guild_buff\(s\.user_id\)/, '현재 전투력 계산용 길드 버프 누락');
+assert.match(applicantProfile, /revoke all on function public\.gacha_s2_get_guild_applicant_profile\(uuid, uuid\) from public, anon, authenticated/);
+assert.match(applicantProfile, /grant execute on function public\.gacha_s2_get_guild_applicant_profile\(uuid, uuid\) to service_role/);
 assert.match(
   pendingJoinState,
   /if v_guild\.guild_id is null then return jsonb_build_object\([\s\S]*?'myrequests', coalesce\(\(/,
@@ -145,6 +157,10 @@ assert.match(router, /case GAME_COMMAND_TYPES\.SET_GUILD_MEMBER_ROLE:[\s\S]*?p_r
 // --- Edge 조회 경로 ---
 assert.match(edge, /body\.kind === 'guildState'/, 'edge 에 길드 조회 kind 누락');
 assert.match(edge, /gacha_s2_get_guild_state/);
+assert.match(edge, /body\.kind === 'guildApplicantProfile'/, 'edge 에 신청자 상세 조회 kind 누락');
+assert.match(edge, /gacha_s2_get_guild_applicant_profile/);
+assert.match(edge, /p_target_user_id: body\.targetUserId/, '클라이언트 대상 ID 전달 누락');
+assert.match(edge, /buildGuildApplicantProfile\(profile, cards\)/, '신청자 전투력은 서버에서 계산해야 한다');
 
 // ── M2: 공헌도·레벨·버프 ──────────────────────────────────
 assert.equal(GUILD_RULES.levels.length, 10);
@@ -384,6 +400,10 @@ assert.match(guildControllerSource, /신청 처리 중…/, '가입 신청 중 �
 assert.match(guildControllerSource, /pendingGuildIds\.add\(guildJoin\)/, '가입 성공 즉시 대기 상태를 반영해야 한다');
 assert.match(guildControllerSource, /data-guild-cancel=/, '대기 상태에 신청 취소 버튼을 노출해야 한다');
 assert.match(guildControllerSource, /pendingGuildIds\.delete\(guildCancel\)/, '취소 성공 즉시 대기 상태를 해제해야 한다');
+assert.match(guildControllerSource, /data-guild-applicant=/, '신청자 닉네임에 상세 조회 버튼이 있어야 한다');
+assert.match(guildControllerSource, /getGuildApplicantProfile\?\.\(userId\)/, '신청자 상세를 클릭 시점에 조회해야 한다');
+assert.match(guildControllerSource, /Number\(profile\.power\)/, '서버가 계산한 신청자 전투력을 표시해야 한다');
+assert.match(guildStyles, /\.guild-request-profile\s*\{/, '신청자 상세 버튼 스타일 누락');
 assert.match(guildStyles, /\.guild-list-pending-actions\s*\{/, '승인 대기 버튼 묶음 스타일 누락');
 assert.match(guildStyles, /\.guild-list-item \.guild-list-pending-button:disabled\s*\{/, '승인 대기 버튼 스타일 누락');
 
@@ -398,7 +418,7 @@ for (const id of ['guildLevelProgress', 'guildLevelTitle', 'guildLevelRemain', '
 assert.ok(guildControllerSource.includes('renderLevelProgress(guild, tier)'), '길드 홈에서 호출돼야 한다');
 // 레벨 표는 config 에서 읽어야 한다. 하드코딩하면 밸런스 조정과 어긋난다.
 assert.ok(guildControllerSource.includes('GUILD_RULES.levels.find'), '다음 레벨은 config 에서 찾아야 한다');
-assert.ok(guildControllerSource.includes("import { GUILD_RULES, guildLevelFor } from './config.js';"),
+assert.match(guildControllerSource, /import \{[^}]*GUILD_RULES[^}]*guildLevelFor[^}]*\} from '\.\/config\.js';/,
   'GUILD_RULES import 이 없으면 ReferenceError 로 길드 화면이 통째로 죽는다');
 // 최고 레벨에서 next 가 없을 때 분기가 있어야 한다.
 assert.ok(guildControllerSource.includes('최고 레벨'), '최고 레벨 분기 누락');

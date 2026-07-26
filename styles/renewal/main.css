@@ -1921,6 +1921,15 @@ button[aria-busy="true"]::after {
 .guild-member-actions { display: flex; gap: 6px; }
 .guild-request { justify-content: space-between; }
 .guild-request div { display: flex; gap: 6px; }
+.guild-request-profile {
+  display: grid; gap: 2px; padding: 0; border: 0; background: transparent;
+  color: var(--text); text-align: left; cursor: pointer;
+}
+.guild-request-profile strong { font-size: .86rem; }
+.guild-request-profile small { color: var(--cyan); font-size: .68rem; }
+.guild-request-profile:hover strong, .guild-request-profile:focus-visible strong { text-decoration: underline; }
+.guild-request-profile:focus-visible { outline: 1px solid var(--cyan); outline-offset: 5px; }
+.guild-request-profile:disabled { cursor: wait; opacity: .55; }
 
 .guild-role { font-size: .68rem; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line-bright); color: var(--muted); }
 .guild-role-owner { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 50%, transparent); }

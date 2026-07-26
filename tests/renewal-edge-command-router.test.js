@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import cards from '../data/renewal-cards.json' with { type: 'json' };
 import { BALANCE_VERSION } from '../src/renewal/config.js';
-import { createServerCommandRouter } from '../src/renewal/server-command-router.js';
+import {
+  buildGuildApplicantProfile,
+  createServerCommandRouter,
+} from '../src/renewal/server-command-router.js';
 import { GAME_COMMAND_TYPES, createGameCommand } from '../src/renewal/service-contract.js';
 
 const playable = cards.filter((card) => card.rarity !== 'EX').slice(0, 5);
@@ -32,6 +35,19 @@ const command = (type, payload, id) => createGameCommand({
   idempotencyKey: id,
   clientSentAt: 1000,
 });
+
+const applicantProfile = buildGuildApplicantProfile({
+  userId: 'applicant',
+  nickname: '신청자',
+  powerSnapshot: 1,
+  formation: playable.map((card) => ({ cardId: card.id, enhancement: 3 })),
+  registeredCardIds: playable.map((card) => card.id),
+  guildBuff: { atk: 0, hp: 0, def: 0 },
+}, cards);
+assert.equal(applicantProfile.power > 1, true, '신청자 전투력은 현재 덱·강화·도감으로 계산해야 한다');
+assert.equal(applicantProfile.formation.length, 5);
+assert.equal('registeredCardIds' in applicantProfile, false, '도감 원본은 승인자 브라우저에 노출하지 않는다');
+assert.equal('guildBuff' in applicantProfile, false, '내부 전투력 계산값은 승인자 브라우저에 노출하지 않는다');
 
 const powerRanking = await router.getPowerRanking('user-fixed-by-auth');
 assert.equal(powerRanking.rpc, 'gacha_s2_get_power_ranking');

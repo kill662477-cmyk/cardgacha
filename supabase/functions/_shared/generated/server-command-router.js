@@ -184,6 +184,34 @@ function verifiedAdventureClears(formation, bonuses, mode = 'normal') {
   return cleared;
 }
 
+export function buildGuildApplicantProfile(profile, cards) {
+  const cardsById = new Map(cards.map((card) => [card.id, card]));
+  const formation = (Array.isArray(profile?.formation) ? profile.formation : []).map((item) => {
+    const card = cardsById.get(item?.cardId);
+    if (!card) return null;
+    return { ...card, enhancement: Number(item?.enhancement) || 0 };
+  }).filter(Boolean);
+  const collectionRecords = Object.fromEntries(
+    (Array.isArray(profile?.registeredCardIds) ? profile.registeredCardIds : [])
+      .map((cardId) => [cardId, true]),
+  );
+  const bonuses = applyGuildBuff(
+    calculateCollectionBonuses(cards, collectionRecords),
+    profile?.guildBuff,
+  );
+  const calculatedPower = formation.length === 5 ? computeFormationPower(formation, bonuses) : 0;
+  return {
+    ok: true,
+    userId: profile?.userId ?? null,
+    nickname: profile?.nickname ?? '-',
+    power: calculatedPower || Math.max(0, Number(profile?.powerSnapshot) || 0),
+    formation: formation.map((card) => ({
+      cardId: card.id,
+      enhancement: card.enhancement,
+    })),
+  };
+}
+
 export function createServerCommandRouter(options) {
   const gateway = options?.gateway;
   const cards = options?.cards;

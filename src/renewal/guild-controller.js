@@ -1,6 +1,7 @@
 import { escapeHtml } from './html.js';
-import { GUILD_RULES, guildLevelFor } from './config.js';
+import { GUILD_RULES, RARITIES, guildLevelFor } from './config.js';
 import { EMBLEM_GLYPHS, emblemMarkup } from './guild-emblem.js';
+import { cardVisualChrome } from './card-visual.js';
 
 const number = new Intl.NumberFormat('ko-KR');
 
@@ -21,7 +22,7 @@ function relativeDays(ms) {
   return `${days}일 전`;
 }
 
-export function createGuildController({ getState, gameService, serverCommands = null, showToast }) {
+export function createGuildController({ cards = [], getState, gameService, serverCommands = null, showToast }) {
   const elements = Object.fromEntries([
     'guildHome', 'guildBrowse', 'guildEmblem', 'guildTagLine', 'guildName', 'guildMeta',
     'guildShowBrowse', 'guildShowHome',
@@ -32,7 +33,10 @@ export function createGuildController({ getState, gameService, serverCommands = 
     'guildWeeklyBox', 'guildWeeklyClaim', 'guildWeeklyList', 'guildWeeklyNote',
     'guildRaidBox', 'guildRaidPhase', 'guildRaidNote', 'guildRaidHpBar',
     'guildRaidAttack', 'guildRaidClaim', 'guildRaidParticipants',
+    'rankerDeckDialog', 'rankerDeckEyebrow', 'rankerDeckTitle', 'rankerDeckPower',
+    'rankerDeckGrid', 'rankerDeckGuild',
   ].map((id) => [id, document.getElementById(id)]));
+  const cardsById = new Map(cards.map((card) => [card.id, card]));
 
   let guildState = null;
   let raidState = null;
@@ -195,12 +199,56 @@ export function createGuildController({ getState, gameService, serverCommands = 
     elements.guildRequestCount.textContent = number.format(rows.length);
     elements.guildRequestList.innerHTML = rows.map((r) => `
       <li class="guild-request">
-        <strong>${escapeHtml(r.nickname ?? '-')}</strong>
+        <button type="button" class="guild-request-profile"
+          data-guild-applicant="${escapeHtml(r.userId)}"
+          aria-label="${escapeHtml(r.nickname ?? '-')}님의 전투력과 현재 덱 확인">
+          <strong>${escapeHtml(r.nickname ?? '-')}</strong>
+          <small>전투력·덱 보기</small>
+        </button>
         <div>
           <button type="button" data-guild-approve="${escapeHtml(r.userId)}">승인</button>
           <button type="button" class="danger" data-guild-reject="${escapeHtml(r.userId)}">거절</button>
         </div>
       </li>`).join('') || '<li class="guild-empty">대기 중인 신청이 없습니다</li>';
+  }
+
+  function applicantDeck(profile) {
+    return (Array.isArray(profile?.formation) ? profile.formation : []).map((item) => {
+      const card = cardsById.get(item?.cardId);
+      if (!card) return null;
+      return { ...card, enhancement: Number(item?.enhancement) || 0 };
+    }).filter(Boolean);
+  }
+
+  async function openApplicantProfile(userId) {
+    try {
+      const profile = await gameService.getGuildApplicantProfile?.(userId);
+      if (!profile || profile.ok === false) {
+        showToast?.(profile?.message ?? '신청자 정보를 불러오지 못했습니다.');
+        return;
+      }
+      const deck = applicantDeck(profile);
+      const power = Math.max(0, Number(profile.power) || 0);
+      const nickname = profile.nickname ?? '-';
+
+      elements.rankerDeckEyebrow.textContent = `가입 신청자 · ${nickname}`;
+      elements.rankerDeckTitle.textContent = `${nickname}님의 현재 덱`;
+      elements.rankerDeckPower.textContent = power > 0 ? `전투력 ${number.format(power)}` : '전투력 미집계';
+      elements.rankerDeckGuild.hidden = true;
+      elements.rankerDeckGuild.innerHTML = '';
+      elements.rankerDeckGrid.innerHTML = deck.length ? deck.map((card) => `
+        <figure class="card-visual" data-rarity="${card.rarity}" data-stars="${card.enhancement}"
+          style="--rarity:${RARITIES[card.rarity].color}">
+          <img class="card-photo" src="assets/cards/${encodeURIComponent(card.file)}"
+            alt="${escapeHtml(card.member)}">${cardVisualChrome(card)}
+          <figcaption>${escapeHtml(card.member)}</figcaption>
+        </figure>`).join('')
+        : '<p class="ranking-note">현재 편성된 카드가 없습니다.</p>';
+      window.lucide?.createIcons();
+      if (!elements.rankerDeckDialog.open) elements.rankerDeckDialog.showModal();
+    } catch (error) {
+      showToast?.(error?.message ?? '신청자 정보를 불러오지 못했습니다.');
+    }
   }
 
   // 소속 길드가 있을 때 'home'(내 길드) / 'browse'(다른 길드 목록) 중 무엇을 볼지.
@@ -410,9 +458,21 @@ export function createGuildController({ getState, gameService, serverCommands = 
     document.getElementById('guildScreen')?.addEventListener('click', (event) => {
       const target = event.target.closest('button');
       if (!target) return;
-      const { guildJoin, guildCancel, guildKick, guildApprove, guildReject, guildRole, guildJoinmode, guildSort } = target.dataset;
+      const {
+        guildJoin, guildCancel, guildKick, guildApprove, guildReject,
+        guildApplicant, guildRole, guildJoinmode, guildSort,
+      } = target.dataset;
       if (guildSort) { memberSort = guildSort; renderMembers(guildState?.members); renderSortControls(); return; }
-      if (guildJoin) {
+      if (guildApplicant) {
+        target.disabled = true;
+        target.setAttribute('aria-busy', 'true');
+        void openApplicantProfile(guildApplicant).finally(() => {
+          if (!target.isConnected) return;
+          target.disabled = false;
+          target.removeAttribute('aria-busy');
+        });
+      }
+      else if (guildJoin) {
         const selectedGuild = guildState?.guilds?.find((guild) => guild.guildId === guildJoin);
         const approvalRequired = selectedGuild?.joinMode !== 'auto';
         target.disabled = true;

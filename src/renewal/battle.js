@@ -38,7 +38,9 @@ export function computeCardStats(card, accountBonuses = {}) {
     hp: Math.round(base.hp * common * (archetype.hp ?? 1) * (1 + (accountBonuses.hp ?? 0))),
     def: Math.round(base.def * common * (archetype.def ?? 1) * (1 + (accountBonuses.defense ?? 0))),
     speed: Number((base.speed * (archetype.speed ?? 1)).toFixed(2)),
-    crit: Number((base.crit + (archetype.crit ?? 0)).toFixed(3)),
+    // accountBonuses.crit 은 증폭 특성의 파티 치명타 오라가 들어오는 자리다.
+    // 상한을 두지 않으면 증폭 5장에서 확률이 과하게 올라 딜 편차가 사라진다.
+    crit: Number(Math.min(0.6, base.crit + (archetype.crit ?? 0) + (accountBonuses.crit ?? 0)).toFixed(3)),
     critDamage: Number((base.critDamage + (archetype.critDamage ?? 0)).toFixed(2)),
   };
 }
@@ -74,8 +76,10 @@ export function getRaceSynergy(formation) {
   return { race: strongest[0], count: strongest[1], ...bonus };
 }
 
-export function getFormationAmplifier(formation) {
-  return 1 + formation.reduce((total, card) => total + (ARCHETYPES[card.archetype]?.amplify ?? 0), 0);
+// 증폭(critAura)은 편성 전체의 치명타 확률을 올린다. 8종 중 유일하게 중첩되는 특성이라
+// 여러 장 넣을수록 강해진다 — 1장만 넣는 약화·생존과 역할이 갈린다.
+export function getFormationCritAura(formation) {
+  return formation.reduce((total, card) => total + (ARCHETYPES[card.archetype]?.critAura ?? 0), 0);
 }
 
 function combineBonus(baseBonus, multiplier) {
@@ -84,11 +88,11 @@ function combineBonus(baseBonus, multiplier) {
 
 export function computeFormationPower(formation, accountBonuses = {}) {
   const synergy = getRaceSynergy(formation);
-  const amplify = getFormationAmplifier(formation);
   const formationBonuses = {
     ...accountBonuses,
-    attack: combineBonus(accountBonuses.attack, synergy.atk * amplify),
+    attack: combineBonus(accountBonuses.attack, synergy.atk),
     hp: combineBonus(accountBonuses.hp, synergy.hp),
+    crit: (accountBonuses.crit ?? 0) + getFormationCritAura(formation),
   };
   return formation.reduce((total, card) => total + computeCardPower(card, formationBonuses), 0);
 }
@@ -102,11 +106,12 @@ export function simulateBattle(formation, stage, accountBonuses = {}) {
   const seed = hashString(`${stage.id}:${formation.map((card) => card.id).join('|')}`);
   const random = seededRandom(seed);
   const synergy = getRaceSynergy(formation);
-  const amplify = getFormationAmplifier(formation);
+  const critAura = getFormationCritAura(formation);
+  const combatBonuses = { ...accountBonuses, crit: (accountBonuses.crit ?? 0) + critAura };
   const fighters = formation.map((card, index) => ({
     card,
     index,
-    stats: computeCardStats(card, accountBonuses),
+    stats: computeCardStats(card, combatBonuses),
     nextAttack: index * 0.08,
     damage: 0,
   }));
@@ -132,7 +137,7 @@ export function simulateBattle(formation, stage, accountBonuses = {}) {
       const bossBonus = stage.boss ? (trait.bossDamage ?? 1) * (1 + (accountBonuses.bossDamage ?? 0)) : 1;
       const hitBonus = trait.multiHit ?? (!stage.boss ? (trait.area ?? 1) : 1);
       const weakenBonus = elapsed <= weakenedUntil ? 1 + weakenDamageAmount : 1;
-      let damage = fighter.stats.atk * spread * synergy.atk * amplify * bossBonus * hitBonus * weakenBonus;
+      let damage = fighter.stats.atk * spread * synergy.atk * bossBonus * hitBonus * weakenBonus;
       if (critical) damage *= fighter.stats.critDamage;
       damage = Math.max(1, Math.round(damage));
       enemyHp = Math.max(0, enemyHp - damage);

@@ -23,7 +23,10 @@ export const ARCHETYPES = {
   combo: { label: '연타', atk: 0.96, hp: 0.96, def: 0.94, speed: 1.12, multiHit: 1.1 },
   area: { label: '광역', atk: 1.04, hp: 0.98, def: 0.94, speed: 0.94, area: 1.18 },
   boss: { label: '보스', atk: 1.08, hp: 1.03, def: 1, speed: 0.91, bossDamage: 1.28 },
-  amplify: { label: '증폭', atk: 1.02, hp: 0.95, def: 0.92, speed: 1, crit: 0.09, amplify: 0.04 },
+  // 증폭: 자기 치명타만 올리던 특성을 파티 전체 치명타 오라로 바꿨다. 강타가 치명타 담당이
+  // 되면서 역할이 겹쳤고, 기존 파티 딜 +4%(중첩)는 5장을 다 넣어도 이득이 +0.66%p 뿐이었다.
+  // critAura 는 편성 전체에 합산되므로 많이 넣을수록 강해지는 유일한 특성이다.
+  amplify: { label: '증폭', atk: 1.02, hp: 0.95, def: 0.92, speed: 1, critAura: 0.15 },
   // 약화는 두 갈래로 작동한다. weaken = 적 공격력 감소, weakenDamage = 적이 받는 피해 증가.
   // 이 게임에는 적 방어력 스탯이 없어(스테이지는 enemyHp/enemyAttack 뿐) '방어력 감소'를
   // 받는 피해 증가로 구현했다. 둘 다 중첩되지 않고 가장 강한 값 하나만 적용된다.

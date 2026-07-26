@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { ARCHETYPES, PACKS, STAGES } from '../src/renewal/config.js';
-import { computeCardPower, computeCardStats, computeFormationPower, getFormationAmplifier, getRaceSynergy, simulateBattle } from '../src/renewal/battle.js';
+import { computeCardPower, computeCardStats, computeFormationPower, getFormationCritAura, getRaceSynergy, simulateBattle } from '../src/renewal/battle.js';
 
 const cards = JSON.parse(await fs.readFile(new URL('../data/renewal-demo-cards.json', import.meta.url), 'utf8'));
 const formation = cards.slice(0, 5);
@@ -37,7 +37,17 @@ assert.equal(getRaceSynergy(raceDeck(5)).atk, 1.12);
 
 const roleCard = (archetype) => ({ id: `role-${archetype}`, rarity: 'SSS', enhancement: 0, archetype, race: 'Z' });
 assert.ok(computeCardPower(roleCard('combo')) > computeCardPower(roleCard('sustain')), 'displayed power must reflect combat throughput instead of raw HP alone');
-assert.equal(getFormationAmplifier([roleCard('amplify'), roleCard('quick')]), 1.04);
+// 증폭은 편성 전체 치명타 오라다. 8종 중 유일하게 중첩된다.
+assert.equal(getFormationCritAura([roleCard('amplify'), roleCard('quick')]), 0.15);
+assert.equal(getFormationCritAura([roleCard('amplify'), roleCard('amplify')]), 0.3);
+assert.equal(getFormationCritAura([roleCard('quick'), roleCard('combo')]), 0);
+// 오라는 자신뿐 아니라 다른 카드의 치명타 확률도 올려야 한다.
+assert.ok(
+  computeCardStats(roleCard('combo'), { crit: 0.15 }).crit > computeCardStats(roleCard('combo')).crit,
+  '증폭 오라가 다른 특성 카드에도 적용돼야 한다',
+);
+// 상한이 없으면 증폭 5장에서 치명타가 과하게 올라 딜 편차가 사라진다.
+assert.equal(computeCardStats(roleCard('combo'), { crit: 5 }).crit, 0.6);
 
 for (const archetype of ['quick', 'heavy', 'combo', 'area', 'boss', 'amplify', 'weaken', 'sustain']) {
   const sssPlusThree = computeCardPower({ id: `tier-check-${archetype}`, rarity: 'SSS', enhancement: 3, archetype, race: 'Z' });

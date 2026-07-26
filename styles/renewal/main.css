@@ -2008,6 +2008,10 @@ button[aria-busy="true"]::after {
 .guild-list-mine { margin-left: auto; color: var(--acid); font-size: .78rem; font-weight: 850; white-space: nowrap; }
 
 /* 편성 프리셋(최대 5개). 편성 다이얼로그 헤더 아래 한 줄로 붙는다. */
+/* .dialog-shell 은 3행(header/본문/스크롤) 기준이다. 편성 창은 프리셋 바가 추가돼 자식이
+   4개라, 행 정의를 안 늘리면 선택 카드 줄이 1fr 을 먹고 인벤토리가 암시적 행으로 밀려
+   아래 카드를 덮는다. 마지막 행만 스크롤 영역이어야 한다. */
+.formation-dialog .dialog-shell { grid-template-rows: auto auto auto minmax(0, 1fr); }
 .formation-presets { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 20px; border-bottom: 1px solid var(--line); }
 .formation-preset-list { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
 .formation-preset { display: inline-flex; align-items: stretch; border: 1px solid var(--line-bright); border-radius: 9px; overflow: hidden; }

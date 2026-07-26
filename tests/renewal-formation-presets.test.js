@@ -75,3 +75,24 @@ assert.match(
 );
 
 console.log('formation preset tests passed: contract, router, server guards, wired UI');
+
+// 레이아웃 회귀 가드.
+// .dialog-shell 의 기본 행 정의는 3행이다. 편성 창은 프리셋 바 때문에 자식이 4개라
+// 행 수를 맞춰 주지 않으면 선택 카드 줄이 남는 공간을 먹고 인벤토리가 아래 카드를 덮는다.
+const css = await readFile(new URL('../styles/renewal/main.css', import.meta.url), 'utf8');
+const dialogBody = html.slice(
+  html.indexOf('<dialog class="formation-dialog"'),
+  html.indexOf('</dialog>', html.indexOf('<dialog class="formation-dialog"')),
+);
+const shellChildren = (dialogBody.match(/^\s{6}<(?:div|header|section)\b/gm) ?? []).length;
+const rowRule = css.match(/\.formation-dialog \.dialog-shell \{ grid-template-rows: ([^;]+); \}/);
+assert.ok(rowRule, '편성 창 전용 grid-template-rows 규칙이 있어야 한다');
+const rowCount = rowRule[1].trim().split(/\s+(?![^(]*\))/).length;
+assert.equal(
+  rowCount,
+  shellChildren,
+  `편성 창 자식 ${shellChildren}개에 맞춰 행을 ${shellChildren}개 정의해야 한다 (현재 ${rowCount}개)`,
+);
+assert.match(rowRule[1], /minmax\(0, 1fr\)$/, '마지막 행만 스크롤 영역이어야 한다');
+
+console.log(`formation dialog layout guard passed: ${shellChildren} rows`);

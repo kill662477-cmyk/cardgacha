@@ -303,6 +303,7 @@ assert.match(
 );
 
 const guildControllerSource = await readFile(new URL('../src/renewal/guild-controller.js', import.meta.url), 'utf8');
+const guildStyles = await readFile(new URL('../styles/renewal/main.css', import.meta.url), 'utf8');
 assert.match(
   guildControllerSource,
   /elements\.guildEmblem\.innerHTML = emblemMarkup\(/,
@@ -357,6 +358,12 @@ assert.match(
   '소속 여부를 넘겨야 목록에서 가입 버튼과 생성 폼을 감출 수 있다',
 );
 assert.match(guildControllerSource, /guild-list-mine/, '목록에서 내 길드를 표시해야 한다');
+assert.match(guildControllerSource, /guild-list-pending/, '가입 신청한 길드에 대기 상태를 표시해야 한다');
+assert.match(guildControllerSource, /승인 대기 중/, '가입 신청 상태 문구 누락');
+assert.match(guildControllerSource, /가입 신청 완료 · 승인 대기 중입니다/, '가입 신청 완료 피드백 누락');
+assert.match(guildControllerSource, /신청 처리 중…/, '가입 신청 중 중복 클릭 방지 문구 누락');
+assert.match(guildControllerSource, /data-guild-cancel/, '대기 중인 신청 취소 버튼 누락');
+assert.match(guildStyles, /\.guild-list-pending\s*\{/, '가입 승인 대기 상태 스타일 누락');
 
 console.log('guild browse-while-member tests passed: buttons wired, member-aware list');
 

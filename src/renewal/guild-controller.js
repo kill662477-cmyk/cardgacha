@@ -327,7 +327,10 @@ export function createGuildController({ getState, gameService, serverCommands = 
           : isMember
             ? ''
             : pending
-              ? `<button type="button" data-guild-cancel="${escapeHtml(g.guildId)}">신청 취소</button>`
+              ? `<div class="guild-list-pending" role="status">
+                  <span>승인 대기 중</span>
+                  <button type="button" data-guild-cancel="${escapeHtml(g.guildId)}">신청 취소</button>
+                </div>`
               : `<button type="button" data-guild-join="${escapeHtml(g.guildId)}" ${full ? 'disabled' : ''}>${full ? '정원 마감' : (g.joinMode === 'auto' ? '즉시 가입' : '가입 신청')}</button>`}
       </li>`;
     }).join('') || '<li class="guild-empty">아직 만들어진 길드가 없습니다</li>';
@@ -349,7 +352,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
     else renderBrowse(isMember);
   }
 
-  async function run(operation) {
+  async function run(operation, successMessage = '') {
     if (!serverCommands) return;
     try {
       const result = await operation();
@@ -358,6 +361,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
         return;
       }
       await load();
+      if (successMessage) showToast?.(successMessage);
     } catch (error) {
       showToast?.(error?.message ?? '요청을 처리하지 못했습니다');
     }
@@ -399,8 +403,24 @@ export function createGuildController({ getState, gameService, serverCommands = 
       if (!target) return;
       const { guildJoin, guildCancel, guildKick, guildApprove, guildReject, guildRole, guildJoinmode, guildSort } = target.dataset;
       if (guildSort) { memberSort = guildSort; renderMembers(guildState?.members); renderSortControls(); return; }
-      if (guildJoin) void run(() => serverCommands.requestJoinGuild({ guildId: guildJoin }));
-      else if (guildCancel) void run(() => serverCommands.cancelJoinRequest({ guildId: guildCancel }));
+      if (guildJoin) {
+        const selectedGuild = guildState?.guilds?.find((guild) => guild.guildId === guildJoin);
+        const approvalRequired = selectedGuild?.joinMode !== 'auto';
+        target.disabled = true;
+        target.textContent = approvalRequired ? '신청 처리 중…' : '가입 처리 중…';
+        void run(
+          () => serverCommands.requestJoinGuild({ guildId: guildJoin }),
+          approvalRequired ? '가입 신청 완료 · 승인 대기 중입니다' : '길드에 가입했습니다',
+        ).finally(() => render());
+      }
+      else if (guildCancel) {
+        target.disabled = true;
+        target.textContent = '취소 처리 중…';
+        void run(
+          () => serverCommands.cancelJoinRequest({ guildId: guildCancel }),
+          '가입 신청을 취소했습니다',
+        ).finally(() => render());
+      }
       else if (guildKick) void run(() => serverCommands.kickGuildMember({ targetUserId: guildKick }));
       else if (guildApprove) void run(() => serverCommands.resolveJoinRequest({ targetUserId: guildApprove, approve: true }));
       else if (guildReject) void run(() => serverCommands.resolveJoinRequest({ targetUserId: guildReject, approve: false }));

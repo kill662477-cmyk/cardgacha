@@ -1934,16 +1934,22 @@ button[aria-busy="true"]::after {
 .guild-list-main em { font-style: normal; color: var(--muted); font-size: .8rem; }
 .guild-list-main small { color: var(--muted); font-size: .74rem; }
 .guild-list-item button { margin-left: auto; }
-.guild-list-pending {
-  display: flex; align-items: center; gap: 8px; margin-left: auto;
+.guild-list-pending-actions {
+  display: flex; align-items: center; gap: 7px; margin-left: auto;
 }
-.guild-list-pending span {
-  padding: 4px 9px; border-radius: 999px; white-space: nowrap;
+.guild-list-pending-actions button { margin-left: 0; }
+.guild-list-item .guild-list-pending-button:disabled {
+  padding: 7px 12px; opacity: 1; cursor: default;
   color: var(--gold); font-size: .72rem; font-weight: 850;
   background: color-mix(in srgb, var(--gold) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
 }
-.guild-list-pending button { margin-left: 0; }
+.guild-list-item .guild-list-pending-cancel {
+  color: var(--muted); border-color: var(--line-bright);
+}
+.guild-list-item .guild-list-pending-cancel:hover {
+  color: #ff8095; border-color: color-mix(in srgb, crimson 55%, transparent);
+}
 
 .guild-create-form { display: grid; gap: 10px; }
 .guild-create-form input {

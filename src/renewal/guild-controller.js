@@ -40,6 +40,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
   // 기여가 낮은 길드원을 바로 찾을 수 있도록 오름차순 정렬을 제공한다(PDB-16 2.6).
   let memberSort = 'role';
   let loading = false;
+  const pendingGuildIds = new Set();
 
   const isRemote = Boolean(serverCommands);
   const myUserId = () => guildState?.membership?.userId ?? null;
@@ -60,6 +61,10 @@ export function createGuildController({ getState, gameService, serverCommands = 
       ]);
       guildState = state?.ok === false ? null : state;
       raidState = raid?.ok === false ? null : raid;
+      if (Array.isArray(guildState?.myRequests)) {
+        pendingGuildIds.clear();
+        guildState.myRequests.forEach((request) => pendingGuildIds.add(request.guildId));
+      }
     } catch {
       guildState = null;
       raidState = null;
@@ -310,7 +315,10 @@ export function createGuildController({ getState, gameService, serverCommands = 
     if (isStreamer) renderEmblemPicker(guildState?.emblems);
 
     const guilds = Array.isArray(guildState?.guilds) ? guildState.guilds : [];
-    const myRequests = new Set((guildState?.myRequests ?? []).map((r) => r.guildId));
+    const myRequests = new Set([
+      ...pendingGuildIds,
+      ...(guildState?.myRequests ?? []).map((request) => request.guildId),
+    ]);
     elements.guildList.innerHTML = guilds.map((g) => {
       const full = (g.memberCount ?? 0) >= g.memberLimit;
       const pending = myRequests.has(g.guildId);
@@ -327,9 +335,9 @@ export function createGuildController({ getState, gameService, serverCommands = 
           : isMember
             ? ''
             : pending
-              ? `<div class="guild-list-pending" role="status">
-                  <span>승인 대기 중</span>
-                  <button type="button" data-guild-cancel="${escapeHtml(g.guildId)}">신청 취소</button>
+              ? `<div class="guild-list-pending-actions">
+                  <button type="button" class="guild-list-pending-button" disabled>승인 대기 중</button>
+                  <button type="button" class="guild-list-pending-cancel" data-guild-cancel="${escapeHtml(g.guildId)}">신청 취소</button>
                 </div>`
               : `<button type="button" data-guild-join="${escapeHtml(g.guildId)}" ${full ? 'disabled' : ''}>${full ? '정원 마감' : (g.joinMode === 'auto' ? '즉시 가입' : '가입 신청')}</button>`}
       </li>`;
@@ -352,7 +360,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
     else renderBrowse(isMember);
   }
 
-  async function run(operation, successMessage = '') {
+  async function run(operation, { successMessage = '', onSuccess = null } = {}) {
     if (!serverCommands) return;
     try {
       const result = await operation();
@@ -360,6 +368,7 @@ export function createGuildController({ getState, gameService, serverCommands = 
         showToast?.(result.message ?? '요청을 처리하지 못했습니다');
         return;
       }
+      onSuccess?.(result);
       await load();
       if (successMessage) showToast?.(successMessage);
     } catch (error) {
@@ -410,15 +419,23 @@ export function createGuildController({ getState, gameService, serverCommands = 
         target.textContent = approvalRequired ? '신청 처리 중…' : '가입 처리 중…';
         void run(
           () => serverCommands.requestJoinGuild({ guildId: guildJoin }),
-          approvalRequired ? '가입 신청 완료 · 승인 대기 중입니다' : '길드에 가입했습니다',
+          {
+            successMessage: approvalRequired ? '가입 신청 완료 · 승인 대기 중입니다' : '길드에 가입했습니다',
+            onSuccess: () => {
+              if (approvalRequired) pendingGuildIds.add(guildJoin);
+            },
+          },
         ).finally(() => render());
       }
       else if (guildCancel) {
         target.disabled = true;
-        target.textContent = '취소 처리 중…';
+        target.textContent = '취소 중…';
         void run(
           () => serverCommands.cancelJoinRequest({ guildId: guildCancel }),
-          '가입 신청을 취소했습니다',
+          {
+            successMessage: '가입 신청을 취소했습니다',
+            onSuccess: () => pendingGuildIds.delete(guildCancel),
+          },
         ).finally(() => render());
       }
       else if (guildKick) void run(() => serverCommands.kickGuildMember({ targetUserId: guildKick }));

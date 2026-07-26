@@ -17,6 +17,7 @@ const snapshotSql = squash(await read('supabase/migrations/20260725000098_guild_
 const weekly = squash(await read('supabase/migrations/20260725000099_guild_m3_weekly_goals.sql'));
 const raidSchema = squash(await read('supabase/migrations/20260725000100_guild_m4_raid_schema.sql'));
 const raidRpc = squash(await read('supabase/migrations/20260725000101_guild_m4_raid_rpc.sql'));
+const pendingJoinState = squash(await read('supabase/migrations/20260726121500_guild_pending_join_state.sql'));
 const router = await read('src/renewal/server-command-router.js');
 const edge = await read('supabase/functions/game-command/index.ts');
 
@@ -91,6 +92,12 @@ assert.match(query, /'joinedat', floor\(extract\(epoch from m\.joined_at\)/, '�
 assert.match(query, /'lastcontributedat'/, '마지막 활동일 노출');
 // 가입 신청 목록은 승인 권한자에게만 노출.
 assert.match(query, /'joinrequests', case when v_can_manage then/);
+assert.match(
+  pendingJoinState,
+  /if v_guild\.guild_id is null then return jsonb_build_object\([\s\S]*?'myrequests', coalesce\(\(/,
+  '무소속 유저 응답에도 본인의 대기 중 가입 신청이 있어야 한다',
+);
+assert.match(pendingJoinState, /r\.user_id = p_user_id and r\.status = 'pending'/);
 
 // 조회 RPC 는 기존 스냅샷 경로를 건드리지 않아야 한다(회귀 위험 차단).
 for (const sql of [schema, query, owner, join, member]) {
@@ -358,12 +365,15 @@ assert.match(
   '소속 여부를 넘겨야 목록에서 가입 버튼과 생성 폼을 감출 수 있다',
 );
 assert.match(guildControllerSource, /guild-list-mine/, '목록에서 내 길드를 표시해야 한다');
-assert.match(guildControllerSource, /guild-list-pending/, '가입 신청한 길드에 대기 상태를 표시해야 한다');
+assert.match(guildControllerSource, /guild-list-pending-button/, '가입 신청 버튼을 승인 대기 버튼으로 바꿔야 한다');
 assert.match(guildControllerSource, /승인 대기 중/, '가입 신청 상태 문구 누락');
 assert.match(guildControllerSource, /가입 신청 완료 · 승인 대기 중입니다/, '가입 신청 완료 피드백 누락');
 assert.match(guildControllerSource, /신청 처리 중…/, '가입 신청 중 중복 클릭 방지 문구 누락');
-assert.match(guildControllerSource, /data-guild-cancel/, '대기 중인 신청 취소 버튼 누락');
-assert.match(guildStyles, /\.guild-list-pending\s*\{/, '가입 승인 대기 상태 스타일 누락');
+assert.match(guildControllerSource, /pendingGuildIds\.add\(guildJoin\)/, '가입 성공 즉시 대기 상태를 반영해야 한다');
+assert.match(guildControllerSource, /data-guild-cancel=/, '대기 상태에 신청 취소 버튼을 노출해야 한다');
+assert.match(guildControllerSource, /pendingGuildIds\.delete\(guildCancel\)/, '취소 성공 즉시 대기 상태를 해제해야 한다');
+assert.match(guildStyles, /\.guild-list-pending-actions\s*\{/, '승인 대기 버튼 묶음 스타일 누락');
+assert.match(guildStyles, /\.guild-list-item \.guild-list-pending-button:disabled\s*\{/, '승인 대기 버튼 스타일 누락');
 
 console.log('guild browse-while-member tests passed: buttons wired, member-aware list');
 

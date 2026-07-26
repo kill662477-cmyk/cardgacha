@@ -60,7 +60,7 @@ console.log(`renewal battle tests passed: ${cards.length} cards, ${STAGES.length
 const battleSource = await fs.readFile(new URL('../src/renewal/battle.js', import.meta.url), 'utf8');
 assert.match(battleSource, /1 - weakenAmount/, '약화 감소폭은 특성 설정값에서 와야 한다');
 assert.doesNotMatch(battleSource, /weakenedUntil \? 0\.92/, '하드코딩된 0.92 가 남아 있으면 안 된다');
-assert.equal(ARCHETYPES.weaken.weaken, 0.15);
+assert.equal(ARCHETYPES.weaken.weaken, 0.2);
 
 // 약화는 중첩되지 않는다. 여러 장을 넣어도 적 공격력 감소폭은 동일해야 한다.
 const weakStage = STAGES.find((s) => s.id === '3-5');

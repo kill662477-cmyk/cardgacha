@@ -11,7 +11,7 @@ begin
   select count(*), min(id::text)::uuid
   into v_match_count, v_user_id
   from public.gacha_s2_accounts
-  where nickname = 'MSTZ_손실바';
+  where lower(btrim(nickname)) = lower('MSTZ_손실바');
 
   if v_match_count <> 1 or v_user_id is null then
     raise exception 'Expected exactly one MSTZ_손실바 account, found %', v_match_count;

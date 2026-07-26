@@ -99,7 +99,11 @@ assert.match(
   '무소속 유저 응답에도 본인의 대기 중 가입 신청이 있어야 한다',
 );
 assert.match(pendingJoinState, /r\.user_id = p_user_id and r\.status = 'pending'/);
-assert.match(penaltyException, /where nickname = 'mstz_손실바'/, '정확한 닉네임만 대상으로 해야 한다');
+assert.match(
+  penaltyException,
+  /where lower\(btrim\(nickname\)\) = lower\('mstz_손실바'\)/,
+  '닉네임 대소문자 차이만 무시해 대상을 찾아야 한다',
+);
 assert.match(penaltyException, /if v_match_count <> 1 or v_user_id is null then/, '동명이인·미발견 가드 누락');
 assert.match(
   penaltyException,

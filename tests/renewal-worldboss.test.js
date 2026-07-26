@@ -46,13 +46,13 @@ assert.equal(resultSnapshot.resultsOpen, true);
 // 34.4M << 60억이라 이 소규모 참여로는 처치 실패(참여 부족 시 실패도 발생하는 것이 의도된 설계).
 assert.equal(resultSnapshot.defeated, false, '34.4M pooled damage falls far short of the 60억 maxHp target');
 const claimed = claimWorldBossReward(recorded, resultAt);
-assert.equal(claimed.reward.points, 10000, '3,000만 티어의 실패 보상 포인트');
+assert.equal(claimed.reward.points, 6000, '3,000만 티어의 실패 보상 포인트');
 assert.equal(getWorldBossReward(claimed.progress, resultAt).available, false);
 
 const participationOnly = claimWorldBossReward(recordWorldBossAttempt(progress, 1, now), resultAt);
 assert.equal(participationOnly.progress.claimedTier, 0);
 assert.equal(participationOnly.reward.defeated, false);
-assert.equal(participationOnly.reward.points, 250, 'failed participation uses the reduced reward table');
+assert.equal(participationOnly.reward.points, 300, 'failed participation uses the reduced reward table');
 assert.equal(getWorldBossReward(normalizeWorldBossProgress(participationOnly.progress, resultAt), resultAt).available, false, 'claimed participation reward must survive normalization');
 
 // --- Schedule (KST daily slots at 17/18/19/20) ---

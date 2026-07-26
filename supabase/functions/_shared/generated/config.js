@@ -363,16 +363,24 @@ export const WORLD_BOSS_RULES = {
   // 참여·화력이 부족한 회차는 실패할 수 있다.
   serverDamagePerSecond: 0,
   cardExpPerAttempt: 25,
-  // balance-tune: 상위 딜 구간 차등 보상 확장. 4,000만딜 3만포 / 3,000만딜 2만포.
+  // 보상 티어(2026-07-26 재설정). 앵커 = 개인딜 5,000만 -> 30,000P / 6,000만 -> 40,000P.
+  // 특성 상향으로 화력이 올라 기존 최고 티어(4,000만 = 30,000P)가 너무 쉬워졌다.
+  // 실측(최근 2일 1,320명): 평균 개인딜 31.4M, 최대 49.0M -> 5,000만은 곧 닿고 6,000만은 성장 목표.
+  // failurePoints 는 처치 실패 시 지급액이다.
+  // 주의: 티어를 늘릴 때 gacha_s2_world_boss_players 의 두 제약을 반드시 확인할 것.
+  //   claimed_tier between -1 and 15  (티어 개수 - 1 이 인덱스 상한)
+  //   reward_points between 0 and 100000
+  // 과거 이 두 제약을 넘겨 보상 수령이 전부 실패한 사고가 두 번 있었다.
   rewardTiers: [
-    { damage: 1, points: 1000, failurePoints: 250, label: '참여' },
-    { damage: 2_000_000, points: 2000, failurePoints: 500, label: '200만' },
-    { damage: 5_000_000, points: 3500, failurePoints: 1000, label: '500만' },
-    { damage: 10_000_000, points: 5500, failurePoints: 2000, label: '1,000만' },
-    { damage: 15_000_000, points: 8000, failurePoints: 3000, label: '1,500만' },
-    { damage: 20_000_000, points: 10000, failurePoints: 5000, label: '2,000만' },
-    { damage: 30_000_000, points: 20000, failurePoints: 10000, label: '3,000만' },
-    { damage: 40_000_000, points: 30000, failurePoints: 15000, label: '4,000만' },
+    { damage: 1, points: 1200, failurePoints: 300, label: '참여' },
+    { damage: 2_000_000, points: 2500, failurePoints: 600, label: '200만' },
+    { damage: 5_000_000, points: 4500, failurePoints: 1200, label: '500만' },
+    { damage: 10_000_000, points: 7000, failurePoints: 2000, label: '1,000만' },
+    { damage: 20_000_000, points: 12000, failurePoints: 4000, label: '2,000만' },
+    { damage: 30_000_000, points: 18000, failurePoints: 6000, label: '3,000만' },
+    { damage: 40_000_000, points: 24000, failurePoints: 9000, label: '4,000만' },
+    { damage: 50_000_000, points: 30000, failurePoints: 12000, label: '5,000만' },
+    { damage: 60_000_000, points: 40000, failurePoints: 15000, label: '6,000만' },
   ],
 };
 

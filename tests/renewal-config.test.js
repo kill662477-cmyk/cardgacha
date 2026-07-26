@@ -57,15 +57,28 @@ assert.equal(MINI_GAME_RULES.dailyPointCapPerGame, 10000);
 assert.equal(MINI_GAME_RULES.ladder.energyCost, 100);
 assert.deepEqual(MINI_GAME_RULES.ladder.rewards, [3000, 2000, 1500, 1000, 500, 50]);
 assert.deepEqual(WORLD_BOSS_RULES.rewardTiers.map(({ damage, points, failurePoints }) => [damage, points, failurePoints]), [
-  [1, 1000, 250],
-  [2_000_000, 2000, 500],
-  [5_000_000, 3500, 1000],
-  [10_000_000, 5500, 2000],
-  [15_000_000, 8000, 3000],
-  [20_000_000, 10000, 5000],
-  [30_000_000, 20000, 10000],
-  [40_000_000, 30000, 15000],
+  [1, 1200, 300],
+  [2_000_000, 2500, 600],
+  [5_000_000, 4500, 1200],
+  [10_000_000, 7000, 2000],
+  [20_000_000, 12000, 4000],
+  [30_000_000, 18000, 6000],
+  [40_000_000, 24000, 9000],
+  [50_000_000, 30000, 12000],
+  [60_000_000, 40000, 15000],
 ]);
+// 티어 개수와 최대 지급액은 gacha_s2_world_boss_players 의 CHECK 제약 안에 있어야 한다.
+// 과거 claimed_tier(<=5), reward_points(<=10000) 를 넘겨 보상 수령이 전부 실패한 사고가 있었다.
+assert.ok(WORLD_BOSS_RULES.rewardTiers.length - 1 <= 15, 'claimed_tier 상한(15) 초과');
+assert.ok(
+  Math.max(...WORLD_BOSS_RULES.rewardTiers.map(({ points }) => points)) <= 100000,
+  'reward_points 상한(100000) 초과',
+);
+// 딜 기준은 오름차순이어야 한다. SQL 이 ordinality 역순으로 최고 티어를 찾기 때문이다.
+assert.deepEqual(
+  WORLD_BOSS_RULES.rewardTiers.map(({ damage }) => damage),
+  [...WORLD_BOSS_RULES.rewardTiers.map(({ damage }) => damage)].sort((a, b) => a - b),
+);
 assert.equal(WORLD_BOSS_RULES.timeZone, 'Asia/Seoul');
 assert.deepEqual(WORLD_BOSS_RULES.scheduleHours, [17, 18, 19, 20]);
 assert.equal(WORLD_BOSS_RULES.attackEnergyCost, 10);
@@ -80,7 +93,7 @@ assert.deepEqual(Object.values(WORLD_BOSS_RULES.slotTiers).map(({ serverDamagePe
 assert.equal(WORLD_BOSS_RULES.serverDamagePerSecond, 0);
 assert.deepEqual(Object.values(WORLD_BOSS_RULES.slotTiers).map(({ clearDestructionGuardRate }) => clearDestructionGuardRate), [0.05, 0.10, 0.15, 0.20]);
 assert.equal(WORLD_BOSS_RULES.raidDurationSeconds, 30 * 60);
-assert.equal(Math.max(...WORLD_BOSS_RULES.rewardTiers.flatMap(({ points, failurePoints }) => [points, failurePoints])), 30000);
+assert.equal(Math.max(...WORLD_BOSS_RULES.rewardTiers.flatMap(({ points, failurePoints }) => [points, failurePoints])), 40000);
 assert.equal(SOOP_RULES.pointsPerBalloon, 5);
 assert.equal(EX_DISTRIBUTION_RULES.enabled, true);
 assert.equal(EX_DISTRIBUTION_RULES.milestones.length, 8);

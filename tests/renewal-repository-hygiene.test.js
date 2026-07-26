@@ -7,6 +7,12 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const at = (...parts) => path.join(root, ...parts);
 const exists = (...parts) => fs.existsSync(at(...parts));
 
+const gitignore = fs.readFileSync(at('.gitignore'), 'utf8');
+assert.match(gitignore, /^\/stats_temp\*\.json$/m);
+assert.match(gitignore, /^\/\.claude\/$/m);
+assert.equal(exists('.github', 'workflows', 'test.yml'), true, 'GitHub test workflow missing');
+assert.equal(exists('AGENTS.md'), true, 'project workflow instructions missing');
+
 for (const required of [
   'index.html',
   'bridge.html',

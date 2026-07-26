@@ -324,7 +324,7 @@ assert.match(
 assert.match(rankingSourceEmblem, /escapeHtml\(guild\.tag\)/);
 
 const ilsinMigration = await readFile(
-  new URL('../supabase/migrations/20260725000107_guild_emblem_ilsin.sql', import.meta.url),
+  new URL('../supabase/migrations/20260725134923_guild_emblem_ilsin.sql', import.meta.url),
   'utf8',
 );
 assert.match(

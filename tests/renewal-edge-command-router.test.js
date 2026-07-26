@@ -133,6 +133,10 @@ assert.equal(mismatch.details, null, 'internal verification details must not rea
 
 const edgeSource = await readFile(new URL('../supabase/functions/game-command/index.ts', import.meta.url), 'utf8');
 const edgeConfig = await readFile(new URL('../supabase/config.toml', import.meta.url), 'utf8');
+const failureAudit = await readFile(
+  new URL('../supabase/migrations/20260726110000_command_failure_audit.sql', import.meta.url),
+  'utf8',
+);
 assert.match(edgeSource, /supabaseAdmin\.auth\.getUser\(jwt\)/);
 assert.match(edgeSource, /p_auth_user_id: user\.id/);
 assert.match(edgeSource, /supabaseAdmin\.rpc/);
@@ -144,7 +148,14 @@ assert.match(edgeSource, /MAX_BODY_BYTES/);
 assert.match(edgeSource, /body\.kind === 'powerRanking'/);
 assert.match(edgeSource, /body\.kind === 'bridgeStatus'/);
 assert.match(edgeSource, /req\.body\.getReader\(\)/);
+assert.match(edgeSource, /X-Request-ID/);
+assert.match(edgeSource, /gacha_s2_command_failures/);
+assert.match(edgeSource, /shouldPersistCommandFailure\(result\.code\)/);
 assert.match(edgeConfig, /\[functions\.game-command\]\s+verify_jwt = false/);
+assert.match(failureAudit, /create table if not exists public\.gacha_s2_command_failures/);
+assert.match(failureAudit, /unique \(request_id\)/);
+assert.match(failureAudit, /enable row level security/);
+assert.doesNotMatch(failureAudit, /^\s*(payload|authorization|jwt)\s+/im);
 
 const generatedPairs = [
   ['src/renewal/config.js', 'supabase/functions/_shared/generated/config.js'],

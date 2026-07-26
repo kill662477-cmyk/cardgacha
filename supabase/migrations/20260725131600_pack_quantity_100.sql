@@ -1,15 +1,3 @@
--- 카드팩 100개 묶음 구매 허용(기존 1개 / 10개에 추가).
---
--- 월드보스·모험 보상이 늘면서 포인트가 남아돌아 10개씩 반복 구매가 번거롭다는 요청.
---
--- 부하 검증(프로덕션, 롤백 트랜잭션): 프리미엄 100팩 = 400뽑 루프가 940ms.
--- PostgREST statement_timeout 8초의 12% 수준이라 여유가 있다. 뽑기당 약 2.35ms.
--- 락은 본인 gacha_s2_player_states 행 하나뿐이라 유저 간 경합도 없다.
--- 오히려 10개씩 10번보다 gacha_s2_idempotency 행이 1/10 로 줄어 저장 부담이 작다.
---
--- 함수 본문은 p_quantity 를 그대로 곱해 쓰므로(v_total_cost / v_total_draws)
--- 입력 검증만 넓히면 된다. 나머지 로직은 건드리지 않는다.
-
 create or replace function public.gacha_s2_purchase_pack(
   p_user_id uuid,
   p_expected_revision bigint,
@@ -187,4 +175,4 @@ end;
 $$;
 
 revoke all on function public.gacha_s2_purchase_pack(uuid, bigint, text, text, integer, text) from public, anon, authenticated;
-grant execute on function public.gacha_s2_purchase_pack(uuid, bigint, text, text, integer, text) to service_role;
+grant execute on function public.gacha_s2_purchase_pack(uuid, bigint, text, text, integer, text) to service_role;;

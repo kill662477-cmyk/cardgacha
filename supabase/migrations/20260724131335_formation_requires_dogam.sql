@@ -1,7 +1,3 @@
--- 편성 검증에 도감(collection_records) 등록 조건 추가.
--- 기존에는 보유(copies>0) + 비 EX 만 확인해, 테스트로 copies만 채워지고 도감 미등록인
--- 카드도 편성이 가능했다. 정상 계정은 보유 시 항상 도감이 등록되므로 영향이 없고,
--- 도감에 없는 카드는 출전에서 제외된다.
 create or replace function public.gacha_s2_update_formation(
   p_user_id uuid,
   p_expected_revision bigint,
@@ -79,7 +75,6 @@ begin
     );
   end if;
 
-  -- 보유(copies>0) + 비 EX + 도감 등록(collection_records) 3조건을 모두 만족해야 편성 가능.
   select count(*) into v_card_count
   from public.gacha_s2_player_cards owned
   join public.gacha_s2_card_catalog catalog on catalog.card_id = owned.card_id
@@ -136,4 +131,4 @@ end;
 $$;
 
 revoke all on function public.gacha_s2_update_formation(uuid, bigint, text, text[]) from public, anon, authenticated;
-grant execute on function public.gacha_s2_update_formation(uuid, bigint, text, text[]) to service_role;
+grant execute on function public.gacha_s2_update_formation(uuid, bigint, text, text[]) to service_role;;

@@ -24,10 +24,21 @@ function corsHeaders(req: Request): Record<string, string> {
   };
 }
 
-function json(req: Request, body: unknown, status = 200) {
-  return Response.json(body, {
+function json(req: Request, body: unknown, status = 200, requestId?: string) {
+  const responseBody = requestId
+    && body
+    && typeof body === 'object'
+    && !Array.isArray(body)
+    && (body as Record<string, unknown>).ok === false
+    ? { ...(body as Record<string, unknown>), requestId }
+    : body;
+  return Response.json(responseBody, {
     status,
-    headers: { ...corsHeaders(req), 'Cache-Control': 'no-store' },
+    headers: {
+      ...corsHeaders(req),
+      'Cache-Control': 'no-store',
+      ...(requestId ? { 'X-Request-ID': requestId } : {}),
+    },
   });
 }
 
@@ -47,6 +58,33 @@ function adminClient() {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
+}
+
+function safeErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? 'unknown');
+  return message.slice(0, 500);
+}
+
+async function persistFailure(
+  supabaseAdmin: ReturnType<typeof adminClient>,
+  failure: Record<string, unknown>,
+) {
+  const { error } = await supabaseAdmin.from('gacha_s2_command_failures').insert(failure);
+  if (error) {
+    console.error('FAILURE_AUDIT_WRITE_FAILED', {
+      requestId: failure.request_id,
+      code: error.code,
+    });
+  }
+}
+
+function shouldPersistCommandFailure(code: unknown) {
+  return new Set([
+    'INTERNAL_ERROR',
+    'VERSION_CONFLICT',
+    'IDEMPOTENCY_KEY_REUSED',
+    'RATE_LIMITED',
+  ]).has(String(code ?? ''));
 }
 
 async function readLimitedText(req: Request) {
@@ -69,21 +107,23 @@ async function readLimitedText(req: Request) {
 }
 
 Deno.serve(async (req: Request) => {
+  const requestId = crypto.randomUUID();
+  const respond = (body: unknown, status = 200) => json(req, body, status, requestId);
   const origin = req.headers.get('origin');
-  if (origin && !allowedOrigins().has(origin)) return json(req, { ok: false, code: 'FORBIDDEN', message: '허용되지 않은 출처입니다.' }, 403);
+  if (origin && !allowedOrigins().has(origin)) return respond({ ok: false, code: 'FORBIDDEN', message: '허용되지 않은 출처입니다.' }, 403);
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(req) });
-  if (req.method !== 'POST') return json(req, { ok: false, code: 'VALIDATION_FAILED', message: 'POST 요청만 허용됩니다.' }, 405);
+  if (req.method !== 'POST') return respond({ ok: false, code: 'VALIDATION_FAILED', message: 'POST 요청만 허용됩니다.' }, 405);
   const contentLength = Number(req.headers.get('content-length') ?? 0);
-  if (contentLength > MAX_BODY_BYTES) return json(req, { ok: false, code: 'VALIDATION_FAILED', message: '요청이 너무 큽니다.' }, 413);
+  if (contentLength > MAX_BODY_BYTES) return respond({ ok: false, code: 'VALIDATION_FAILED', message: '요청이 너무 큽니다.' }, 413);
 
   const jwt = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
-  if (!jwt) return json(req, { ok: false, code: 'AUTH_REQUIRED', message: '로그인이 필요합니다.' }, 401);
+  if (!jwt) return respond({ ok: false, code: 'AUTH_REQUIRED', message: '로그인이 필요합니다.' }, 401);
   
   const supabaseAdmin = adminClient();
   const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(jwt);
 
   if (userError || !user?.id) {
-    return json(req, { ok: false, code: 'AUTH_REQUIRED', message: '로그인이 필요합니다.' }, 401);
+    return respond({ ok: false, code: 'AUTH_REQUIRED', message: '로그인이 필요합니다.' }, 401);
   }
 
   let body: Record<string, unknown>;
@@ -91,7 +131,7 @@ Deno.serve(async (req: Request) => {
     const raw = await readLimitedText(req);
     body = JSON.parse(raw);
   } catch {
-    return json(req, { ok: false, code: 'VALIDATION_FAILED', message: 'JSON 요청이 올바르지 않습니다.' }, 400);
+    return respond({ ok: false, code: 'VALIDATION_FAILED', message: 'JSON 요청이 올바르지 않습니다.' }, 400);
   }
 
   const gateway = {
@@ -114,17 +154,48 @@ Deno.serve(async (req: Request) => {
     p_auth_user_id: user.id,
   });
   if (accountError || !accountId) {
-    return json(req, { ok: false, code: 'AUTH_REQUIRED', message: '게임 계정 연결이 필요합니다.' }, 401);
+    return respond({ ok: false, code: 'AUTH_REQUIRED', message: '게임 계정 연결이 필요합니다.' }, 401);
   }
   const userId = String(accountId);
-  const router = createServerCommandRouter({ gateway, cards });
+  const logFailure = async (
+    requestKind: string,
+    errorCode: string,
+    httpStatus: number,
+    errorSource: string,
+    error: unknown,
+    command?: Record<string, unknown>,
+  ) => persistFailure(supabaseAdmin, {
+    request_id: requestId,
+    auth_user_id: user.id,
+    user_id: userId,
+    request_kind: requestKind,
+    command_id: typeof command?.commandId === 'string' ? command.commandId : null,
+    command_type: typeof command?.type === 'string' ? command.type : null,
+    error_code: errorCode,
+    http_status: httpStatus,
+    error_source: errorSource,
+    error_message: safeErrorMessage(error),
+  });
+  let internalCommandError: unknown = null;
+  const router = createServerCommandRouter({
+    gateway,
+    cards,
+    onError: (error: unknown) => {
+      internalCommandError = error
+        && typeof error === 'object'
+        && 'reason' in error
+        ? (error as Record<string, unknown>).reason
+        : error;
+    },
+  });
 
   if (body.kind === 'snapshot') {
     try {
       const snapshot = await router.loadSnapshot(userId);
-      return json(req, { ok: true, serverTime: Date.now(), snapshot });
+      return respond({ ok: true, serverTime: Date.now(), snapshot });
     } catch (e: any) {
-      return json(req, { ok: false, code: 'INTERNAL_ERROR', message: `계정 상태를 불러오지 못했습니다. (${e?.message ?? 'unknown'})` }, 500);
+      await logFailure('snapshot', 'INTERNAL_ERROR', 500, 'snapshot', e);
+      return respond({ ok: false, code: 'INTERNAL_ERROR', message: '계정 상태를 불러오지 못했습니다.' }, 500);
     }
   }
   if (body.kind === 'worldBossStatus') {
@@ -133,17 +204,19 @@ Deno.serve(async (req: Request) => {
         p_user_id: userId,
         p_event_id: typeof body.eventId === 'string' ? body.eventId : null,
       });
-      return json(req, { ok: true, serverTime: Date.now(), status });
-    } catch {
-      return json(req, { ok: false, code: 'INTERNAL_ERROR', message: '월드보스 상태를 불러오지 못했습니다.' }, 500);
+      return respond({ ok: true, serverTime: Date.now(), status });
+    } catch (error) {
+      await logFailure('worldBossStatus', 'INTERNAL_ERROR', 500, 'worldBossStatus', error);
+      return respond({ ok: false, code: 'INTERNAL_ERROR', message: '월드보스 상태를 불러오지 못했습니다.' }, 500);
     }
   }
   if (body.kind === 'powerRanking') {
     try {
       const ranking = await router.getPowerRanking(userId);
-      return json(req, { ok: true, serverTime: Date.now(), ranking });
-    } catch {
-      return json(req, { ok: false, code: 'INTERNAL_ERROR', message: '전투력 랭킹을 불러오지 못했습니다.' }, 500);
+      return respond({ ok: true, serverTime: Date.now(), ranking });
+    } catch (error) {
+      await logFailure('powerRanking', 'INTERNAL_ERROR', 500, 'powerRanking', error);
+      return respond({ ok: false, code: 'INTERNAL_ERROR', message: '전투력 랭킹을 불러오지 못했습니다.' }, 500);
     }
   }
   if (body.kind === 'guildState') {
@@ -152,30 +225,44 @@ Deno.serve(async (req: Request) => {
         p_user_id: userId,
         p_guild_id: typeof body.guildId === 'string' ? body.guildId : null,
       });
-      return json(req, { ok: true, serverTime: Date.now(), state });
-    } catch {
-      return json(req, { ok: false, code: 'INTERNAL_ERROR', message: '길드 정보를 불러오지 못했습니다.' }, 500);
+      return respond({ ok: true, serverTime: Date.now(), state });
+    } catch (error) {
+      await logFailure('guildState', 'INTERNAL_ERROR', 500, 'guildState', error);
+      return respond({ ok: false, code: 'INTERNAL_ERROR', message: '길드 정보를 불러오지 못했습니다.' }, 500);
     }
   }
   if (body.kind === 'guildRaidStatus') {
     try {
       const status = await gateway.rpc('gacha_s2_get_guild_raid_status', { p_user_id: userId });
-      return json(req, { ok: true, serverTime: Date.now(), status });
-    } catch {
-      return json(req, { ok: false, code: 'INTERNAL_ERROR', message: '길드 레이드 정보를 불러오지 못했습니다.' }, 500);
+      return respond({ ok: true, serverTime: Date.now(), status });
+    } catch (error) {
+      await logFailure('guildRaidStatus', 'INTERNAL_ERROR', 500, 'guildRaidStatus', error);
+      return respond({ ok: false, code: 'INTERNAL_ERROR', message: '길드 레이드 정보를 불러오지 못했습니다.' }, 500);
     }
   }
   if (body.kind === 'bridgeStatus') {
     try {
       const status = await gateway.rpc('gacha_s2_get_bridge_status', { p_user_id: userId });
-      return json(req, { ok: true, serverTime: Date.now(), status });
-    } catch {
-      return json(req, { ok: false, code: 'INTERNAL_ERROR', message: 'API 연동 권한을 확인하지 못했습니다.' }, 500);
+      return respond({ ok: true, serverTime: Date.now(), status });
+    } catch (error) {
+      await logFailure('bridgeStatus', 'INTERNAL_ERROR', 500, 'bridgeStatus', error);
+      return respond({ ok: false, code: 'INTERNAL_ERROR', message: 'API 연동 권한을 확인하지 못했습니다.' }, 500);
     }
   }
   if (body.kind !== 'command' || !body.command) {
-    return json(req, { ok: false, code: 'VALIDATION_FAILED', message: '요청 종류가 올바르지 않습니다.' }, 400);
+    return respond({ ok: false, code: 'VALIDATION_FAILED', message: '요청 종류가 올바르지 않습니다.' }, 400);
   }
   const result = await router.execute(userId, body.command);
-  return json(req, result, statusFor(result));
+  const status = statusFor(result);
+  if (result?.ok === false && shouldPersistCommandFailure(result.code)) {
+    await logFailure(
+      'command',
+      String(result.code),
+      status,
+      'commandRouter',
+      internalCommandError ?? result.message ?? result.code,
+      body.command as Record<string, unknown>,
+    );
+  }
+  return respond(result, status);
 });

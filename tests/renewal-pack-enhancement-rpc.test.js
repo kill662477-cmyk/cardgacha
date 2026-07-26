@@ -106,10 +106,10 @@ assert.match(sameCardMaterial, /owned\.copies - 1 validation still preserves the
 
 console.log('renewal pack/enhancement RPC tests passed: server RNG, atomic economy, replay, revision, service-role boundary');
 
-// 100개 묶음 구매(20260725000106). 서버 RPC 와 클라이언트 계약이 함께 100 을 허용해야 하며,
+// 100개 묶음 구매(운영 이력 20260725131600). 서버 RPC 와 클라이언트 계약이 함께 100 을 허용해야 하며,
 // 한쪽만 넓히면 구매가 거절된다.
 const quantity100Sql = await readFile(
-  new URL('../supabase/migrations/20260725000106_pack_quantity_100.sql', import.meta.url),
+  new URL('../supabase/migrations/20260725131600_pack_quantity_100.sql', import.meta.url),
   'utf8',
 );
 const quantity100 = quantity100Sql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();

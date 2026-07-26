@@ -64,10 +64,10 @@ assert.match(
 
 console.log('renewal database migration tests passed: read-only source, account and bridge carryover, clean game state');
 
-// 신규 가입 시작 포인트 200,000 (20260726000111).
+// 신규 가입 시작 포인트 200,000 (운영 이력 20260725175359).
 // 소급 지급은 전용 테이블로 멱등성을 잡고, 앞으로의 가입자는 컬럼 기본값으로 처리한다.
 const newPlayerPointsSql = await readFile(
-  new URL('../supabase/migrations/20260726000111_new_player_starting_points_200k.sql', import.meta.url),
+  new URL('../supabase/migrations/20260725175359_new_player_starting_points_200k.sql', import.meta.url),
   'utf8',
 );
 assert.match(newPlayerPointsSql, /lock table public\.gacha_s2_player_states in share row exclusive mode/);

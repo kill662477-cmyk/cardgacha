@@ -1,12 +1,3 @@
--- 월드보스 슬롯 HP 상향: 17시 60억 / 18시 65억 / 19시 70억 / 20시 75억 (직전 55/60/65/70억).
---
--- 사유: 특성 상향(약화·생존·강타·증폭)으로 유저 화력이 전반적으로 올랐다. 각 슬롯 +5억.
--- 서버DPS는 계속 0이다. 처치 여부는 참가자 합산딜 vs max_hp 로만 갈린다.
--- difficultyMultiplier 는 안내 문구 표시 전용이라 17시 대비 HP 비율로 맞춘다.
---
--- 20260725000091 주석대로, config 갱신만으로는 "미리 생성된 다음 슬롯" 행이 옛 HP로 남는다.
--- 실제로 오늘 17시 회차가 55억으로 선생성돼 있어 아래 두 번째 블록에서 함께 리싱크한다.
-
 update public.gacha_s2_balance_versions
 set config =
   jsonb_set(
@@ -50,8 +41,6 @@ begin
 end;
 $$;
 
--- 아직 시작 전(starts_at > now)이고, 아무도 공격하지 않았고(player_damage = 0),
--- 처치되지 않은(defeated_at is null) 행만 새 HP로 갱신한다. 진행 중/종료된 회차는 건드리지 않는다.
 with tier as (
   select
     e.event_id,
@@ -92,4 +81,4 @@ begin
     raise exception 'pending world boss events still stale: %', v_stale;
   end if;
 end;
-$$;
+$$;;

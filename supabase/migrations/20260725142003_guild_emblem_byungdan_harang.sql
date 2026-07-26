@@ -1,15 +1,3 @@
--- 커스텀 길드 엠블럼 'byungdan'(븅단폭격) / 'harang'(하랑단) 등록 및 적용.
---
--- 이미지: assets/renewal/guild/emblems/{byungdan,harang}.png (256x256 원형 마스크, 각 29KB)
--- 방식은 20260725000107_guild_emblem_ilsin.sql 과 동일하다.
--- active = false 라 다른 길드 선택 목록에는 뜨지 않고, 화면 표시는 길드 행의 emblem 키를
--- 직접 읽으므로 정상 동작한다.
---
--- 이로써 현재 활동 중인 길드 4곳이 모두 전용 엠블럼을 갖는다.
---
--- 주의: 길드장이 엠블럼을 다른 것으로 바꾸면 UI 로는 되돌릴 수 없다.
--- 복구하려면 해당 update 문을 다시 실행해야 한다.
-
 insert into public.gacha_s2_guild_emblems (emblem_key, label, sort_order, active)
 values
   ('byungdan', '븅단폭격', 902, false),
@@ -36,4 +24,4 @@ begin
     raise exception 'byungdan/harang emblems not applied (matched % guilds)', v_count;
   end if;
 end;
-$$;
+$$;;

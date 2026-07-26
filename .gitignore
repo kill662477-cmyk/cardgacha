@@ -8,3 +8,8 @@ node_modules
 .bridge-keys/
 .zcode/
 trailer-output/
+
+# Local agent settings and operational exports must never enter Git.
+/.claude/
+/CLAUDE.md
+/stats_temp*.json

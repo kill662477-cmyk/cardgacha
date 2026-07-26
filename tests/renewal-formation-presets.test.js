@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { GAME_COMMAND_TYPES, createGameCommand, validateGameCommand } from '../src/renewal/service-contract.js';
 
-const sql = await readFile(new URL('../supabase/migrations/20260726000114_formation_presets.sql', import.meta.url), 'utf8');
+const sql = await readFile(new URL('../supabase/migrations/20260726094049_formation_presets.sql', import.meta.url), 'utf8');
 const contract = await readFile(new URL('../src/renewal/service-contract.js', import.meta.url), 'utf8');
 const router = await readFile(new URL('../src/renewal/server-command-router.js', import.meta.url), 'utf8');
 const app = await readFile(new URL('../src/renewal/app.js', import.meta.url), 'utf8');

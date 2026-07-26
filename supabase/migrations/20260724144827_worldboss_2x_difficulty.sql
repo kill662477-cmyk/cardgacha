@@ -1,5 +1,3 @@
--- 월드보스 난이도 직전(1.3배) 대비 추가 2배 상향. maxHp·serverDamagePerSecond를
--- 슬롯 4종 + 공용값 전부 함께 2배 스케일해 처치 요구 딜(갭)이 정확히 2배 상승.
 update public.gacha_s2_balance_versions
 set config =
   jsonb_set(
@@ -36,4 +34,4 @@ begin
     raise exception 'worldboss slot20 dps update failed';
   end if;
 end;
-$$;
+$$;;

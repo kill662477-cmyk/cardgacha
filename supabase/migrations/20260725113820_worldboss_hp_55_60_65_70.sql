@@ -1,12 +1,3 @@
--- 월드보스 슬롯 HP 상향: 17시 55억 / 18시 60억 / 19시 65억 / 20시 70억.
--- (직전 값 40/45/60/65억. 어제 회차가 전부 여유롭게 클리어돼 목표치를 올린다.)
---
--- 서버DPS는 계속 0이다. 처치 여부는 참가자 합산딜 vs max_hp 로만 갈린다.
--- difficultyMultiplier 는 안내 문구 표시 전용이라 17시 대비 HP 비율로 맞춘다.
---
--- 20260725000091 주석대로, config 갱신만으로는 "미리 생성된 다음 슬롯" 행이 옛 HP로 남는다.
--- 그래서 아래 두 번째 블록에서 시작 전 이벤트 행을 함께 리싱크한다.
-
 update public.gacha_s2_balance_versions
 set config =
   jsonb_set(
@@ -43,7 +34,6 @@ begin
   if (v_cfg->'worldBossRules'->>'maxHp')::bigint <> 5500000000 then
     raise exception 'worldboss default hp update failed';
   end if;
-  -- 서버DPS 폐지 상태가 유지되는지 확인. 여기가 0이 아니면 난이도 계산이 통째로 달라진다.
   if (select count(*) from jsonb_each(v_cfg->'worldBossRules'->'slotTiers') as t(k, v)
       where (v->>'serverDamagePerSecond')::bigint <> 0) > 0 then
     raise exception 'worldboss server dps must stay 0';
@@ -51,8 +41,6 @@ begin
 end;
 $$;
 
--- 아직 시작 전(starts_at > now)이고, 아무도 공격하지 않았고(player_damage = 0),
--- 처치되지 않은(defeated_at is null) 행만 새 HP로 갱신한다. 진행 중/종료된 회차는 건드리지 않는다.
 with tier as (
   select
     e.event_id,
@@ -93,4 +81,4 @@ begin
     raise exception 'pending world boss events still stale: %', v_stale;
   end if;
 end;
-$$;
+$$;;

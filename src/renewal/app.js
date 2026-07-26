@@ -210,6 +210,7 @@ function cacheElements() {
     'adventureModeNormal', 'adventureModeHard', 'adventureModeLock',
     'formationButton', 'quickBattleButton', 'quickBattleCount', 'claimButton', 'pendingReward',
     'formationDialog', 'selectedFormation', 'inventoryGrid', 'selectionCount',
+    'formationPresetList', 'formationPresetName', 'formationPresetSave',
     'confirmFormation', 'clearFormation', 'toast', 'attackEcho', 'battlefield', 'offlineTime', 'offlineSummary',
     'rewardDialog', 'rewardEyebrow', 'rewardTitle', 'rewardDuration',
     'rewardCardExp', 'rewardPoints', 'rewardParty', 'rewardNote', 'confirmReward',
@@ -1007,6 +1008,67 @@ function renderFormationDialog() {
   }).join('');
   elements.selectionCount.textContent = `${temporaryFormation.length} / ${GAME_RULES.formationSize}`;
   elements.confirmFormation.disabled = temporaryFormation.length !== GAME_RULES.formationSize;
+  renderFormationPresets();
+}
+
+// 편성 프리셋(최대 5개). 로컬 테스트 프로필에는 서버 상태가 없어 저장 경로를 막는다.
+function renderFormationPresets() {
+  if (!elements.formationPresetList) return;
+  const presets = state.formationPresets ?? {};
+  const names = Object.keys(presets);
+  const active = state.activeFormationPresetId;
+  elements.formationPresetList.innerHTML = names.length
+    ? names.map((name) => `<div class="formation-preset${name === active ? ' active' : ''}">
+        <button type="button" data-preset-apply="${escapeHtml(name)}" title="이 프리셋으로 교체">${escapeHtml(name)}</button>
+        <button type="button" class="formation-preset-remove" data-preset-delete="${escapeHtml(name)}" aria-label="${escapeHtml(name)} 삭제" title="삭제">×</button>
+      </div>`).join('')
+    : '<span class="formation-preset-empty">저장된 프리셋이 없습니다. 편성을 고른 뒤 이름을 붙여 저장하세요.</span>';
+  const full = names.length >= 5;
+  elements.formationPresetSave.disabled = !remoteMode || temporaryFormation.length !== GAME_RULES.formationSize;
+  elements.formationPresetName.placeholder = full
+    ? '프리셋 5개 · 기존 이름으로 덮어쓰기'
+    : '프리셋 이름 (최대 12자)';
+}
+
+async function saveFormationPreset() {
+  const name = elements.formationPresetName.value.trim();
+  if (!name) return showToast('프리셋 이름을 입력하세요');
+  if (temporaryFormation.length !== GAME_RULES.formationSize) return showToast('카드 5장을 모두 선택하세요');
+  return runUiOperation('saveFormationPreset', elements.formationPresetSave, async () => {
+    const response = await executeServerCommand(GAME_COMMAND_TYPES.SAVE_FORMATION_PRESET, {
+      presetId: name, formation: [...temporaryFormation],
+    });
+    if (!response?.ok) return response;
+    elements.formationPresetName.value = '';
+    renderFormationDialog();
+    showToast(`프리셋 "${name}" 저장`);
+    return { ok: true };
+  });
+}
+
+async function applyFormationPreset(name) {
+  return runUiOperation('applyFormationPreset', null, async () => {
+    const response = await executeServerCommand(GAME_COMMAND_TYPES.APPLY_FORMATION_PRESET, { presetId: name });
+    if (!response?.ok) return response;
+    // 서버가 편성을 바꿨으므로 진행 중인 전투를 끊고 선택 상태를 새 편성으로 맞춘다.
+    battleToken += 1;
+    battleRunning = false;
+    temporaryFormation = [...state.formation];
+    elements.formationDialog.close();
+    renderAll();
+    showToast(`프리셋 "${name}" 적용`);
+    return { ok: true };
+  });
+}
+
+async function deleteFormationPreset(name) {
+  return runUiOperation('deleteFormationPreset', null, async () => {
+    const response = await executeServerCommand(GAME_COMMAND_TYPES.DELETE_FORMATION_PRESET, { presetId: name });
+    if (!response?.ok) return response;
+    renderFormationDialog();
+    showToast(`프리셋 "${name}" 삭제`);
+    return { ok: true };
+  });
 }
 
 function openFormation() {
@@ -2373,6 +2435,17 @@ function bindEvents() {
   });
   elements.confirmFormation.addEventListener('click', confirmFormation);
   elements.clearFormation.addEventListener('click', clearFormationSelection);
+  elements.formationPresetSave.addEventListener('click', saveFormationPreset);
+  elements.formationPresetName.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') { event.preventDefault(); saveFormationPreset(); }
+  });
+  elements.formationPresetList.addEventListener('click', (event) => {
+    const apply = event.target.closest('[data-preset-apply]');
+    if (apply) return applyFormationPreset(apply.dataset.presetApply);
+    const remove = event.target.closest('[data-preset-delete]');
+    if (remove) return deleteFormationPreset(remove.dataset.presetDelete);
+    return undefined;
+  });
   elements.quickBattleButton.addEventListener('click', () => openRewardDialog('quick'));
   elements.claimButton.addEventListener('click', () => openRewardDialog('offline'));
   elements.confirmReward.addEventListener('click', confirmReward);

@@ -340,14 +340,14 @@ console.log('guild custom emblem tests passed: image whitelist, markup render, e
 const guildBrowseHtml = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 for (const id of ['guildShowBrowse', 'guildShowHome']) {
   assert.match(guildBrowseHtml, new RegExp(`id="${id}"`), `${id} 버튼이 화면에 있어야 한다`);
-  assert.match(
-    guildControllerSource,
-    new RegExp(`elements\.${id}\?\.addEventListener`),
+  // 정규식 대신 문자열 포함으로 검사한다. 템플릿 리터럴 안에서는 \. 가 그냥 . 로 풀려
+  // 정규식이 조용히 헐거워진다(실제로 이 가드가 그 때문에 오탐을 냈다).
+  assert.ok(
+    guildControllerSource.includes(`elements.${id}?.addEventListener`),
     `${id} 버튼에 클릭 처리가 연결돼야 한다`,
   );
-  assert.match(
-    guildControllerSource,
-    new RegExp(`'${id}'`),
+  assert.ok(
+    guildControllerSource.includes(`'${id}'`),
     `${id} 가 elements 목록에 등록돼야 한다`,
   );
 }

@@ -2006,3 +2006,23 @@ button[aria-busy="true"]::after {
 }
 /* 목록에서 자기 길드 표시. 가입 버튼 자리를 대신한다. */
 .guild-list-mine { margin-left: auto; color: var(--acid); font-size: .78rem; font-weight: 850; white-space: nowrap; }
+
+/* 편성 프리셋(최대 5개). 편성 다이얼로그 헤더 아래 한 줄로 붙는다. */
+.formation-presets { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 20px; border-bottom: 1px solid var(--line); }
+.formation-preset-list { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
+.formation-preset { display: inline-flex; align-items: stretch; border: 1px solid var(--line-bright); border-radius: 9px; overflow: hidden; }
+.formation-preset > button { padding: 6px 10px; background: var(--panel-soft); color: var(--text); font-size: .78rem; font-weight: 800; }
+.formation-preset.active > button:first-child { color: var(--acid); }
+.formation-preset-remove { border-left: 1px solid var(--line); color: var(--muted); padding: 6px 8px; }
+.formation-preset-remove:hover { color: var(--danger, #e11d48); }
+.formation-preset-empty { color: var(--muted); font-size: .76rem; }
+.formation-preset-save { display: flex; gap: 6px; }
+.formation-preset-save input {
+  width: 190px; padding: 6px 10px; border-radius: 9px;
+  border: 1px solid var(--line-bright); background: var(--panel); color: var(--text); font-size: .78rem;
+}
+@media (max-width: 900px) {
+  .formation-presets { padding: 8px 14px; }
+  .formation-preset-save { width: 100%; }
+  .formation-preset-save input { flex: 1; width: auto; }
+}

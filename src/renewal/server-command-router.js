@@ -11,6 +11,9 @@ import {
 
 const DIRECT_RPCS = Object.freeze({
   [GAME_COMMAND_TYPES.UPDATE_FORMATION]: 'gacha_s2_update_formation',
+  [GAME_COMMAND_TYPES.SAVE_FORMATION_PRESET]: 'gacha_s2_save_formation_preset',
+  [GAME_COMMAND_TYPES.APPLY_FORMATION_PRESET]: 'gacha_s2_apply_formation_preset',
+  [GAME_COMMAND_TYPES.DELETE_FORMATION_PRESET]: 'gacha_s2_delete_formation_preset',
   [GAME_COMMAND_TYPES.PURCHASE_PACK]: 'gacha_s2_purchase_pack',
   [GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK]: 'gacha_s2_purchase_support_pack',
   [GAME_COMMAND_TYPES.USE_SUPPORT_ITEM]: 'gacha_s2_use_support_item',
@@ -65,6 +68,11 @@ function directArgs(userId, command) {
   switch (command.type) {
     case GAME_COMMAND_TYPES.UPDATE_FORMATION:
       return { ...args, p_formation: payload.formation };
+    case GAME_COMMAND_TYPES.SAVE_FORMATION_PRESET:
+      return { ...args, p_preset_id: payload.presetId, p_formation: payload.formation };
+    case GAME_COMMAND_TYPES.APPLY_FORMATION_PRESET:
+    case GAME_COMMAND_TYPES.DELETE_FORMATION_PRESET:
+      return { ...args, p_preset_id: payload.presetId };
     case GAME_COMMAND_TYPES.PURCHASE_PACK:
       return {
         ...args,

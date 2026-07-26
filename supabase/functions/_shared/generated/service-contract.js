@@ -2,6 +2,11 @@ export const GAME_API_CONTRACT_VERSION = 1;
 
 export const GAME_COMMAND_TYPES = Object.freeze({
   UPDATE_FORMATION: 'updateFormation',
+  // 편성 프리셋(최대 5개). 상태 필드(formationPresets/activeFormationPresetId)와 5개 상한은
+  // state-schema 에 이미 있었는데 쓰는 명령이 없어 항상 비어 있었다.
+  SAVE_FORMATION_PRESET: 'saveFormationPreset',
+  APPLY_FORMATION_PRESET: 'applyFormationPreset',
+  DELETE_FORMATION_PRESET: 'deleteFormationPreset',
   CLAIM_ADVENTURE_REWARDS: 'claimAdventureRewards',
   START_ADVENTURE_RUN: 'startAdventureRun',
   FINISH_ADVENTURE_RUN: 'finishAdventureRun',
@@ -67,6 +72,9 @@ function validatePayload(type, payload, issues) {
   if (!isRecord(payload)) return addIssue(issues, 'payload', '객체 필요');
   const allowedFields = {
     [GAME_COMMAND_TYPES.UPDATE_FORMATION]: ['formation'],
+    [GAME_COMMAND_TYPES.SAVE_FORMATION_PRESET]: ['presetId', 'formation'],
+    [GAME_COMMAND_TYPES.APPLY_FORMATION_PRESET]: ['presetId'],
+    [GAME_COMMAND_TYPES.DELETE_FORMATION_PRESET]: ['presetId'],
     [GAME_COMMAND_TYPES.CLAIM_ADVENTURE_REWARDS]: ['mode'],
     [GAME_COMMAND_TYPES.START_ADVENTURE_RUN]: ['mode'],
     [GAME_COMMAND_TYPES.FINISH_ADVENTURE_RUN]: ['runId'],
@@ -108,6 +116,22 @@ function validatePayload(type, payload, issues) {
       } else {
         payload.formation.forEach((cardId, index) => validateString(issues, cardId, `payload.formation.${index}`, 80));
         if (new Set(payload.formation).size !== payload.formation.length) addIssue(issues, 'payload.formation', '중복 카드 ID 불가');
+      }
+      break;
+    case GAME_COMMAND_TYPES.SAVE_FORMATION_PRESET:
+    case GAME_COMMAND_TYPES.APPLY_FORMATION_PRESET:
+    case GAME_COMMAND_TYPES.DELETE_FORMATION_PRESET:
+      // presetId 는 사용자가 붙이는 이름이자 저장 키다. 화면에는 이스케이프해서 그린다.
+      validateString(issues, payload.presetId, 'payload.presetId', 12);
+      if (type === GAME_COMMAND_TYPES.SAVE_FORMATION_PRESET) {
+        if (!Array.isArray(payload.formation) || payload.formation.length !== 5) {
+          addIssue(issues, 'payload.formation', '카드 ID 5개 배열 필요');
+        } else {
+          payload.formation.forEach((cardId, index) => validateString(issues, cardId, `payload.formation.${index}`, 80));
+          if (new Set(payload.formation).size !== payload.formation.length) {
+            addIssue(issues, 'payload.formation', '중복 카드 ID 불가');
+          }
+        }
       }
       break;
     case GAME_COMMAND_TYPES.CLAIM_ADVENTURE_REWARDS:

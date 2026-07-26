@@ -18,6 +18,7 @@ const weekly = squash(await read('supabase/migrations/20260725000099_guild_m3_we
 const raidSchema = squash(await read('supabase/migrations/20260725000100_guild_m4_raid_schema.sql'));
 const raidRpc = squash(await read('supabase/migrations/20260725000101_guild_m4_raid_rpc.sql'));
 const pendingJoinState = squash(await read('supabase/migrations/20260726121500_guild_pending_join_state.sql'));
+const penaltyException = squash(await read('supabase/migrations/20260726123000_clear_mstz_sonsilba_guild_penalty.sql'));
 const router = await read('src/renewal/server-command-router.js');
 const edge = await read('supabase/functions/game-command/index.ts');
 
@@ -98,6 +99,13 @@ assert.match(
   '무소속 유저 응답에도 본인의 대기 중 가입 신청이 있어야 한다',
 );
 assert.match(pendingJoinState, /r\.user_id = p_user_id and r\.status = 'pending'/);
+assert.match(penaltyException, /where nickname = 'mstz_손실바'/, '정확한 닉네임만 대상으로 해야 한다');
+assert.match(penaltyException, /if v_match_count <> 1 or v_user_id is null then/, '동명이인·미발견 가드 누락');
+assert.match(
+  penaltyException,
+  /delete from public\.gacha_s2_guild_leave_penalties where user_id = v_user_id/,
+  '대상 계정의 길드 페널티만 삭제해야 한다',
+);
 
 // 조회 RPC 는 기존 스냅샷 경로를 건드리지 않아야 한다(회귀 위험 차단).
 for (const sql of [schema, query, owner, join, member]) {

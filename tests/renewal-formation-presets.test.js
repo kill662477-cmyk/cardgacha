@@ -63,7 +63,15 @@ for (const id of ['formationPresetList', 'formationPresetName', 'formationPreset
 assert.match(app, /elements\.formationPresetSave\.addEventListener/);
 assert.match(app, /elements\.formationPresetList\.addEventListener/);
 // 프리셋 이름은 사용자 입력이라 화면에 이스케이프해서 그려야 한다.
-assert.match(app, /data-preset-apply="\$\{escapeHtml\(name\)\}"/);
-assert.match(app, /data-preset-delete="\$\{escapeHtml\(name\)\}"/);
+assert.ok(app.includes('data-preset-apply="${escapeHtml(name)}"'));
+assert.ok(app.includes('data-preset-delete="${escapeHtml(name)}"'));
+// escapeHtml 을 쓰면서 import 를 빠뜨리면 프리셋이 하나라도 있는 순간
+// renderFormationDialog 가 ReferenceError 로 죽어 편성 창이 아예 열리지 않는다.
+// 실제로 그렇게 라이브에서 편성 버튼이 먹통이 됐다.
+assert.match(
+  app,
+  /import \{ escapeHtml \} from '\.\/html\.js';/,
+  'escapeHtml 을 쓰는 파일은 반드시 import 해야 한다',
+);
 
 console.log('formation preset tests passed: contract, router, server guards, wired UI');

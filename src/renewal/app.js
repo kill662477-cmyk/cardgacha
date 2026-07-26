@@ -3,6 +3,7 @@ import {
   REWARD_RULES, STAGES, SUPPORT_ITEMS, SUPPORT_PACK,
 } from './config.js';
 import { computeCardPower, computeCardStats, computeFormationPower, getRaceSynergy, simulateBattle } from './battle.js';
+import { escapeHtml } from './html.js';
 import {
   advanceAdventureRun,
   calculateAdventureRunReward,

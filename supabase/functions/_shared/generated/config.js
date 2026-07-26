@@ -22,7 +22,7 @@ export const ARCHETYPES = {
   area: { label: '광역', atk: 1.04, hp: 0.98, def: 0.94, speed: 0.94, area: 1.18 },
   boss: { label: '보스', atk: 1.08, hp: 1.03, def: 1, speed: 0.91, bossDamage: 1.28 },
   amplify: { label: '증폭', atk: 1.02, hp: 0.95, def: 0.92, speed: 1, crit: 0.09, amplify: 0.04 },
-  weaken: { label: '약화', atk: 0.92, hp: 1.02, def: 1.02, speed: 1.03, weaken: 0.08 },
+  weaken: { label: '약화', atk: 0.92, hp: 1.02, def: 1.02, speed: 1.03, weaken: 0.15 },
   sustain: { label: '생존', atk: 0.91, hp: 1.24, def: 1.18, speed: 0.88, recovery: 0.08 },
 };
 

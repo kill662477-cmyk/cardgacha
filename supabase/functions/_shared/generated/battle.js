@@ -116,6 +116,9 @@ export function simulateBattle(formation, stage, accountBonuses = {}) {
   let elapsed = 0;
   let nextEnemyAttack = 1.4;
   let weakenedUntil = 0;
+  // 감소폭을 하드코딩하지 않고 특성 설정값(ARCHETYPES.weaken.weaken)에서 가져온다.
+  // 중첩은 되지 않는다. 여러 장이 있어도 가장 강한 값 하나만 적용되고 지속시간만 갱신된다.
+  let weakenAmount = 0;
 
   while (elapsed <= stage.duration && enemyHp > 0 && partyHp > 0) {
     fighters.forEach((fighter) => {
@@ -130,7 +133,10 @@ export function simulateBattle(formation, stage, accountBonuses = {}) {
       damage = Math.max(1, Math.round(damage));
       enemyHp = Math.max(0, enemyHp - damage);
       fighter.damage += damage;
-      if (trait.weaken) weakenedUntil = Math.max(weakenedUntil, elapsed + 2.5);
+      if (trait.weaken) {
+        weakenedUntil = Math.max(weakenedUntil, elapsed + 2.5);
+        weakenAmount = Math.max(weakenAmount, trait.weaken);
+      }
       if (trait.recovery) partyHp = Math.min(partyMaxHp, partyHp + fighter.stats.hp * trait.recovery);
       events.push({ type: 'attack', at: elapsed, cardIndex: fighter.index, damage, critical, enemyHp });
       fighter.nextAttack += 1 / fighter.stats.speed;
@@ -138,7 +144,7 @@ export function simulateBattle(formation, stage, accountBonuses = {}) {
 
     if (enemyHp > 0 && elapsed + 0.0001 >= nextEnemyAttack) {
       const averageDef = fighters.reduce((sum, fighter) => sum + fighter.stats.def, 0) / fighters.length;
-      const weakened = elapsed <= weakenedUntil ? 0.92 : 1;
+      const weakened = elapsed <= weakenedUntil ? 1 - weakenAmount : 1;
       const incoming = Math.max(1, Math.round(stage.enemyAttack * weakened - averageDef * 0.38));
       partyHp = Math.max(0, partyHp - incoming);
       events.push({ type: 'enemy', at: elapsed, damage: incoming, partyHp });

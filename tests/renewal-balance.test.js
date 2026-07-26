@@ -15,8 +15,11 @@ const fullCollection = calculateCollectionBonuses(allCards, Object.fromEntries(a
 
 // 저성능 덱은 지역 1 안에서 막혀야 한다. 벽 위치가 1-3 에서 1-4 로 한 칸 밀린 것은
 // 생존 특성 공격력 상향(0.91 -> 1.06)의 의도된 결과다. 이 덱에 D/sustain 카드가 들어 있다.
-assert.equal(simulateBattle(lowDeck, STAGES[2]).victory, true, 'unmaxed low deck should clear 1-3');
-assert.equal(simulateBattle(lowDeck, STAGES[3]).victory, false, 'unmaxed low deck should stop at 1-4');
+// 저성능 덱은 지역 1 안에서 막혀야 한다. 벽이 1-3 에서 1-6 으로 밀린 것은
+// 생존 공격력 상향과 약화 개편(적 공격력 -15% + 적이 받는 피해 +15%)의 의도된 결과다.
+// 이 덱에는 D/sustain 과 F/weaken 이 함께 들어 있어 두 변경을 모두 받는다.
+assert.equal(simulateBattle(lowDeck, STAGES[4]).victory, true, 'unmaxed low deck should clear 1-5');
+assert.equal(simulateBattle(lowDeck, STAGES[5]).victory, false, 'unmaxed low deck should stop at 1-6');
 assert.equal(simulateBattle(midDeck, STAGES[9]).victory, true, 'mid deck should clear the first region');
 assert.equal(simulateBattle(topDeck, STAGES[9]).victory, true, 'top deck should clear the first region');
 assert.equal(simulateBattle(topDeck, STAGES[10]).victory, true, 'top deck may enter region 2');

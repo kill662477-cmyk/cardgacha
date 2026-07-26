@@ -58,7 +58,8 @@ export function computeCardPower(card, accountBonuses = {}) {
   const bossDamage = expectedDamagePerSecond(stats, trait, true);
   const weightedDamage = generalDamage * 0.65 + bossDamage * 0.35;
   const recoveryValue = stats.hp * (trait.recovery ?? 0) * stats.speed * 0.3;
-  const weakenValue = (stats.hp * 0.2 + stats.def * 2.4) * (trait.weaken ?? 0);
+  const weakenValue = (stats.hp * 0.2 + stats.def * 2.4) * (trait.weaken ?? 0)
+    + weightedDamage * (trait.weakenDamage ?? 0);
   return Math.round(weightedDamage * 2.5 + stats.hp * 0.2 + stats.def * 2.4 + recoveryValue + weakenValue);
 }
 
@@ -119,6 +120,8 @@ export function simulateBattle(formation, stage, accountBonuses = {}) {
   // 감소폭을 하드코딩하지 않고 특성 설정값(ARCHETYPES.weaken.weaken)에서 가져온다.
   // 중첩은 되지 않는다. 여러 장이 있어도 가장 강한 값 하나만 적용되고 지속시간만 갱신된다.
   let weakenAmount = 0;
+  // 적이 받는 피해 증가분. 적 방어력 스탯이 없어 '방어력 감소'를 이 형태로 구현했다.
+  let weakenDamageAmount = 0;
 
   while (elapsed <= stage.duration && enemyHp > 0 && partyHp > 0) {
     fighters.forEach((fighter) => {
@@ -128,7 +131,8 @@ export function simulateBattle(formation, stage, accountBonuses = {}) {
       const spread = 0.92 + random() * 0.16;
       const bossBonus = stage.boss ? (trait.bossDamage ?? 1) * (1 + (accountBonuses.bossDamage ?? 0)) : 1;
       const hitBonus = trait.multiHit ?? (!stage.boss ? (trait.area ?? 1) : 1);
-      let damage = fighter.stats.atk * spread * synergy.atk * amplify * bossBonus * hitBonus;
+      const weakenBonus = elapsed <= weakenedUntil ? 1 + weakenDamageAmount : 1;
+      let damage = fighter.stats.atk * spread * synergy.atk * amplify * bossBonus * hitBonus * weakenBonus;
       if (critical) damage *= fighter.stats.critDamage;
       damage = Math.max(1, Math.round(damage));
       enemyHp = Math.max(0, enemyHp - damage);
@@ -136,6 +140,7 @@ export function simulateBattle(formation, stage, accountBonuses = {}) {
       if (trait.weaken) {
         weakenedUntil = Math.max(weakenedUntil, elapsed + 2.5);
         weakenAmount = Math.max(weakenAmount, trait.weaken);
+        weakenDamageAmount = Math.max(weakenDamageAmount, trait.weakenDamage ?? 0);
       }
       if (trait.recovery) partyHp = Math.min(partyMaxHp, partyHp + fighter.stats.hp * trait.recovery);
       events.push({ type: 'attack', at: elapsed, cardIndex: fighter.index, damage, critical, enemyHp });

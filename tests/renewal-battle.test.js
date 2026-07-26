@@ -60,7 +60,15 @@ console.log(`renewal battle tests passed: ${cards.length} cards, ${STAGES.length
 const battleSource = await fs.readFile(new URL('../src/renewal/battle.js', import.meta.url), 'utf8');
 assert.match(battleSource, /1 - weakenAmount/, '약화 감소폭은 특성 설정값에서 와야 한다');
 assert.doesNotMatch(battleSource, /weakenedUntil \? 0\.92/, '하드코딩된 0.92 가 남아 있으면 안 된다');
-assert.equal(ARCHETYPES.weaken.weaken, 0.2);
+assert.equal(ARCHETYPES.weaken.weaken, 0.15);
+assert.equal(ARCHETYPES.weaken.weakenDamage, 0.1);
+// 적 방어력 스탯이 없어 '방어력 감소'는 적이 받는 피해 증가로 구현했다.
+assert.match(battleSource, /1 \+ weakenDamageAmount/, '약화는 적이 받는 피해도 늘려야 한다');
+assert.match(
+  battleSource,
+  /weakenDamageAmount = Math\.max\(weakenDamageAmount, trait\.weakenDamage \?\? 0\)/,
+  '피해 증가분도 누적되면 안 된다',
+);
 
 // 약화는 중첩되지 않는다. 여러 장을 넣어도 적 공격력 감소폭은 동일해야 한다.
 const weakStage = STAGES.find((s) => s.id === '3-5');

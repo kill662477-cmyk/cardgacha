@@ -71,8 +71,8 @@ assert.equal(atOpen.slot.id, 'noise-zero-20260717-17');
 assert.equal(getWorldBossSnapshot(createWorldBossProgress(kst(2026, 7, 17, 17, 0, 0)), kst(2026, 7, 17, 17, 0, 0)).active, true);
 assert.equal(getWorldBossTier(atOpen.slot.id).maxHp, 6_500_000_000, '17:00 baseline HP = 65억 (server DPS removed)');
 assert.equal(getWorldBossTier('noise-zero-20260717-18').maxHp, 7_000_000_000);
-assert.equal(getWorldBossTier('noise-zero-20260717-19').maxHp, 7_500_000_000);
-assert.equal(getWorldBossTier('noise-zero-20260717-20').maxHp, 8_000_000_000);
+assert.equal(getWorldBossTier('noise-zero-20260717-19').maxHp, 8_500_000_000);
+assert.equal(getWorldBossTier('noise-zero-20260717-20').maxHp, 9_500_000_000);
 assert.deepEqual(
   WORLD_BOSS_RULES.scheduleHours.map((hour) => getWorldBossTier(`noise-zero-20260717-${hour}`).serverDamagePerSecond),
   [0, 0, 0, 0],

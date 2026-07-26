@@ -85,8 +85,8 @@ assert.equal(WORLD_BOSS_RULES.attackEnergyCost, 10);
 assert.deepEqual(Object.values(WORLD_BOSS_RULES.slotTiers).map(({ difficultyMultiplier, maxHp }) => [difficultyMultiplier, maxHp]), [
   [1, 6_500_000_000],
   [1.077, 7_000_000_000],
-  [1.154, 7_500_000_000],
-  [1.231, 8_000_000_000],
+  [1.308, 8_500_000_000],
+  [1.462, 9_500_000_000],
 ]);
 // balance-tune: 서버 자동딜 폐지 -> 모든 슬롯 serverDamagePerSecond는 0.
 assert.deepEqual(Object.values(WORLD_BOSS_RULES.slotTiers).map(({ serverDamagePerSecond }) => serverDamagePerSecond), [0, 0, 0, 0]);

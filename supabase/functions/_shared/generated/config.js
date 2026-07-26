@@ -329,9 +329,10 @@ export const WORLD_BOSS_RULES = {
   slotTiers: {
     // balance-tune: 서버 자동딜(서버DPS) 완전 폐지 -> 이제 참가자 전원의 합산 딜만으로
     // 처치 여부가 갈린다(0으로 두면 서버RPC가 자동으로 자동딜 0으로 계산, 로직 변경 불필요).
-    // maxHp는 지정값(17:65억/18:70억/19:75억/20:80억)으로 고정 -> 참여가 부족한 회차는 실패 가능.
+    // maxHp는 지정값(17:65억/18:70억/19:85억/20:95억)으로 고정 -> 참여가 부족한 회차는 실패 가능.
     // 2026-07-26 1차: 특성 상향으로 각 슬롯 +5억(55~70 -> 60~75).
-    // 2026-07-26 2차: 17시 실측에서 최대 개인딜이 49.0M -> 54.3M(+11%)로 뛰어 다시 +5억.
+    // 2026-07-26 2차: 17시 실측 최대 개인딜 49.0M -> 54.3M(+11%). 슬롯당 +5억.
+    // 2026-07-26 3차: 18시(70억)가 4분 만에 98% 소진돼 후반 슬롯만 크게 올림(19:85억/20:95억).
     // difficultyMultiplier는 표시 전용(worldboss-controller 안내 문구)이라 17시 대비 HP 비율로 맞춘다.
     17: {
       title: '신호 요새', name: 'SIGNAL//BASTION', difficultyMultiplier: 1,
@@ -344,13 +345,13 @@ export const WORLD_BOSS_RULES = {
       image: 'assets/renewal/worldboss/boss-18-relay-devourer.webp',
     },
     19: {
-      title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 1.154,
-      maxHp: 7_500_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.15,
+      title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 1.308,
+      maxHp: 8_500_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.15,
       image: 'assets/renewal/worldboss/boss-19-void-harvester.webp',
     },
     20: {
-      title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 1.231,
-      maxHp: 8_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.20,
+      title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 1.462,
+      maxHp: 9_500_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.20,
       image: 'assets/renewal/worldboss/boss-20-malice-singularity.webp',
     },
   },

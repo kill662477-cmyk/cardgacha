@@ -725,8 +725,8 @@ function renderHeader() {
   synchronizeTimedState();
   ensureValidRepresentativeCard();
   const formation = formationCards();
-  // nolevel-1: 전투력은 도감 보너스만 반영. accountLevel 곱셈 제거.
-  const combatBonuses = currentCollectionBonuses();
+  // 프로필 전투력도 실제 전투·랭킹과 동일하게 도감 보너스와 길드 버프를 모두 반영한다.
+  const combatBonuses = currentCombatBonuses();
   const collectionBonuses = combatBonuses;
   const idleReward = currentIdleReward();
   elements.nickname.textContent = state.nickname;

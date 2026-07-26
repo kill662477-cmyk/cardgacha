@@ -220,6 +220,11 @@ for (const field of ['schemaversion', 'revision', 'points', 'cardcopies', 'colle
 assert.match(router, /applyGuildBuff\(base, snapshot\.guildBuff\)/);
 const appJs = await read('src/renewal/app.js');
 assert.match(appJs, /applyGuildBuff\(currentCollectionBonuses\(\), state\.guildBuff\)/);
+assert.match(
+  appJs,
+  /function renderHeader\(\)[\s\S]*?const combatBonuses = currentCombatBonuses\(\);/,
+  '프로필 전투력도 길드 버프가 포함된 공통 전투 보너스를 사용해야 한다',
+);
 
 
 // 네비에 화면을 추가하면 showScreen 에서 그 화면을 토글해 줘야 한다.

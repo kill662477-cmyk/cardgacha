@@ -52,8 +52,15 @@ assert.match(globalRewardSql, /set points = state\.points \+ reward\.points_gran
 assert.match(globalRewardSql, /and reward\.points_after is null/);
 assert.match(globalRewardSql, /v_reward_total <> v_reward_count::bigint \* 50000/);
 assert.match(globalRewardSql, /revoke all on table public\.gacha_s2_ss_sss_buff_reward_20260723/);
-assert.match(indexHtml, /\[ASL 본선 진출 기념\] 전 계정 30,000 P 지급/);
-assert.match(indexHtml, /30,000 포인트<\/strong>를 특별 지급/);
+// 우편함 공지는 운영하며 바뀐다. 제목과 본문의 금액이 서로 어긋나지 않는지만 잠근다.
+// (지급 스크립트와 공지 금액이 달라 유저 문의가 생겼던 적이 있다.)
+const mailNotice = indexHtml.match(/\[[^\]]+\] 전 계정 ([\d,]+) P 지급/);
+assert.ok(mailNotice, '우편함 공지 제목이 "[제목] 전 계정 N P 지급" 형식이어야 한다');
+assert.match(
+  indexHtml,
+  new RegExp(`${mailNotice[1]} 포인트<\/strong>`),
+  `공지 제목(${mailNotice[1]} P)과 본문 금액이 일치해야 한다`,
+);
 
 console.log('renewal database migration tests passed: read-only source, account and bridge carryover, clean game state');
 

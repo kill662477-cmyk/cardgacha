@@ -179,31 +179,35 @@ export const REGIONS = [
   { id: 5, name: '악플 코어 심층부', code: 'malice-core', hpBase: 4200000, attackBase: 12500, bossHp: 7500000, bossAttack: 16000 },
   // balance-tune: 하드 모험 올클리어 기준을 SSS 올 7강 + 풀도감 스펙에 맞춤.
   // 카드 천장(SSS 4.6배 × 9강 3배) 대비 과튜닝돼 있던 HP를 원래의 약 0.675배로
-  // 하향, 공격력 0.85배(생존 여유). SSS 7강 풀도감이 딱 100 올클, 도감 80%면
-  // 88에서 벽 · SS 9성 풀도감은 하드 중반(75)에서 막힘.
+  // 하드 재밸런싱(2026-07-26). 기준선 = SSS 등급 · 전원 8강 · 올도감.
+  // 특성 상향(약화·생존·강타·증폭) 이후 기준 스펙이 10-10 을 제한시간의 66%, 파티 HP 98% 로
+  // 통과해 하드가 사실상 무난한 구간이 됐다. 지역별로 HP 는 시간 압박용, 공격력은 생존
+  // 압박용으로 따로 올렸다(HP x1.25/1.28/1.32/1.36/1.44, 공격력 x1.15/1.25/1.45/1.65/1.80).
+  // 조정 후: SSS+8 올도감이 10-10 을 시간 95% · HP 39% 로 겨우 통과하고, SSS+7 은 35 스테이지,
+  // SS+9 는 16 스테이지에서 막힌다. 서포트 없는 딜 5장 편성은 전멸해 편성 구성도 요구된다.
   {
     id: 6, name: '붕괴한 신호 폐허', code: 'void-rift', mode: 'hard',
-    hpBase: 7090000, attackBase: 22950, bossHp: 9450000, bossAttack: 21250,
+    hpBase: 8862500, attackBase: 26393, bossHp: 11812500, bossAttack: 24438,
     duration: 46, bossDuration: 56,
   },
   {
     id: 7, name: '심연의 중계 감옥', code: 'abyss-relay', mode: 'hard',
-    hpBase: 8440000, attackBase: 24225, bossHp: 11140000, bossAttack: 22525,
+    hpBase: 10803200, attackBase: 30281, bossHp: 14259200, bossAttack: 28156,
     duration: 48, bossDuration: 58,
   },
   {
     id: 8, name: '악몽 송출 스튜디오', code: 'nightmare-studio', mode: 'hard',
-    hpBase: 9790000, attackBase: 25500, bossHp: 13500000, bossAttack: 23800,
+    hpBase: 12922800, attackBase: 36975, bossHp: 17820000, bossAttack: 34510,
     duration: 50, bossDuration: 60,
   },
   {
     id: 9, name: '오메가 데이터 성채', code: 'omega-fortress', mode: 'hard',
-    hpBase: 11140000, attackBase: 27200, bossHp: 16200000, bossAttack: 25075,
+    hpBase: 15150400, attackBase: 44880, bossHp: 22032000, bossAttack: 41374,
     duration: 52, bossDuration: 62,
   },
   {
     id: 10, name: '지옥 악플 코어', code: 'hell-core', mode: 'hard',
-    hpBase: 12490000, attackBase: 27200, bossHp: 18900000, bossAttack: 26775,
+    hpBase: 17985600, attackBase: 48960, bossHp: 27216000, bossAttack: 48195,
     duration: 59, bossDuration: 64,
   },
 ];

@@ -111,8 +111,16 @@ assert.match(ss29Migration, /v_ss_multiplier <> 2\.9 or v_sss_multiplier <> 4\.6
 // balance-tune: 5-10 보스를 SS 7강 + 도감 80% 스펙으로 클리어 가능하게 하향.
 assert.equal(REGIONS[4].bossHp, 7_500_000, 'region 5 final boss tuned to SS+7/collection-80% clear spec');
 assert.equal(REGIONS[4].bossAttack, 16_000);
-// balance-tune: 하드 최종 보스를 SSS 올 7강 + 풀도감 올클리어 스펙에 맞춰 하향.
-assert.equal(REGIONS[9].bossHp, 18_900_000, 'hard final boss tuned to SSS+7/full-collection all-clear spec');
+// balance-tune(2026-07-26): 특성 상향 이후 하드가 너무 쉬워져 기준선을 SSS 올 8강 + 풀도감으로
+// 다시 잡았다. 이 스펙이 10-10 을 제한시간 95% · 파티 HP 39% 로 겨우 통과하고 SSS+7 은 35 스테이지에서 막힌다.
+// HP 는 시간 압박, 공격력은 생존 압박 담당이라 지역별 배수를 따로 뒀다.
+assert.equal(REGIONS[9].bossHp, 27_216_000, 'hard final boss tuned to SSS+8/full-collection all-clear spec');
+assert.equal(REGIONS[9].bossAttack, 48_195);
+assert.deepEqual(
+  REGIONS.slice(5).map((region) => [region.hpBase, region.attackBase]),
+  [[8_862_500, 26_393], [10_803_200, 30_281], [12_922_800, 36_975], [15_150_400, 44_880], [17_985_600, 48_960]],
+  'hard region stats must stay on the rebalanced curve',
+);
 assert.equal(REGIONS.length, 10);
 assert.ok(REGIONS.slice(5).every((region) => region.mode === 'hard'));
 assert.equal(Object.hasOwn(BALANCE_GOVERNANCE, 'ACCOUNT_RULES'), false);

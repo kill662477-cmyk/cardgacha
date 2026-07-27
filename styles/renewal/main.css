@@ -251,8 +251,8 @@ button[aria-busy="true"]::after {
 .card-visual[data-rarity="EX"] { aspect-ratio: 16 / 9; }
 .card-visual[data-rarity="EX"] > .card-photo { left: 4.6667%; top: 8.4444%; width: 90.6666%; height: 83.1112%; background: #060807; object-fit: contain; object-position: center; clip-path: polygon(8.18% 0, 91.82% 0, 100% 11.59%, 100% 87%, 91.91% 100%, 8% 100%, 0 87%, 0 11.59%); }
 .card-visual > .card-frame-overlay { position: absolute; inset: 0; z-index: 3; display: block; width: 100%; height: 100%; object-fit: fill; object-position: center; pointer-events: none; }
-.card-max-aura { --max-metal: #aeb8bc; --max-light: #f2f5f3; position: absolute; inset: 1.4%; z-index: 6; overflow: hidden; pointer-events: none; background: linear-gradient(135deg, color-mix(in srgb, var(--max-light) 7%, transparent), transparent 22%, transparent 78%, color-mix(in srgb, var(--max-metal) 8%, transparent)); clip-path: polygon(4% 0, 96% 0, 100% 3%, 100% 97%, 96% 100%, 4% 100%, 0 97%, 0 3%); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--max-metal) 86%, transparent), inset 0 0 16px color-mix(in srgb, var(--max-metal) 14%, transparent), 0 0 10px color-mix(in srgb, var(--max-metal) 18%, transparent); }
-.card-max-aura::before { content: ""; position: absolute; inset: 3px; background: linear-gradient(90deg, var(--max-light), transparent 70%) left top / 34% 1px no-repeat, linear-gradient(180deg, var(--max-light), transparent 70%) left top / 1px 24% no-repeat, linear-gradient(-90deg, var(--max-light), transparent 70%) right top / 34% 1px no-repeat, linear-gradient(180deg, var(--max-light), transparent 70%) right top / 1px 24% no-repeat, linear-gradient(90deg, var(--max-metal), transparent 70%) left bottom / 34% 1px no-repeat, linear-gradient(0deg, var(--max-metal), transparent 70%) left bottom / 1px 24% no-repeat, linear-gradient(-90deg, var(--max-metal), transparent 70%) right bottom / 34% 1px no-repeat, linear-gradient(0deg, var(--max-metal), transparent 70%) right bottom / 1px 24% no-repeat; opacity: .9; }
+.card-max-aura { --max-metal: #aeb8bc; --max-light: #f2f5f3; position: absolute; inset: .8%; z-index: 6; overflow: hidden; pointer-events: none; background: radial-gradient(circle at 9% 8%, var(--max-light) 0 1px, color-mix(in srgb, var(--max-metal) 72%, transparent) 2px, transparent 4px), radial-gradient(circle at 91% 8%, var(--max-light) 0 1px, color-mix(in srgb, var(--max-metal) 72%, transparent) 2px, transparent 4px), radial-gradient(circle at 9% 92%, var(--max-light) 0 1px, color-mix(in srgb, var(--max-metal) 72%, transparent) 2px, transparent 4px), radial-gradient(circle at 91% 92%, var(--max-light) 0 1px, color-mix(in srgb, var(--max-metal) 72%, transparent) 2px, transparent 4px), linear-gradient(135deg, color-mix(in srgb, var(--max-light) 14%, transparent), transparent 22%, transparent 76%, color-mix(in srgb, var(--max-metal) 17%, transparent)); clip-path: polygon(4% 0, 96% 0, 100% 3%, 100% 97%, 96% 100%, 4% 100%, 0 97%, 0 3%); box-shadow: inset 0 0 0 1px var(--max-light), inset 0 0 0 3px color-mix(in srgb, var(--max-metal) 44%, transparent), inset 0 0 20px color-mix(in srgb, var(--max-metal) 30%, transparent), 0 0 16px color-mix(in srgb, var(--max-metal) 46%, transparent); animation: max-card-tier-breathe 3.6s ease-in-out infinite; }
+.card-max-aura::before { content: ""; position: absolute; inset: 3px; background: linear-gradient(90deg, var(--max-light), transparent 70%) left top / 42% 2px no-repeat, linear-gradient(180deg, var(--max-light), transparent 70%) left top / 2px 30% no-repeat, linear-gradient(-90deg, var(--max-light), transparent 70%) right top / 42% 2px no-repeat, linear-gradient(180deg, var(--max-light), transparent 70%) right top / 2px 30% no-repeat, linear-gradient(90deg, var(--max-metal), transparent 70%) left bottom / 42% 2px no-repeat, linear-gradient(0deg, var(--max-metal), transparent 70%) left bottom / 2px 30% no-repeat, linear-gradient(-90deg, var(--max-metal), transparent 70%) right bottom / 42% 2px no-repeat, linear-gradient(0deg, var(--max-metal), transparent 70%) right bottom / 2px 30% no-repeat; opacity: 1; filter: drop-shadow(0 0 3px color-mix(in srgb, var(--max-metal) 70%, transparent)); }
 .card-max-aura::after { content: ""; position: absolute; top: -32%; bottom: -32%; left: -46%; width: 28%; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--max-light) 34%, transparent), transparent); transform: skewX(-18deg); animation: max-card-sheen 5.6s cubic-bezier(.36,0,.24,1) infinite; }
 .card-max-aura[data-max-rarity="F"] { --max-metal: #aeb8bc; --max-light: #f2f5f3; }
 .card-max-aura[data-max-rarity="E"] { --max-metal: #62b382; --max-light: #d7f2df; }
@@ -274,9 +274,9 @@ button[aria-busy="true"]::after {
 .card-star-mark[data-star-tier="low"] { --star-accent: #d5e2dc; }
 .card-star-mark[data-star-tier="mid"] { --star-accent: #62d4d0; }
 .card-star-mark[data-star-tier="high"] { --star-accent: #ff9b3f; }
-.card-star-mark[data-star-tier="max"] { --star-accent: #aeb8bc; --star-light: #f2f5f3; gap: clamp(2px, 2cqi, 5px); min-height: clamp(16px, 16cqi, 38px); padding: 1px; border: 0; background: transparent; clip-path: none; box-shadow: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,.96)) drop-shadow(0 0 4px color-mix(in srgb, var(--star-accent) 32%, transparent)); }
-.card-star-mark[data-star-tier="max"] img { filter: saturate(.88) drop-shadow(0 0 4px color-mix(in srgb, var(--star-light) 72%, transparent)); }
-.card-star-mark[data-star-tier="max"] b { color: var(--star-light); letter-spacing: -.03em; text-shadow: 0 1px 0 #111, 0 0 7px color-mix(in srgb, var(--star-light) 45%, transparent); }
+.card-star-mark[data-star-tier="max"] { --star-accent: #aeb8bc; --star-light: #f2f5f3; gap: clamp(2px, 2cqi, 5px); min-height: clamp(18px, 18cqi, 42px); padding: 1px; border: 0; background: transparent; clip-path: none; box-shadow: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,.96)) drop-shadow(0 0 6px color-mix(in srgb, var(--star-accent) 58%, transparent)); }
+.card-star-mark[data-star-tier="max"] img { width: clamp(13px, 14cqi, 30px); height: clamp(13px, 14cqi, 30px); filter: saturate(1.05) brightness(1.16) drop-shadow(0 0 5px color-mix(in srgb, var(--star-light) 88%, transparent)); }
+.card-star-mark[data-star-tier="max"] b { color: var(--star-accent); font-size: clamp(9px, 9cqi, 18px); letter-spacing: .01em; text-shadow: -1px -1px 0 #020302, 1px -1px 0 #020302, -1px 1px 0 #020302, 1px 1px 0 #020302, 0 0 9px var(--star-accent); }
 .card-star-mark[data-star-tier="max"][data-star-rarity="F"] { --star-accent: #aeb8bc; --star-light: #f2f5f3; }
 .card-star-mark[data-star-tier="max"][data-star-rarity="E"] { --star-accent: #62b382; --star-light: #d7f2df; }
 .card-star-mark[data-star-tier="max"][data-star-rarity="D"] { --star-accent: #68add1; --star-light: #d9f4ff; }
@@ -321,6 +321,11 @@ button[aria-busy="true"]::after {
   50% { filter: brightness(1.16) saturate(1.18); }
 }
 
+@keyframes max-card-tier-breathe {
+  0%, 100% { filter: brightness(.94) saturate(.9); }
+  50% { filter: brightness(1.1) saturate(1.08); }
+}
+
 @keyframes max-badge-sss {
   0%, 100% { filter: drop-shadow(0 2px 3px rgba(0,0,0,.92)) brightness(.98); }
   50% { filter: drop-shadow(0 0 6px color-mix(in srgb, #d7ff35 72%, transparent)) brightness(1.15); }
@@ -328,6 +333,7 @@ button[aria-busy="true"]::after {
 
 @media (prefers-reduced-motion: reduce) {
   .card-max-aura::after { animation: none; opacity: 0; }
+  .card-max-aura,
   .card-max-aura[data-max-rarity="SSS"],
   .card-star-mark:not(.inline)[data-star-tier="max"][data-star-rarity="SSS"] { animation: none; }
 }

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
+import { EMBLEM_IMAGES } from '../src/renewal/guild-emblem.js';
 import { GAME_COMMAND_TYPES, validateGameCommand } from '../src/renewal/service-contract.js';
 import { GUILD_RULES, guildLevelFor } from '../src/renewal/config.js';
 import { applyGuildBuff } from '../src/renewal/collection.js';
@@ -346,6 +347,12 @@ assert.match(emblemSource, /chiri: `assets\/renewal\/guild\/emblems\/chiri\.png\
 assert.match(emblemSource, /byungdan: `assets\/renewal\/guild\/emblems\/byungdan\.png\?v=/);
 assert.match(emblemSource, /harang: `assets\/renewal\/guild\/emblems\/harang\.png\?v=/);
 assert.match(emblemSource, /calmsnal: `assets\/renewal\/guild\/emblems\/calmsnal\.png\?v=/);
+assert.match(emblemSource, /jjiking: `assets\/renewal\/guild\/emblems\/jjiking\.png\?v=/);
+assert.match(emblemSource, /sexyterran: `assets\/renewal\/guild\/emblems\/sexyterran\.png\?v=/);
+// 화이트리스트에 키만 추가하고 파일을 안 올리면 깨진 이미지가 뜬다. 실제 파일 존재를 함께 잠근다.
+for (const key of Object.keys(EMBLEM_IMAGES)) {
+  await access(new URL(`../assets/renewal/guild/emblems/${key}.png`, import.meta.url));
+}
 assert.match(
   emblemSource,
   /EMBLEM_ASSET_VERSION/,

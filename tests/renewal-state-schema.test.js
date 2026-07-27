@@ -47,6 +47,8 @@ const resetItemMigration = migrateGameState(preResetItems);
 assert.equal(resetItemMigration.ok, true);
 assert.equal(resetItemMigration.migrated, true);
 assert.equal(resetItemMigration.state.supportItems.adventureRunReset, 0);
+assert.equal(resetItemMigration.state.supportItems.ssCardSelector, 0);
+assert.equal(resetItemMigration.state.supportItems.sssCardSelector, 0);
 assert.equal(resetItemMigration.state.supportItems.quickBattleReset, 0);
 assert.equal(validateGameState(resetItemMigration.state, { cardIds }).valid, true);
 

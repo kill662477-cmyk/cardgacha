@@ -3,6 +3,11 @@ import { readFile } from 'node:fs/promises';
 
 const sql = await readFile(new URL('../supabase/renewal_migration_007_economy_profile.sql', import.meta.url), 'utf8');
 const normalized = sql.replace(/\s+/g, ' ');
+const selectorSql = await readFile(
+  new URL('../supabase/migrations/20260727180000_card_selection_tickets.sql', import.meta.url),
+  'utf8',
+);
+const normalizedSelector = selectorSql.replace(/\s+/g, ' ');
 
 for (const signature of [
   'gacha_s2_purchase_support_pack',
@@ -22,5 +27,17 @@ assert.match(normalized, /gacha_s2_draw_pack_for_command/);
 assert.match(normalized, /offlineCapHours/);
 assert.match(normalized, /gacha_s2_grant_formation_exp/);
 assert.doesNotMatch(normalized, /grant execute .* to authenticated/);
+
+assert.match(normalizedSelector, /create or replace function public\.gacha_s2_redeem_card_selector\(/);
+assert.match(normalizedSelector, /when 'ssCardSelector' then 'SS'/);
+assert.match(normalizedSelector, /when 'sssCardSelector' then 'SSS'/);
+assert.match(normalizedSelector, /rarity = v_target_rarity/);
+assert.match(normalizedSelector, /and not is_group/);
+assert.match(normalizedSelector, /on conflict \(user_id, card_id\) do update/);
+assert.match(normalizedSelector, /on conflict \(user_id, card_id\) do nothing/);
+assert.match(normalizedSelector, /gacha_s2_idempotency/);
+assert.match(normalizedSelector, /gacha_s2_command_audit/);
+assert.match(normalizedSelector, /event-only card selection tickets must not enter support-pack rates/);
+assert.doesNotMatch(normalizedSelector, /grant execute .* to authenticated/);
 
 console.log('renewal economy/profile RPC tests passed: support economy, idle rewards, profile commands');

@@ -14,6 +14,11 @@ export function applyLocalTestProfile(state, cards, hostname = globalThis.locati
   state.pendingPoints = 0;
   state.lastRewardAt = Date.now();
   if (state.supportItems) Object.keys(state.supportItems).forEach((key) => { state.supportItems[key] = 0; });
+  // 이벤트 전용 선택권은 로컬에서 지급·선택 흐름을 바로 검수할 수 있게 각 1개만 제공한다.
+  if (state.supportItems) {
+    state.supportItems.ssCardSelector = 1;
+    state.supportItems.sssCardSelector = 1;
+  }
   cards.forEach((card) => { state.cardCopies[card.id] = 1; });
   state.collectionRecords = Object.fromEntries(cards.map((card) => [card.id, true]));
   return true;

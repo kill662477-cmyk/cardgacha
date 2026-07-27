@@ -35,6 +35,7 @@ import {
   drawCardPack,
   drawSupportPack,
   effectivePackRates,
+  redeemCardSelector,
   useCardExpPotion,
   useCardExpPotionBatch,
   useSupportItem,
@@ -109,6 +110,8 @@ let selectedCollectionCardId = null;
 let shopTab = 'cards';
 let selectedShopProduct = 'general';
 let selectedShopRace = '저그';
+let selectedCardSelectorItemId = null;
+let selectedCardSelectorCardId = null;
 let dismantleRarity = null;
 let miniGameController = null;
 let worldBossController = null;
@@ -239,6 +242,8 @@ function cacheElements() {
     'shopDetailTitle', 'shopDetailSummary', 'shopProbabilityList', 'shopDetailNote',
     'shopResultDialog', 'shopResultTitle', 'shopResultSummary', 'shopResultGrid',
     'shopResultPager', 'shopResultPageLabel',
+    'cardSelectorDialog', 'cardSelectorTitle', 'cardSelectorSummary', 'cardSelectorGrid',
+    'cardSelectorSelection', 'cardSelectorConfirm', 'cardSelectorClose',
     'minigameScreen', 'worldBossScreen', 'rankingScreen',
     'systemStateLayer', 'systemStateEyebrow', 'systemStateTitle', 'systemStateMessage', 'systemStateCode', 'systemStateRetry',
     'rewardDurationBlock', 'rewardBreakdown', 'rewardEmptyState',
@@ -1785,7 +1790,8 @@ const SHOP_CARD_PRODUCTS = {
 const SHOP_CARD_PRODUCT_ORDER = ['general', 'elite', 'premium', 'zerg', 'terran', 'protoss'];
 
 const ITEM_ICONS = {
-  행동력: 'battery-charging', 강화: 'chevrons-up', 경험치: 'radio', 교환권: 'ticket', 초기화: 'rotate-ccw',
+  행동력: 'battery-charging', 강화: 'chevrons-up', 경험치: 'radio', 교환권: 'ticket',
+  선택권: 'badge-check', 초기화: 'rotate-ccw',
 };
 
 const ITEM_IMAGES = {
@@ -1848,11 +1854,11 @@ function supportPackProductMarkup() {
 function shopItemMarkup(itemId) {
   const item = SUPPORT_ITEMS[itemId];
   const count = state.supportItems[itemId] ?? 0;
-  const directlyUsable = Boolean(item.energy || item.durationMinutes || item.pack || item.cardExp || item.reset);
-  return `<article class="shop-item-row">
+  const directlyUsable = Boolean(item.energy || item.durationMinutes || item.pack || item.cardExp || item.cardSelectorRarity || item.reset);
+  return `<article class="shop-item-row${item.cardSelectorRarity ? ' card-selector-item' : ''}"${item.cardSelectorRarity ? ` style="--selector-rarity:${RARITIES[item.cardSelectorRarity].color}"` : ''}>
     <div class="shop-item-icon">${supportItemIconMarkup(itemId, item)}</div>
     <div class="shop-item-copy"><b>${item.name}</b><span>${item.effect}</span><small>보유 ${count}개</small></div>
-    <button class="shop-item-action" type="button" data-use-shop-item="${itemId}" ${count <= 0 || !directlyUsable ? 'disabled' : ''}>${item.pack ? '교환' : item.cardExp ? '강화' : '사용'}</button>
+    <button class="shop-item-action" type="button" data-use-shop-item="${itemId}" ${count <= 0 || !directlyUsable ? 'disabled' : ''}>${item.cardSelectorRarity ? '선택' : item.pack ? '교환' : item.cardExp ? '강화' : '사용'}</button>
   </article>`;
 }
 
@@ -1885,9 +1891,84 @@ function renderShopDetail() {
       ['강화', '강화 화면에서 시도 단계에 맞춰 사용'],
       ['초기화', '사용한 모험 시작 또는 빠른 전투 횟수를 최대치로 복구'],
       ['교환권', '동일 카드팩의 장수와 확률 그대로 적용'],
+      ['선택권', '표시 등급 카드 중 원하는 카드 1장을 직접 선택'],
     ].map(([name, rule]) => `<div class="shop-rate-row"><b>${name}</b><span></span><small>${rule}</small></div>`).join('');
     elements.shopDetailNote.textContent = '모든 아이템은 만료 기간 없음.';
   }
+}
+
+function cardSelectorCandidates(itemId) {
+  const rarity = SUPPORT_ITEMS[itemId]?.cardSelectorRarity;
+  return cards
+    .filter((card) => card.rarity === rarity && !card.group)
+    .sort((left, right) => left.member.localeCompare(right.member, 'ko') || left.id.localeCompare(right.id));
+}
+
+function renderCardSelectorDialog() {
+  const item = SUPPORT_ITEMS[selectedCardSelectorItemId];
+  if (!item?.cardSelectorRarity) return;
+  const candidates = cardSelectorCandidates(selectedCardSelectorItemId);
+  const selected = cardsById.get(selectedCardSelectorCardId);
+  elements.cardSelectorTitle.textContent = item.name;
+  elements.cardSelectorSummary.textContent = `${item.cardSelectorRarity} 등급 ${candidates.length}종 · 1장 선택`;
+  elements.cardSelectorGrid.innerHTML = candidates.map((card) => {
+    const active = card.id === selectedCardSelectorCardId;
+    return `<button class="card-selector-card${active ? ' selected' : ''}" type="button" data-selector-card="${card.id}" aria-pressed="${active}" style="--rarity:${RARITIES[card.rarity].color}">
+      <span class="card-selector-photo"><img src="${imagePath(card)}" alt="${escapeHtml(card.member)} ${card.rarity} 카드"></span>
+      <span class="card-selector-copy"><b>${escapeHtml(card.member)}</b><small>${card.race} · ${ARCHETYPES[card.archetype].label}</small><em>현재 보유 ${state.cardCopies[card.id] ?? 0}장</em></span>
+      <strong>${card.rarity}</strong>
+    </button>`;
+  }).join('');
+  elements.cardSelectorSelection.textContent = selected
+    ? `${selected.member} ${selected.rarity} 카드 선택됨`
+    : '받을 카드를 선택하세요.';
+  elements.cardSelectorConfirm.disabled = !selected;
+}
+
+function openCardSelector(itemId) {
+  const item = SUPPORT_ITEMS[itemId];
+  if (!item?.cardSelectorRarity || (state.supportItems[itemId] ?? 0) <= 0) return;
+  selectedCardSelectorItemId = itemId;
+  selectedCardSelectorCardId = null;
+  renderCardSelectorDialog();
+  elements.cardSelectorDialog.showModal();
+}
+
+function showCardSelectorResult(cardId, item) {
+  const card = cardsById.get(cardId);
+  elements.shopResultTitle.textContent = `${item.name} 사용 완료`;
+  elements.shopResultSummary.textContent = `${card?.member ?? cardId} ${card?.rarity ?? ''} 카드 1장 획득`;
+  cardResultPaging.cardIds = [cardId];
+  cardResultPaging.page = 0;
+  renderCardResultPage();
+  elements.shopResultDialog.showModal();
+}
+
+async function redeemSelectedCardSelector() {
+  const itemId = selectedCardSelectorItemId;
+  const cardId = selectedCardSelectorCardId;
+  const item = SUPPORT_ITEMS[itemId];
+  const card = cardsById.get(cardId);
+  if (!item?.cardSelectorRarity || !card) return;
+  return runUiOperation('redeemCardSelector', elements.cardSelectorConfirm, async () => {
+    if (remoteMode) {
+      const response = await executeServerCommand(GAME_COMMAND_TYPES.REDEEM_CARD_SELECTOR, { itemId, cardId });
+      if (!response?.ok) return response;
+      elements.cardSelectorDialog.close();
+      renderHeader();
+      renderShop();
+      showCardSelectorResult(response.result?.cardId ?? cardId, item);
+      return response;
+    }
+    const result = redeemCardSelector(state, itemId, cardId, cards);
+    if (!result.used) return showToast(result.reason);
+    state = result.state;
+    gameService.persistSnapshot(state);
+    elements.cardSelectorDialog.close();
+    renderHeader();
+    renderShop();
+    showCardSelectorResult(cardId, item);
+  });
 }
 
 function renderShop() {
@@ -2069,6 +2150,10 @@ function purchaseSupportPack(amount = 1, triggerButton = null) {
 async function activateShopItem(itemId) {
   const item = SUPPORT_ITEMS[itemId];
   if (!item) return;
+  if (item.cardSelectorRarity) {
+    openCardSelector(itemId);
+    return;
+  }
   if (item.cardExp) {
     showScreen('enhance');
     showToast('강화 화면에서 EXP 포션을 사용할 카드를 선택하세요');
@@ -2667,6 +2752,14 @@ function bindEvents() {
     const button = event.target.closest('[data-use-shop-item]');
     if (button && !button.disabled) activateShopItem(button.dataset.useShopItem);
   });
+  elements.cardSelectorGrid.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-selector-card]');
+    if (!button) return;
+    selectedCardSelectorCardId = button.dataset.selectorCard;
+    renderCardSelectorDialog();
+  });
+  elements.cardSelectorConfirm.addEventListener('click', redeemSelectedCardSelector);
+  elements.cardSelectorClose.addEventListener('click', () => elements.cardSelectorDialog.close());
   elements.shopResultPager.addEventListener('click', (event) => {
     const button = event.target.closest('[data-result-page]');
     if (!button) return;

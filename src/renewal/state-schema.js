@@ -219,13 +219,13 @@ export function migrateGameState(rawState) {
   const state = { ...rawState };
   const removedGrowthMaterials = Object.hasOwn(state, 'growthMaterials');
   delete state.growthMaterials;
-  let addedResetItems = false;
+  let addedSupportItems = false;
   if (isRecord(state.supportItems)) {
     state.supportItems = { ...state.supportItems };
-    ['adventureRunReset', 'quickBattleReset', 'cardExpPotionLarge'].forEach((itemId) => {
+    Object.keys(SUPPORT_ITEMS).forEach((itemId) => {
       if (!Object.hasOwn(state.supportItems, itemId)) {
         state.supportItems[itemId] = 0;
-        addedResetItems = true;
+        addedSupportItems = true;
       }
     });
   }
@@ -269,7 +269,7 @@ export function migrateGameState(rawState) {
   return {
     ok: true,
     fromVersion,
-    migrated: fromVersion !== GAME_STATE_SCHEMA_VERSION || removedGrowthMaterials || addedResetItems || addedMiniGameBreakdown || removedAccountLevel,
+    migrated: fromVersion !== GAME_STATE_SCHEMA_VERSION || removedGrowthMaterials || addedSupportItems || addedMiniGameBreakdown || removedAccountLevel,
     state,
     issues: [],
   };

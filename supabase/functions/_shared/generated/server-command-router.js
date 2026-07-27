@@ -17,6 +17,7 @@ const DIRECT_RPCS = Object.freeze({
   [GAME_COMMAND_TYPES.PURCHASE_PACK]: 'gacha_s2_purchase_pack',
   [GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK]: 'gacha_s2_purchase_support_pack',
   [GAME_COMMAND_TYPES.USE_SUPPORT_ITEM]: 'gacha_s2_use_support_item',
+  [GAME_COMMAND_TYPES.REDEEM_CARD_SELECTOR]: 'gacha_s2_redeem_card_selector',
   [GAME_COMMAND_TYPES.ENHANCE_CARD]: 'gacha_s2_enhance_card',
   [GAME_COMMAND_TYPES.SET_REPRESENTATIVE_CARD]: 'gacha_s2_set_representative_card',
   [GAME_COMMAND_TYPES.SET_CARD_LOCK]: 'gacha_s2_set_card_lock',
@@ -91,6 +92,8 @@ function directArgs(userId, command) {
         p_race: payload.race ?? null,
         p_count: payload.count ?? 1,
       };
+    case GAME_COMMAND_TYPES.REDEEM_CARD_SELECTOR:
+      return { ...args, p_item_id: payload.itemId, p_card_id: payload.cardId };
     case GAME_COMMAND_TYPES.ENHANCE_CARD:
       return {
         ...args,

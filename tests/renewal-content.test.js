@@ -119,13 +119,17 @@ const localProfile = {
   cardCopies: { [cards[0].id]: 3 }, collectionRecords: {},
 };
 assert.equal(applyLocalTestProfile(localProfile, cards, '127.0.0.1'), true);
+assert.equal(localProfile.supportItems.ssCardSelector, 1);
+assert.equal(localProfile.supportItems.sssCardSelector, 1);
 assert.equal(localProfile.nickname, 'MSTZ');
 assert.equal(localProfile.points, 1_000_000);
 assert.equal(Object.hasOwn(localProfile, 'accountLevel'), false, 'local profile has no account level');
 assert.equal(Object.hasOwn(localProfile, 'accountExp'), false, 'local profile has no account exp');
 assert.equal(localProfile.pendingPoints, 0, 'no pending offline reward');
 assert.equal(localProfile.actionEnergy, 120, 'energy refilled to max');
-assert.ok(Object.values(localProfile.supportItems).every((count) => count === 0), 'no support items granted');
+assert.ok(Object.entries(localProfile.supportItems).every(([itemId, count]) => (
+  ['ssCardSelector', 'sssCardSelector'].includes(itemId) ? count === 1 : count === 0
+)), 'local QA profile grants only card selector test items');
 assert.equal(Object.keys(localProfile.collectionRecords).length, cards.length, 'local QA profile has full collection');
 assert.ok(cards.every((card) => localProfile.collectionRecords[card.id] === true), 'every card registered in local collection');
 assert.ok(cards.every((card) => localProfile.cardCopies[card.id] === 1), 'every card available for local QA');

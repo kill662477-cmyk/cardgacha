@@ -167,6 +167,19 @@ for (const supportCommand of [
   createGameCommand({ type: GAME_COMMAND_TYPES.SET_CARD_LOCK, payload: { cardId: 'card-a', locked: true }, expectedRevision: 8, idempotencyKey: 'card-lock-0000001', clientSentAt: clock.now() }),
 ]) assert.equal(validateGameCommand(supportCommand).valid, true);
 
+const cardSelector = createGameCommand({
+  type: GAME_COMMAND_TYPES.REDEEM_CARD_SELECTOR,
+  payload: { itemId: 'sssCardSelector', cardId: 'jidudu-1' },
+  expectedRevision: 8,
+  idempotencyKey: 'card-selector-0001',
+  clientSentAt: clock.now(),
+});
+assert.equal(validateGameCommand(cardSelector).valid, true);
+assert.equal(validateGameCommand({
+  ...cardSelector,
+  payload: { itemId: 'premiumTicket', cardId: 'jidudu-1' },
+}).valid, false);
+
 assert.equal(isRetryableGameError({ ok: false, retryable: true, code: GAME_ERROR_CODES.OFFLINE }), true);
 assert.equal(isRetryableGameError(conflict), false);
 assert.equal(validateGameResponse({ ...first, snapshot: { ...first.snapshot, revision: 999 } }).valid, false);

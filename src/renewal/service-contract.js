@@ -14,6 +14,7 @@ export const GAME_COMMAND_TYPES = Object.freeze({
   PURCHASE_PACK: 'purchasePack',
   PURCHASE_SUPPORT_PACK: 'purchaseSupportPack',
   USE_SUPPORT_ITEM: 'useSupportItem',
+  REDEEM_CARD_SELECTOR: 'redeemCardSelector',
   ENHANCE_CARD: 'enhanceCard',
   DISMANTLE_CARDS: 'dismantleCards',
   SET_REPRESENTATIVE_CARD: 'setRepresentativeCard',
@@ -83,6 +84,7 @@ function validatePayload(type, payload, issues) {
     [GAME_COMMAND_TYPES.PURCHASE_PACK]: ['productId', 'quantity', 'race'],
     [GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK]: ['quantity'],
     [GAME_COMMAND_TYPES.USE_SUPPORT_ITEM]: ['itemId', 'targetCardId', 'race', 'count'],
+    [GAME_COMMAND_TYPES.REDEEM_CARD_SELECTOR]: ['itemId', 'cardId'],
     [GAME_COMMAND_TYPES.ENHANCE_CARD]: ['cardId', 'targetEnhancement', 'materialCardIds', 'boosterId'],
     [GAME_COMMAND_TYPES.DISMANTLE_CARDS]: ['rarity'],
     [GAME_COMMAND_TYPES.SET_REPRESENTATIVE_CARD]: ['cardId'],
@@ -192,6 +194,12 @@ function validatePayload(type, payload, issues) {
       }
       break;
     }
+    case GAME_COMMAND_TYPES.REDEEM_CARD_SELECTOR:
+      if (!['ssCardSelector', 'sssCardSelector'].includes(payload.itemId)) {
+        addIssue(issues, 'payload.itemId', 'SS 또는 SSS 카드 선택권 필요');
+      }
+      validateString(issues, payload.cardId, 'payload.cardId', 80);
+      break;
     case GAME_COMMAND_TYPES.SET_REPRESENTATIVE_CARD:
       validateString(issues, payload.cardId, 'payload.cardId', 80);
       break;

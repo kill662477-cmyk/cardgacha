@@ -118,6 +118,15 @@ const supportPack = await router.execute('user-fixed-by-auth', command(
 ));
 assert.equal(supportPack.rpc, 'gacha_s2_purchase_support_pack');
 
+const cardSelector = await router.execute('user-fixed-by-auth', command(
+  GAME_COMMAND_TYPES.REDEEM_CARD_SELECTOR,
+  { itemId: 'sssCardSelector', cardId: 'jidudu-1' },
+  'card-selector-0001',
+));
+assert.equal(cardSelector.rpc, 'gacha_s2_redeem_card_selector');
+assert.equal(cardSelector.args.p_item_id, 'sssCardSelector');
+assert.equal(cardSelector.args.p_card_id, 'jidudu-1');
+
 const cardLock = await router.execute('user-fixed-by-auth', command(
   GAME_COMMAND_TYPES.SET_CARD_LOCK,
   { cardId: playable[0].id, locked: true },

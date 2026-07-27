@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { PACKS, SUPPORT_PACK } from '../src/renewal/config.js';
+import { PACKS, SUPPORT_ITEMS, SUPPORT_PACK } from '../src/renewal/config.js';
 import {
   addCardResults,
   cardResultGridLayout,
@@ -8,6 +8,7 @@ import {
   drawCardPack,
   drawSupportPack,
   effectivePackRates,
+  redeemCardSelector,
   useSupportItem,
   useCardExpPotion,
   useCardExpPotionBatch,
@@ -21,6 +22,10 @@ assert.equal(SUPPORT_PACK.items.energySmall + SUPPORT_PACK.items.energyMedium + 
 assert.equal(SUPPORT_PACK.items.destructionGuard, 5);
 assert.equal(SUPPORT_PACK.guaranteeRates.energyLarge, 7);
 assert.equal(SUPPORT_PACK.guaranteeRates.destructionGuard, 6);
+assert.equal(SUPPORT_ITEMS.ssCardSelector.cardSelectorRarity, 'SS');
+assert.equal(SUPPORT_ITEMS.sssCardSelector.cardSelectorRarity, 'SSS');
+assert.equal(Object.hasOwn(SUPPORT_PACK.items, 'ssCardSelector'), false, 'event selector must not drop from support pack');
+assert.equal(Object.hasOwn(SUPPORT_PACK.items, 'sssCardSelector'), false, 'event selector must not drop from support pack');
 
 const general = drawCardPack('general', cards, { random: () => 0 });
 assert.equal(general.length, PACKS.general.count);
@@ -37,6 +42,20 @@ assert.ok(SUPPORT_PACK.rareItems.includes(guaranteed[9]), 'tenth slot must guara
 const cardState = addCardResults({}, {}, [cards[0].id, cards[0].id]);
 assert.equal(cardState.copies[cards[0].id], 2);
 assert.equal(cardState.collectionRecords[cards[0].id], true);
+
+const ssCard = cards.find((card) => card.rarity === 'SS');
+const sssCard = cards.find((card) => card.rarity === 'SSS');
+const selectorState = {
+  supportItems: { ssCardSelector: 1, sssCardSelector: 1 },
+  cardCopies: {},
+  collectionRecords: {},
+};
+const selectedSs = redeemCardSelector(selectorState, 'ssCardSelector', ssCard.id, cards);
+assert.equal(selectedSs.used, true);
+assert.equal(selectedSs.state.supportItems.ssCardSelector, 0);
+assert.equal(selectedSs.state.cardCopies[ssCard.id], 1);
+assert.equal(selectedSs.state.collectionRecords[ssCard.id], true);
+assert.equal(redeemCardSelector(selectorState, 'ssCardSelector', sssCard.id, cards).used, false);
 
 assert.deepEqual(cardResultGridLayout(3), { columns: 3, cardWidth: '150px', bulk: false });
 assert.deepEqual(cardResultGridLayout(10), { columns: 5, cardWidth: '125px', bulk: false });
@@ -126,4 +145,4 @@ const batchMaxed = useCardExpPotionBatch(
 );
 assert.equal(batchMaxed.used, false);
 
-console.log('renewal shop tests passed: card packs, support guarantee, consumables, adventure and quick-battle resets, batch EXP potion fill');
+console.log('renewal shop tests passed: card packs, support guarantee, selectors, consumables, resets, batch EXP potion fill');

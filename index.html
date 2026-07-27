@@ -841,6 +841,24 @@
     </form>
   </dialog>
 
+  <dialog class="card-selector-dialog" id="cardSelectorDialog">
+    <section class="card-selector-shell">
+      <header class="card-selector-head">
+        <div>
+          <span>CARD SELECTOR</span>
+          <h2 id="cardSelectorTitle">카드 선택권</h2>
+          <p id="cardSelectorSummary">원하는 카드 1장을 선택하세요.</p>
+        </div>
+        <button id="cardSelectorClose" type="button" aria-label="카드 선택 창 닫기">×</button>
+      </header>
+      <div class="card-selector-grid" id="cardSelectorGrid"></div>
+      <footer class="card-selector-footer">
+        <p id="cardSelectorSelection" aria-live="polite">받을 카드를 선택하세요.</p>
+        <button class="confirm-button" id="cardSelectorConfirm" type="button" disabled>선택 카드 받기</button>
+      </footer>
+    </section>
+  </dialog>
+
   <dialog class="account-login-dialog" id="loginDialog">
     <div class="account-login-shell">
       <span>SEASON 2 SIGN IN</span>
@@ -864,6 +882,6 @@
   </dialog>
 
   <script src="runtime-config.js?v=4"></script>
-  <script type="module" src="src/renewal/app.js?v=202607271325"></script>
+  <script type="module" src="src/renewal/app.js?v=202607271630"></script>
 </body>
 </html>

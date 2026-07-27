@@ -75,6 +75,27 @@ export function addSupportResults(inventory, itemIds) {
   return next;
 }
 
+export function redeemCardSelector(state, itemId, cardId, cardCatalog) {
+  const item = SUPPORT_ITEMS[itemId];
+  const card = cardCatalog.find((candidate) => candidate.id === cardId);
+  if (!item?.cardSelectorRarity) return { used: false, reason: '유효하지 않은 카드 선택권', state };
+  if ((state.supportItems[itemId] ?? 0) <= 0) return { used: false, reason: `${item.name} 없음`, state };
+  if (!card || card.group || card.rarity !== item.cardSelectorRarity) {
+    return { used: false, reason: `${item.cardSelectorRarity} 카드만 선택 가능`, state };
+  }
+  return {
+    used: true,
+    cardId,
+    reason: `${card.member} ${card.rarity} 카드 획득`,
+    state: {
+      ...state,
+      supportItems: { ...state.supportItems, [itemId]: state.supportItems[itemId] - 1 },
+      cardCopies: { ...state.cardCopies, [cardId]: (state.cardCopies[cardId] ?? 0) + 1 },
+      collectionRecords: { ...state.collectionRecords, [cardId]: true },
+    },
+  };
+}
+
 export function useSupportItem(state, itemId, now = Date.now()) {
   const item = SUPPORT_ITEMS[itemId];
   if (!item || (state.supportItems[itemId] ?? 0) <= 0) return { used: false, reason: '보유 아이템 없음', state };

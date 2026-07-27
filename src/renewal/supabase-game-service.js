@@ -12,6 +12,8 @@ export const SUPABASE_GAME_SERVICE_METHODS = Object.freeze([
   'getGuildApplicantProfile',
   'getPowerRanking',
   'getBridgeStatus',
+  'getMailbox',
+  'markMailboxRead',
   'executeCommand',
   'sendCommand',
 ]);
@@ -233,6 +235,39 @@ export function createSupabaseGameService(options = {}) {
     return response.status ?? { canUseDonationBridge: false, soopId: null };
   }
 
+  async function getMailbox() {
+    const response = await request({ kind: 'mailbox' });
+    if (response.ok === false) return response;
+    if (!response.mailbox || typeof response.mailbox !== 'object') {
+      return createGameError({
+        code: GAME_ERROR_CODES.INTERNAL_ERROR,
+        message: '우편함 응답이 올바르지 않습니다.',
+        serverTime: clock.now(),
+      });
+    }
+    return response.mailbox;
+  }
+
+  async function markMailboxRead(mailId) {
+    if (typeof mailId !== 'string' || !UUID_PATTERN.test(mailId)) {
+      return createGameError({
+        code: GAME_ERROR_CODES.VALIDATION_FAILED,
+        message: '우편 정보가 올바르지 않습니다.',
+        serverTime: clock.now(),
+      });
+    }
+    const response = await request({ kind: 'mailboxRead', mailId });
+    if (response.ok === false) return response;
+    if (!response.result || typeof response.result !== 'object') {
+      return createGameError({
+        code: GAME_ERROR_CODES.INTERNAL_ERROR,
+        message: '우편 읽음 처리 응답이 올바르지 않습니다.',
+        serverTime: clock.now(),
+      });
+    }
+    return response.result;
+  }
+
   const service = {
     loadSnapshot,
     getWorldBossStatus,
@@ -242,6 +277,8 @@ export function createSupabaseGameService(options = {}) {
     getGuildRaidStatus,
     getPowerRanking,
     getBridgeStatus,
+    getMailbox,
+    markMailboxRead,
     executeCommand,
     sendCommand,
   };

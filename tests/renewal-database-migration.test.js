@@ -8,6 +8,10 @@ const globalRewardSql = await readFile(
   'utf8',
 );
 const indexHtml = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const mailboxSql = await readFile(
+  new URL('../supabase/migrations/20260727203000_personal_mailbox.sql', import.meta.url),
+  'utf8',
+);
 
 for (const sourceTable of [
   'gacha_users',
@@ -52,15 +56,18 @@ assert.match(globalRewardSql, /set points = state\.points \+ reward\.points_gran
 assert.match(globalRewardSql, /and reward\.points_after is null/);
 assert.match(globalRewardSql, /v_reward_total <> v_reward_count::bigint \* 50000/);
 assert.match(globalRewardSql, /revoke all on table public\.gacha_s2_ss_sss_buff_reward_20260723/);
-// 우편함 공지는 운영하며 바뀐다. 제목과 본문의 금액이 서로 어긋나지 않는지만 잠근다.
-// (지급 스크립트와 공지 금액이 달라 유저 문의가 생겼던 적이 있다.)
-const mailNotice = indexHtml.match(/\[[^\]]+\] 전 계정 ([\d,]+) P 지급/);
-assert.ok(mailNotice, '우편함 공지 제목이 "[제목] 전 계정 N P 지급" 형식이어야 한다');
-assert.match(
-  indexHtml,
-  new RegExp(`${mailNotice[1]} 포인트<\/strong>`),
-  `공지 제목(${mailNotice[1]} P)과 본문 금액이 일치해야 한다`,
-);
+assert.match(indexHtml, /id="mailboxList"/);
+assert.match(indexHtml, /id="mailboxStatus"/);
+assert.match(indexHtml, /id="mailCloseButton"[^>]+type="submit"/);
+assert.doesNotMatch(indexHtml, /mail_kammon_victory_100k_20260727_read/);
+assert.match(mailboxSql, /create table if not exists public\.gacha_s2_mailbox/);
+assert.match(mailboxSql, /unique \(user_id, event_key\)/);
+assert.match(mailboxSql, /create or replace function public\.gacha_s2_deliver_mail/);
+assert.match(mailboxSql, /create or replace function public\.gacha_s2_get_mailbox/);
+assert.match(mailboxSql, /create or replace function public\.gacha_s2_mark_mail_read/);
+assert.match(mailboxSql, /where user_id = p_user_id and id = p_mail_id/);
+assert.match(mailboxSql, /enable row level security/);
+assert.match(mailboxSql, /revoke all on table public\.gacha_s2_mailbox from public, anon, authenticated/);
 
 console.log('renewal database migration tests passed: read-only source, account and bridge carryover, clean game state');
 

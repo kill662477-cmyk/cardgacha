@@ -64,8 +64,20 @@ import { cardVisualChrome, enhancementLabel, enhancementStarMarkup, rarityMarkMa
 import { applyLocalTestProfile } from './local-test-profile.js';
 import { bonusDropText, grantBonusDrop, rollAdventureBonusDrop } from './bonus-loot.js';
 import { createLiveTickerController } from './live-ticker-controller.js?v=202607271015';
+import {
+  applyMailboxRead,
+  mailboxBadgeText,
+  normalizeMailboxState,
+} from './mailbox.js?v=202607272030';
 
 const number = new Intl.NumberFormat('ko-KR');
+const mailDate = new Intl.DateTimeFormat('ko-KR', {
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+});
 const CARD_BACK_PATH = 'assets/card-back.jpg';
 // 'inventory'는 별도 DOM 없이 shopScreen을 보유아이템 탭으로 열어주는 별칭 화면.
 const SCREEN_IDS = new Set(['shop', 'inventory', 'enhance', 'collection', 'ranking', 'guild', 'adventure', 'worldboss', 'minigame']);
@@ -120,6 +132,9 @@ let guildController = null;
 let liveTickerController = null;
 let fxController = null;
 let bridgeStatus = { canUseDonationBridge: false, soopId: null };
+let mailbox = normalizeMailboxState();
+let mailboxUiState = 'idle';
+let mailboxRequest = null;
 const requestCoordinator = createRequestCoordinator({
   clock: gameService,
   isOnline: () => navigator.onLine !== false,
@@ -202,7 +217,8 @@ function imagePath(card) {
 function cacheElements() {
   [
     'nickname', 'combatPower', 'energyValue', 'pointValue', 'profileCardButton', 'apiLinkButton', 'logoutButton',
-    'mailButton', 'mailDialog', 'mailBadge', 'worldBossNavBadge',
+    'mailButton', 'mailDialog', 'mailBadge', 'mailboxStatus', 'mailboxList', 'mailboxSummary', 'mailCloseButton',
+    'worldBossNavBadge',
     'guildScreen', 'guildHome', 'guildBrowse', 'guildEmblem', 'guildTagLine', 'guildName', 'guildMeta',
     'guildActions', 'guildNotice', 'guildRequestsBox', 'guildRequestCount', 'guildRequestList',
     'guildMemberCount', 'guildMemberList', 'guildPenalty', 'guildCreateBox', 'guildCreateForm',
@@ -2443,15 +2459,151 @@ function selectAdventureMode(mode) {
   renderAll();
 }
 
-function bindEvents() {
-  if (sessionStorage.getItem('mail_kammon_victory_100k_20260727_read') === 'true') {
-    elements.mailBadge.hidden = true;
+function localMailboxFixture() {
+  return normalizeMailboxState({
+    unreadCount: 1,
+    messages: [
+      {
+        id: '00000000-0000-4000-8000-000000000101',
+        eventKey: 'local:reward-preview',
+        category: 'REWARD',
+        title: '이벤트 보상 지급 완료',
+        body: '이벤트 참여가 확인되어 50,000 포인트가 계정에 자동 반영되었습니다.',
+        points: 50000,
+        createdAt: new Date(gameService.now()).toISOString(),
+        readAt: null,
+      },
+      {
+        id: '00000000-0000-4000-8000-000000000102',
+        eventKey: 'local:mailbox-preview',
+        category: 'SYSTEM',
+        title: '개인 우편함 안내',
+        body: '앞으로 계정별 지급 및 운영 안내가 이곳에 표시됩니다.',
+        points: 0,
+        createdAt: new Date(gameService.now() - 3600000).toISOString(),
+        readAt: new Date(gameService.now() - 3500000).toISOString(),
+      },
+    ],
+  });
+}
+
+function renderMailboxBadge() {
+  if (!elements.mailBadge) return;
+  const label = mailboxBadgeText(mailbox.unreadCount);
+  elements.mailBadge.hidden = !label;
+  elements.mailBadge.textContent = label;
+  elements.mailButton?.setAttribute(
+    'aria-label',
+    label ? `우편함, 읽지 않은 우편 ${mailbox.unreadCount}개` : '우편함',
+  );
+}
+
+function renderMailbox() {
+  renderMailboxBadge();
+  if (!elements.mailboxList) return;
+  const statusMessages = {
+    loading: '계정 우편을 불러오는 중입니다.',
+    error: '우편함을 불러오지 못했습니다. 잠시 후 다시 열어 주세요.',
+  };
+  elements.mailboxStatus.dataset.state = mailboxUiState;
+  elements.mailboxStatus.textContent = statusMessages[mailboxUiState] ?? '';
+  elements.mailboxSummary.textContent = `우편 ${number.format(mailbox.messages.length)}개 · 안 읽음 ${number.format(mailbox.unreadCount)}개`;
+
+  if (mailboxUiState === 'loading' && mailbox.messages.length === 0) {
+    elements.mailboxList.innerHTML = '<div class="mailbox-empty"><i data-lucide="loader"></i><strong>우편 동기화 중</strong><p>잠시만 기다려 주세요.</p></div>';
+  } else if (mailbox.messages.length === 0) {
+    elements.mailboxList.innerHTML = '<div class="mailbox-empty"><i data-lucide="mail-open"></i><strong>도착한 우편이 없습니다</strong><p>계정 대상 운영 안내와 지급 결과가 이곳에 표시됩니다.</p></div>';
+  } else {
+    const categoryLabels = { REWARD: '보상', EVENT: '이벤트', SYSTEM: '시스템' };
+    elements.mailboxList.innerHTML = mailbox.messages.map((message) => {
+      const unread = !message.readAt;
+      const body = escapeHtml(message.body).replace(/\n/g, '<br>');
+      return `<article class="mail-item" role="listitem" data-category="${message.category}" data-unread="${unread}">
+        <div class="mail-item-head">
+          <span class="mail-kind">${categoryLabels[message.category]}</span>
+          <strong class="mail-item-title">${escapeHtml(message.title)}</strong>
+          ${unread ? '<span class="mail-unread-mark">NEW</span>' : ''}
+        </div>
+        <p class="mail-item-body">${body}</p>
+        <div class="mail-item-meta">
+          <span>${mailDate.format(new Date(message.createdAt))}</span>
+          ${message.points > 0 ? `<b class="mail-points">+${number.format(message.points)} P</b>` : ''}
+          ${unread ? `<button class="mail-read-button" type="button" data-mail-id="${message.id}">읽음 처리</button>` : '<span>읽음</span>'}
+        </div>
+      </article>`;
+    }).join('');
   }
+  window.lucide?.createIcons();
+}
+
+async function refreshMailbox({ showLoading = false } = {}) {
+  if (mailboxRequest) return mailboxRequest;
+  mailboxRequest = (async () => {
+    if (showLoading) {
+      mailboxUiState = 'loading';
+      renderMailbox();
+    }
+    try {
+      if (remoteMode) {
+        const response = await gameService.getMailbox();
+        if (response?.ok === false) throw new Error(response.message ?? response.code ?? 'MAILBOX_FAILED');
+        mailbox = normalizeMailboxState(response);
+      } else {
+        const localPreview = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+        mailbox = mailbox.messages.length || !localPreview ? mailbox : localMailboxFixture();
+      }
+      mailboxUiState = 'ready';
+    } catch (error) {
+      console.warn('[mailbox] load failed:', error);
+      mailboxUiState = 'error';
+    } finally {
+      mailboxRequest = null;
+      renderMailbox();
+    }
+    return mailbox;
+  })();
+  return mailboxRequest;
+}
+
+async function markMailboxRead(mailId, button) {
+  if (!mailId || button?.getAttribute('aria-busy') === 'true') return;
+  button?.setAttribute('aria-busy', 'true');
+  try {
+    const result = remoteMode
+      ? await gameService.markMailboxRead(mailId)
+      : {
+        ok: true,
+        mailId,
+        readAt: new Date(gameService.now()).toISOString(),
+        unreadCount: Math.max(0, mailbox.unreadCount - 1),
+      };
+    if (result?.ok === false) throw new Error(result.message ?? result.code ?? 'MAIL_READ_FAILED');
+    mailbox = applyMailboxRead(mailbox, result);
+    mailboxUiState = 'ready';
+    renderMailbox();
+  } catch (error) {
+    console.warn('[mailbox] mark read failed:', error);
+    mailboxUiState = 'error';
+    renderMailbox();
+    showToast('우편 읽음 처리를 완료하지 못했습니다.', 'warning');
+  } finally {
+    button?.removeAttribute('aria-busy');
+  }
+}
+
+function bindEvents() {
   elements.profileCardButton.addEventListener('click', openRepresentativeCardDetail);
-  elements.mailButton.addEventListener('click', () => {
-    sessionStorage.setItem('mail_kammon_victory_100k_20260727_read', 'true');
-    elements.mailBadge.hidden = true;
+  elements.mailButton.addEventListener('click', async () => {
     elements.mailDialog.showModal();
+    await refreshMailbox({ showLoading: mailbox.messages.length === 0 });
+  });
+  elements.mailboxList.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-mail-id]');
+    if (button) void markMailboxRead(button.dataset.mailId, button);
+  });
+  elements.mailCloseButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    elements.mailDialog.close();
   });
   elements.soundToggleButton.addEventListener('click', () => {
     state.soundEnabled = state.soundEnabled === false;
@@ -2918,6 +3070,8 @@ async function init() {
     if (!remoteMode) gameService.persistSnapshot(state);
     renderAll();
     bindEvents();
+    renderMailbox();
+    void refreshMailbox();
     showScreen(activeScreen);
     if (elements.logoutButton) elements.logoutButton.hidden = !remoteMode;
     // 모바일에서 로그인 후 게임 진입 시 가로모드/전체화면 가이드 표시.

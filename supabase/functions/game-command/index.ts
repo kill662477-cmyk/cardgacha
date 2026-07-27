@@ -283,6 +283,34 @@ Deno.serve(async (req: Request) => {
       return respond({ ok: false, code: 'INTERNAL_ERROR', message: 'API 연동 권한을 확인하지 못했습니다.' }, 500);
     }
   }
+  if (body.kind === 'mailbox') {
+    try {
+      const mailbox = await gateway.rpc('gacha_s2_get_mailbox', {
+        p_user_id: userId,
+        p_limit: 50,
+      });
+      return respond({ ok: true, serverTime: Date.now(), mailbox });
+    } catch (error) {
+      await logFailure('mailbox', 'INTERNAL_ERROR', 500, 'mailbox', error);
+      return respond({ ok: false, code: 'INTERNAL_ERROR', message: '우편함을 불러오지 못했습니다.' }, 500);
+    }
+  }
+  if (body.kind === 'mailboxRead') {
+    if (typeof body.mailId !== 'string' || !UUID_PATTERN.test(body.mailId)) {
+      return respond({ ok: false, code: 'VALIDATION_FAILED', message: '우편 정보가 올바르지 않습니다.' }, 400);
+    }
+    try {
+      const result = await gateway.rpc('gacha_s2_mark_mail_read', {
+        p_user_id: userId,
+        p_mail_id: body.mailId,
+      });
+      if (result?.ok === false) return respond(result, statusFor(result));
+      return respond({ ok: true, serverTime: Date.now(), result });
+    } catch (error) {
+      await logFailure('mailboxRead', 'INTERNAL_ERROR', 500, 'mailboxRead', error);
+      return respond({ ok: false, code: 'INTERNAL_ERROR', message: '우편 읽음 처리를 완료하지 못했습니다.' }, 500);
+    }
+  }
   if (body.kind !== 'command' || !body.command) {
     return respond({ ok: false, code: 'VALIDATION_FAILED', message: '요청 종류가 올바르지 않습니다.' }, 400);
   }

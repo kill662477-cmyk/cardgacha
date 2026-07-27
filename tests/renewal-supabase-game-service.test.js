@@ -43,6 +43,37 @@ const fetchImpl = async (url, options) => {
       },
     });
   }
+  if (body.kind === 'mailbox') {
+    return Response.json({
+      ok: true,
+      serverTime: now,
+      mailbox: {
+        ok: true,
+        unreadCount: 1,
+        messages: [{
+          id: '00000000-0000-4000-8000-000000000010',
+          title: '보상 지급 완료',
+          body: '50,000 포인트 지급',
+          category: 'REWARD',
+          points: 50000,
+          createdAt: '2026-07-27T10:00:00.000Z',
+          readAt: null,
+        }],
+      },
+    });
+  }
+  if (body.kind === 'mailboxRead') {
+    return Response.json({
+      ok: true,
+      serverTime: now,
+      result: {
+        ok: true,
+        mailId: body.mailId,
+        readAt: '2026-07-27T10:01:00.000Z',
+        unreadCount: 0,
+      },
+    });
+  }
   const response = createGameSuccess({
     command: body.command,
     revision: 8,
@@ -94,11 +125,24 @@ const lottoState = await service.getLottoState();
 assert.equal(lottoState.round.roundId, '20260727-1500');
 assert.deepEqual(lottoState.history, []);
 assert.equal(calls[3].body.kind, 'lottoState');
+const mailbox = await service.getMailbox();
+assert.equal(mailbox.unreadCount, 1);
+assert.equal(mailbox.messages[0].points, 50000);
+assert.equal(calls[4].body.kind, 'mailbox');
+const mailId = '00000000-0000-4000-8000-000000000010';
+const markedMail = await service.markMailboxRead(mailId);
+assert.equal(markedMail.mailId, mailId);
+assert.equal(markedMail.unreadCount, 0);
+assert.equal(calls[5].body.kind, 'mailboxRead');
+assert.equal(calls[5].body.mailId, mailId);
+const invalidMail = await service.markMailboxRead('not-a-uuid');
+assert.equal(invalidMail.code, 'VALIDATION_FAILED');
+assert.equal(calls.length, 6, 'invalid mail ID must not issue a request');
 
 token = '';
 const unauthenticated = await service.loadSnapshot();
 assert.equal(unauthenticated.code, 'AUTH_REQUIRED');
-assert.equal(calls.length, 4, 'missing session must not issue a request');
+assert.equal(calls.length, 6, 'missing session must not issue a request');
 
 const mismatchedService = createSupabaseGameService({
   projectUrl: 'https://project.supabase.co',

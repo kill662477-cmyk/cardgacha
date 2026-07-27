@@ -38,6 +38,7 @@ const fetchImpl = async (url, options) => {
       state: {
         ok: true,
         round: { roundId: '20260727-1500', saleOpen: true },
+        history: [],
         recentWinners: [],
       },
     });
@@ -91,6 +92,7 @@ assert.equal(invalidApplicant.code, 'VALIDATION_FAILED');
 assert.equal(calls.length, 3, 'invalid applicant ID must not issue a request');
 const lottoState = await service.getLottoState();
 assert.equal(lottoState.round.roundId, '20260727-1500');
+assert.deepEqual(lottoState.history, []);
 assert.equal(calls[3].body.kind, 'lottoState');
 
 token = '';

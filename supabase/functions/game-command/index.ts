@@ -216,7 +216,7 @@ Deno.serve(async (req: Request) => {
   }
   if (body.kind === 'lottoState') {
     try {
-      const state = await gateway.rpc('gacha_s2_get_lotto_state', { p_user_id: userId });
+      const state = await gateway.rpc('gacha_s2_get_lotto_state_v2', { p_user_id: userId });
       if (state?.ok === false) return respond(state, statusFor(state));
       return respond({ ok: true, serverTime: Date.now(), state });
     } catch (error) {

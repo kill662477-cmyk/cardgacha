@@ -983,7 +983,7 @@ button[aria-busy="true"]::after {
 
 .lotto-shell { display: grid; grid-template-rows: auto auto auto auto minmax(66px, 1fr); gap: 10px; width: min(100%, 820px); height: 100%; min-height: 0; padding: 4px; overflow-y: auto; }
 .lotto-round-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 13px; border: 1px solid #4b544e; background: rgba(7,11,8,.94); }
-.lotto-round-head span, .lotto-result-grid section > span, .lotto-winners header span { display: block; color: var(--muted); font-size: 8px; font-weight: 900; letter-spacing: .1em; }
+.lotto-round-head span, .lotto-result-grid section > span, .lotto-result-head span, .lotto-winners header span { display: block; color: var(--muted); font-size: 8px; font-weight: 900; letter-spacing: .1em; }
 .lotto-round-head strong { display: block; margin-top: 3px; font-size: 14px; }
 .lotto-round-head > b { padding: 6px 9px; border: 1px solid var(--acid); color: var(--acid); font-size: 9px; }
 .lotto-round-head > b.closed { border-color: var(--red); color: var(--red); }
@@ -999,6 +999,10 @@ button[aria-busy="true"]::after {
 .lotto-ball.hit { border-color: var(--acid); background: var(--acid); color: #071009; }
 .lotto-result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .lotto-result-grid section { min-width: 0; padding: 10px 12px; border: 1px solid var(--line); background: rgba(6,10,7,.92); }
+.lotto-result-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.lotto-result-head button { padding: 4px 7px; border: 1px solid #6d623d; background: #17150c; color: var(--gold); font-size: 8px; font-weight: 900; cursor: pointer; }
+.lotto-result-head button:hover, .lotto-result-head button:focus-visible { border-color: var(--gold); outline: none; }
+.lotto-result-head button:disabled { opacity: .45; cursor: wait; }
 .lotto-result-grid section > div { margin-top: 7px; color: #d9dfda; font-size: 9px; line-height: 1.6; }
 .lotto-result-grid .lotto-inline-balls { display: flex; flex-wrap: wrap; gap: 4px; }
 .lotto-result-grid .lotto-inline-balls .lotto-ball { width: 23px; height: 23px; font-size: 8px; }
@@ -1011,6 +1015,23 @@ button[aria-busy="true"]::after {
 .lotto-winner-row { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 5px 2px; border-bottom: 1px solid #2f2b1d; font-size: 9px; }
 .lotto-winner-row b { color: var(--gold); }
 .lotto-winner-row strong { color: var(--acid); font-variant-numeric: tabular-nums; }
+
+.lotto-history-dialog { width: min(720px, calc(100vw - 28px)); max-height: calc(100vh - 28px); padding: 0; border: 1px solid #6d623d; background: #080b09; color: var(--text); }
+.lotto-history-dialog::backdrop { background: rgba(0,0,0,.86); backdrop-filter: blur(5px); }
+.lotto-history-shell { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; max-height: calc(100vh - 30px); }
+.lotto-history-shell > header { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border-bottom: 1px solid #4e472d; background: #0d0e08; }
+.lotto-history-shell > header span { color: var(--gold); font-size: 8px; font-weight: 950; letter-spacing: .12em; }
+.lotto-history-shell > header h2 { margin: 4px 0 0; font-size: 20px; }
+.lotto-history-list { min-height: 180px; padding: 10px 18px; overflow-y: auto; }
+.lotto-history-list > p { display: grid; min-height: 150px; margin: 0; place-items: center; color: var(--muted); font-size: 10px; }
+.lotto-history-row { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 48px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.lotto-history-row time { color: #dce2dd; font-size: 10px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.lotto-history-row > div { display: flex; gap: 5px; }
+.lotto-history-row .lotto-ball { width: 28px; height: 28px; font-size: 9px; }
+.lotto-history-row small { color: var(--muted); font-size: 8px; white-space: nowrap; }
+.lotto-history-shell > footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 18px; border-top: 1px solid #4e472d; }
+.lotto-history-shell > footer small { color: var(--muted); font-size: 8px; }
+.lotto-history-shell > footer .confirm-button { min-width: 92px; }
 
 .minigame-result-panel { display: grid; justify-items: center; gap: 8px; min-width: 280px; padding: 28px; border: 1px solid var(--acid); background: rgba(6,10,7,.94); box-shadow: 0 0 50px rgba(200,245,46,.12); }
 .minigame-result-panel span { color: var(--acid); font-size: 8px; font-weight: 950; }

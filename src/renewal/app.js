@@ -50,10 +50,10 @@ import {
 } from './rewards.js';
 import { assertValidGameState, migrateGameState } from './state-schema.js';
 import { createLocalGameService } from './local-game-service.js';
-import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './remote-runtime.js?v=202607271015';
+import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './remote-runtime.js?v=202607271135';
 import { GAME_COMMAND_TYPES, isRetryableGameError } from './service-contract.js';
 import { createRequestCoordinator, REQUEST_PHASES } from './request-coordinator.js?v=202607211025';
-import { createMiniGameController } from './minigame-controller.js?v=202607271015';
+import { createMiniGameController } from './minigame-controller.js?v=202607271135';
 import { executeCommandWithVersionRetry } from './server-command-retry.js';
 import { createWorldBossController } from './worldboss-controller.js';
 import { createRankingController } from './ranking-controller.js';

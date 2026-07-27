@@ -173,6 +173,8 @@ assert.match(edgeSource, /MAX_BODY_BYTES/);
 assert.match(edgeSource, /body\.kind === 'powerRanking'/);
 assert.match(edgeSource, /body\.kind === 'bridgeStatus'/);
 assert.match(edgeSource, /body\.kind === 'lottoState'/);
+assert.match(edgeSource, /gacha_s2_get_lotto_state_v2/);
+assert.doesNotMatch(edgeSource, /body\.kind === 'lottoHistory'/);
 assert.match(edgeSource, /req\.body\.getReader\(\)/);
 assert.match(edgeSource, /X-Request-ID/);
 assert.match(edgeSource, /gacha_s2_command_failures/);

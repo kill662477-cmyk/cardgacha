@@ -50,6 +50,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     'lottoShell', 'lottoRoundLabel', 'lottoSaleStatus', 'lottoNumberGrid',
     'lottoSelectedNumbers', 'lottoMyTicket', 'lottoLatestResult', 'lottoWinnerList',
     'lottoControl', 'lottoFirstPool', 'lottoSecondPool', 'lottoEntryStatus',
+    'lottoHistoryButton', 'lottoHistoryDialog', 'lottoHistoryList',
   ].map((id) => [id, document.getElementById(id)]));
 
   let selectedGame = 'memory';
@@ -342,6 +343,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
           : lottoNumbers.length === LOTTO_RULES.picks
             ? '번호 선택 완료. 구매를 확정하세요.'
             : `번호 ${LOTTO_RULES.picks - lottoNumbers.length}개를 더 선택하세요.`;
+    if (elements.lottoHistoryDialog.open) renderLottoHistory();
   }
 
   function render() {
@@ -548,6 +550,24 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     lottoNumbers = [];
     showToast(`로또 구매 완료 · ${picked.join(', ')}`);
     await loadLottoState({ silent: true });
+  }
+
+  function renderLottoHistory() {
+    const history = Array.isArray(lottoState?.history) ? lottoState.history : [];
+    elements.lottoHistoryList.innerHTML = history.length
+      ? history.map((draw) => `
+        <article class="lotto-history-row">
+          <time>${formatLottoRound(draw.drawAt)}</time>
+          <div>${lottoBallMarkup(draw.winningNumbers ?? [])}</div>
+          <small>1등 ${number.format(draw.firstWinners ?? 0)}명 · 2등 ${number.format(draw.secondWinners ?? 0)}명</small>
+        </article>
+      `).join('')
+      : `<p>${lottoLoading ? '당첨번호 기록을 동기화하는 중입니다.' : '최근 7일간 완료된 추첨이 없습니다.'}</p>`;
+  }
+
+  function openLottoHistory() {
+    if (!elements.lottoHistoryDialog.open) elements.lottoHistoryDialog.showModal();
+    renderLottoHistory();
   }
 
   function toggleLottoNumber(value) {
@@ -791,6 +811,9 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   elements.lottoNumberGrid.addEventListener('click', (event) => {
     const button = event.target.closest('[data-lotto-number]');
     if (button) toggleLottoNumber(Number(button.dataset.lottoNumber));
+  });
+  elements.lottoHistoryButton.addEventListener('click', () => {
+    openLottoHistory();
   });
 
   progress();

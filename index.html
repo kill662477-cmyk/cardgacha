@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/renewal/brand/card-gacha-s2-favicon-32.png">
   <link rel="apple-touch-icon" sizes="192x192" href="assets/renewal/brand/card-gacha-s2-icon-192.png">
   <link rel="stylesheet" href="styles/renewal/tokens.css">
-  <link rel="stylesheet" href="styles/renewal/main.css?v=202607271015">
+  <link rel="stylesheet" href="styles/renewal/main.css?v=202607271135">
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
 </head>
 <body>
@@ -560,7 +560,10 @@
                 <div id="lottoMyTicket">이번 회차 미구매</div>
               </section>
               <section>
-                <span>LATEST DRAW</span>
+                <header class="lotto-result-head">
+                  <span>LATEST DRAW</span>
+                  <button id="lottoHistoryButton" type="button">역대 당첨번호</button>
+                </header>
                 <div id="lottoLatestResult">추첨 기록 대기 중</div>
               </section>
             </div>
@@ -610,6 +613,22 @@
       </aside>
     </main>
   </div>
+
+  <dialog class="lotto-history-dialog" id="lottoHistoryDialog">
+    <form method="dialog" class="lotto-history-shell">
+      <header>
+        <div><span>LOTTO ARCHIVE</span><h2>최근 7일 당첨번호</h2></div>
+        <button class="icon-button" value="cancel" aria-label="당첨번호 기록 닫기" title="닫기"><i data-lucide="x"></i></button>
+      </header>
+      <div class="lotto-history-list" id="lottoHistoryList">
+        <p>당첨번호를 불러오는 중입니다.</p>
+      </div>
+      <footer>
+        <small>오늘 포함 최근 7일 · 하루 3회차 · 최대 21개 기록</small>
+        <button class="confirm-button" value="cancel">닫기</button>
+      </footer>
+    </form>
+  </dialog>
 
   <section class="system-state-layer" id="systemStateLayer" data-state="loading" role="status" aria-live="polite" aria-label="게임 데이터 로딩 중">
     <div class="system-state-panel">
@@ -844,6 +863,6 @@
   </dialog>
 
   <script src="runtime-config.js?v=4"></script>
-  <script type="module" src="src/renewal/app.js?v=202607271015"></script>
+  <script type="module" src="src/renewal/app.js?v=202607271135"></script>
 </body>
 </html>

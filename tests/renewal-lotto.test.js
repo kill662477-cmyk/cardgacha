@@ -8,7 +8,9 @@ import {
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const sql = await read('supabase/migrations/20260727093000_lotto_minigame.sql');
+const historySql = await read('supabase/migrations/20260727113000_lotto_weekly_history.sql');
 const normalizedSql = sql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
+const normalizedHistorySql = historySql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const html = await read('index.html');
 const controller = await read('src/renewal/minigame-controller.js');
 const runtime = await read('src/renewal/remote-runtime.js');
@@ -50,9 +52,17 @@ assert.doesNotMatch(normalizedSql, /gacha_s2_minigame_daily/, '로또는 기존 
 assert.match(html, /data-minigame-select="lotto"/);
 assert.match(html, /id="lottoNumberGrid"/);
 assert.match(html, /최근 1·2등 당첨자/);
+assert.match(html, /id="lottoHistoryButton"[^>]*>역대 당첨번호</);
+assert.match(html, /id="lottoHistoryDialog"/);
 assert.match(controller, /GAME_COMMAND_TYPES|buyLottoTicket|loadLottoState/);
 assert.match(controller, /getState\(\)\.points < LOTTO_RULES\.ticketCost/);
 assert.match(controller, /miniGameMode\.hidden = lotto \|\| ladder/);
+assert.match(controller, /Array\.isArray\(lottoState\?\.history\)/);
+assert.doesNotMatch(controller, /getLottoHistory/, '버튼 클릭은 별도 서버 조회를 만들면 안 된다');
 assert.match(runtime, /event_rank,points,lotto_round_id/);
+assert.match(normalizedHistorySql, /create or replace function public\.gacha_s2_get_lotto_state_v2/);
+assert.match(normalizedHistorySql, /::date - 6/);
+assert.match(normalizedHistorySql, /limit 21/);
+assert.match(normalizedHistorySql, /public\.gacha_s2_get_lotto_state\(p_user_id\).*public\.gacha_s2_get_lotto_history\(p_user_id\)/);
 
 console.log('renewal lotto tests passed: 6/18 ticket, capped rollover, isolated economy, atomic auto payout, winner ticker');

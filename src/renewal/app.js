@@ -55,11 +55,11 @@ import { GAME_COMMAND_TYPES, isRetryableGameError } from './service-contract.js'
 import { createRequestCoordinator, REQUEST_PHASES } from './request-coordinator.js?v=202607211025';
 import { createMiniGameController } from './minigame-controller.js?v=202607271135';
 import { executeCommandWithVersionRetry } from './server-command-retry.js';
-import { createWorldBossController } from './worldboss-controller.js';
-import { createRankingController } from './ranking-controller.js';
-import { createGuildController } from './guild-controller.js';
-import { createFxController } from './fx-controller.js';
-import { cardVisualChrome, enhancementLabel, enhancementStarMarkup, rarityMarkMarkup } from './card-visual.js';
+import { createWorldBossController } from './worldboss-controller.js?v=202607271245';
+import { createRankingController } from './ranking-controller.js?v=202607271245';
+import { createGuildController } from './guild-controller.js?v=202607271245';
+import { createFxController } from './fx-controller.js?v=202607271245';
+import { cardVisualChrome, enhancementLabel, enhancementStarMarkup, rarityMarkMarkup } from './card-visual.js?v=202607271245';
 import { applyLocalTestProfile } from './local-test-profile.js';
 import { bonusDropText, grantBonusDrop, rollAdventureBonusDrop } from './bonus-loot.js';
 import { createLiveTickerController } from './live-ticker-controller.js?v=202607271015';
@@ -1004,7 +1004,7 @@ function renderFormationDialog() {
     const selected = temporaryFormation.includes(card.id);
     return `<button class="inventory-card${selected ? ' selected' : ''}" type="button" data-card-id="${card.id}" style="--rarity:${RARITIES[card.rarity].color}">
       <img src="${imagePath(card)}" alt="">
-      <div><div class="card-list-marks">${rarityMarkMarkup(card.rarity)}${enhancementStarMarkup(card.enhancement, { inline: true })}<b>보유 ×${state.cardCopies[card.id]}</b></div><span>${card.member}</span><strong class="inventory-power">전투력 ${number.format(power)}</strong><small>${ARCHETYPES[card.archetype].label} · ${card.race}</small><small>공 ${number.format(stats.atk)} · 체 ${number.format(stats.hp)} · 방 ${number.format(stats.def)}</small><small>EXP ${number.format(card.exp)}/${number.format(cardExpRequired(card.enhancement))}</small></div>
+      <div><div class="card-list-marks">${rarityMarkMarkup(card.rarity)}${enhancementStarMarkup(card.enhancement, { inline: true, rarity: card.rarity })}<b>보유 ×${state.cardCopies[card.id]}</b></div><span>${card.member}</span><strong class="inventory-power">전투력 ${number.format(power)}</strong><small>${ARCHETYPES[card.archetype].label} · ${card.race}</small><small>공 ${number.format(stats.atk)} · 체 ${number.format(stats.hp)} · 방 ${number.format(stats.def)}</small><small>EXP ${number.format(card.exp)}/${number.format(cardExpRequired(card.enhancement))}</small></div>
     </button>`;
   }).join('');
   elements.selectionCount.textContent = `${temporaryFormation.length} / ${GAME_RULES.formationSize}`;
@@ -1340,7 +1340,7 @@ function renderEnhancementList() {
     const locked = state.cardLocks[card.id];
     return `<button class="enhance-target-card${card.id === selectedEnhanceCardId ? ' selected' : ''}${ready ? ' ready' : ''}" type="button" data-enhance-card-id="${card.id}" style="--rarity:${RARITIES[card.rarity].color}">
       <img src="${imagePath(card)}" alt="">
-      <div><div class="card-list-marks">${rarityMarkMarkup(card.rarity)}${enhancementStarMarkup(card.enhancement, { inline: true })}<b>×${state.cardCopies[card.id]}</b></div><span>${card.member}${locked ? ' <i class="lock-mark">LOCK</i>' : ''}</span><small>전투력 ${number.format(power)} · EXP ${number.format(card.exp)}/${number.format(required)}</small></div>
+      <div><div class="card-list-marks">${rarityMarkMarkup(card.rarity)}${enhancementStarMarkup(card.enhancement, { inline: true, rarity: card.rarity })}<b>×${state.cardCopies[card.id]}</b></div><span>${card.member}${locked ? ' <i class="lock-mark">LOCK</i>' : ''}</span><small>전투력 ${number.format(power)} · EXP ${number.format(card.exp)}/${number.format(required)}</small></div>
     </button>`;
   }).join('') || emptyStateMarkup({
     stateType: 'empty',
@@ -1548,7 +1548,7 @@ function renderCollectionSelected(bonuses) {
   elements.collectionSelected.innerHTML = `
     <div class="collection-selected-card card-visual${registered ? '' : ' unregistered'}" data-rarity="${card.rarity}" style="--rarity:${RARITIES[card.rarity].color}"><img class="card-photo" src="${art}" alt="${registered ? card.member : '미등록 카드 뒷면'}">${cardVisualChrome(card, { showEnhancement: registered })}</div>
     <div class="collection-selected-copy" style="--rarity:${RARITIES[card.rarity].color}">
-      <div class="card-copy-marks">${rarityMarkMarkup(card.rarity)}${registered ? enhancementStarMarkup(card.enhancement, { inline: true }) : ''}</div><h2>${registered ? card.member : '미등록 카드'}</h2><span>${card.race} · ${ARCHETYPES[card.archetype]?.label ?? '전시 전용'}</span>
+      <div class="card-copy-marks">${rarityMarkMarkup(card.rarity)}${registered ? enhancementStarMarkup(card.enhancement, { inline: true, rarity: card.rarity }) : ''}</div><h2>${registered ? card.member : '미등록 카드'}</h2><span>${card.race} · ${ARCHETYPES[card.archetype]?.label ?? '전시 전용'}</span>
       ${stats ? `<dl><div class="power"><dt>전투력</dt><dd>${number.format(power)} <small class="power-breakdown">(기본 ${number.format(basePower)}${power > basePower ? ` + 강화 ${number.format(power - basePower)}` : ''})</small></dd></div><div><dt>공격력</dt><dd>${number.format(stats.atk)}</dd></div><div><dt>체력</dt><dd>${number.format(stats.hp)}</dd></div><div><dt>방어력</dt><dd>${number.format(stats.def)}</dd></div></dl>` : '<dl><div><dt>용도</dt><dd>도감 전시 전용</dd></div></dl>'}
       <div class="registered${registered ? '' : ' missing'}">${registered ? `등록 완료 · 현재 ${copies}장 보유${card.id === state.representativeCardId ? ' · 대표카드' : ''}` : '최초 획득 시 영구 등록'}</div>
     </div>`;

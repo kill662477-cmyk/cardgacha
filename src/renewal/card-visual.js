@@ -27,16 +27,20 @@ export function rarityMarkMarkup(rarity) {
   return `<span class="card-rarity-mark" data-rarity="${rarity}" aria-label="${rarity} 등급">${rarity}</span>`;
 }
 
-export function enhancementStarMarkup(value, { inline = false } = {}) {
+export function enhancementStarMarkup(value, { inline = false, rarity = '' } = {}) {
   const level = normalizeEnhancement(value);
   if (level === 0) return '';
   const tier = enhancementTier(level);
-  return `<span class="card-star-mark${inline ? ' inline' : ''}" data-star-tier="${tier}" data-star-level="${level}" aria-label="${enhancementLabel(level)} 강화" title="${enhancementLabel(level)} 강화"><img src="${ENHANCEMENT_STAR_PATH}" alt=""><b>×${level}</b>${level === 9 ? '<i>MAX</i>' : ''}</span>`;
+  const rarityAttribute = rarity ? ` data-star-rarity="${rarity}"` : '';
+  return `<span class="card-star-mark${inline ? ' inline' : ''}" data-star-tier="${tier}" data-star-level="${level}"${rarityAttribute} aria-label="${enhancementLabel(level)} 강화" title="${enhancementLabel(level)} 강화"><img src="${ENHANCEMENT_STAR_PATH}" alt=""><b>×${level}</b>${level === 9 ? '<i>MAX</i>' : ''}</span>`;
 }
 
 export function cardVisualChrome(card, { showEnhancement = true, showFrame = true } = {}) {
   const frame = showFrame
     ? `<img class="card-frame-overlay" src="${cardFramePath(card.rarity)}" alt="" aria-hidden="true">`
     : '';
-  return `${frame}${rarityMarkMarkup(card.rarity)}${showEnhancement ? enhancementStarMarkup(card.enhancement) : ''}`;
+  const maxAura = showEnhancement && normalizeEnhancement(card.enhancement) === 9
+    ? `<span class="card-max-aura" data-max-rarity="${card.rarity}" aria-hidden="true"></span>`
+    : '';
+  return `${frame}${maxAura}${rarityMarkMarkup(card.rarity)}${showEnhancement ? enhancementStarMarkup(card.enhancement, { rarity: card.rarity }) : ''}`;
 }

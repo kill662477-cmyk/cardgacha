@@ -1,6 +1,6 @@
 import { RARITIES, SUPPORT_ITEMS } from './config.js';
 import { applyCardExperience } from './rewards.js';
-import { cardVisualChrome } from './card-visual.js';
+import { cardVisualChrome } from './card-visual.js?v=202607271245';
 import { escapeHtml } from './html.js';
 import {
   WORLD_BOSS_RULES,

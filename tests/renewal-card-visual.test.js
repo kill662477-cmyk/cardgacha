@@ -26,6 +26,12 @@ const max = cardVisualChrome({ rarity: 'SSS', enhancement: 9 });
 assert.match(max, /card-frame-sss\.webp/);
 assert.match(max, /data-rarity="SSS"/);
 assert.match(max, /data-star-tier="max"/);
+assert.match(max, /card-max-aura/);
+assert.match(max, /data-max-rarity="SSS"/);
+assert.match(max, /data-star-rarity="SSS"/);
 assert.match(max, /MAX/);
+
+const notMax = cardVisualChrome({ rarity: 'SS', enhancement: 8 });
+assert.doesNotMatch(notMax, /card-max-aura/);
 
 console.log('renewal card visual tests passed: rarity core, star ranks, frame mapping');

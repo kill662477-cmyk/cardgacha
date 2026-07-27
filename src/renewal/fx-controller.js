@@ -1,4 +1,4 @@
-import { cardFramePath, enhancementLabel, enhancementTier } from './card-visual.js';
+import { cardFramePath, enhancementLabel, enhancementTier } from './card-visual.js?v=202607271245';
 
 const OUTCOME_COLORS = {
   success: ['#d7ff35', '#68f7ef', '#ffffff'],
@@ -106,6 +106,7 @@ export function createFxController({ root = document.getElementById('fxLayer'), 
   const cardName = root.querySelector('[data-fx-card-name]');
   const levelLabel = root.querySelector('[data-fx-level]');
   const levelBurst = root.querySelector('[data-fx-level-burst]');
+  const maxAura = root.querySelector('[data-fx-max-aura]');
   const verdict = root.querySelector('[data-fx-verdict]');
   const skipButton = root.querySelector('[data-fx-skip]');
   const canvas = root.querySelector('canvas');
@@ -492,6 +493,11 @@ export function createFxController({ root = document.getElementById('fxLayer'), 
     const displayedLevel = outcome === 'success' ? target : Math.max(0, target - 1);
     levelLabel.dataset.starTier = enhancementTier(displayedLevel);
     levelLabel.dataset.starLevel = displayedLevel;
+    levelLabel.dataset.starRarity = rarity;
+    if (maxAura) {
+      maxAura.hidden = displayedLevel !== 9;
+      maxAura.dataset.maxRarity = rarity;
+    }
     levelLabel.setAttribute('aria-label', `${enhancementLabel(displayedLevel)} 강화`);
     levelLabel.title = `${enhancementLabel(displayedLevel)} 강화`;
     levelLabel.querySelector('b').textContent = `×${displayedLevel}`;

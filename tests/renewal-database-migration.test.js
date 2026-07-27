@@ -12,6 +12,10 @@ const mailboxSql = await readFile(
   new URL('../supabase/migrations/20260727203000_personal_mailbox.sql', import.meta.url),
   'utf8',
 );
+const soopEventRewardSql = await readFile(
+  new URL('../supabase/migrations/20260727231500_soop_post_202512799_reward_batch_1.sql', import.meta.url),
+  'utf8',
+);
 
 for (const sourceTable of [
   'gacha_users',
@@ -68,6 +72,15 @@ assert.match(mailboxSql, /create or replace function public\.gacha_s2_mark_mail_
 assert.match(mailboxSql, /where user_id = p_user_id and id = p_mail_id/);
 assert.match(mailboxSql, /enable row level security/);
 assert.match(mailboxSql, /revoke all on table public\.gacha_s2_mailbox from public, anon, authenticated/);
+assert.match(soopEventRewardSql, /lock table public\.gacha_s2_player_states in share row exclusive mode/);
+assert.match(soopEventRewardSql, /create table if not exists public\.gacha_s2_soop_post_202512799_rewards/);
+assert.match(soopEventRewardSql, /points_granted integer not null default 50000/);
+assert.match(soopEventRewardSql, /on conflict do nothing/);
+assert.match(soopEventRewardSql, /and reward\.points_after is null/);
+assert.match(soopEventRewardSql, /gacha_s2_deliver_mail/);
+assert.match(soopEventRewardSql, /soop-post-202512799:reward-50k/);
+assert.match(soopEventRewardSql, /v_reward_total <> v_reward_count::bigint \* 50000/);
+assert.match(soopEventRewardSql, /revoke all on table public\.gacha_s2_soop_post_202512799_rewards/);
 
 console.log('renewal database migration tests passed: read-only source, account and bridge carryover, clean game state');
 

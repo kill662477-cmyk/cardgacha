@@ -32,7 +32,7 @@ export function enhancementStarMarkup(value, { inline = false, rarity = '' } = {
   if (level === 0) return '';
   const tier = enhancementTier(level);
   const rarityAttribute = rarity ? ` data-star-rarity="${rarity}"` : '';
-  return `<span class="card-star-mark${inline ? ' inline' : ''}" data-star-tier="${tier}" data-star-level="${level}"${rarityAttribute} aria-label="${enhancementLabel(level)} 강화" title="${enhancementLabel(level)} 강화"><img src="${ENHANCEMENT_STAR_PATH}" alt=""><b>×${level}</b>${level === 9 ? '<i>MAX</i>' : ''}</span>`;
+  return `<span class="card-star-mark${inline ? ' inline' : ''}" data-star-tier="${tier}" data-star-level="${level}"${rarityAttribute} aria-label="${enhancementLabel(level)} 강화" title="${enhancementLabel(level)} 강화"><img src="${ENHANCEMENT_STAR_PATH}" alt=""><b>×${level}</b></span>`;
 }
 
 export function cardVisualChrome(card, { showEnhancement = true, showFrame = true } = {}) {

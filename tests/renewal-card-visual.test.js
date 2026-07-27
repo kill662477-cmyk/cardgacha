@@ -29,7 +29,7 @@ assert.match(max, /data-star-tier="max"/);
 assert.match(max, /card-max-aura/);
 assert.match(max, /data-max-rarity="SSS"/);
 assert.match(max, /data-star-rarity="SSS"/);
-assert.match(max, /MAX/);
+assert.doesNotMatch(max, /MAX/);
 
 const notMax = cardVisualChrome({ rarity: 'SS', enhancement: 8 });
 assert.doesNotMatch(notMax, /card-max-aura/);

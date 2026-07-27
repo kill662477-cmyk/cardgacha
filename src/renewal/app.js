@@ -55,11 +55,11 @@ import { GAME_COMMAND_TYPES, isRetryableGameError } from './service-contract.js'
 import { createRequestCoordinator, REQUEST_PHASES } from './request-coordinator.js?v=202607211025';
 import { createMiniGameController } from './minigame-controller.js?v=202607271135';
 import { executeCommandWithVersionRetry } from './server-command-retry.js';
-import { createWorldBossController } from './worldboss-controller.js?v=202607271245';
-import { createRankingController } from './ranking-controller.js?v=202607271245';
-import { createGuildController } from './guild-controller.js?v=202607271245';
-import { createFxController } from './fx-controller.js?v=202607271245';
-import { cardVisualChrome, enhancementLabel, enhancementStarMarkup, rarityMarkMarkup } from './card-visual.js?v=202607271245';
+import { createWorldBossController } from './worldboss-controller.js?v=202607271325';
+import { createRankingController } from './ranking-controller.js?v=202607271325';
+import { createGuildController } from './guild-controller.js?v=202607271325';
+import { createFxController } from './fx-controller.js?v=202607271325';
+import { cardVisualChrome, enhancementLabel, enhancementStarMarkup, rarityMarkMarkup } from './card-visual.js?v=202607271325';
 import { applyLocalTestProfile } from './local-test-profile.js';
 import { bonusDropText, grantBonusDrop, rollAdventureBonusDrop } from './bonus-loot.js';
 import { createLiveTickerController } from './live-ticker-controller.js?v=202607271015';

@@ -1,4 +1,4 @@
-import { cardFramePath, enhancementLabel, enhancementTier } from './card-visual.js?v=202607271245';
+import { cardFramePath, enhancementLabel, enhancementTier } from './card-visual.js?v=202607271325';
 
 const OUTCOME_COLORS = {
   success: ['#d7ff35', '#68f7ef', '#ffffff'],
@@ -501,7 +501,6 @@ export function createFxController({ root = document.getElementById('fxLayer'), 
     levelLabel.setAttribute('aria-label', `${enhancementLabel(displayedLevel)} 강화`);
     levelLabel.title = `${enhancementLabel(displayedLevel)} 강화`;
     levelLabel.querySelector('b').textContent = `×${displayedLevel}`;
-    levelLabel.querySelector('i').textContent = displayedLevel === 9 ? 'MAX' : '';
     levelBurst.querySelector('strong').textContent = `${enhancementLabel(displayedLevel)}`;
     verdict.textContent = message;
     skipButton.hidden = true;

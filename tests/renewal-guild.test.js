@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { access, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { EMBLEM_IMAGES } from '../src/renewal/guild-emblem.js';
 import { GAME_COMMAND_TYPES, validateGameCommand } from '../src/renewal/service-contract.js';
 import { GUILD_RULES, guildLevelFor } from '../src/renewal/config.js';
@@ -350,8 +350,13 @@ assert.match(emblemSource, /calmsnal: `assets\/renewal\/guild\/emblems\/calmsnal
 assert.match(emblemSource, /jjiking: `assets\/renewal\/guild\/emblems\/jjiking\.png\?v=/);
 assert.match(emblemSource, /sexyterran: `assets\/renewal\/guild\/emblems\/sexyterran\.png\?v=/);
 // 화이트리스트에 키만 추가하고 파일을 안 올리면 깨진 이미지가 뜬다. 실제 파일 존재를 함께 잠근다.
+// 규격도 같이 본다. 엠블럼은 256x256 원형 마스크(투명 모서리)라 정사각 이미지를 그대로 올리면
+// 목록에서 혼자 네모로 튄다. PNG 헤더의 IHDR 크기와 tRNS(투명도) 청크 유무로 검사한다.
 for (const key of Object.keys(EMBLEM_IMAGES)) {
-  await access(new URL(`../assets/renewal/guild/emblems/${key}.png`, import.meta.url));
+  const png = await readFile(new URL(`../assets/renewal/guild/emblems/${key}.png`, import.meta.url));
+  assert.equal(png.readUInt32BE(16), 256, `${key}.png 너비는 256 이어야 한다`);
+  assert.equal(png.readUInt32BE(20), 256, `${key}.png 높이는 256 이어야 한다`);
+  assert.ok(png.includes('tRNS'), `${key}.png 에 원형 마스크(투명 영역)가 없다`);
 }
 assert.match(
   emblemSource,

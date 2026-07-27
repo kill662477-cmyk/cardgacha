@@ -13,6 +13,12 @@ import {
   pickLadderReward,
   reshuffleSumTiles,
 } from './minigames.js';
+import { escapeHtml } from './html.js';
+import {
+  LOTTO_RULES,
+  lottoBallMarkup,
+  normalizeLottoNumbers,
+} from './lotto.js';
 
 const number = new Intl.NumberFormat('ko-KR');
 
@@ -40,6 +46,10 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     'miniGameResultScore', 'miniGameResultReward', 'miniGameMode', 'miniGameDifficulty',
     'miniGameBest', 'miniGamePlays', 'miniGameRemaining', 'miniGameStartButton',
     'miniGameStopButton', 'miniGameRewardCost', 'ladderShell', 'ladderChoiceCopy', 'ladderBoard',
+    'miniGameDailyBlock', 'miniGameControlEyebrow', 'miniGameControlTitle', 'miniGameRecords',
+    'lottoShell', 'lottoRoundLabel', 'lottoSaleStatus', 'lottoNumberGrid',
+    'lottoSelectedNumbers', 'lottoMyTicket', 'lottoLatestResult', 'lottoWinnerList',
+    'lottoControl', 'lottoFirstPool', 'lottoSecondPool', 'lottoEntryStatus',
   ].map((id) => [id, document.getElementById(id)]));
 
   let selectedGame = 'memory';
@@ -50,6 +60,11 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   let resolvingMemory = false;
   let sumDrag = null;
   let ladderResolving = false;
+  let lottoState = null;
+  let lottoNumbers = [];
+  let lottoLoading = false;
+  let lottoNextSyncAt = 0;
+  let lottoRequestSequence = 0;
   let result = null;
   let sequence = 0;
 
@@ -70,35 +85,55 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   function renderHeader() {
     const memory = selectedGame === 'memory';
     const ladder = selectedGame === 'ladder';
-    elements.miniGameEyebrow.textContent = memory ? 'MEMORY SIGNAL' : ladder ? 'LUCKY LADDER' : 'CAMMON APPLE';
-    elements.miniGameTitle.textContent = memory ? '카드 짝맞추기' : ladder ? MINI_GAME_RULES.ladder.label : MINI_GAME_RULES.sumTen.label;
-    elements.miniGameTimer.textContent = ladder ? '--:--' : formatTime(session ? sessionRemaining() : (
+    const lotto = selectedGame === 'lotto';
+    elements.miniGameEyebrow.textContent = memory ? 'MEMORY SIGNAL' : ladder ? 'LUCKY LADDER' : lotto ? 'LOTTO 6/18' : 'CAMMON APPLE';
+    elements.miniGameTitle.textContent = memory ? '카드 짝맞추기' : ladder ? MINI_GAME_RULES.ladder.label : lotto ? '시그널 로또' : MINI_GAME_RULES.sumTen.label;
+    elements.miniGameTimer.textContent = lotto ? lottoCountdownLabel() : ladder ? '--:--' : formatTime(session ? sessionRemaining() : (
       memory ? MINI_GAME_RULES.memory[memoryDifficulty].timeLimit : MINI_GAME_RULES.sumTen.timeLimit
     ));
-    elements.miniGameScore.textContent = number.format(currentScore());
+    elements.miniGameScore.textContent = lotto
+      ? `${lottoState?.ticket?.numbers?.length ?? lottoNumbers.length} / ${LOTTO_RULES.picks}`
+      : number.format(currentScore());
   }
 
   function renderControls() {
     const daily = progress();
     const ladder = selectedGame === 'ladder';
+    const lotto = selectedGame === 'lotto';
     const earned = daily.pointsEarnedByGame[selectedGame] ?? 0;
     const remaining = Math.max(0, MINI_GAME_RULES.dailyPointCapPerGame - earned);
     const busy = Boolean(session);
     const energyCost = ladder ? MINI_GAME_RULES.ladder.energyCost : MINI_GAME_RULES.energyCost;
-    elements.miniGameDaily.textContent = `${number.format(earned)} / ${number.format(MINI_GAME_RULES.dailyPointCapPerGame)} P`;
-    elements.miniGameDailyBar.style.width = `${Math.min(100, earned / MINI_GAME_RULES.dailyPointCapPerGame * 100)}%`;
+    elements.miniGameDailyBlock.hidden = lotto;
+    elements.miniGameMode.hidden = lotto;
+    elements.miniGameRecords.hidden = lotto;
+    elements.lottoControl.hidden = !lotto;
+    elements.miniGameControlEyebrow.textContent = lotto ? 'DRAW CONTROL' : 'PLAY MODE';
+    elements.miniGameControlTitle.textContent = lotto ? '구매 정보' : '작전 설정';
+    if (!lotto) {
+      elements.miniGameDaily.textContent = `${number.format(earned)} / ${number.format(MINI_GAME_RULES.dailyPointCapPerGame)} P`;
+      elements.miniGameDailyBar.style.width = `${Math.min(100, earned / MINI_GAME_RULES.dailyPointCapPerGame * 100)}%`;
+    }
     elements.miniGameBest.textContent = number.format(selectedGame === 'memory' ? daily.bestMemory : ladder ? daily.bestLadder : daily.bestSumTen);
     elements.miniGamePlays.textContent = `${number.format(daily.plays)}회`;
     elements.miniGameRemaining.textContent = `${number.format(remaining)} P`;
-    elements.miniGameDifficulty.hidden = selectedGame !== 'memory';
-    elements.miniGameMode.hidden = ladder;
+    elements.miniGameDifficulty.hidden = selectedGame !== 'memory' || lotto;
+    elements.miniGameMode.hidden = lotto || ladder;
     elements.miniGameStartButton.hidden = busy;
     elements.miniGameStopButton.hidden = !busy;
     elements.miniGameStopButton.disabled = ladderResolving;
-    elements.miniGameStartButton.disabled = (ladder || selectedMode === 'reward')
+    elements.miniGameStartButton.disabled = lotto
+      ? lottoLoading
+        || !lottoState?.round?.saleOpen
+        || Boolean(lottoState?.ticket)
+        || normalizeLottoNumbers(lottoNumbers).length !== LOTTO_RULES.picks
+        || getState().points < LOTTO_RULES.ticketCost
+      : (ladder || selectedMode === 'reward')
       && (getState().actionEnergy < energyCost || remaining <= 0);
-    elements.miniGameStartButton.querySelector('span').textContent = ladder ? '출발점 선택하기' : selectedMode === 'reward' ? '보상 게임 시작' : '연습 시작';
-    elements.miniGameStartButton.dataset.mode = ladder ? 'reward' : selectedMode;
+    elements.miniGameStartButton.querySelector('span').textContent = lotto
+      ? lottoState?.ticket ? '이번 회차 구매 완료' : '1,000P 구매 확정'
+      : ladder ? '출발점 선택하기' : selectedMode === 'reward' ? '보상 게임 시작' : '연습 시작';
+    elements.miniGameStartButton.dataset.mode = lotto || ladder ? 'reward' : selectedMode;
     elements.miniGameRewardCost.textContent = `-${energyCost} 행동력`;
     elements.miniGamePicker.querySelectorAll('[data-minigame-select]').forEach((button) => {
       button.classList.toggle('active', button.dataset.minigameSelect === selectedGame);
@@ -122,6 +157,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     elements.memoryBoard.hidden = true;
     elements.sumTenShell.hidden = true;
     elements.ladderShell.hidden = true;
+    elements.lottoShell.hidden = true;
     elements.miniGameResult.hidden = true;
     elements.miniGameReadyVisual.dataset.game = selectedGame;
     elements.miniGameReadyVisual.innerHTML = selectedGame === 'memory'
@@ -153,6 +189,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     elements.memoryBoard.hidden = true;
     elements.sumTenShell.hidden = true;
     elements.ladderShell.hidden = true;
+    elements.lottoShell.hidden = true;
     elements.miniGameResult.hidden = false;
     elements.miniGameResultTitle.textContent = result.title;
     elements.miniGameResultScore.textContent = result.scoreLabel ?? `${number.format(result.score)} SCORE`;
@@ -164,6 +201,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     elements.miniGameResult.hidden = true;
     elements.sumTenShell.hidden = true;
     elements.ladderShell.hidden = true;
+    elements.lottoShell.hidden = true;
     elements.memoryBoard.hidden = false;
     elements.memoryBoard.style.setProperty('--columns', session.columns);
     elements.memoryBoard.innerHTML = session.deck.map((card, index) => {
@@ -187,6 +225,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     elements.miniGameResult.hidden = true;
     elements.memoryBoard.hidden = true;
     elements.ladderShell.hidden = true;
+    elements.lottoShell.hidden = true;
     elements.sumTenShell.hidden = false;
     elements.sumTenBoard.style.setProperty('--columns', session.columns);
     elements.sumTenBoard.style.setProperty('--rows', session.rows);
@@ -208,6 +247,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     elements.miniGameResult.hidden = true;
     elements.memoryBoard.hidden = true;
     elements.sumTenShell.hidden = true;
+    elements.lottoShell.hidden = true;
     elements.ladderShell.hidden = false;
     const columns = MINI_GAME_RULES.ladder.columns;
     const choosing = session.phase === 'choose';
@@ -223,10 +263,92 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
       <div class="ladder-bottom">${rewards.map((reward, lane) => `<span class="${board ? '' : 'hidden-reward'}${session.phase === 'resolved' && board?.endLane === lane ? ' winner' : ''}">${board ? `${number.format(reward)}P` : '?'}</span>`).join('')}</div>`;
   }
 
+  function formatLottoRound(drawAt) {
+    if (!Number.isFinite(Number(drawAt))) return '회차 확인 중';
+    return new Intl.DateTimeFormat('ko-KR', {
+      timeZone: 'Asia/Seoul',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(new Date(Number(drawAt)));
+  }
+
+  function lottoCountdownLabel() {
+    const round = lottoState?.round;
+    if (!round) return '--:--';
+    if (!round.saleOpen) return '마감';
+    return formatTime((Number(round.salesCloseAt) - clock.now()) / 1000);
+  }
+
+  function renderLotto() {
+    elements.miniGameEmpty.hidden = true;
+    elements.miniGameResult.hidden = true;
+    elements.memoryBoard.hidden = true;
+    elements.sumTenShell.hidden = true;
+    elements.ladderShell.hidden = true;
+    elements.lottoShell.hidden = false;
+
+    const round = lottoState?.round;
+    const ticketNumbers = normalizeLottoNumbers(lottoState?.ticket?.numbers);
+    const displayedNumbers = ticketNumbers.length ? ticketNumbers : normalizeLottoNumbers(lottoNumbers);
+    const selection = new Set(displayedNumbers.length ? displayedNumbers : lottoNumbers);
+    const locked = lottoLoading || Boolean(ticketNumbers.length) || !round?.saleOpen;
+    elements.lottoNumberGrid.innerHTML = Array.from({ length: LOTTO_RULES.maximumNumber }, (_, index) => {
+      const value = index + 1;
+      return `<button type="button" data-lotto-number="${value}" class="${selection.has(value) ? 'selected' : ''}" ${locked ? 'disabled' : ''}>${value}</button>`;
+    }).join('');
+    elements.lottoSelectedNumbers.innerHTML = Array.from({ length: LOTTO_RULES.picks }, (_, index) => (
+      displayedNumbers[index] == null ? '<i class="lotto-ball">?</i>' : `<i class="lotto-ball">${displayedNumbers[index]}</i>`
+    )).join('');
+
+    elements.lottoRoundLabel.textContent = round
+      ? `${formatLottoRound(round.drawAt)} 추첨 · ${number.format(round.ticketCount ?? 0)}장`
+      : '회차 확인 중';
+    elements.lottoSaleStatus.textContent = lottoLoading ? '동기화 중' : round?.saleOpen ? '구매 가능' : '판매 마감';
+    elements.lottoSaleStatus.classList.toggle('closed', !round?.saleOpen);
+    elements.lottoFirstPool.textContent = `${number.format(round?.firstPool ?? 100_000)} P`;
+    elements.lottoSecondPool.textContent = `${number.format(round?.secondPool ?? 50_000)} P`;
+
+    const myRecent = lottoState?.myRecentTickets?.[0] ?? null;
+    if (ticketNumbers.length) {
+      elements.lottoMyTicket.innerHTML = `<div class="lotto-inline-balls">${lottoBallMarkup(ticketNumbers)}</div><div class="lotto-result-summary"><span>구매 완료</span><strong>자동 지급 대기</strong></div>`;
+    } else if (myRecent) {
+      const hits = Array.isArray(myRecent.winningNumbers)
+        ? myRecent.numbers.filter((value) => myRecent.winningNumbers.includes(value))
+        : [];
+      elements.lottoMyTicket.innerHTML = `<div class="lotto-inline-balls">${lottoBallMarkup(myRecent.numbers ?? [], { hits })}</div><div class="lotto-result-summary"><span>${myRecent.matchCount ?? 0}개 일치</span><strong>${myRecent.prizePoints > 0 ? `+${number.format(myRecent.prizePoints)}P 지급` : '꽝'}</strong></div>`;
+    } else {
+      elements.lottoMyTicket.textContent = '이번 회차 미구매';
+    }
+
+    const latest = lottoState?.recentResults?.[0] ?? null;
+    elements.lottoLatestResult.innerHTML = latest
+      ? `<div class="lotto-inline-balls">${lottoBallMarkup(latest.winningNumbers ?? [])}</div><div class="lotto-result-summary"><span>${formatLottoRound(latest.drawAt)}</span><strong>1등 ${number.format(latest.firstWinners ?? 0)}명 · 2등 ${number.format(latest.secondWinners ?? 0)}명</strong></div>`
+      : '추첨 기록 대기 중';
+
+    const winners = lottoState?.recentWinners ?? [];
+    elements.lottoWinnerList.innerHTML = winners.length
+      ? winners.map((winner) => `<div class="lotto-winner-row"><b>${winner.rank}등</b><span>${escapeHtml(winner.nickname)}</span><strong>${number.format(winner.points)}P</strong></div>`).join('')
+      : '아직 1·2등 당첨자가 없습니다.';
+
+    elements.lottoEntryStatus.textContent = lottoLoading
+      ? '회차 정보를 불러오는 중입니다.'
+      : ticketNumbers.length
+        ? `번호 ${ticketNumbers.join(', ')} · 자동 지급 대기`
+        : !round?.saleOpen
+          ? '판매가 마감됐습니다. 추첨 후 다음 회차가 열립니다.'
+          : lottoNumbers.length === LOTTO_RULES.picks
+            ? '번호 선택 완료. 구매를 확정하세요.'
+            : `번호 ${LOTTO_RULES.picks - lottoNumbers.length}개를 더 선택하세요.`;
+  }
+
   function render() {
     renderHeader();
     renderControls();
-    if (session?.game === 'memory') renderMemory();
+    if (selectedGame === 'lotto') renderLotto();
+    else if (session?.game === 'memory') renderMemory();
     else if (session?.game === 'sumTen') renderSumTen();
     else if (session?.game === 'ladder') renderLadder();
     else if (result) renderResult();
@@ -306,6 +428,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   async function startGame() {
     const state = getState();
     const daily = progress();
+    if (selectedGame === 'lotto') return buyLottoTicket();
     if (selectedGame === 'ladder') {
       if ((daily.pointsEarnedByGame.ladder ?? 0) >= MINI_GAME_RULES.dailyPointCapPerGame) {
         return showToast('오늘 운명의 사다리 보상 한도 도달');
@@ -379,6 +502,67 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     render();
     stopTimer();
     timer = window.setInterval(tick, 1000);
+  }
+
+  async function loadLottoState({ silent = false } = {}) {
+    if (!serverCommands?.getLottoState || lottoLoading) return;
+    lottoLoading = true;
+    const requestId = ++lottoRequestSequence;
+    if (!silent) render();
+    const response = await serverCommands.getLottoState();
+    if (requestId !== lottoRequestSequence) return;
+    lottoLoading = false;
+    if (!response?.ok && !response?.round) {
+      lottoNextSyncAt = clock.now() + 15_000;
+      render();
+      if (!silent) showToast(response?.message || '로또 정보를 불러오지 못했습니다.');
+      return;
+    }
+    lottoState = response;
+    lottoNextSyncAt = clock.now() + 30_000;
+    if (
+      Number.isSafeInteger(response.playerRevision)
+      && response.playerRevision > Number(getState().revision ?? 0)
+      && serverCommands.refreshSnapshot
+    ) {
+      await serverCommands.refreshSnapshot();
+    }
+    render();
+  }
+
+  async function buyLottoTicket() {
+    if (lottoLoading || !serverCommands?.buyLottoTicket) return;
+    const picked = normalizeLottoNumbers(lottoNumbers);
+    if (picked.length !== LOTTO_RULES.picks) return showToast('1~18 중 서로 다른 번호 6개를 선택하세요.');
+    if (!lottoState?.round?.saleOpen) return showToast('이번 회차 판매가 마감됐습니다.');
+    if (lottoState.ticket) return showToast('이번 회차 로또는 이미 구매했습니다.');
+    if (getState().points < LOTTO_RULES.ticketCost) return showToast('로또 구매에 1,000P가 필요합니다.');
+    lottoLoading = true;
+    render();
+    const response = await serverCommands.buyLottoTicket({ numbers: picked });
+    lottoLoading = false;
+    if (!response?.ok) {
+      render();
+      return showToast(response?.message || '로또 구매에 실패했습니다.');
+    }
+    lottoNumbers = [];
+    showToast(`로또 구매 완료 · ${picked.join(', ')}`);
+    await loadLottoState({ silent: true });
+  }
+
+  function toggleLottoNumber(value) {
+    if (selectedGame !== 'lotto' || lottoLoading || lottoState?.ticket || !lottoState?.round?.saleOpen) return;
+    if (!Number.isInteger(value) || value < 1 || value > LOTTO_RULES.maximumNumber) return;
+    if (lottoNumbers.includes(value)) lottoNumbers = lottoNumbers.filter((numberValue) => numberValue !== value);
+    else if (lottoNumbers.length < LOTTO_RULES.picks) lottoNumbers = [...lottoNumbers, value].sort((left, right) => left - right);
+    else return showToast('번호는 6개까지 선택할 수 있습니다.');
+    render();
+  }
+
+  function heartbeat() {
+    if (selectedGame !== 'lotto') return;
+    elements.miniGameTimer.textContent = lottoCountdownLabel();
+    if (clock.now() >= lottoNextSyncAt) void loadLottoState({ silent: true });
   }
 
   async function chooseLadderLane(lane) {
@@ -574,6 +758,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     selectedGame = button.dataset.minigameSelect;
     result = null;
     render();
+    if (selectedGame === 'lotto') void loadLottoState();
   });
   elements.miniGameMode.addEventListener('click', (event) => {
     const button = event.target.closest('[data-mini-mode]');
@@ -603,7 +788,11 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     const button = event.target.closest('[data-ladder-lane]');
     if (button) chooseLadderLane(Number(button.dataset.ladderLane));
   });
+  elements.lottoNumberGrid.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-lotto-number]');
+    if (button) toggleLottoNumber(Number(button.dataset.lottoNumber));
+  });
 
   progress();
-  return { render, tick };
+  return { render, tick, heartbeat };
 }

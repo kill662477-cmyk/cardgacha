@@ -46,6 +46,7 @@ assert.equal(reset.revision, 0);
 const uiFiles = [
   'src/renewal/app.js',
   'src/renewal/minigame-controller.js',
+  'src/renewal/lotto.js',
   'src/renewal/worldboss-controller.js',
   'src/renewal/ranking-controller.js',
   'src/renewal/fx-controller.js',

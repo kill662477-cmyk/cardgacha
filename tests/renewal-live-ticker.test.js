@@ -20,6 +20,22 @@ assert.equal(normalizeLiveEvent({ ...draw, rarity: 'A' }), null, 'only S/SS/SSS 
 assert.equal(normalizeLiveEvent({
   ...draw, event_type: 'nine_star_success', rarity: 'F', enhancement: 9,
 }).enhancement, 9, 'every combat rarity can announce a +9 success');
+const lottoWinner = normalizeLiveEvent({
+  id: 3,
+  event_type: 'lotto_first',
+  nickname: '당첨자',
+  card_id: null,
+  member: null,
+  rarity: null,
+  enhancement: null,
+  event_rank: 1,
+  points: 500000,
+  lotto_round_id: '20260727-2000',
+  created_at: new Date(now - 500).toISOString(),
+});
+assert.equal(lottoWinner.eventRank, 1);
+assert.match(liveEventMarkup(lottoWinner), /LOTTO 1등/);
+assert.match(liveEventMarkup(lottoWinner), /500,000P/);
 assert.equal(mergeLiveEvents([{ ...draw, created_at: new Date(now - LIVE_EVENT_TTL_MS - 1).toISOString() }], now).length, 0);
 assert.equal(mergeLiveEvents([draw, { ...draw, id: 2, created_at: new Date(now - 2000).toISOString() }], now).length, 1, 'Realtime/local echo is deduplicated');
 assert.match(liveEventMarkup(normalizeLiveEvent({ ...draw, nickname: '<img onerror=1>' })), /&lt;img onerror=1&gt;/);

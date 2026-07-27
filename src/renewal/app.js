@@ -50,10 +50,10 @@ import {
 } from './rewards.js';
 import { assertValidGameState, migrateGameState } from './state-schema.js';
 import { createLocalGameService } from './local-game-service.js';
-import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './remote-runtime.js?v=202607241835';
+import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './remote-runtime.js?v=202607271015';
 import { GAME_COMMAND_TYPES, isRetryableGameError } from './service-contract.js';
 import { createRequestCoordinator, REQUEST_PHASES } from './request-coordinator.js?v=202607211025';
-import { createMiniGameController } from './minigame-controller.js?v=202607211525';
+import { createMiniGameController } from './minigame-controller.js?v=202607271015';
 import { executeCommandWithVersionRetry } from './server-command-retry.js';
 import { createWorldBossController } from './worldboss-controller.js';
 import { createRankingController } from './ranking-controller.js';
@@ -62,7 +62,7 @@ import { createFxController } from './fx-controller.js';
 import { cardVisualChrome, enhancementLabel, enhancementStarMarkup, rarityMarkMarkup } from './card-visual.js';
 import { applyLocalTestProfile } from './local-test-profile.js';
 import { bonusDropText, grantBonusDrop, rollAdventureBonusDrop } from './bonus-loot.js';
-import { createLiveTickerController } from './live-ticker-controller.js';
+import { createLiveTickerController } from './live-ticker-controller.js?v=202607271015';
 
 const number = new Intl.NumberFormat('ko-KR');
 const CARD_BACK_PATH = 'assets/card-back.jpg';
@@ -2692,6 +2692,7 @@ function startTimedUpdates() {
     renderRewardReadout();
     if (activeScreen === 'shop') renderShopBuff();
     if (activeScreen === 'worldboss') worldBossController?.tick();
+    if (activeScreen === 'minigame') miniGameController?.heartbeat?.();
     // Nav badge nudge: check reward availability even when off the world boss
     // screen, since claiming is manual and the results window is only 30 minutes.
     else if (tickCount % 60 === 0) void worldBossController?.checkRewardAvailability();
@@ -2741,6 +2742,18 @@ async function init() {
         playLadder: (payload) => runUiOperation('playLadder', null, () => (
           executeServerCommand(GAME_COMMAND_TYPES.PLAY_LADDER, payload)
         )),
+        getLottoState: () => gameService.getLottoState(),
+        buyLottoTicket: (payload) => runUiOperation('buyLottoTicket', elements.miniGameStartButton, () => (
+          executeServerCommand(GAME_COMMAND_TYPES.BUY_LOTTO_TICKET, payload)
+        )),
+        refreshSnapshot: async () => {
+          const loaded = await loadRemoteSnapshotWithRetry();
+          if (loaded?.ok && loaded.snapshot) {
+            applyServerSnapshot(loaded.snapshot);
+            renderHeader();
+          }
+          return loaded;
+        },
       } : null,
       showToast,
     });

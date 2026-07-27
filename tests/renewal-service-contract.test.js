@@ -110,6 +110,22 @@ const ladderPlay = createGameCommand({
 });
 assert.equal(validateGameCommand(ladderPlay).valid, true);
 assert.equal(validateGameCommand({ ...ladderPlay, payload: { lane: 6 } }).valid, false);
+const lottoPurchase = createGameCommand({
+  type: GAME_COMMAND_TYPES.BUY_LOTTO_TICKET,
+  payload: { numbers: [1, 4, 7, 10, 13, 18] },
+  expectedRevision: 8,
+  idempotencyKey: 'lotto-buy-000001',
+  clientSentAt: clock.now(),
+});
+assert.equal(validateGameCommand(lottoPurchase).valid, true);
+assert.equal(validateGameCommand({
+  ...lottoPurchase,
+  payload: { numbers: [1, 1, 7, 10, 13, 18] },
+}).valid, false, '로또 한 티켓 안에서 번호를 중복 선택할 수 없어야 한다');
+assert.equal(validateGameCommand({
+  ...lottoPurchase,
+  payload: { numbers: [1, 4, 7, 10, 13, 19] },
+}).valid, false, '로또 번호는 1~18만 허용해야 한다');
 assert.equal(validateGameCommand({
   ...minigameFinish,
   payload: { ...minigameFinish.payload, inputDigest: 'client-forged' },

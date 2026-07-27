@@ -21,6 +21,7 @@ export const GAME_COMMAND_TYPES = Object.freeze({
   START_MINIGAME: 'startMinigame',
   FINISH_MINIGAME: 'finishMinigame',
   PLAY_LADDER: 'playLadder',
+  BUY_LOTTO_TICKET: 'buyLottoTicket',
   ATTACK_WORLD_BOSS: 'attackWorldBoss',
   CLAIM_WORLD_BOSS_REWARD: 'claimWorldBossReward',
   // 길드(PDB-16 M1)
@@ -89,6 +90,7 @@ function validatePayload(type, payload, issues) {
     [GAME_COMMAND_TYPES.START_MINIGAME]: ['game', 'difficulty'],
     [GAME_COMMAND_TYPES.FINISH_MINIGAME]: ['runId', 'inputLog', 'score'],
     [GAME_COMMAND_TYPES.PLAY_LADDER]: ['lane'],
+    [GAME_COMMAND_TYPES.BUY_LOTTO_TICKET]: ['numbers'],
     [GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS]: ['eventId'],
     [GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD]: ['eventId'],
     // 길드(PDB-16). 인자가 없는 명령도 빈 배열로 반드시 선언해야 한다.
@@ -227,6 +229,20 @@ function validatePayload(type, payload, issues) {
       break;
     case GAME_COMMAND_TYPES.PLAY_LADDER:
       if (!isNonNegativeInteger(payload.lane) || payload.lane > 5) addIssue(issues, 'payload.lane', '0~5 출발점 필요');
+      break;
+    case GAME_COMMAND_TYPES.BUY_LOTTO_TICKET:
+      if (!Array.isArray(payload.numbers) || payload.numbers.length !== 6) {
+        addIssue(issues, 'payload.numbers', '번호 6개 배열 필요');
+      } else {
+        payload.numbers.forEach((value, index) => {
+          if (!Number.isInteger(value) || value < 1 || value > 18) {
+            addIssue(issues, `payload.numbers.${index}`, '1~18 정수 필요');
+          }
+        });
+        if (new Set(payload.numbers).size !== payload.numbers.length) {
+          addIssue(issues, 'payload.numbers', '중복 번호 불가');
+        }
+      }
       break;
     case GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS:
       validateString(issues, payload.eventId, 'payload.eventId', 100);

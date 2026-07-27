@@ -134,6 +134,15 @@ assert.equal(ladder.rpc, 'gacha_s2_play_ladder');
 assert.equal(ladder.args.p_lane, 4);
 assert.equal(ladder.args.p_user_id, 'user-fixed-by-auth');
 
+const lotto = await router.execute('user-fixed-by-auth', command(
+  GAME_COMMAND_TYPES.BUY_LOTTO_TICKET,
+  { numbers: [1, 4, 7, 10, 13, 18] },
+  'lotto-edge-00001',
+));
+assert.equal(lotto.rpc, 'gacha_s2_buy_lotto_ticket');
+assert.deepEqual(lotto.args.p_numbers, [1, 4, 7, 10, 13, 18]);
+assert.equal(lotto.args.p_user_id, 'user-fixed-by-auth');
+
 const mismatchRouter = createServerCommandRouter({
   gateway: { ...gateway, activeBalanceVersion: async () => 'stale-balance' },
   cards,
@@ -163,6 +172,7 @@ assert.match(edgeSource, /GAME_ALLOWED_ORIGINS/);
 assert.match(edgeSource, /MAX_BODY_BYTES/);
 assert.match(edgeSource, /body\.kind === 'powerRanking'/);
 assert.match(edgeSource, /body\.kind === 'bridgeStatus'/);
+assert.match(edgeSource, /body\.kind === 'lottoState'/);
 assert.match(edgeSource, /req\.body\.getReader\(\)/);
 assert.match(edgeSource, /X-Request-ID/);
 assert.match(edgeSource, /gacha_s2_command_failures/);

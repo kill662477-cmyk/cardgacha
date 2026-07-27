@@ -981,6 +981,37 @@ button[aria-busy="true"]::after {
 .ladder-bottom span.winner { border-color: var(--acid); background: #18200c; color: var(--acid); box-shadow: 0 0 18px rgba(200,245,46,.28); animation: ladder-winner .7s ease infinite alternate; }
 @keyframes ladder-winner { to { transform: translateY(-3px) scale(1.04); filter: brightness(1.25); } }
 
+.lotto-shell { display: grid; grid-template-rows: auto auto auto auto minmax(66px, 1fr); gap: 10px; width: min(100%, 820px); height: 100%; min-height: 0; padding: 4px; overflow-y: auto; }
+.lotto-round-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 13px; border: 1px solid #4b544e; background: rgba(7,11,8,.94); }
+.lotto-round-head span, .lotto-result-grid section > span, .lotto-winners header span { display: block; color: var(--muted); font-size: 8px; font-weight: 900; letter-spacing: .1em; }
+.lotto-round-head strong { display: block; margin-top: 3px; font-size: 14px; }
+.lotto-round-head > b { padding: 6px 9px; border: 1px solid var(--acid); color: var(--acid); font-size: 9px; }
+.lotto-round-head > b.closed { border-color: var(--red); color: var(--red); }
+.lotto-number-grid { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 6px; }
+.lotto-number-grid button { aspect-ratio: 1; min-width: 0; border: 1px solid #58645c; border-radius: 50%; background: #101712; color: #dce2dd; font-size: clamp(10px, 1.3vw, 15px); font-weight: 950; cursor: pointer; transition: transform .14s ease, border-color .14s ease, background .14s ease, color .14s ease; }
+.lotto-number-grid button:hover, .lotto-number-grid button:focus-visible { border-color: var(--acid); color: var(--acid); transform: translateY(-2px); outline: none; }
+.lotto-number-grid button.selected { border-color: var(--gold); background: var(--gold); color: #121006; box-shadow: 0 0 15px rgba(229,189,78,.28); }
+.lotto-number-grid button:disabled { cursor: default; filter: grayscale(.7); opacity: .55; transform: none; }
+.lotto-ticket-strip { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; border-left: 3px solid var(--gold); background: rgba(229,189,78,.08); }
+.lotto-ticket-strip > span { color: var(--gold); font-size: 9px; font-weight: 950; }
+.lotto-ticket-strip > div { display: flex; gap: 6px; }
+.lotto-ball { display: inline-grid; place-items: center; width: 28px; height: 28px; border: 1px solid #8b7a44; border-radius: 50%; background: #17150c; color: var(--gold); font-size: 10px; font-style: normal; font-weight: 950; }
+.lotto-ball.hit { border-color: var(--acid); background: var(--acid); color: #071009; }
+.lotto-result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.lotto-result-grid section { min-width: 0; padding: 10px 12px; border: 1px solid var(--line); background: rgba(6,10,7,.92); }
+.lotto-result-grid section > div { margin-top: 7px; color: #d9dfda; font-size: 9px; line-height: 1.6; }
+.lotto-result-grid .lotto-inline-balls { display: flex; flex-wrap: wrap; gap: 4px; }
+.lotto-result-grid .lotto-inline-balls .lotto-ball { width: 23px; height: 23px; font-size: 8px; }
+.lotto-result-summary { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 7px; color: var(--muted); }
+.lotto-result-summary strong { color: var(--acid); font-size: 10px; }
+.lotto-winners { min-height: 0; padding: 10px 12px; border: 1px solid #554c2e; background: rgba(14,12,5,.92); }
+.lotto-winners header { display: flex; justify-content: space-between; align-items: end; padding-bottom: 7px; border-bottom: 1px solid #3f3925; }
+.lotto-winners header strong { color: var(--gold); font-size: 10px; }
+.lotto-winners > div { display: grid; gap: 4px; max-height: 92px; margin-top: 6px; overflow-y: auto; }
+.lotto-winner-row { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 5px 2px; border-bottom: 1px solid #2f2b1d; font-size: 9px; }
+.lotto-winner-row b { color: var(--gold); }
+.lotto-winner-row strong { color: var(--acid); font-variant-numeric: tabular-nums; }
+
 .minigame-result-panel { display: grid; justify-items: center; gap: 8px; min-width: 280px; padding: 28px; border: 1px solid var(--acid); background: rgba(6,10,7,.94); box-shadow: 0 0 50px rgba(200,245,46,.12); }
 .minigame-result-panel span { color: var(--acid); font-size: 8px; font-weight: 950; }
 .minigame-result-panel h3 { margin: 0; font-size: 25px; }
@@ -1007,6 +1038,20 @@ button[aria-busy="true"]::after {
 .minigame-records div { display: flex; justify-content: space-between; padding: 11px 1px; border-bottom: 1px solid var(--line); }
 .minigame-records dt { color: var(--muted); font-size: 9px; }
 .minigame-records dd { margin: 0; color: var(--acid); font-size: 10px; font-weight: 900; }
+.lotto-control { grid-row: 2 / 5; min-height: 0; padding: 10px 12px; overflow-y: auto; }
+.lotto-pool { padding: 11px; border: 1px solid #4d4831; background: #151308; }
+.lotto-pool + .lotto-pool { margin-top: 7px; }
+.lotto-pool span, .lotto-pool small { display: block; color: var(--muted); font-size: 8px; }
+.lotto-pool strong { display: block; margin: 5px 0; color: var(--gold); font-size: 18px; font-variant-numeric: tabular-nums; }
+.lotto-pool.second { border-color: #3f4a50; background: #101518; }
+.lotto-pool.second strong { color: #d6e0ea; }
+.lotto-control ul { margin: 9px 0; padding: 0; list-style: none; }
+.lotto-control li { display: grid; grid-template-columns: 30px 1fr auto; gap: 6px; padding: 8px 2px; border-bottom: 1px solid var(--line); font-size: 9px; }
+.lotto-control li b { color: var(--gold); }
+.lotto-control li span { color: var(--muted); }
+.lotto-control li strong { color: var(--acid); }
+.lotto-control p { margin: 10px 0 7px; padding: 8px; border-left: 3px solid var(--acid); background: rgba(200,245,46,.07); color: var(--acid); font-size: 9px; line-height: 1.5; }
+.lotto-control > small { color: var(--muted); font-size: 8px; line-height: 1.5; }
 .minigame-start-button, .minigame-stop-button { display: flex; justify-content: center; align-items: center; gap: 7px; min-height: 48px; margin: 8px 12px 12px; border: 1px solid var(--acid); background: var(--acid); color: #070a09; font-weight: 950; cursor: pointer; }
 .minigame-start-button, .minigame-stop-button { grid-row: 5; }
 .minigame-start-button[data-mode="practice"] { border-color: var(--cyan); background: var(--cyan); }

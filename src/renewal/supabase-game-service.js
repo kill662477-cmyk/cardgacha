@@ -8,6 +8,7 @@ import {
 export const SUPABASE_GAME_SERVICE_METHODS = Object.freeze([
   'loadSnapshot',
   'getWorldBossStatus',
+  'getLottoState',
   'getGuildApplicantProfile',
   'getPowerRanking',
   'getBridgeStatus',
@@ -174,6 +175,19 @@ export function createSupabaseGameService(options = {}) {
     return response.state;
   }
 
+  async function getLottoState() {
+    const response = await request({ kind: 'lottoState' });
+    if (response.ok === false) return response;
+    if (!response.state || typeof response.state !== 'object') {
+      return createGameError({
+        code: GAME_ERROR_CODES.INTERNAL_ERROR,
+        message: '로또 정보를 불러오지 못했습니다.',
+        serverTime: clock.now(),
+      });
+    }
+    return response.state;
+  }
+
   async function getGuildApplicantProfile(targetUserId) {
     if (typeof targetUserId !== 'string' || !UUID_PATTERN.test(targetUserId)) {
       return createGameError({
@@ -222,6 +236,7 @@ export function createSupabaseGameService(options = {}) {
   const service = {
     loadSnapshot,
     getWorldBossStatus,
+    getLottoState,
     getGuildState,
     getGuildApplicantProfile,
     getGuildRaidStatus,

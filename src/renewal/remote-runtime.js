@@ -1,6 +1,6 @@
 import { createClient } from '../vendor/supabase.js';
 import { createAuthSessionService } from './auth-session-service.js?v=202607241835';
-import { createSupabaseGameService } from './supabase-game-service.js?v=202607241835';
+import { createSupabaseGameService } from './supabase-game-service.js?v=202607271015';
 
 export function readRemoteConfig(source = globalThis.__CARD_GACHA_CONFIG__) {
   if (globalThis.location && new URLSearchParams(globalThis.location.search).has('local')) {
@@ -48,7 +48,7 @@ export function createRemoteRuntime(config = readRemoteConfig(), options = {}) {
     const cutoff = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     const { data, error } = await supabase
       .from('gacha_s2_live_events')
-      .select('id,event_type,nickname,card_id,member,rarity,enhancement,created_at')
+      .select('id,event_type,nickname,card_id,member,rarity,enhancement,event_rank,points,lotto_round_id,created_at')
       .gte('created_at', cutoff)
       .order('created_at', { ascending: false })
       .limit(20);

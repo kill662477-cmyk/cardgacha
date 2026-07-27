@@ -31,6 +31,17 @@ const fetchImpl = async (url, options) => {
       },
     });
   }
+  if (body.kind === 'lottoState') {
+    return Response.json({
+      ok: true,
+      serverTime: now,
+      state: {
+        ok: true,
+        round: { roundId: '20260727-1500', saleOpen: true },
+        recentWinners: [],
+      },
+    });
+  }
   const response = createGameSuccess({
     command: body.command,
     revision: 8,
@@ -78,11 +89,14 @@ assert.equal(calls[2].body.targetUserId, applicantUserId);
 const invalidApplicant = await service.getGuildApplicantProfile('not-a-uuid');
 assert.equal(invalidApplicant.code, 'VALIDATION_FAILED');
 assert.equal(calls.length, 3, 'invalid applicant ID must not issue a request');
+const lottoState = await service.getLottoState();
+assert.equal(lottoState.round.roundId, '20260727-1500');
+assert.equal(calls[3].body.kind, 'lottoState');
 
 token = '';
 const unauthenticated = await service.loadSnapshot();
 assert.equal(unauthenticated.code, 'AUTH_REQUIRED');
-assert.equal(calls.length, 3, 'missing session must not issue a request');
+assert.equal(calls.length, 4, 'missing session must not issue a request');
 
 const mismatchedService = createSupabaseGameService({
   projectUrl: 'https://project.supabase.co',

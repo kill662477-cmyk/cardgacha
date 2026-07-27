@@ -397,6 +397,7 @@ export const GUILD_RULES = {
   // "스테이지 몇 개" 같은 세부 결과가 아니라 명령 단위로 센다.
   gpPerCommand: {
     finishAdventureRun: 5,
+    claimQuickBattle: 5,
     finishMinigame: 2,
     playLadder: 2,
     attackWorldBoss: 10,

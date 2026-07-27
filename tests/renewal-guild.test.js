@@ -20,6 +20,8 @@ const raidRpc = squash(await read('supabase/migrations/20260725000101_guild_m4_r
 const pendingJoinState = squash(await read('supabase/migrations/20260726121500_guild_pending_join_state.sql'));
 const penaltyException = squash(await read('supabase/migrations/20260726123000_clear_mstz_sonsilba_guild_penalty.sql'));
 const applicantProfile = squash(await read('supabase/migrations/20260727000001_guild_applicant_profile.sql'));
+const quickBattleGp = squash(await read('supabase/migrations/20260727142000_guild_quick_battle_gp.sql'));
+const jolgeQuickBattleGp = squash(await read('supabase/migrations/20260727142500_compensate_jolge_quick_battle_gp.sql'));
 const router = await read('src/renewal/server-command-router.js');
 const edge = await read('supabase/functions/game-command/index.ts');
 
@@ -202,6 +204,14 @@ assert.equal(applyGuildBuff(baseBonus, null), baseBonus);
 assert.match(gpLevels, /create trigger gacha_s2_guild_gp_trigger after insert on public\.gacha_s2_command_audit/);
 assert.match(gpLevels, /when 'finishadventurerun' then v_gp := 5/);
 assert.match(gpLevels, /when 'attackworldboss' then v_gp := 10/);
+assert.equal(GUILD_RULES.gpPerCommand.claimQuickBattle, 5);
+assert.match(quickBattleGp, /when 'claimquickbattle' then v_gp := 5; v_source := 'adventure'/);
+assert.match(quickBattleGp, /actions = public\.gacha_s2_guild_contributions\.actions \+ 1/);
+assert.match(jolgeQuickBattleGp, /where btrim\(nickname\) = '졸게'/);
+assert.match(jolgeQuickBattleGp, /if v_quick_count <> 3 then/);
+assert.match(jolgeQuickBattleGp, /'졸게', 'adventure', v_award, 3/);
+assert.match(jolgeQuickBattleGp, /on conflict \(adjustment_key\) do nothing/);
+assert.match(jolgeQuickBattleGp, /least\(15, 200 - v_today_gp\)/);
 assert.match(gpLevels, /v_cap constant integer := 200/, '하루 개인 적립 상한');
 assert.match(gpLevels, /if v_today >= v_cap then return new; end if;/);
 // 정원은 절대 줄지 않아야 한다(이미 가입한 길드원 보호).

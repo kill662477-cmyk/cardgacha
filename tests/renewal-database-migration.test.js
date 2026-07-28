@@ -16,6 +16,10 @@ const soopEventRewardSql = await readFile(
   new URL('../supabase/migrations/20260727231500_soop_post_202512799_reward_batch_1.sql', import.meta.url),
   'utf8',
 );
+const soopEventBatch4Sql = await readFile(
+  new URL('../supabase/migrations/20260728232000_soop_post_202512799_reward_batch_4.sql', import.meta.url),
+  'utf8',
+);
 
 for (const sourceTable of [
   'gacha_users',
@@ -81,6 +85,14 @@ assert.match(soopEventRewardSql, /gacha_s2_deliver_mail/);
 assert.match(soopEventRewardSql, /soop-post-202512799:reward-50k/);
 assert.match(soopEventRewardSql, /v_reward_total <> v_reward_count::bigint \* 50000/);
 assert.match(soopEventRewardSql, /revoke all on table public\.gacha_s2_soop_post_202512799_rewards/);
+assert.match(soopEventBatch4Sql, /SOOP event batch 4 target mismatch: expected 9/);
+assert.equal((soopEventBatch4Sql.match(/^  \('[a-z0-9]+'\)[,;]$/gm) ?? []).length, 9);
+assert.match(soopEventBatch4Sql, /on conflict do nothing/);
+assert.match(soopEventBatch4Sql, /soop_post_202512799_batch_4_awarded/);
+assert.match(soopEventBatch4Sql, /state\.points \+ 50000/);
+assert.match(soopEventBatch4Sql, /\[이벤트\] 참여 보상 지급 완료/);
+assert.match(soopEventBatch4Sql, /v_reward_count <> 9 or v_reward_total <> 450000/);
+assert.match(soopEventBatch4Sql, /mailbox verification failed: expected 9/);
 
 console.log('renewal database migration tests passed: read-only source, account and bridge carryover, clean game state');
 

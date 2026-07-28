@@ -11,7 +11,7 @@ export const EMBLEM_GLYPHS = Object.freeze({
 // gacha_s2_guild_emblems 행 삽입 + 여기 한 줄이면 된다.
 // 파일명을 그대로 두고 이미지를 교체하면(크롭 조정 등) 브라우저가 옛 파일을 계속 쓴다.
 // 그래서 경로에 버전을 붙인다. 이미지를 새로 만들 때마다 이 값을 올릴 것.
-const EMBLEM_ASSET_VERSION = '202607281030';
+const EMBLEM_ASSET_VERSION = '202607281325';
 
 export const EMBLEM_IMAGES = Object.freeze({
   ilsin: `assets/renewal/guild/emblems/ilsin.png?v=${EMBLEM_ASSET_VERSION}`,

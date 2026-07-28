@@ -2,12 +2,11 @@
 globalThis.__CARD_GACHA_CONFIG__ = globalThis.__CARD_GACHA_CONFIG__ ?? {
   supabaseUrl: 'https://rljvzultuyiudhjjfotg.supabase.co',
   supabasePublishableKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsanZ6dWx0dXlpdWRoampmb3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NzUzNjUsImV4cCI6MjA5NzI1MTM2NX0.U2FYWE4AOfJS6utrXDvwhU4yUqNtDDKk75OM27IXXWU',
-  // Maintenance toggle (Phase 1): true로 설정하면 app.js 로드 전에 점검 페이지로 가로채기.
-  // 운영 토글 = 이 값을 수정 후 재배포. false로 두면 정상 동작.
-  maintenance: false,
-  maintenanceTitle: '시즌2 긴급 점검 안내',
-  maintenanceMessage: '안녕하세요, 카드가챠 운영팀입니다.\n\n현재 게임 데이터 초기화 및 밸런스 패치 작업이 진행 중입니다.\n\n이번 초기화로 인해 그동안 열심히 플레이해 주신 여러분의 진행 데이터가 리셋되는 점, 진심으로 사과드립니다. 더 나은 게임 환경과 공정한 밸런스를 위한 결정이오니 너그러운 양해 부탁드립니다.\n\n점검이 완료되면 별도 공지 없이 바로 접속 가능합니다.\n감사합니다.',
-  maintenanceCode: 'MAINTENANCE // 데이터 초기화 & 밸런스 패치',
+  // 운영 토글. true면 앱 초기화를 중단하고 점검 화면만 표시한다.
+  maintenance: true,
+  maintenanceTitle: '서버 점검 중',
+  maintenanceMessage: '서버 안정화 및 요청 구조 개선 작업을 진행하고 있습니다.\n\n점검 시간: 08:30 ~ 11:00\n작업이 일찍 끝나면 예정보다 빠르게 오픈됩니다.\n\n10시 시그널 로또 추첨은 기존 일정대로 정상 진행됩니다.',
+  maintenanceCode: 'MAINTENANCE // SERVER OPTIMIZATION',
 };
 
 // 점검 모드: app.js 모듈 실행 전에 본문을 가리고 점검 오버레이를 노출한다.
@@ -15,15 +14,8 @@ globalThis.__CARD_GACHA_CONFIG__ = globalThis.__CARD_GACHA_CONFIG__ ?? {
 (function applyMaintenanceGuard() {
   if (typeof document === 'undefined' || typeof window === 'undefined') return;
   
-  // 관리자 접속 우회: URL에 ?admin=cmyk 를 붙여 접속하면 브라우저에 권한이 저장됩니다.
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('admin') === 'cmyk') {
-    localStorage.setItem('admin_bypass_maintenance', 'true');
-  }
-  const isBypass = localStorage.getItem('admin_bypass_maintenance') === 'true';
-
   const config = globalThis.__CARD_GACHA_CONFIG__;
-  if (!config || !config.maintenance || isBypass) return;
+  if (!config || !config.maintenance) return;
 
   const injectOverlay = () => {
     if (document.getElementById('maintenanceOverlay')) return;

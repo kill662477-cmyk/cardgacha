@@ -2119,6 +2119,10 @@ button[aria-busy="true"]::after {
   background: var(--panel-soft); border: 1px solid var(--line);
 }
 .guild-member-main { display: flex; align-items: center; gap: 8px; min-width: 140px; }
+.guild-member-profile { padding: 0; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.guild-member-profile strong { text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: color .15s ease, text-decoration-color .15s ease; }
+.guild-member-profile small { color: var(--muted); font-size: .66rem; font-weight: 750; }
+.guild-member-profile:hover strong, .guild-member-profile:focus-visible strong { color: var(--acid); text-decoration-color: currentColor; }
 .guild-member-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-left: auto; color: var(--muted); font-size: .74rem; }
 .guild-member-actions { display: flex; gap: 6px; }
 .guild-request { justify-content: space-between; }
@@ -2209,6 +2213,7 @@ button[aria-busy="true"]::after {
 .guild-weekly-bar i { display: block; height: 100%; background: var(--cyan); }
 .guild-weekly-goal.complete .guild-weekly-bar i { background: var(--acid, #b6ff3b); }
 .guild-weekly-goal small { color: var(--muted); font-size: .7rem; }
+.guild-weekly-personal.complete { color: var(--acid, #b6ff3b); font-weight: 850; }
 .guild-raid { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
 .guild-raid > small { display: block; margin: 4px 0 10px; color: var(--muted); font-size: .74rem; }
 .guild-raid-hp { height: 12px; border-radius: 999px; background: var(--panel-soft); overflow: hidden; border: 1px solid var(--line); }

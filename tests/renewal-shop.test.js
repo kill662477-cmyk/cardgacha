@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import { PACKS, SUPPORT_ITEMS, SUPPORT_PACK } from '../src/renewal/config.js';
 import {
   addCardResults,
+  cardExpPotionsNeeded,
   cardResultGridLayout,
   cardExpBoostSeconds,
   drawCardPack,
@@ -144,5 +145,18 @@ const batchMaxed = useCardExpPotionBatch(
   'target', 300, 'cardExpPotionLarge',
 );
 assert.equal(batchMaxed.used, false);
+
+assert.equal(
+  cardExpPotionsNeeded(0, 300, 'cardExpPotionLarge'),
+  15,
+  '일괄 요청은 보유량이 아니라 실제 필요 수량을 보내야 한다',
+);
+const batchOverTenThousandOwned = useCardExpPotionBatch(
+  { supportItems: { cardExpPotionLarge: 10_001 }, cardProgress: { target: { enhancement: 2, exp: 0 } } },
+  'target', 300, 'cardExpPotionLarge',
+);
+assert.equal(batchOverTenThousandOwned.used, true);
+assert.equal(batchOverTenThousandOwned.potionsUsed, 15);
+assert.equal(batchOverTenThousandOwned.state.supportItems.cardExpPotionLarge, 9_986);
 
 console.log('renewal shop tests passed: card packs, support guarantee, selectors, consumables, resets, batch EXP potion fill');

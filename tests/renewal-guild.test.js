@@ -21,6 +21,7 @@ const raidRpc = squash(await read('supabase/migrations/20260725000101_guild_m4_r
 const pendingJoinState = squash(await read('supabase/migrations/20260726121500_guild_pending_join_state.sql'));
 const penaltyException = squash(await read('supabase/migrations/20260726123000_clear_mstz_sonsilba_guild_penalty.sql'));
 const applicantProfile = squash(await read('supabase/migrations/20260727000001_guild_applicant_profile.sql'));
+const memberProgressAndDecks = squash(await read('supabase/migrations/20260728103000_guild_member_progress_and_decks.sql'));
 const quickBattleGp = squash(await read('supabase/migrations/20260727142000_guild_quick_battle_gp.sql'));
 const jolgeQuickBattleGp = squash(await read('supabase/migrations/20260727142500_compensate_jolge_quick_battle_gp.sql'));
 const router = await read('src/renewal/server-command-router.js');
@@ -164,6 +165,16 @@ assert.match(edge, /body\.kind === 'guildApplicantProfile'/, 'edge 에 신청자
 assert.match(edge, /gacha_s2_get_guild_applicant_profile/);
 assert.match(edge, /p_target_user_id: body\.targetUserId/, '클라이언트 대상 ID 전달 누락');
 assert.match(edge, /buildGuildApplicantProfile\(profile, cards\)/, '신청자 전투력은 서버에서 계산해야 한다');
+assert.match(edge, /body\.kind === 'guildMemberProfile'/, 'edge 에 길드원 덱 조회 kind 누락');
+assert.match(edge, /gacha_s2_get_guild_member_profile/);
+assert.match(edge, /gacha_s2_get_guild_weekly_member_progress/);
+assert.match(memberProgressAndDecks, /create or replace function public\.gacha_s2_get_guild_weekly_member_progress/);
+assert.match(memberProgressAndDecks, /c\.user_id = p_user_id/, '주간 개인 기여도는 본인 기록만 합산해야 한다');
+assert.match(memberProgressAndDecks, /'counted', least\(v_actions, v_cap\)/, '화면 기여도는 개인 상한까지만 표시해야 한다');
+assert.match(memberProgressAndDecks, /target\.guild_id = v_guild_id and target\.user_id = p_target_user_id/,
+  '같은 길드원만 덱을 조회할 수 있어야 한다');
+assert.match(memberProgressAndDecks, /'guildbuff', public\.gacha_s2_guild_buff\(s\.user_id\)/,
+  '길드원 전투력 계산에 길드 버프가 포함돼야 한다');
 
 // ── M2: 공헌도·레벨·버프 ──────────────────────────────────
 assert.equal(GUILD_RULES.levels.length, 10);
@@ -446,6 +457,10 @@ assert.match(guildControllerSource, /data-guild-cancel=/, '대기 상태에 신�
 assert.match(guildControllerSource, /pendingGuildIds\.delete\(guildCancel\)/, '취소 성공 즉시 대기 상태를 해제해야 한다');
 assert.match(guildControllerSource, /data-guild-applicant=/, '신청자 닉네임에 상세 조회 버튼이 있어야 한다');
 assert.match(guildControllerSource, /getGuildApplicantProfile\?\.\(userId\)/, '신청자 상세를 클릭 시점에 조회해야 한다');
+assert.match(guildControllerSource, /data-guild-member-profile=/, '길드원 닉네임에 덱 조회 버튼이 있어야 한다');
+assert.match(guildControllerSource, /getGuildMemberProfile\?\.\(userId\)/, '길드원 덱은 클릭 시점에 조회해야 한다');
+assert.match(guildControllerSource, /weekly\.myContributions/, '주간 목표에 본인 기여도를 표시해야 한다');
+assert.match(guildControllerSource, /최대 기여 완료/, '개인 최대치 달성 여부 문구 누락');
 assert.match(guildControllerSource, /Number\(profile\.power\)/, '서버가 계산한 신청자 전투력을 표시해야 한다');
 assert.match(guildStyles, /\.guild-request-profile\s*\{/, '신청자 상세 버튼 스타일 누락');
 assert.match(guildStyles, /\.guild-list-pending-actions\s*\{/, '승인 대기 버튼 묶음 스타일 누락');

@@ -100,10 +100,13 @@ export function createGuildController({ cards = [], getState, gameService, serve
       const manageable = canManage && m.role !== 'owner' && !(m.role === 'officer' && !isOwner);
       return `
       <li class="guild-member">
-        <div class="guild-member-main">
+        <button type="button" class="guild-member-main guild-member-profile"
+          data-guild-member-profile="${escapeHtml(m.userId)}"
+          aria-label="${escapeHtml(m.nickname ?? '-')}님의 전투력과 현재 덱 확인">
           <strong>${escapeHtml(m.nickname ?? '-')}</strong>
           <span class="guild-role guild-role-${escapeHtml(m.role)}">${ROLE_LABELS[m.role] ?? m.role}</span>
-        </div>
+          <small>덱 보기</small>
+        </button>
         <div class="guild-member-stats">
           <span>주간 ${number.format(m.weeklyGp ?? 0)} GP</span>
           <span>누적 ${number.format(m.totalGp ?? 0)}</span>
@@ -158,13 +161,22 @@ export function createGuildController({ cards = [], getState, gameService, serve
       return;
     }
     elements.guildWeeklyBox.hidden = false;
+    const personal = new Map(
+      (Array.isArray(weekly.myContributions) ? weekly.myContributions : [])
+        .map((goal) => [goal.key, goal]),
+    );
     elements.guildWeeklyList.innerHTML = weekly.goals.map((g) => {
       const ratio = g.target > 0 ? Math.min(100, Math.round((g.progress / g.target) * 100)) : 0;
+      const mine = personal.get(g.key);
+      const personalText = mine
+        ? `내 기여 ${number.format(mine.counted ?? 0)} / ${number.format(mine.memberCap ?? g.memberCap)}`
+          + (mine.complete ? ' · 최대 기여 완료' : '')
+        : `1인 최대 ${number.format(g.memberCap)}회까지 집계`;
       return `<li class="guild-weekly-goal${g.complete ? ' complete' : ''}">
         <div class="guild-weekly-label"><strong>${escapeHtml(g.label)}</strong>
           <span>${number.format(g.progress)} / ${number.format(g.target)}</span></div>
         <div class="guild-weekly-bar"><i style="width:${ratio}%"></i></div>
-        <small>1인 최대 ${number.format(g.memberCap)}회까지 집계</small>
+        <small class="guild-weekly-personal${mine?.complete ? ' complete' : ''}">${personalText}</small>
       </li>`;
     }).join('');
     // 달성했고 아직 안 받았을 때만 수령 버튼을 노출한다.
@@ -212,7 +224,7 @@ export function createGuildController({ cards = [], getState, gameService, serve
       </li>`).join('') || '<li class="guild-empty">대기 중인 신청이 없습니다</li>';
   }
 
-  function applicantDeck(profile) {
+  function profileDeck(profile) {
     return (Array.isArray(profile?.formation) ? profile.formation : []).map((item) => {
       const card = cardsById.get(item?.cardId);
       if (!card) return null;
@@ -220,18 +232,21 @@ export function createGuildController({ cards = [], getState, gameService, serve
     }).filter(Boolean);
   }
 
-  async function openApplicantProfile(userId) {
+  async function openGuildProfile(userId, kind = 'applicant') {
     try {
-      const profile = await gameService.getGuildApplicantProfile?.(userId);
+      const memberProfile = kind === 'member';
+      const profile = memberProfile
+        ? await gameService.getGuildMemberProfile?.(userId)
+        : await gameService.getGuildApplicantProfile?.(userId);
       if (!profile || profile.ok === false) {
-        showToast?.(profile?.message ?? '신청자 정보를 불러오지 못했습니다.');
+        showToast?.(profile?.message ?? `${memberProfile ? '길드원' : '신청자'} 정보를 불러오지 못했습니다.`);
         return;
       }
-      const deck = applicantDeck(profile);
+      const deck = profileDeck(profile);
       const power = Math.max(0, Number(profile.power) || 0);
       const nickname = profile.nickname ?? '-';
 
-      elements.rankerDeckEyebrow.textContent = `가입 신청자 · ${nickname}`;
+      elements.rankerDeckEyebrow.textContent = memberProfile ? `길드원 · ${nickname}` : `가입 신청자 · ${nickname}`;
       elements.rankerDeckTitle.textContent = `${nickname}님의 현재 덱`;
       elements.rankerDeckPower.textContent = power > 0 ? `전투력 ${number.format(power)}` : '전투력 미집계';
       elements.rankerDeckGuild.hidden = true;
@@ -247,7 +262,7 @@ export function createGuildController({ cards = [], getState, gameService, serve
       window.lucide?.createIcons();
       if (!elements.rankerDeckDialog.open) elements.rankerDeckDialog.showModal();
     } catch (error) {
-      showToast?.(error?.message ?? '신청자 정보를 불러오지 못했습니다.');
+      showToast?.(error?.message ?? `${kind === 'member' ? '길드원' : '신청자'} 정보를 불러오지 못했습니다.`);
     }
   }
 
@@ -460,13 +475,22 @@ export function createGuildController({ cards = [], getState, gameService, serve
       if (!target) return;
       const {
         guildJoin, guildCancel, guildKick, guildApprove, guildReject,
-        guildApplicant, guildRole, guildJoinmode, guildSort,
+        guildApplicant, guildMemberProfile, guildRole, guildJoinmode, guildSort,
       } = target.dataset;
       if (guildSort) { memberSort = guildSort; renderMembers(guildState?.members); renderSortControls(); return; }
       if (guildApplicant) {
         target.disabled = true;
         target.setAttribute('aria-busy', 'true');
-        void openApplicantProfile(guildApplicant).finally(() => {
+        void openGuildProfile(guildApplicant, 'applicant').finally(() => {
+          if (!target.isConnected) return;
+          target.disabled = false;
+          target.removeAttribute('aria-busy');
+        });
+      }
+      else if (guildMemberProfile) {
+        target.disabled = true;
+        target.setAttribute('aria-busy', 'true');
+        void openGuildProfile(guildMemberProfile, 'member').finally(() => {
           if (!target.isConnected) return;
           target.disabled = false;
           target.removeAttribute('aria-busy');

@@ -10,6 +10,7 @@ export const SUPABASE_GAME_SERVICE_METHODS = Object.freeze([
   'getWorldBossStatus',
   'getLottoState',
   'getGuildApplicantProfile',
+  'getGuildMemberProfile',
   'getPowerRanking',
   'getBridgeStatus',
   'getMailbox',
@@ -210,6 +211,26 @@ export function createSupabaseGameService(options = {}) {
     return response.profile;
   }
 
+  async function getGuildMemberProfile(targetUserId) {
+    if (typeof targetUserId !== 'string' || !UUID_PATTERN.test(targetUserId)) {
+      return createGameError({
+        code: GAME_ERROR_CODES.VALIDATION_FAILED,
+        message: '길드원 정보가 올바르지 않습니다.',
+        serverTime: clock.now(),
+      });
+    }
+    const response = await request({ kind: 'guildMemberProfile', targetUserId });
+    if (response.ok === false) return response;
+    if (!response.profile || typeof response.profile !== 'object') {
+      return createGameError({
+        code: GAME_ERROR_CODES.INTERNAL_ERROR,
+        message: '길드원 정보 응답이 올바르지 않습니다.',
+        serverTime: clock.now(),
+      });
+    }
+    return response.profile;
+  }
+
   async function getGuildRaidStatus() {
     const response = await request({ kind: 'guildRaidStatus' });
     if (response.ok === false) return response;
@@ -274,6 +295,7 @@ export function createSupabaseGameService(options = {}) {
     getLottoState,
     getGuildState,
     getGuildApplicantProfile,
+    getGuildMemberProfile,
     getGuildRaidStatus,
     getPowerRanking,
     getBridgeStatus,

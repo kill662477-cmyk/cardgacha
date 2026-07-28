@@ -31,6 +31,18 @@ const fetchImpl = async (url, options) => {
       },
     });
   }
+  if (body.kind === 'guildMemberProfile') {
+    return Response.json({
+      ok: true,
+      serverTime: now,
+      profile: {
+        ok: true,
+        userId: body.targetUserId,
+        nickname: '길드원',
+        formation: [],
+      },
+    });
+  }
   if (body.kind === 'lottoState') {
     return Response.json({
       ok: true,
@@ -121,28 +133,35 @@ assert.equal(calls[2].body.targetUserId, applicantUserId);
 const invalidApplicant = await service.getGuildApplicantProfile('not-a-uuid');
 assert.equal(invalidApplicant.code, 'VALIDATION_FAILED');
 assert.equal(calls.length, 3, 'invalid applicant ID must not issue a request');
+const memberProfile = await service.getGuildMemberProfile(applicantUserId);
+assert.equal(memberProfile.nickname, '길드원');
+assert.equal(calls[3].body.kind, 'guildMemberProfile');
+assert.equal(calls[3].body.targetUserId, applicantUserId);
+const invalidMember = await service.getGuildMemberProfile('not-a-uuid');
+assert.equal(invalidMember.code, 'VALIDATION_FAILED');
+assert.equal(calls.length, 4, 'invalid guild member ID must not issue a request');
 const lottoState = await service.getLottoState();
 assert.equal(lottoState.round.roundId, '20260727-1500');
 assert.deepEqual(lottoState.history, []);
-assert.equal(calls[3].body.kind, 'lottoState');
+assert.equal(calls[4].body.kind, 'lottoState');
 const mailbox = await service.getMailbox();
 assert.equal(mailbox.unreadCount, 1);
 assert.equal(mailbox.messages[0].points, 50000);
-assert.equal(calls[4].body.kind, 'mailbox');
+assert.equal(calls[5].body.kind, 'mailbox');
 const mailId = '00000000-0000-4000-8000-000000000010';
 const markedMail = await service.markMailboxRead(mailId);
 assert.equal(markedMail.mailId, mailId);
 assert.equal(markedMail.unreadCount, 0);
-assert.equal(calls[5].body.kind, 'mailboxRead');
-assert.equal(calls[5].body.mailId, mailId);
+assert.equal(calls[6].body.kind, 'mailboxRead');
+assert.equal(calls[6].body.mailId, mailId);
 const invalidMail = await service.markMailboxRead('not-a-uuid');
 assert.equal(invalidMail.code, 'VALIDATION_FAILED');
-assert.equal(calls.length, 6, 'invalid mail ID must not issue a request');
+assert.equal(calls.length, 7, 'invalid mail ID must not issue a request');
 
 token = '';
 const unauthenticated = await service.loadSnapshot();
 assert.equal(unauthenticated.code, 'AUTH_REQUIRED');
-assert.equal(calls.length, 6, 'missing session must not issue a request');
+assert.equal(calls.length, 7, 'missing session must not issue a request');
 
 const mismatchedService = createSupabaseGameService({
   projectUrl: 'https://project.supabase.co',

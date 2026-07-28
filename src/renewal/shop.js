@@ -153,6 +153,12 @@ export function useCardExpPotion(state, cardId, requiredExp, itemId = 'cardExpPo
 // by the card's remaining required EXP -- for the enhancement screen's
 // "일괄 채우기" (fill) button. Mirrors the single-use function's per-potion cap
 // logic exactly, just looped, so results match calling useCardExpPotion N times.
+export function cardExpPotionsNeeded(currentExp, requiredExp, itemId = 'cardExpPotion') {
+  const itemExp = Math.max(0, Number(SUPPORT_ITEMS[itemId]?.cardExp) || 0);
+  const remaining = Math.max(0, (Number(requiredExp) || 0) - (Number(currentExp) || 0));
+  return itemExp > 0 ? Math.ceil(remaining / itemExp) : 0;
+}
+
 export function useCardExpPotionBatch(state, cardId, requiredExp, itemId = 'cardExpPotion') {
   const item = SUPPORT_ITEMS[itemId];
   const current = state.cardProgress[cardId] ?? { enhancement: 0, exp: 0 };
@@ -161,7 +167,7 @@ export function useCardExpPotionBatch(state, cardId, requiredExp, itemId = 'card
   if (owned <= 0) return { used: false, reason: `${item.name} 없음`, state };
   if (required <= 0 || current.exp >= required) return { used: false, reason: '현재 강화 경험치 MAX', state };
   const needed = required - current.exp;
-  const potionsUsed = Math.min(owned, Math.ceil(needed / item.cardExp));
+  const potionsUsed = Math.min(owned, cardExpPotionsNeeded(current.exp, required, itemId));
   const gained = Math.min(item.cardExp * potionsUsed, needed);
   return {
     used: true,

@@ -30,6 +30,7 @@ import { applyGuildBuff, buildCollectionModel, calculateCollectionBonuses, group
 import {
   addCardResults,
   addSupportResults,
+  cardExpPotionsNeeded,
   cardResultGridLayout,
   cardExpBoostSeconds,
   drawCardPack,
@@ -51,14 +52,14 @@ import {
 } from './rewards.js';
 import { assertValidGameState, migrateGameState } from './state-schema.js';
 import { createLocalGameService } from './local-game-service.js';
-import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './remote-runtime.js?v=202607271135';
+import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './remote-runtime.js?v=202607281030';
 import { GAME_COMMAND_TYPES, isRetryableGameError } from './service-contract.js';
 import { createRequestCoordinator, REQUEST_PHASES } from './request-coordinator.js?v=202607211025';
 import { createMiniGameController } from './minigame-controller.js?v=202607271135';
 import { executeCommandWithVersionRetry } from './server-command-retry.js';
 import { createWorldBossController } from './worldboss-controller.js?v=202607271325';
 import { createRankingController } from './ranking-controller.js?v=202607271325';
-import { createGuildController } from './guild-controller.js?v=202607271325';
+import { createGuildController } from './guild-controller.js?v=202607281030';
 import { createFxController } from './fx-controller.js?v=202607271325';
 import { cardVisualChrome, enhancementLabel, enhancementStarMarkup, rarityMarkMarkup } from './card-visual.js?v=202607271325';
 import { applyLocalTestProfile } from './local-test-profile.js';
@@ -2248,7 +2249,13 @@ async function fillSelectedCardExpPotion(itemId, button) {
   if (remoteMode) {
     return runUiOperation('useSupportItem', button, async () => {
       const response = await executeServerCommand(GAME_COMMAND_TYPES.USE_SUPPORT_ITEM, {
-        itemId, targetCardId: card.id, race: null, count: state.supportItems[itemId] ?? 0,
+        itemId,
+        targetCardId: card.id,
+        race: null,
+        count: Math.min(
+          state.supportItems[itemId] ?? 0,
+          cardExpPotionsNeeded(card.exp, cardExpRequired(card.enhancement), itemId),
+        ),
       });
       if (!response?.ok) return response;
       renderEnhancement();

@@ -20,6 +20,7 @@ const raidSchema = squash(await read('supabase/migrations/20260725000100_guild_m
 const raidRpc = squash(await read('supabase/migrations/20260725000101_guild_m4_raid_rpc.sql'));
 const pendingJoinState = squash(await read('supabase/migrations/20260726121500_guild_pending_join_state.sql'));
 const penaltyException = squash(await read('supabase/migrations/20260726123000_clear_mstz_sonsilba_guild_penalty.sql'));
+const requestedPenaltyException = squash(await read('supabase/migrations/20260728190000_clear_llliiiiilli_guild_penalty.sql'));
 const applicantProfile = squash(await read('supabase/migrations/20260727000001_guild_applicant_profile.sql'));
 const memberProgressAndDecks = squash(await read('supabase/migrations/20260728103000_guild_member_progress_and_decks.sql'));
 const quickBattleGp = squash(await read('supabase/migrations/20260727142000_guild_quick_battle_gp.sql'));
@@ -125,6 +126,17 @@ assert.match(
   penaltyException,
   /delete from public\.gacha_s2_guild_leave_penalties where user_id = v_user_id/,
   '대상 계정의 길드 페널티만 삭제해야 한다',
+);
+assert.match(
+  requestedPenaltyException,
+  /where lower\(btrim\(nickname\)\) = lower\('llliiiiilli'\)/,
+  'llliiiiilli 계정만 정확히 찾아야 한다',
+);
+assert.match(requestedPenaltyException, /if v_match_count <> 1 or v_user_id is null then/, '동명이인·미발견 가드 누락');
+assert.match(
+  requestedPenaltyException,
+  /delete from public\.gacha_s2_guild_leave_penalties where user_id = v_user_id/,
+  'llliiiiilli 계정의 길드 페널티만 삭제해야 한다',
 );
 
 // 조회 RPC 는 기존 스냅샷 경로를 건드리지 않아야 한다(회귀 위험 차단).
@@ -394,6 +406,16 @@ assert.match(
   '페널티 기간은 config 값을 써야 서버(3 days)와 어긋나지 않는다',
 );
 assert.equal(GUILD_RULES.leavePenaltyDays, 3, '서버 gacha_s2_guild_apply_penalty 의 interval 3 days 와 같아야 한다');
+assert.match(
+  guildControllerSource,
+  /else if \(guildKick\) \{[\s\S]{0,500}?window\.confirm\([\s\S]{0,300}?serverCommands\.kickGuildMember\(\{ targetUserId: guildKick \}\)/,
+  '길드원 추방은 대상 확인창 통과 후에만 커맨드를 보내야 한다',
+);
+assert.match(
+  guildControllerSource,
+  /targetMember\?\.nickname[\s\S]{0,300}?GUILD_RULES\.leavePenaltyDays/,
+  '추방 확인창에 대상 닉네임과 재가입 페널티 기간을 표시해야 한다',
+);
 assert.match(
   guildControllerSource,
   /data-guild-disband[\s\S]{0,400}?window\.confirm\([\s\S]{0,200}?serverCommands\.disbandGuild\(\)/,

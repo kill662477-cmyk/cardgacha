@@ -59,7 +59,7 @@ import { createMiniGameController } from './minigame-controller.js?v=20260727113
 import { executeCommandWithVersionRetry } from './server-command-retry.js';
 import { createWorldBossController } from './worldboss-controller.js?v=202607271325';
 import { createRankingController } from './ranking-controller.js?v=202607271325';
-import { createGuildController } from './guild-controller.js?v=202607281348';
+import { createGuildController } from './guild-controller.js?v=202607281721';
 import { createFxController } from './fx-controller.js?v=202607271325';
 import { cardVisualChrome, enhancementLabel, enhancementStarMarkup, rarityMarkMarkup } from './card-visual.js?v=202607271325';
 import { applyLocalTestProfile } from './local-test-profile.js';

@@ -522,7 +522,13 @@ export function createGuildController({ cards = [], getState, gameService, serve
           },
         ).finally(() => render());
       }
-      else if (guildKick) void run(() => serverCommands.kickGuildMember({ targetUserId: guildKick }));
+      else if (guildKick) {
+        const targetMember = guildState?.members?.find((member) => member.userId === guildKick);
+        const targetNickname = targetMember?.nickname ?? '선택한 길드원';
+        if (window.confirm(`'${targetNickname}' 님을 추방하면 ${GUILD_RULES.leavePenaltyDays}일간 다른 길드에 가입할 수 없습니다. 정말 추방할까요?`)) {
+          void run(() => serverCommands.kickGuildMember({ targetUserId: guildKick }));
+        }
+      }
       else if (guildApprove) void run(() => serverCommands.resolveJoinRequest({ targetUserId: guildApprove, approve: true }));
       else if (guildReject) void run(() => serverCommands.resolveJoinRequest({ targetUserId: guildReject, approve: false }));
       else if (guildRole) void run(() => serverCommands.setGuildMemberRole({ targetUserId: guildRole, role: target.dataset.roleNext }));

@@ -509,9 +509,16 @@ export function createGuildController({ cards = [], getState, gameService, serve
       else if (target.id === 'guildRaidAttack') void run(() => serverCommands.attackGuildRaid());
       else if (target.id === 'guildRaidClaim') void run(() => serverCommands.claimGuildRaidReward());
       else if (target.id === 'guildWeeklyClaim') void run(() => serverCommands.claimGuildWeeklyReward());
-      else if (target.hasAttribute('data-guild-leave')) void run(() => serverCommands.leaveGuild());
+      else if (target.hasAttribute('data-guild-leave')) {
+        // 탈퇴는 되돌릴 수 없고 재가입 페널티까지 붙는다. 오조작 방지를 위해 한 번 더 묻는다.
+        const guildName = guildState?.guild?.name ?? '길드';
+        if (window.confirm(`'${guildName}' 에서 탈퇴하면 ${GUILD_RULES.leavePenaltyDays}일간 다른 길드에 가입할 수 없습니다. 탈퇴할까요?`)) {
+          void run(() => serverCommands.leaveGuild());
+        }
+      }
       else if (target.hasAttribute('data-guild-disband')) {
-        if (window.confirm('길드를 해산하면 모든 길드원이 탈퇴 처리됩니다. 계속할까요?')) {
+        const guildName = guildState?.guild?.name ?? '길드';
+        if (window.confirm(`'${guildName}' 을(를) 해산하면 모든 길드원이 탈퇴 처리되고 되돌릴 수 없습니다. 해산할까요?`)) {
           void run(() => serverCommands.disbandGuild());
         }
       }

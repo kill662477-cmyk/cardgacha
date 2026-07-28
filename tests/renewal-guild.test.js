@@ -371,6 +371,23 @@ assert.match(
   /elements\.guildEmblem\.innerHTML = emblemMarkup\(/,
   'textContent 로 두면 이미지 엠블럼이 문자열로 새어 나온다',
 );
+// 탈퇴는 되돌릴 수 없고 3일 재가입 페널티가 붙는다. 해산과 마찬가지로 확인 절차를 강제한다.
+assert.match(
+  guildControllerSource,
+  /data-guild-leave[\s\S]{0,400}?window\.confirm\([\s\S]{0,200}?serverCommands\.leaveGuild\(\)/,
+  '길드 탈퇴는 confirm 통과 후에만 커맨드를 보내야 한다',
+);
+assert.match(
+  guildControllerSource,
+  /GUILD_RULES\.leavePenaltyDays/,
+  '페널티 기간은 config 값을 써야 서버(3 days)와 어긋나지 않는다',
+);
+assert.equal(GUILD_RULES.leavePenaltyDays, 3, '서버 gacha_s2_guild_apply_penalty 의 interval 3 days 와 같아야 한다');
+assert.match(
+  guildControllerSource,
+  /data-guild-disband[\s\S]{0,400}?window\.confirm\([\s\S]{0,200}?serverCommands\.disbandGuild\(\)/,
+  '길드 해산도 confirm 통과 후에만 커맨드를 보내야 한다',
+);
 assert.doesNotMatch(
   guildControllerSource,
   /const EMBLEM_GLYPHS = Object\.freeze/,

@@ -15,6 +15,10 @@ function allowedOrigins() {
     .filter(Boolean));
 }
 
+function maintenanceEnabled() {
+  return (Deno.env.get('GAME_MAINTENANCE_MODE') ?? '').trim().toLowerCase() === 'true';
+}
+
 function corsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get('origin');
   const allowed = allowedOrigins();
@@ -116,6 +120,13 @@ Deno.serve(async (req: Request) => {
   const origin = req.headers.get('origin');
   if (origin && !allowedOrigins().has(origin)) return respond({ ok: false, code: 'FORBIDDEN', message: '허용되지 않은 출처입니다.' }, 403);
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(req) });
+  if (maintenanceEnabled()) {
+    return respond({
+      ok: false,
+      code: 'MAINTENANCE',
+      message: '서버 점검 중입니다. 점검 완료 후 다시 접속해 주세요.',
+    }, 503);
+  }
   if (req.method !== 'POST') return respond({ ok: false, code: 'VALIDATION_FAILED', message: 'POST 요청만 허용됩니다.' }, 405);
   const contentLength = Number(req.headers.get('content-length') ?? 0);
   if (contentLength > MAX_BODY_BYTES) return respond({ ok: false, code: 'VALIDATION_FAILED', message: '요청이 너무 큽니다.' }, 413);

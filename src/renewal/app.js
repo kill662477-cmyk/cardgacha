@@ -2961,7 +2961,7 @@ async function init() {
   setSystemState('loading');
   fxController = createFxController({ soundEnabled: state.soundEnabled !== false, random: gameService.random });
   try {
-    const response = await fetch('data/renewal-cards.json?v=202607251445');
+    const response = await fetch('data/renewal-cards.json?v=202607282311');
     if (!response.ok) throw new Error(`Card data request failed: ${response.status}`);
     cards = await response.json();
     cardsById = new Map(cards.map((card) => [card.id, card]));

@@ -16,10 +16,11 @@ const refreshedSssAssetsMigration = fs.readFileSync(path.join(root, 'supabase', 
 const arisongiAssetFixMigration = fs.readFileSync(path.join(root, 'supabase', 'migrations', '20260724000086_fix_arisongi_sss_asset_encoding.sql'), 'utf8');
 const requestedCardsMigration = fs.readFileSync(path.join(root, 'supabase', 'migrations', '20260726124500_add_four_requested_cards.sql'), 'utf8');
 const sateGrantMigration = fs.readFileSync(path.join(root, 'supabase', 'migrations', '20260728191000_give_sate5_mstz_sonsilba.sql'), 'utf8');
+const chiriNangniMigration = fs.readFileSync(path.join(root, 'supabase', 'migrations', '20260728231100_add_chiri19_refresh_nangni8.sql'), 'utf8');
 const combatRarities = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
 const combatArchetypes = ['quick', 'heavy', 'combo', 'area', 'boss', 'amplify', 'weaken', 'sustain'];
-assert.equal(cards.length, 228);
-assert.equal(new Set(cards.map((card) => card.id)).size, 228);
+assert.equal(cards.length, 229);
+assert.equal(new Set(cards.map((card) => card.id)).size, 229);
 assert.equal(cards.filter((card) => card.rarity === 'EX').length, 8);
 assert.ok(cards.filter((card) => card.rarity === 'EX').every((card) => card.member === '단체사진' && card.archetype === null));
 const nonKimFurCards = cards.filter((card) => card.sourceRarity === 'FUR' && card.member !== '김윤환' && !card.group);
@@ -45,6 +46,7 @@ const newRarities = {
   'jidudu-13': 'SS', 'chiri-17': 'S', 'chiri-18': 'A', 'tomato-14': 'SS',
   'vitaming-15': 'SS', 'haetsal-13': 'SS', 'parksubeom-6': 'SSS',
   'vitaming-16': 'SS', 'jidongwon-8': 'SSS', 'arisongi-12': 'SS',
+  'chiri-19': 'SS',
 };
 for (const [id, rarity] of Object.entries(newRarities)) assert.equal(cards.find((card) => card.id === id)?.rarity, rarity);
 assert.deepEqual(
@@ -101,10 +103,23 @@ assert.match(sateGrantMigration, /on conflict \(grant_key\) do nothing/);
 assert.match(sateGrantMigration, /gacha_s2_player_cards\.copies \+ excluded\.copies/);
 assert.match(sateGrantMigration, /insert into public\.gacha_s2_collection_records/);
 assert.match(sateGrantMigration, /set revision = revision \+ 1/);
+assert.deepEqual(
+  Object.fromEntries(['nangni-8', 'chiri-19'].map((id) => {
+    const { member, file, rarity, race, archetype } = cards.find((card) => card.id === id);
+    return [id, { member, file, rarity, race, archetype }];
+  })),
+  {
+    'nangni-8': { member: '낭니', file: 'nangni-8-r1.jpg', rarity: 'SSS', race: '저그', archetype: 'boss' },
+    'chiri-19': { member: '치리', file: 'chiri-19.jpg', rarity: 'SS', race: '저그', archetype: 'heavy' },
+  },
+);
+assert.match(chiriNangniMigration, /asset_file = 'nangni-8-r1\.jpg'/);
+assert.match(chiriNangniMigration, /'chiri-19'[\s\S]*'치리'[\s\S]*'chiri-19\.jpg'[\s\S]*'SS'[\s\S]*'저그'[\s\S]*'heavy'/);
+assert.match(chiriNangniMigration, /catalog must contain exactly 229 cards/i);
 assert.deepEqual(Object.fromEntries(['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS'].map((rarity) => [
   rarity,
   cards.filter((card) => card.rarity === rarity).length,
-])), { F: 25, E: 24, D: 25, C: 24, B: 23, A: 26, S: 25, SS: 27 });
+])), { F: 25, E: 24, D: 25, C: 24, B: 23, A: 26, S: 25, SS: 28 });
 assert.equal(cards.find((card) => card.id === 'group-1').rarity, 'EX');
 assert.equal(cards.filter((card) => card.copies > 0).length, 20);
 assert.ok(cards.filter((card) => card.rarity !== 'EX').every((card) => ['저그', '테란', '프로토스'].includes(card.race)));

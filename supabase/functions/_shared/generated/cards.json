@@ -1913,7 +1913,7 @@
   {
     "id": "nangni-8",
     "member": "낭니",
-    "file": "nangni-8.avif",
+    "file": "nangni-8-r1.jpg",
     "rarity": "SSS",
     "race": "저그",
     "archetype": "boss",
@@ -2957,6 +2957,19 @@
     "rarity": "SS",
     "race": "프로토스",
     "archetype": "boss",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "MUR",
+    "group": false
+  },
+  {
+    "id": "chiri-19",
+    "member": "치리",
+    "file": "chiri-19.jpg",
+    "rarity": "SS",
+    "race": "저그",
+    "archetype": "heavy",
     "enhancement": 0,
     "exp": 0,
     "copies": 0,

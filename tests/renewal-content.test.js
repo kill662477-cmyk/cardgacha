@@ -15,6 +15,7 @@ const newSssCardsMigration = fs.readFileSync(path.join(root, 'supabase', 'migrat
 const refreshedSssAssetsMigration = fs.readFileSync(path.join(root, 'supabase', 'migrations', '20260724000084_refresh_three_sss_asset_paths.sql'), 'utf8');
 const arisongiAssetFixMigration = fs.readFileSync(path.join(root, 'supabase', 'migrations', '20260724000086_fix_arisongi_sss_asset_encoding.sql'), 'utf8');
 const requestedCardsMigration = fs.readFileSync(path.join(root, 'supabase', 'migrations', '20260726124500_add_four_requested_cards.sql'), 'utf8');
+const sateGrantMigration = fs.readFileSync(path.join(root, 'supabase', 'migrations', '20260728191000_give_sate5_mstz_sonsilba.sql'), 'utf8');
 const combatRarities = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
 const combatArchetypes = ['quick', 'heavy', 'combo', 'area', 'boss', 'amplify', 'weaken', 'sustain'];
 assert.equal(cards.length, 228);
@@ -93,6 +94,13 @@ assert.match(requestedCardsMigration, /\('parksubeom-6', '박수범', 'parksubeo
 assert.match(requestedCardsMigration, /\('vitaming-16', '비타밍', 'vitaming-16\.png', 'SS', '테란', 'amplify'/);
 assert.match(requestedCardsMigration, /\('jidongwon-8', '지동원', 'jidongwon-8\.jpg', 'SSS', '테란', 'amplify'/);
 assert.match(requestedCardsMigration, /\('arisongi-12', '아리송이', 'arisongi-12\.jpg', 'SS', '프로토스', 'boss'/);
+assert.match(sateGrantMigration, /where lower\(btrim\(nickname\)\) = lower\('Mstz_손실바'\)/);
+assert.match(sateGrantMigration, /card_id = 'sate-5'[\s\S]*member = '사테'[\s\S]*rarity = 'SSS'/);
+assert.match(sateGrantMigration, /'operator:20260728:mstz-sate5'/);
+assert.match(sateGrantMigration, /on conflict \(grant_key\) do nothing/);
+assert.match(sateGrantMigration, /gacha_s2_player_cards\.copies \+ excluded\.copies/);
+assert.match(sateGrantMigration, /insert into public\.gacha_s2_collection_records/);
+assert.match(sateGrantMigration, /set revision = revision \+ 1/);
 assert.deepEqual(Object.fromEntries(['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS'].map((rarity) => [
   rarity,
   cards.filter((card) => card.rarity === rarity).length,

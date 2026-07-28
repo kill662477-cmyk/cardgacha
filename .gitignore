@@ -11,5 +11,6 @@ trailer-output/
 
 # Local agent settings and operational exports must never enter Git.
 /.claude/
+/.codex-remote-attachments/
 /CLAUDE.md
 /stats_temp*.json

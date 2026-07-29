@@ -35,6 +35,7 @@ export function createSupabaseGameService(options = {}) {
   const publishableKey = String(options.publishableKey ?? '').trim();
   const getAccessToken = options.getAccessToken;
   const fetchImpl = options.fetch ?? globalThis.fetch;
+  const readRpc = typeof options.readRpc === 'function' ? options.readRpc : null;
   const clock = options.clock ?? { now: () => Date.now() };
   const createIdempotencyKey = options.createIdempotencyKey ?? defaultIdempotencyKey;
   if (!/^https:\/\/[^/]+$/.test(projectUrl)) throw new Error('Valid Supabase project URL is required.');
@@ -110,6 +111,42 @@ export function createSupabaseGameService(options = {}) {
     return payload;
   }
 
+  async function readRequest(edgeBody, rpcName, rpcArgs = {}) {
+    if (!readRpc) return request(edgeBody);
+    let response;
+    try {
+      response = await readRpc(rpcName, rpcArgs);
+    } catch (error) {
+      return createGameError({
+        code: GAME_ERROR_CODES.OFFLINE,
+        message: '조회 서버에 연결할 수 없습니다.',
+        serverTime: clock.now(),
+        details: { message: error?.message ?? String(error) },
+      });
+    }
+    if (response?.error) {
+      const status = Number(response.error.status ?? response.status ?? 0);
+      return createGameError({
+        code: status === 401 || status === 403
+          ? GAME_ERROR_CODES.AUTH_REQUIRED
+          : GAME_ERROR_CODES.INTERNAL_ERROR,
+        message: status === 401 || status === 403
+          ? '로그인이 필요합니다.'
+          : '조회 요청을 처리하지 못했습니다.',
+        serverTime: clock.now(),
+        details: { status, code: response.error.code ?? null },
+      });
+    }
+    if (!response || !response.data || typeof response.data !== 'object') {
+      return createGameError({
+        code: GAME_ERROR_CODES.INTERNAL_ERROR,
+        message: '조회 서버 응답이 올바르지 않습니다.',
+        serverTime: clock.now(),
+      });
+    }
+    return response.data;
+  }
+
   async function executeCommand(command) {
     const response = await request({ kind: 'command', command });
     const validation = validateGameResponse(response);
@@ -138,7 +175,10 @@ export function createSupabaseGameService(options = {}) {
   }
 
   async function loadSnapshot() {
-    const response = await request({ kind: 'snapshot' });
+    const response = await readRequest(
+      { kind: 'snapshot' },
+      'gacha_s2_client_get_snapshot',
+    );
     if (response.ok === false) return response;
     if (!response.snapshot || typeof response.snapshot !== 'object'
       || !Number.isSafeInteger(response.snapshot.revision) || response.snapshot.revision < 0) {
@@ -152,7 +192,11 @@ export function createSupabaseGameService(options = {}) {
   }
 
   async function getWorldBossStatus(eventId = null) {
-    const response = await request({ kind: 'worldBossStatus', eventId });
+    const response = await readRequest(
+      { kind: 'worldBossStatus', eventId },
+      'gacha_s2_client_get_world_boss_status',
+      { p_event_id: eventId },
+    );
     if (response.ok === false) return response;
     if (!response.status || typeof response.status !== 'object') {
       return createGameError({
@@ -166,7 +210,11 @@ export function createSupabaseGameService(options = {}) {
 
   // 길드 상태(PDB-16). 스냅샷을 건드리지 않고 월드보스 상태와 같은 방식으로 분리 조회한다.
   async function getGuildState(guildId = null) {
-    const response = await request({ kind: 'guildState', guildId });
+    const response = await readRequest(
+      { kind: 'guildState', guildId },
+      'gacha_s2_client_get_guild_state',
+      { p_guild_id: guildId },
+    );
     if (response.ok === false) return response;
     if (!response.state || typeof response.state !== 'object') {
       return createGameError({
@@ -179,7 +227,10 @@ export function createSupabaseGameService(options = {}) {
   }
 
   async function getLottoState() {
-    const response = await request({ kind: 'lottoState' });
+    const response = await readRequest(
+      { kind: 'lottoState' },
+      'gacha_s2_client_get_lotto_state',
+    );
     if (response.ok === false) return response;
     if (!response.state || typeof response.state !== 'object') {
       return createGameError({
@@ -232,7 +283,10 @@ export function createSupabaseGameService(options = {}) {
   }
 
   async function getGuildRaidStatus() {
-    const response = await request({ kind: 'guildRaidStatus' });
+    const response = await readRequest(
+      { kind: 'guildRaidStatus' },
+      'gacha_s2_client_get_guild_raid_status',
+    );
     if (response.ok === false) return response;
     return response.status ?? { active: false, raid: null };
   }
@@ -251,13 +305,20 @@ export function createSupabaseGameService(options = {}) {
   }
 
   async function getBridgeStatus() {
-    const response = await request({ kind: 'bridgeStatus' });
+    const response = await readRequest(
+      { kind: 'bridgeStatus' },
+      'gacha_s2_client_get_bridge_status',
+    );
     if (response.ok === false) return response;
     return response.status ?? { canUseDonationBridge: false, soopId: null };
   }
 
   async function getMailbox() {
-    const response = await request({ kind: 'mailbox' });
+    const response = await readRequest(
+      { kind: 'mailbox' },
+      'gacha_s2_client_get_mailbox',
+      { p_limit: 50 },
+    );
     if (response.ok === false) return response;
     if (!response.mailbox || typeof response.mailbox !== 'object') {
       return createGameError({

@@ -1,6 +1,6 @@
 import { createClient } from '../vendor/supabase.js';
 import { createAuthSessionService } from './auth-session-service.js?v=202607241835';
-import { createSupabaseGameService } from './supabase-game-service.js?v=202607271135';
+import { createSupabaseGameService } from './supabase-game-service.js?v=202607290900';
 
 export function readRemoteConfig(source = globalThis.__CARD_GACHA_CONFIG__) {
   if (globalThis.location && new URLSearchParams(globalThis.location.search).has('local')) {
@@ -31,19 +31,8 @@ export function createRemoteRuntime(config = readRemoteConfig(), options = {}) {
     publishableKey: config.publishableKey,
     getAccessToken: auth.getAccessToken,
     fetch: options.fetch,
+    readRpc: (name, args) => supabase.rpc(name, args),
   });
-  function subscribeWorldBoss(onChange) {
-    if (typeof onChange !== 'function') return () => {};
-    const channel = supabase
-      .channel('gacha-s2-world-boss-events')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'gacha_s2_world_boss_events',
-      }, () => onChange())
-      .subscribe();
-    return () => { void supabase.removeChannel(channel); };
-  }
   async function getLiveEvents() {
     const cutoff = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     const { data, error } = await supabase
@@ -68,7 +57,7 @@ export function createRemoteRuntime(config = readRemoteConfig(), options = {}) {
     return () => { void supabase.removeChannel(channel); };
   }
   return {
-    supabase, auth, game, subscribeWorldBoss, getLiveEvents, subscribeLiveEvents,
+    supabase, auth, game, getLiveEvents, subscribeLiveEvents,
     now: () => Date.now(), random: () => Math.random(),
   };
 }

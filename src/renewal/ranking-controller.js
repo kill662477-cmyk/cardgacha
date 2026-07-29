@@ -26,6 +26,7 @@ export function createRankingController({ cards = [], getState, getFormation, ge
   const cardsById = new Map(cards.map((card) => [card.id, card]));
   let renderSequence = 0;
   let cachedRanking = null;
+  let cachedRankingAt = 0;
 
   function imagePath(card) {
     return `assets/cards/${encodeURIComponent(card.file)}`;
@@ -129,6 +130,10 @@ export function createRankingController({ cards = [], getState, getFormation, ge
   function render() {
     const state = getState();
     const combatPower = getCombatPower();
+    if (cachedRanking && gameService.now() - cachedRankingAt < 60_000) {
+      applyRanking(cachedRanking);
+      return;
+    }
     const request = gameService.getPowerRanking(() => buildCombatPowerRanking(state.nickname, combatPower));
     if (!request || typeof request.then !== 'function') {
       cachedRanking = request;
@@ -141,6 +146,7 @@ export function createRankingController({ cards = [], getState, getFormation, ge
     request.then((ranking) => {
       if (sequence !== renderSequence || ranking?.ok === false) return;
       cachedRanking = ranking;
+      cachedRankingAt = gameService.now();
       applyRanking(ranking);
     }).catch(() => {
       if (sequence === renderSequence && !cachedRanking) elements.rankingPopulation.textContent = '랭킹 연결 실패';

@@ -41,6 +41,8 @@ assert.doesNotMatch(app, /executeServerCommand\([^\n]+retryOnVersionConflict: tr
 assert.match(commandRetry, /applySnapshot\(response\.snapshot\)/);
 assert.match(commandRetry, /GAME_ERROR_CODES\.VERSION_CONFLICT/);
 assert.match(runtime, /from\('gacha_s2_live_events'\)/);
+assert.match(runtime, /readRpc: \(name, args\) => supabase\.rpc\(name, args\)/);
+assert.doesNotMatch(runtime, /gacha-s2-world-boss-events/);
 assert.match(runtime, /event: 'INSERT'/);
 assert.match(runtime, /subscribeLiveEvents/);
 

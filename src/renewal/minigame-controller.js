@@ -515,13 +515,15 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     if (requestId !== lottoRequestSequence) return;
     lottoLoading = false;
     if (!response?.ok && !response?.round) {
-      lottoNextSyncAt = clock.now() + 15_000;
+      lottoNextSyncAt = clock.now() + 30_000;
       render();
       if (!silent) showToast(response?.message || '로또 정보를 불러오지 못했습니다.');
       return;
     }
     lottoState = response;
-    lottoNextSyncAt = clock.now() + 30_000;
+    const drawAt = Number(response.round?.drawAt ?? 0);
+    const nearDraw = drawAt > 0 && Math.abs(drawAt - clock.now()) <= 120_000;
+    lottoNextSyncAt = clock.now() + (nearDraw ? 15_000 : 60_000);
     if (
       Number.isSafeInteger(response.playerRevision)
       && response.playerRevision > Number(getState().revision ?? 0)

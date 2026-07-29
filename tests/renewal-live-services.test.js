@@ -51,7 +51,8 @@ assert.match(client, /refreshActiveConnection/);
 assert.match(client, /refreshCredentials/);
 assert.match(client, /isTokenError/);
 assert.doesNotMatch(client, /localStorage/);
-assert.match(worldBoss, /subscribeWorldBoss/);
+assert.doesNotMatch(worldBoss, /subscribeWorldBoss/);
+assert.match(worldBoss, /SERVER_STATUS_REFRESH_MS = 30_000/);
 assert.match(worldBoss, /refreshServerStatus/);
 assert.match(ranking, /gameService\.getPowerRanking/);
 

@@ -17,6 +17,7 @@ import { bonusDropText, grantBonusDrop, rollWorldBossBonusDrop, rollWorldBossDes
 const number = new Intl.NumberFormat('ko-KR');
 const rankNames = ['전파도시_루키', 'Fresh민트', 'Calm_브로커', '암흑신호', 'MSTZ_손실바'];
 const rankDamage = [48_250_000, 39_870_000, 32_410_000, 26_730_000, 21_940_000];
+const SERVER_STATUS_REFRESH_MS = 30_000;
 
 function formatDuration(totalSeconds) {
   const seconds = Math.max(0, Math.ceil(totalSeconds));
@@ -47,7 +48,6 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
   let serverStatus = null;
   let serverStatusFetchedAt = 0;
   let serverStatusRequest = null;
-  let unsubscribeWorldBoss = null;
 
   function imagePath(card) {
     return `assets/cards/${encodeURIComponent(card.file)}`;
@@ -77,7 +77,7 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
 
   async function refreshServerStatus(force = false) {
     if (!serverCommands?.getWorldBossStatus) return null;
-    if (!force && serverStatus && clock.now() - serverStatusFetchedAt < 10_000) return serverStatus;
+    if (!force && serverStatus && clock.now() - serverStatusFetchedAt < SERVER_STATUS_REFRESH_MS) return serverStatus;
     if (serverStatusRequest) return serverStatusRequest;
     serverStatusRequest = serverCommands.getWorldBossStatus()
       .then((response) => {
@@ -411,7 +411,7 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
         const remainingAt = serverStatus.event.resultsOpen ? serverStatus.event.endsAt : serverStatus.event.raidEndsAt;
         elements.worldBossTimer.textContent = formatDuration((remainingAt - now) / 1000);
       } else render(now);
-      if (now - serverStatusFetchedAt >= 10_000) void refreshServerStatus();
+      if (now - serverStatusFetchedAt >= SERVER_STATUS_REFRESH_MS) void refreshServerStatus();
       return;
     }
     if (running) {
@@ -432,12 +432,6 @@ export function createWorldBossController({ getState, getFormation, getBonuses, 
     if (active) {
       render();
       void refreshServerStatus(true);
-      if (serverCommands?.subscribeWorldBoss && !unsubscribeWorldBoss) {
-        unsubscribeWorldBoss = serverCommands.subscribeWorldBoss(() => { void refreshServerStatus(true); });
-      }
-    } else if (unsubscribeWorldBoss) {
-      unsubscribeWorldBoss();
-      unsubscribeWorldBoss = null;
     }
   }
 

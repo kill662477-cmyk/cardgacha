@@ -158,6 +158,64 @@ const invalidMail = await service.markMailboxRead('not-a-uuid');
 assert.equal(invalidMail.code, 'VALIDATION_FAILED');
 assert.equal(calls.length, 7, 'invalid mail ID must not issue a request');
 
+const directReadCalls = [];
+let directEdgeCalls = 0;
+const directReadService = createSupabaseGameService({
+  projectUrl: 'https://project.supabase.co',
+  publishableKey: 'sb_publishable_browser_safe',
+  getAccessToken: async () => 'user-session-jwt',
+  readRpc: async (name, args) => {
+    directReadCalls.push({ name, args });
+    const payloads = {
+      gacha_s2_client_get_snapshot: { ok: true, snapshot },
+      gacha_s2_client_get_world_boss_status: { ok: true, status: { event: null } },
+      gacha_s2_client_get_lotto_state: { ok: true, state: { ok: true, round: null } },
+      gacha_s2_client_get_guild_state: { ok: true, state: { ok: true, guild: null } },
+      gacha_s2_client_get_guild_raid_status: { ok: true, status: { active: false, raid: null } },
+      gacha_s2_client_get_bridge_status: { ok: true, status: { canUseDonationBridge: false, soopId: null } },
+      gacha_s2_client_get_mailbox: { ok: true, mailbox: { ok: true, unreadCount: 0, messages: [] } },
+    };
+    return { data: payloads[name], error: null };
+  },
+  fetch: async (_url, options) => {
+    directEdgeCalls += 1;
+    const body = JSON.parse(options.body);
+    return Response.json(createGameSuccess({
+      command: body.command,
+      revision: 8,
+      serverTime: now,
+      serverSeed: 123,
+      snapshot: { ...snapshot, revision: 8 },
+      result: {},
+    }));
+  },
+  clock: { now: () => now++ },
+});
+await directReadService.loadSnapshot();
+await directReadService.getWorldBossStatus();
+await directReadService.getLottoState();
+await directReadService.getGuildState();
+await directReadService.getGuildRaidStatus();
+await directReadService.getBridgeStatus();
+await directReadService.getMailbox();
+assert.deepEqual(directReadCalls.map(({ name }) => name), [
+  'gacha_s2_client_get_snapshot',
+  'gacha_s2_client_get_world_boss_status',
+  'gacha_s2_client_get_lotto_state',
+  'gacha_s2_client_get_guild_state',
+  'gacha_s2_client_get_guild_raid_status',
+  'gacha_s2_client_get_bridge_status',
+  'gacha_s2_client_get_mailbox',
+]);
+assert.equal(directEdgeCalls, 0, 'read-only calls must bypass game-command');
+await directReadService.sendCommand(
+  GAME_COMMAND_TYPES.UPDATE_FORMATION,
+  { formation: ['a', 'b', 'c', 'd', 'e'] },
+  7,
+  'direct-read-command-001',
+);
+assert.equal(directEdgeCalls, 1, 'mutations must stay on game-command');
+
 token = '';
 const unauthenticated = await service.loadSnapshot();
 assert.equal(unauthenticated.code, 'AUTH_REQUIRED');

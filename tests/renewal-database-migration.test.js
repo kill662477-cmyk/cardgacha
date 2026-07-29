@@ -24,6 +24,10 @@ const soopEventBatch5Sql = await readFile(
   new URL('../supabase/migrations/20260729071000_soop_post_202512799_reward_batch_5.sql', import.meta.url),
   'utf8',
 );
+const authenticatedReadApiSql = await readFile(
+  new URL('../supabase/migrations/20260729090000_authenticated_read_api.sql', import.meta.url),
+  'utf8',
+);
 
 for (const sourceTable of [
   'gacha_users',
@@ -105,6 +109,16 @@ assert.match(soopEventBatch5Sql, /state\.points \+ 50000/);
 assert.match(soopEventBatch5Sql, /\[이벤트\] 참여 보상 지급 완료/);
 assert.match(soopEventBatch5Sql, /v_reward_count <> 3 or v_reward_total <> 150000/);
 assert.match(soopEventBatch5Sql, /mailbox verification failed: expected 3/);
+assert.match(authenticatedReadApiSql, /where account\.auth_user_id = auth\.uid\(\)/);
+assert.match(authenticatedReadApiSql, /create or replace function public\.gacha_s2_client_get_snapshot\(\)/);
+assert.match(authenticatedReadApiSql, /create or replace function public\.gacha_s2_client_get_world_boss_status/);
+assert.match(authenticatedReadApiSql, /create or replace function public\.gacha_s2_client_get_lotto_state\(\)/);
+assert.match(authenticatedReadApiSql, /create or replace function public\.gacha_s2_client_get_guild_state/);
+assert.match(authenticatedReadApiSql, /create or replace function public\.gacha_s2_client_get_guild_raid_status\(\)/);
+assert.match(authenticatedReadApiSql, /create or replace function public\.gacha_s2_client_get_bridge_status\(\)/);
+assert.match(authenticatedReadApiSql, /create or replace function public\.gacha_s2_client_get_mailbox/);
+assert.match(authenticatedReadApiSql, /grant execute on function public\.gacha_s2_client_get_snapshot\(\)\s+to authenticated/);
+assert.match(authenticatedReadApiSql, /revoke all on function public\.gacha_s2_client_account_id\(\)\s+from public, anon, authenticated/);
 
 console.log('renewal database migration tests passed: read-only source, account and bridge carryover, clean game state');
 

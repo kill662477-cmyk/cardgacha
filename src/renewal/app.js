@@ -52,13 +52,13 @@ import {
 } from './rewards.js';
 import { assertValidGameState, migrateGameState } from './state-schema.js';
 import { createLocalGameService } from './local-game-service.js';
-import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './remote-runtime.js?v=202607281030';
+import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './remote-runtime.js?v=202607290900';
 import { GAME_COMMAND_TYPES, isRetryableGameError } from './service-contract.js';
 import { createRequestCoordinator, REQUEST_PHASES } from './request-coordinator.js?v=202607211025';
-import { createMiniGameController } from './minigame-controller.js?v=202607271135';
+import { createMiniGameController } from './minigame-controller.js?v=202607290900';
 import { executeCommandWithVersionRetry } from './server-command-retry.js';
-import { createWorldBossController } from './worldboss-controller.js?v=202607271325';
-import { createRankingController } from './ranking-controller.js?v=202607271325';
+import { createWorldBossController } from './worldboss-controller.js?v=202607290900';
+import { createRankingController } from './ranking-controller.js?v=202607290900';
 import { createGuildController } from './guild-controller.js?v=202607281721';
 import { createFxController } from './fx-controller.js?v=202607271325';
 import { cardVisualChrome, enhancementLabel, enhancementStarMarkup, rarityMarkMarkup } from './card-visual.js?v=202607271325';
@@ -2947,7 +2947,9 @@ function startTimedUpdates() {
     if (activeScreen === 'minigame') miniGameController?.heartbeat?.();
     // Nav badge nudge: check reward availability even when off the world boss
     // screen, since claiming is manual and the results window is only 30 minutes.
-    else if (tickCount % 60 === 0) void worldBossController?.checkRewardAvailability();
+    else if (tickCount % 300 === 0 && document.visibilityState === 'visible') {
+      void worldBossController?.checkRewardAvailability();
+    }
   }, 1000);
 }
 
@@ -3021,7 +3023,6 @@ async function init() {
       }),
       serverCommands: remoteMode ? {
         getWorldBossStatus: () => gameService.getWorldBossStatus(),
-        subscribeWorldBoss: (onChange) => remoteRuntime.subscribeWorldBoss(onChange),
         attackWorldBoss: (payload) => runUiOperation('attackWorldBoss', elements.worldBossAttackButton, () => (
           executeServerCommand(GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS, payload)
         )),

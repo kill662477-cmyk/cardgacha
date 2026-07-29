@@ -15,6 +15,11 @@ const july22DonationReconciliation = (await readFile(
   new URL('../supabase/migrations/20260723000070_donation_30x_both_sides_reconciliation_20260722.sql', import.meta.url),
   'utf8',
 )).replace(/\s+/g, ' ');
+const expandedDonationTypes = (await readFile(
+  new URL('../supabase/migrations/20260730000500_expand_soop_donation_types.sql', import.meta.url),
+  'utf8',
+)).replace(/\s+/g, ' ');
+const bridgeHtml = await readFile(new URL('../bridge.html', import.meta.url), 'utf8');
 
 assert.match(sql, /create or replace function public\.gacha_s2_get_power_ranking/);
 assert.match(sql, /set power_snapshot = p_verified_power, power_snapshot_at = now\(\)/);
@@ -42,15 +47,26 @@ assert.match(edge, /session: renewedSession/);
 assert.match(edge, /type: 'soop-oauth'/);
 assert.match(edge, /gacha_s2_apply_soop_donation/);
 assert.match(edge, /eventAction/);
+for (const action of ['BALLOON_GIFTED', 'ADBALLOON_GIFTED', 'VIDEOBALLOON_GIFTED', 'BATTLE_MISSION_GIFTED']) {
+  assert.match(edge, new RegExp(`'${action}'`));
+  assert.match(client, new RegExp(`'${action}'`));
+  assert.match(expandedDonationTypes, new RegExp(`'${action}'`));
+}
 assert.doesNotMatch(edge, /['"]FINISHED['"]|['"]SETTLED['"]/);
 
-assert.match(client, /new Set\(\['BALLOON_GIFTED', 'BATTLE_MISSION_GIFTED'\]\)/);
+assert.match(client, /ADBALLOON_GIFTED: '애드벌룬'/);
+assert.match(client, /VIDEOBALLOON_GIFTED: '영상도네이션'/);
 assert.match(client, /recipient\(message\) \|\| state\.credentials\?\.soopId/);
 assert.match(client, /scheduleTokenRefresh/);
 assert.match(client, /refreshActiveConnection/);
 assert.match(client, /refreshCredentials/);
 assert.match(client, /isTokenError/);
 assert.doesNotMatch(client, /localStorage/);
+assert.match(bridgeHtml, /별풍선·애드벌룬·영상도네이션·대결미션 후원/);
+assert.match(expandedDonationTypes, /drop constraint gacha_s2_soop_donation_events_action_check/);
+assert.match(expandedDonationTypes, /v_points := p_amount \* 30/);
+assert.match(expandedDonationTypes, /donation event id reused with different payload/);
+assert.match(expandedDonationTypes, /grant execute on function public\.gacha_s2_apply_soop_donation/);
 assert.doesNotMatch(worldBoss, /subscribeWorldBoss/);
 assert.match(worldBoss, /SERVER_STATUS_REFRESH_MS = 30_000/);
 assert.match(worldBoss, /refreshServerStatus/);

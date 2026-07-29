@@ -6,7 +6,18 @@ const SDK_URLS = [
   'https://static.sooplive.com/asset/app/chat-sdk/latest/chat-sdk.min.js',
   'https://static.sooplive.com/asset/app/chat-sdk/chat-sdk.min.js',
 ];
-const DONATION_ACTIONS = new Set(['BALLOON_GIFTED', 'BATTLE_MISSION_GIFTED']);
+const DONATION_ACTIONS = new Set([
+  'BALLOON_GIFTED',
+  'ADBALLOON_GIFTED',
+  'VIDEOBALLOON_GIFTED',
+  'BATTLE_MISSION_GIFTED',
+]);
+const DONATION_LABELS = {
+  BALLOON_GIFTED: '별풍선',
+  ADBALLOON_GIFTED: '애드벌룬',
+  VIDEOBALLOON_GIFTED: '영상도네이션',
+  BATTLE_MISSION_GIFTED: '대결미션',
+};
 const DEFAULT_ACCESS_TOKEN_TTL_MS = 2 * 60 * 60 * 1000;
 const ACCESS_TOKEN_REFRESH_EARLY_MS = 10 * 60 * 1000;
 const config = globalThis.__CARD_GACHA_CONFIG__ ?? {};
@@ -126,7 +137,7 @@ async function handleMessage(action, message) {
     if (result.applied) {
       state.events += 1;
       state.points += result.pointsPerAccount;
-      logEvent(`${action === 'BATTLE_MISSION_GIFTED' ? '대결미션 · ' : ''}${name} → ${recipientSoopId}`, `+${result.pointsPerAccount}P`);
+      logEvent(`${DONATION_LABELS[action]} · ${name} → ${recipientSoopId}`, `+${result.pointsPerAccount}P`);
     } else {
       state.skipped += 1;
       logEvent(`${name} · 중복 이벤트`, '중복', 'skip');

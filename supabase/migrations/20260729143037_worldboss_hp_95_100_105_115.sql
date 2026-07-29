@@ -1,8 +1,6 @@
 -- 2026-07-30 부터 월드보스 체력 17시 95억 / 18시 100억 / 19시 105억 / 20시 115억.
---
--- 07-29 4회차는 105억까지 전부 클리어됐고 모두 종료 상태(player_damage > 0)라 resync 대상이 아니다.
--- 07-30 17시 회차는 07-29 20:00 에 nextSlot 으로 미리 생성되어 옛 값(85억)을 들고 있었다.
--- 설정만 바꾸고 끝내면 그 회차가 옛 값으로 열린다(07-28 17시 사고의 원인).
+-- 07-29 4회차는 모두 종료(player_damage > 0)라 resync 대상이 아니다.
+-- 07-30 17시 회차는 07-29 20:00 에 nextSlot 으로 미리 생성되어 옛 값(85억)을 들고 있다.
 update public.gacha_s2_balance_versions
 set config = jsonb_set(jsonb_set(jsonb_set(jsonb_set(jsonb_set(jsonb_set(jsonb_set(jsonb_set(
       config,

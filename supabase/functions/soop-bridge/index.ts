@@ -358,7 +358,12 @@ Deno.serve(async (req: Request) => {
     const senderSoopId = safeText(body.senderSoopId, 100);
     const recipientSoopId = safeText(body.recipientSoopId, 100);
     const amount = Number(body.amount);
-    if (!eventId || !['BALLOON_GIFTED', 'BATTLE_MISSION_GIFTED'].includes(eventAction)
+    if (!eventId || ![
+      'BALLOON_GIFTED',
+      'ADBALLOON_GIFTED',
+      'VIDEOBALLOON_GIFTED',
+      'BATTLE_MISSION_GIFTED',
+    ].includes(eventAction)
       || !senderSoopId || recipientSoopId !== session.soopId || !Number.isSafeInteger(amount) || amount < 1 || amount > 100000) {
       return json(req, { ok: false, error: '유효하지 않은 후원 이벤트입니다.' }, 400);
     }

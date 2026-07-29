@@ -3,7 +3,7 @@ globalThis.__CARD_GACHA_CONFIG__ = globalThis.__CARD_GACHA_CONFIG__ ?? {
   supabaseUrl: 'https://rljvzultuyiudhjjfotg.supabase.co',
   supabasePublishableKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsanZ6dWx0dXlpdWRoampmb3RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NzUzNjUsImV4cCI6MjA5NzI1MTM2NX0.U2FYWE4AOfJS6utrXDvwhU4yUqNtDDKk75OM27IXXWU',
   // 운영 토글. true면 앱 초기화를 중단하고 점검 화면만 표시한다.
-  maintenance: true,
+  maintenance: false,
   maintenanceTitle: '서버 점검 중',
   maintenanceMessage: '서버 안정화 및 요청 구조 개선 작업을 진행하고 있습니다.\n\n점검 시간: 08:30 ~ 11:00\n작업이 일찍 끝나면 예정보다 빠르게 오픈됩니다.\n\n10시 시그널 로또 추첨은 기존 일정대로 정상 진행됩니다.',
   maintenanceCode: 'MAINTENANCE // SERVER OPTIMIZATION',

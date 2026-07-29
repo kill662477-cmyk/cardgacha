@@ -28,6 +28,10 @@ const authenticatedReadApiSql = await readFile(
   new URL('../supabase/migrations/20260729090000_authenticated_read_api.sql', import.meta.url),
   'utf8',
 );
+const guildRaidPromotionRewardSql = await readFile(
+  new URL('../supabase/migrations/20260729231500_guild_raid_promotion_reward_50k.sql', import.meta.url),
+  'utf8',
+);
 
 for (const sourceTable of [
   'gacha_users',
@@ -119,6 +123,16 @@ assert.match(authenticatedReadApiSql, /create or replace function public\.gacha_
 assert.match(authenticatedReadApiSql, /create or replace function public\.gacha_s2_client_get_mailbox/);
 assert.match(authenticatedReadApiSql, /grant execute on function public\.gacha_s2_client_get_snapshot\(\)\s+to authenticated/);
 assert.match(authenticatedReadApiSql, /revoke all on function public\.gacha_s2_client_account_id\(\)\s+from public, anon, authenticated/);
+assert.match(guildRaidPromotionRewardSql, /lock table public\.gacha_s2_player_states in share row exclusive mode/);
+assert.match(guildRaidPromotionRewardSql, /create table if not exists public\.gacha_s2_guild_raid_promotion_reward_20260729/);
+assert.match(guildRaidPromotionRewardSql, /where not exists \(\s*select 1\s*from public\.gacha_s2_guild_raid_promotion_reward_20260729\s*\)/);
+assert.match(guildRaidPromotionRewardSql, /and reward\.points_after is null/);
+assert.match(guildRaidPromotionRewardSql, /'guild-raid-promotion-20260729'/);
+assert.match(guildRaidPromotionRewardSql, /매주 수요일·토요일 21:00 KST/);
+assert.match(guildRaidPromotionRewardSql, /길드 레이드 입장/);
+assert.match(guildRaidPromotionRewardSql, /v_reward_total <> v_reward_count::bigint \* 50000/);
+assert.match(guildRaidPromotionRewardSql, /v_mail_count <> v_reward_count/);
+assert.match(guildRaidPromotionRewardSql, /revoke all on table public\.gacha_s2_guild_raid_promotion_reward_20260729/);
 
 console.log('renewal database migration tests passed: read-only source, account and bridge carryover, clean game state');
 

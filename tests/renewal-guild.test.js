@@ -389,6 +389,31 @@ assert.match(
 
 const guildControllerSource = await readFile(new URL('../src/renewal/guild-controller.js', import.meta.url), 'utf8');
 const guildStyles = await readFile(new URL('../styles/renewal/main.css', import.meta.url), 'utf8');
+const guildPageHtml = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const guildRaidArenaAsset = await readFile(new URL('../assets/renewal/guild/raid-arena.webp', import.meta.url));
+const guildRaidBossAsset = await readFile(new URL('../assets/renewal/guild/raid-boss.webp', import.meta.url));
+
+// 길드 레이드는 홈의 텍스트 목록이 아니라 입장 버튼 → 전용 전투 화면 흐름이어야 한다.
+for (const id of [
+  'guildRaidEnter', 'guildRaidDialog', 'guildRaidArenaPhase', 'guildRaidArenaNote',
+  'guildRaidHpText', 'guildRaidHpBar', 'guildRaidAttack', 'guildRaidClaim', 'guildRaidParticipants',
+]) {
+  assert.ok(guildPageHtml.includes(`id="${id}"`), `${id} 길드 레이드 UI 누락`);
+  assert.ok(guildControllerSource.includes(`'${id}'`), `${id} 컨트롤러 연결 누락`);
+}
+assert.match(guildControllerSource, /target\.id === 'guildRaidEnter'[\s\S]{0,180}?guildRaidDialog\.showModal\(\)/,
+  '입장 버튼이 전용 길드 레이드 화면을 열어야 한다');
+assert.match(guildControllerSource, /if \(!raid\) \{[\s\S]{0,180}?guildRaidBox\.dataset\.state = 'closed'/,
+  '비전투 시간에도 입장 카드의 대기 상태를 보여야 한다');
+assert.match(guildStyles, /\.guild-raid-entry\s*\{[\s\S]*?raid-arena\.webp/,
+  '길드 홈 입장 카드에 레이드 배경이 적용돼야 한다');
+assert.match(guildStyles, /\.guild-raid-dialog\s*\{/, '길드 레이드 전용 화면 스타일 누락');
+assert.match(guildStyles, /\.guild-raid-boss\s*\{/, '길드 레이드 보스 배치 스타일 누락');
+for (const [name, asset] of [['raid-arena.webp', guildRaidArenaAsset], ['raid-boss.webp', guildRaidBossAsset]]) {
+  assert.equal(asset.subarray(0, 4).toString('ascii'), 'RIFF', `${name} 는 WebP 파일이어야 한다`);
+  assert.ok(asset.length > 50_000, `${name} 이미지가 비어 있거나 지나치게 작다`);
+}
+
 assert.match(
   guildControllerSource,
   /elements\.guildEmblem\.innerHTML = emblemMarkup\(/,

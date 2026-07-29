@@ -2214,16 +2214,206 @@ button[aria-busy="true"]::after {
 .guild-weekly-goal.complete .guild-weekly-bar i { background: var(--acid, #b6ff3b); }
 .guild-weekly-goal small { color: var(--muted); font-size: .7rem; }
 .guild-weekly-personal.complete { color: var(--acid, #b6ff3b); font-weight: 850; }
-.guild-raid { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
-.guild-raid > small { display: block; margin: 4px 0 10px; color: var(--muted); font-size: .74rem; }
-.guild-raid-hp { height: 12px; border-radius: 999px; background: var(--panel-soft); overflow: hidden; border: 1px solid var(--line); }
-.guild-raid-hp i { display: block; height: 100%; background: linear-gradient(90deg, #e11d48, #f97316); transition: width .3s; }
-.guild-raid-actions { display: flex; gap: 8px; margin-top: 10px; }
-.guild-raid-actions button { width: auto; padding: 8px 16px; font-size: .8rem; }
-.guild-raid-participants { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; max-height: 260px; overflow-y: auto; }
-.guild-raid-participant { display: flex; justify-content: space-between; gap: 8px; padding: 7px 11px; border-radius: 9px; background: var(--panel-soft); border: 1px solid var(--line); font-size: .8rem; }
-.guild-raid-participant.absent { opacity: .5; }
-.guild-raid-participant span { color: var(--muted); font-size: .75rem; }
+.guild-raid-entry {
+  position: relative; min-height: 224px; overflow: hidden;
+  display: flex; align-items: stretch;
+  border: 1px solid color-mix(in srgb, var(--acid) 32%, var(--line));
+  border-radius: 16px;
+  background:
+    linear-gradient(90deg, rgba(3,7,6,.97) 0%, rgba(3,7,6,.89) 38%, rgba(3,7,6,.28) 72%, rgba(3,7,6,.65) 100%),
+    url('../../assets/renewal/guild/raid-arena.webp?v=202607291000') center 57% / cover no-repeat;
+  box-shadow: inset 0 0 80px rgba(0,0,0,.62), 0 18px 50px rgba(0,0,0,.22);
+}
+.guild-raid-entry::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(190,255,38,.08), transparent 35%, rgba(0,0,0,.36));
+}
+.guild-raid-entry[data-state="active"] {
+  border-color: color-mix(in srgb, var(--acid) 68%, transparent);
+  box-shadow: inset 0 0 80px rgba(0,0,0,.58), 0 0 34px rgba(182,255,59,.11);
+}
+.guild-raid-entry-boss {
+  position: absolute; z-index: 1; right: clamp(4%, 8vw, 12%); bottom: -44%;
+  width: auto; height: 142%;
+  object-fit: contain; filter: drop-shadow(0 14px 22px rgba(0,0,0,.84));
+  pointer-events: none; user-select: none;
+}
+.guild-raid-entry-copy {
+  position: relative; z-index: 2; width: min(58%, 620px);
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  padding: 24px 28px;
+}
+.guild-raid-eyebrow {
+  color: var(--acid); font-size: .65rem; font-weight: 900; letter-spacing: .2em;
+}
+.guild-raid-entry-title {
+  display: flex; align-items: center; gap: 12px; margin-top: 7px; flex-wrap: wrap;
+}
+.guild-raid-entry-title h2 { margin: 0; font-size: clamp(1.45rem, 2.6vw, 2.25rem); letter-spacing: -.04em; }
+.guild-raid-entry-title strong {
+  padding: 5px 9px; border: 1px solid var(--line-bright); border-radius: 999px;
+  color: var(--muted); background: rgba(2,6,4,.68); font-size: .68rem; letter-spacing: .04em;
+}
+.guild-raid-entry[data-state="active"] .guild-raid-entry-title strong {
+  color: #071004; border-color: var(--acid); background: var(--acid);
+}
+.guild-raid-entry[data-state="defeated"] .guild-raid-entry-title strong {
+  color: #071004; border-color: #f2ca5c; background: #f2ca5c;
+}
+.guild-raid-entry-copy p {
+  max-width: 540px; margin: 10px 0 18px; color: #b9c5bc; font-size: .82rem; line-height: 1.55;
+}
+.guild-raid-enter {
+  min-height: 44px; display: inline-flex; align-items: center; gap: 14px;
+  padding: 0 18px; border: 1px solid var(--acid); border-radius: 10px;
+  color: #071004; background: var(--acid); font-size: .83rem; font-weight: 900;
+  cursor: pointer; box-shadow: 0 8px 24px rgba(182,255,59,.14);
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+.guild-raid-enter:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(182,255,59,.22); }
+.guild-raid-enter svg { width: 16px; height: 16px; }
+
+.guild-raid-dialog {
+  width: min(1160px, calc(100vw - 24px)); height: min(780px, calc(100dvh - 24px));
+  max-width: none; max-height: none; padding: 0; overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--acid) 34%, var(--line));
+  border-radius: 14px; background: #050806; color: var(--text);
+  box-shadow: 0 30px 120px rgba(0,0,0,.88);
+}
+.guild-raid-dialog::backdrop { background: rgba(0,0,0,.9); backdrop-filter: blur(7px); }
+.guild-raid-shell { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.guild-raid-dialog-head {
+  min-height: 70px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 13px 18px 13px 22px; border-bottom: 1px solid var(--line);
+  background: linear-gradient(90deg, #0b110d, #050806);
+}
+.guild-raid-dialog-head span { color: var(--acid); font-size: .62rem; font-weight: 900; letter-spacing: .2em; }
+.guild-raid-dialog-head h2 { margin: 3px 0 0; font-size: 1.28rem; letter-spacing: -.02em; }
+.guild-raid-close {
+  width: 42px; height: 42px; display: grid; place-items: center; flex: none;
+  border: 1px solid var(--line-bright); border-radius: 10px;
+  background: var(--panel-soft); color: var(--muted); cursor: pointer;
+}
+.guild-raid-close:hover { color: var(--text); border-color: var(--acid); }
+.guild-raid-close svg { width: 18px; height: 18px; }
+.guild-raid-dialog-body { min-height: 0; display: grid; grid-template-columns: minmax(0, 1.62fr) minmax(260px, .58fr); }
+.guild-raid-arena {
+  position: relative; min-width: 0; min-height: 0; overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(1,4,3,.05) 0%, rgba(1,4,3,.2) 45%, rgba(1,4,3,.97) 100%),
+    url('../../assets/renewal/guild/raid-arena.webp?v=202607291000') center / cover no-repeat;
+}
+.guild-raid-arena::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  box-shadow: inset 0 0 120px rgba(0,0,0,.62);
+}
+.guild-raid-arena-status {
+  position: absolute; z-index: 3; top: 22px; left: 24px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 5px;
+}
+.guild-raid-arena-status strong {
+  padding: 6px 10px; border: 1px solid var(--line-bright); border-radius: 8px;
+  color: #cbd7cd; background: rgba(3,7,5,.78); font-size: .74rem;
+}
+.guild-raid-dialog[data-state="active"] .guild-raid-arena-status strong {
+  color: #071004; border-color: var(--acid); background: var(--acid);
+}
+.guild-raid-dialog[data-state="defeated"] .guild-raid-arena-status strong {
+  color: #071004; border-color: #f2ca5c; background: #f2ca5c;
+}
+.guild-raid-arena-status span { color: rgba(225,235,227,.68); font-size: .58rem; font-weight: 800; letter-spacing: .14em; }
+.guild-raid-boss {
+  position: absolute; z-index: 1; left: 50%; bottom: 2%;
+  height: min(81%, 650px); width: auto; max-width: 64%;
+  transform: translateX(-50%); object-fit: contain;
+  filter: drop-shadow(0 22px 35px rgba(0,0,0,.88));
+  pointer-events: none; user-select: none;
+}
+.guild-raid-dialog[data-state="active"] .guild-raid-boss {
+  animation: guild-raid-boss-pulse 3.2s ease-in-out infinite;
+}
+.guild-raid-dialog[data-state="defeated"] .guild-raid-boss { filter: grayscale(.7) brightness(.54) drop-shadow(0 18px 30px rgba(0,0,0,.9)); }
+@keyframes guild-raid-boss-pulse {
+  0%, 100% { transform: translateX(-50%) translateY(0); filter: drop-shadow(0 20px 34px rgba(0,0,0,.88)); }
+  50% { transform: translateX(-50%) translateY(-5px); filter: drop-shadow(0 23px 40px rgba(151,223,47,.18)); }
+}
+.guild-raid-combat-panel {
+  position: absolute; z-index: 4; left: 22px; right: 22px; bottom: 18px;
+  padding: 14px 16px 15px; border: 1px solid rgba(157,181,163,.26); border-radius: 12px;
+  background: linear-gradient(90deg, rgba(4,8,6,.94), rgba(4,8,6,.78));
+  box-shadow: 0 16px 44px rgba(0,0,0,.46); backdrop-filter: blur(8px);
+}
+.guild-raid-combat-panel > p { margin: 0 0 9px; color: #b3c0b6; font-size: .73rem; }
+.guild-raid-hp-label { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.guild-raid-hp-label span { color: #ff7189; font-size: .61rem; font-weight: 900; letter-spacing: .12em; }
+.guild-raid-hp-label strong { font-size: .8rem; font-variant-numeric: tabular-nums; }
+.guild-raid-hp {
+  height: 13px; margin-top: 6px; overflow: hidden;
+  border: 1px solid rgba(255,84,112,.38); border-radius: 999px; background: rgba(30,4,9,.78);
+}
+.guild-raid-hp i {
+  display: block; height: 100%; width: 0; border-radius: inherit;
+  background: linear-gradient(90deg, #d81843, #ff6b31 76%, #ffb238);
+  box-shadow: 0 0 18px rgba(255,67,74,.38); transition: width .35s ease;
+}
+.guild-raid-actions { display: flex; gap: 8px; margin-top: 11px; }
+.guild-raid-actions button {
+  min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 0 18px; border-radius: 9px; font-size: .8rem; font-weight: 900; cursor: pointer;
+}
+.guild-raid-actions button svg { width: 16px; height: 16px; }
+.guild-raid-attack { border: 1px solid #ff4969; color: #fff; background: linear-gradient(135deg, #b90e36, #e52d2d); }
+.guild-raid-claim { border: 1px solid #f2ca5c; color: #161000; background: #f2ca5c; }
+.guild-raid-roster {
+  min-width: 0; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr);
+  border-left: 1px solid var(--line); background: #070b08;
+}
+.guild-raid-roster > header {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 10px;
+  padding: 17px 16px 14px; border-bottom: 1px solid var(--line);
+}
+.guild-raid-roster > header span { color: var(--acid); font-size: .57rem; font-weight: 900; letter-spacing: .14em; }
+.guild-raid-roster > header h3 { margin: 3px 0 0; font-size: .95rem; }
+.guild-raid-roster > header small { color: var(--muted); font-size: .65rem; white-space: nowrap; }
+.guild-raid-participants {
+  min-height: 0; list-style: none; margin: 0; padding: 10px;
+  display: grid; align-content: start; gap: 6px; overflow-y: auto;
+}
+.guild-raid-participant {
+  display: flex; justify-content: space-between; gap: 8px; padding: 9px 10px;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--panel-soft); font-size: .77rem;
+}
+.guild-raid-participant.absent { opacity: .47; }
+.guild-raid-participant span { color: var(--muted); font-size: .7rem; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 780px) {
+  .guild-raid-entry { min-height: 208px; }
+  .guild-raid-entry-copy { width: 72%; padding: 20px; }
+  .guild-raid-entry-boss { right: 2%; bottom: -45%; width: auto; height: 145%; opacity: .88; }
+  .guild-raid-entry-copy p { font-size: .74rem; }
+  .guild-raid-dialog { width: calc(100vw - 10px); height: calc(100dvh - 10px); border-radius: 10px; }
+  .guild-raid-dialog-head { min-height: 58px; padding: 9px 12px 9px 15px; }
+  .guild-raid-dialog-head h2 { font-size: 1.02rem; }
+  .guild-raid-dialog-body { grid-template: minmax(370px, 1fr) 190px / 1fr; }
+  .guild-raid-roster { border-left: 0; border-top: 1px solid var(--line); }
+  .guild-raid-roster > header { padding: 9px 12px; }
+  .guild-raid-participants { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 8px; }
+  .guild-raid-boss { height: 71%; max-width: 78%; bottom: 8%; }
+  .guild-raid-combat-panel { left: 10px; right: 10px; bottom: 9px; padding: 10px 11px; }
+  .guild-raid-arena-status { top: 12px; left: 12px; }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .guild-raid-dialog-body { grid-template: 1fr / minmax(0, 1.55fr) minmax(235px, .55fr); }
+  .guild-raid-dialog-head { min-height: 50px; padding-block: 7px; }
+  .guild-raid-dialog-head span { font-size: .5rem; }
+  .guild-raid-dialog-head h2 { font-size: .94rem; }
+  .guild-raid-roster { border-top: 0; border-left: 1px solid var(--line); }
+  .guild-raid-participants { grid-template-columns: 1fr; }
+  .guild-raid-boss { height: 72%; bottom: 18%; }
+  .guild-raid-combat-panel { bottom: 7px; padding: 8px 10px; }
+  .guild-raid-actions button { min-height: 34px; }
+}
 .guild-joinmode { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px; border-radius: 10px; background: var(--panel-soft); border: 1px solid var(--line); }
 .guild-joinmode > span { font-size: .72rem; color: var(--muted); margin-right: 2px; }
 .guild-joinmode button { padding: 5px 11px; border-radius: 7px; font-size: .75rem; font-weight: 700; cursor: pointer; background: transparent; color: var(--muted); border: 1px solid transparent; }

@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/renewal/brand/card-gacha-s2-favicon-32.png">
   <link rel="apple-touch-icon" sizes="192x192" href="assets/renewal/brand/card-gacha-s2-icon-192.png">
   <link rel="stylesheet" href="styles/renewal/tokens.css">
-  <link rel="stylesheet" href="styles/renewal/main.css?v=202607281030">
+  <link rel="stylesheet" href="styles/renewal/main.css?v=202607291000">
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
 </head>
 <body>
@@ -431,18 +431,19 @@
         </section>
         <p class="guild-notice" id="guildNotice" hidden></p>
 
-        <section class="guild-raid" id="guildRaidBox" hidden>
-          <div class="guild-weekly-head">
-            <h2>길드 레이드</h2>
-            <span id="guildRaidPhase"></span>
+        <section class="guild-raid-entry" id="guildRaidBox" hidden data-state="closed">
+          <img class="guild-raid-entry-boss" src="assets/renewal/guild/raid-boss.webp?v=202607291000" alt="" aria-hidden="true">
+          <div class="guild-raid-entry-copy">
+            <span class="guild-raid-eyebrow">GUILD CO-OP // RAID SIGNAL</span>
+            <div class="guild-raid-entry-title">
+              <h2>길드 레이드</h2>
+              <strong id="guildRaidPhase">입장 대기</strong>
+            </div>
+            <p id="guildRaidNote">매주 수·토 21:00 KST · 길드원과 함께 보스를 처치하세요</p>
+            <button class="guild-raid-enter" type="button" id="guildRaidEnter">
+              <span>길드 레이드 입장</span><i data-lucide="arrow-up-right"></i>
+            </button>
           </div>
-          <small id="guildRaidNote">매주 수·토 21:00 KST · 처치 성공 시 길드원 전원 보상</small>
-          <div class="guild-raid-hp"><i id="guildRaidHpBar"></i></div>
-          <div class="guild-raid-actions">
-            <button class="confirm-button" type="button" id="guildRaidAttack" hidden>공격</button>
-            <button class="confirm-button" type="button" id="guildRaidClaim" hidden>보상 받기</button>
-          </div>
-          <ul class="guild-raid-participants" id="guildRaidParticipants"></ul>
         </section>
 
         <section class="guild-weekly" id="guildWeeklyBox" hidden>
@@ -494,6 +495,56 @@
           <ul class="guild-list" id="guildList"></ul>
         </section>
       </section>
+
+      <dialog class="guild-raid-dialog" id="guildRaidDialog">
+        <form method="dialog" class="guild-raid-shell">
+          <header class="guild-raid-dialog-head">
+            <div>
+              <span>GUILD RAID // CO-OP BATTLE</span>
+              <h2>시그널 아포칼립스</h2>
+            </div>
+            <button class="guild-raid-close" type="submit" value="close" aria-label="길드 레이드 닫기">
+              <i data-lucide="x"></i>
+            </button>
+          </header>
+
+          <div class="guild-raid-dialog-body">
+            <section class="guild-raid-arena" aria-label="길드 레이드 전투 현황">
+              <div class="guild-raid-arena-status">
+                <strong id="guildRaidArenaPhase">입장 대기</strong>
+                <span>ABYSSAL SIGNAL WARLORD</span>
+              </div>
+              <img class="guild-raid-boss" src="assets/renewal/guild/raid-boss.webp?v=202607291000" alt="길드 레이드 보스 시그널 아포칼립스">
+              <div class="guild-raid-combat-panel">
+                <p id="guildRaidArenaNote">매주 수·토 21:00 KST에 전투가 시작됩니다</p>
+                <div class="guild-raid-hp-label">
+                  <span>RAID BOSS HP</span>
+                  <strong id="guildRaidHpText">-</strong>
+                </div>
+                <div class="guild-raid-hp"><i id="guildRaidHpBar"></i></div>
+                <div class="guild-raid-actions">
+                  <button class="guild-raid-attack" type="button" id="guildRaidAttack" hidden>
+                    <i data-lucide="swords"></i><span>공격 시작</span>
+                  </button>
+                  <button class="guild-raid-claim" type="button" id="guildRaidClaim" hidden>
+                    <i data-lucide="gift"></i><span>보상 받기</span>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <aside class="guild-raid-roster">
+              <header>
+                <div><span>RAID RECORD</span><h3>길드원 전투 기록</h3></div>
+                <small>개인 최대 3회</small>
+              </header>
+              <ul class="guild-raid-participants" id="guildRaidParticipants">
+                <li class="guild-empty">아직 열린 레이드가 없습니다</li>
+              </ul>
+            </aside>
+          </div>
+        </form>
+      </dialog>
     </main>
 
     <main class="minigame-screen" id="minigameScreen" hidden>
@@ -878,6 +929,6 @@
   </dialog>
 
   <script src="runtime-config.js?v=202607290915"></script>
-  <script type="module" src="src/renewal/app.js?v=202607290900"></script>
+  <script type="module" src="src/renewal/app.js?v=202607291000"></script>
 </body>
 </html>

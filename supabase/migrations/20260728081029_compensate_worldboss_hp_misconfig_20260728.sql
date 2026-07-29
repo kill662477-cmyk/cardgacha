@@ -1,8 +1,5 @@
--- 2026-07-28 17시 월드보스가 예정된 75억이 아닌 65억으로 열린 운영 실수 보상.
--- 원인은 20260728171000_worldboss_resync_pending_hp.sql 주석 참고
--- (회차가 미리 생성된 뒤 설정을 바꿔 옛 값이 남았다).
---
--- 지급: 전 계정 30,000 P(개별 우편) + 길드 가입자 GP 30(월드보스 1회차 3회 공격분).
+-- 2026-07-28 17시 월드보스가 75억이 아닌 65억으로 열린 운영 실수 보상.
+-- 전 계정 30,000 P(개별 우편) + 길드원 GP 30(월드보스 1회차 3회 공격분).
 insert into public.gacha_s2_mailbox (user_id, event_key, category, title, body, points)
 select a.id,
        'worldboss-hp-misconfig-20260728',
@@ -67,4 +64,4 @@ begin
     perform public.gacha_s2_guild_refresh_level(v_guild_id);
   end loop;
 end;
-$$;
+$$;;

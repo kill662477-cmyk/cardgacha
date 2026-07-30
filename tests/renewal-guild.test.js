@@ -21,6 +21,7 @@ const raidRpc = squash(await read('supabase/migrations/20260725000101_guild_m4_r
 const pendingJoinState = squash(await read('supabase/migrations/20260726121500_guild_pending_join_state.sql'));
 const penaltyException = squash(await read('supabase/migrations/20260726123000_clear_mstz_sonsilba_guild_penalty.sql'));
 const requestedPenaltyException = squash(await read('supabase/migrations/20260728190000_clear_llliiiiilli_guild_penalty.sql'));
+const levelFourCapacity = squash(await read('supabase/migrations/20260730120000_guild_level_four_capacity_60.sql'));
 const applicantProfile = squash(await read('supabase/migrations/20260727000001_guild_applicant_profile.sql'));
 const memberProgressAndDecks = squash(await read('supabase/migrations/20260728103000_guild_member_progress_and_decks.sql'));
 const quickBattleGp = squash(await read('supabase/migrations/20260727142000_guild_quick_battle_gp.sql'));
@@ -194,6 +195,8 @@ assert.equal(GUILD_RULES.levels[0].memberLimit, 30);
 // 정원 확장은 레벨 2·3에 앞당겨 초기 성장 체감을 준다.
 assert.equal(GUILD_RULES.levels[1].memberLimit, 40, '레벨2 정원 40');
 assert.equal(GUILD_RULES.levels[2].memberLimit, 50, '레벨3 정원 50');
+assert.equal(GUILD_RULES.levels[3].memberLimit, 60, '레벨4 정원 60');
+assert.ok(GUILD_RULES.levels.slice(3).every((tier) => tier.memberLimit === 60), '레벨4 이상 정원 60 유지');
 // 무소속 유저를 무력화하지 않도록 스탯 버프 상한을 +5% 로 묶는다.
 for (const tier of GUILD_RULES.levels) {
   for (const key of ['atk', 'hp', 'def', 'points']) {
@@ -240,6 +243,10 @@ assert.match(gpLevels, /v_cap constant integer := 200/, '하루 개인 적립 �
 assert.match(gpLevels, /if v_today >= v_cap then return new; end if;/);
 // 정원은 절대 줄지 않아야 한다(이미 가입한 길드원 보호).
 assert.match(gpLevels, /member_limit = greatest\(coalesce\(v_limit, 30\), member_limit, v_members\)/);
+assert.match(levelFourCapacity, /check \(member_limit between 1 and 60\)/);
+assert.match(levelFourCapacity, /where level >= 4/);
+assert.match(levelFourCapacity, /where level >= 4 and disbanded_at is null/);
+assert.match(levelFourCapacity, /set member_limit = greatest\(member_limit, 60\)/);
 assert.match(gpLevels, /create table if not exists public\.gacha_s2_guild_levels/);
 assert.match(gpLevels, /create table if not exists public\.gacha_s2_guild_contributions/);
 assert.match(gpLevels, /create or replace function public\.gacha_s2_guild_buff/);

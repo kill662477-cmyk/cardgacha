@@ -129,7 +129,12 @@ begin
       active = false;
 
   update public.gacha_s2_balance_versions
-  set active = (version = '2026.07.30-hell10-worldboss-retune-2');
+  set active = false
+  where active;
+
+  update public.gacha_s2_balance_versions
+  set active = true
+  where version = '2026.07.30-hell10-worldboss-retune-2';
 end;
 $sync_adventure_balance$;
 

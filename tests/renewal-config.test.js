@@ -35,6 +35,7 @@ const ss29Migration = (await readFile(
   new URL('../supabase/migrations/20260723000074_ss_2_9.sql', import.meta.url),
   'utf8',
 )).replace(/\s+/g, ' ');
+const appSource = await readFile(new URL('../src/renewal/app.js', import.meta.url), 'utf8');
 
 const rateTotal = (rates) => Object.values(rates).reduce((sum, rate) => sum + rate, 0);
 Object.values(PACKS).forEach((pack) => assert.ok(Math.abs(rateTotal(pack.rates) - 100) < 1e-9));
@@ -104,6 +105,14 @@ assert.equal(new Set(EX_DISTRIBUTION_RULES.milestones.map(({ cardId }) => cardId
 assert.strictEqual(BALANCE_VERSION, '2026.07.30-area-trait-1.5');
 assert.equal(ARCHETYPES.boss.bossDamage, 2.0);
 assert.equal(ARCHETYPES.area.area, 1.5);
+assert.match(appSource, /\$\{ARCHETYPES\.combo\.multiHit\}배/, '연타 설명은 현재 설정값을 표시해야 한다');
+assert.match(appSource, /\$\{ARCHETYPES\.area\.area\}배/, '광역 설명은 현재 설정값을 표시해야 한다');
+assert.match(appSource, /\$\{ARCHETYPES\.boss\.bossDamage\}배/, '보스 설명은 현재 설정값을 표시해야 한다');
+assert.doesNotMatch(
+  appSource,
+  /연타 피해 계수 1\.18배|광역 피해 계수 1\.22배|보스 피해 계수 1\.28배/,
+  '과거 특성 계수 문구가 남으면 안 된다',
+);
 assert.deepEqual(ADVENTURE_RULES.modes.hard, {
   label: '하드 모험', startStage: 51, endStage: 100, stageCount: 50, unlockStage: 50,
 });

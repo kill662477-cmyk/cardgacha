@@ -146,9 +146,9 @@ const requestCoordinator = createRequestCoordinator({
 const ARCHETYPE_DESCRIPTIONS = {
   quick: '빠른 공격 주기로 꾸준한 피해를 누적합니다. 공격속도 +28%.',
   heavy: '느리지만 강한 일격을 가합니다. 공격력 +31%, 치명타 확률 +12%p, 치명타 피해 +20%p.',
-  combo: '연속 타격으로 기본 피해를 증폭합니다. 연타 피해 계수 1.18배.',
-  area: '여러 적이 등장하는 웨이브에 강합니다. 광역 피해 계수 1.22배.',
-  boss: '보스 대상 공격이 강화됩니다. 보스 피해 계수 1.28배.',
+  combo: `연속 타격으로 기본 피해를 증폭합니다. 연타 피해 계수 ${ARCHETYPES.combo.multiHit}배.`,
+  area: `여러 적이 등장하는 웨이브에 강합니다. 광역 피해 계수 ${ARCHETYPES.area.area}배.`,
+  boss: `보스 대상 공격이 강화됩니다. 보스 피해 계수 ${ARCHETYPES.boss.bossDamage}배.`,
   amplify: '편성 전체의 치명타 신호를 증폭합니다. 파티 전원 치명타 확률 +15%p(중첩, 최대 60%).',
   weaken: '공격 적중 시 적의 전투 신호를 약화합니다. 적 공격력 -15%, 적이 받는 피해 +10%.',
   sustain: '높은 체력과 방어력으로 오래 버팁니다. 회복 효율 8%.',

@@ -101,8 +101,9 @@ assert.equal(EX_DISTRIBUTION_RULES.milestones.length, 8);
 assert.equal(Object.values(PACKS).some((pack) => Object.hasOwn(pack.rates, 'EX')), false);
 assert.deepEqual(EX_DISTRIBUTION_RULES.milestones.map(({ clearedStage }) => clearedStage), [5, 10, 15, 20, 25, 30, 40, 50]);
 assert.equal(new Set(EX_DISTRIBUTION_RULES.milestones.map(({ cardId }) => cardId)).size, 8);
-assert.strictEqual(BALANCE_VERSION, '2026.07.30-boss-trait-2');
+assert.strictEqual(BALANCE_VERSION, '2026.07.30-area-trait-1.5');
 assert.equal(ARCHETYPES.boss.bossDamage, 2.0);
+assert.equal(ARCHETYPES.area.area, 1.5);
 assert.deepEqual(ADVENTURE_RULES.modes.hard, {
   label: '하드 모험', startStage: 51, endStage: 100, stageCount: 50, unlockStage: 50,
 });

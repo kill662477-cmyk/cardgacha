@@ -174,9 +174,9 @@ assert.ok(STAGES.every((stage, index) => stage.globalNumber === index + 1));
 
 const fullRecords = Object.fromEntries(cards.map((card) => [card.id, true]));
 const collectionBonuses = calculateCollectionBonuses(cards, fullRecords);
-// 모험 도달성 기준 덱은 월드보스 전용 계수 변경에 따라 카드 구성이 뒤집히지 않아야 한다.
+// 모험 도달성 기준 덱은 보스/일반 웨이브 전용 계수 변경에 따라 카드 구성이 뒤집히지 않아야 한다.
 const maxedCards = cards
-  .filter((card) => card.rarity !== 'EX' && card.archetype !== 'boss')
+  .filter((card) => card.rarity !== 'EX' && !['boss', 'area'].includes(card.archetype))
   .map((card) => ({ ...card, enhancement: 9 }));
 const raceDecks = [...new Set(maxedCards.map((card) => card.race))].map((race) => (
   maxedCards.filter((card) => card.race === race)

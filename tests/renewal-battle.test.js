@@ -61,6 +61,9 @@ const areaNormal = simulateBattle(areaDeck, { ...target, boss: false });
 const areaBoss = simulateBattle(areaDeck, { ...target, boss: true });
 const totalDamage = (result) => result.damageByCard.reduce((sum, entry) => sum + entry.damage, 0);
 assert.ok(totalDamage(areaNormal) > totalDamage(areaBoss), 'area bonus must apply to normal waves only');
+const comboWaveDeck = areaDeck.map((card) => ({ ...card, archetype: 'combo' }));
+const comboNormal = simulateBattle(comboWaveDeck, { ...target, boss: false });
+assert.ok(totalDamage(areaNormal) > totalDamage(comboNormal) * 1.2, 'area trait 1.5 must clearly lead normal-wave damage');
 
 const bossSpecialistDeck = Array.from({ length: 5 }, (_, index) => ({
   ...roleCard('boss'), id: `boss-specialist-${index}`,
@@ -81,8 +84,14 @@ const bossTraitMigration = await fs.readFile(
   new URL('../supabase/migrations/20260730123000_boss_trait_damage_2.sql', import.meta.url),
   'utf8',
 );
+const areaTraitMigration = await fs.readFile(
+  new URL('../supabase/migrations/20260730192000_area_trait_damage_1_5.sql', import.meta.url),
+  'utf8',
+);
 assert.match(bossTraitMigration, /\{archetypes,boss,bossDamage\}.*'2\.0'::jsonb/s);
 assert.match(bossTraitMigration, /2026\.07\.30-boss-trait-2/);
+assert.match(areaTraitMigration, /\{archetypes,area,area\}.*'1\.5'::jsonb/s);
+assert.match(areaTraitMigration, /2026\.07\.30-area-trait-1\.5/);
 assert.match(battleSource, /1 - weakenAmount/, '약화 감소폭은 특성 설정값에서 와야 한다');
 assert.doesNotMatch(battleSource, /weakenedUntil \? 0\.92/, '하드코딩된 0.92 가 남아 있으면 안 된다');
 assert.equal(ARCHETYPES.weaken.weaken, 0.15);

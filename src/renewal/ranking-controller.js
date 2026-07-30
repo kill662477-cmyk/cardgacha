@@ -13,6 +13,11 @@ function guildBadgeMarkup(guild, { showTag = true } = {}) {
   const tag = showTag && guild.tag ? `[${escapeHtml(guild.tag)}] ` : '';
   return `<span class="ranking-guild-badge">${emblemMarkup(guild.emblem, 'ranking-guild-emblem')}${tag}${escapeHtml(guild.name)}</span>`;
 }
+
+function hellMedalMarkup(earned, className = '') {
+  if (!earned) return '';
+  return `<img class="hell-conqueror-medal ${className}" src="assets/renewal/ui/hell-conqueror-medal.webp" alt="HELL 정복자" title="Hell10 정복자">`;
+}
 const PODIUM_CARD_IDS = ['kimyunhwan-2', 'tomato-1', 'jidudu-1'];
 
 export function createRankingController({ cards = [], getState, getFormation, getCombatPower, gameService }) {
@@ -21,7 +26,7 @@ export function createRankingController({ cards = [], getState, getFormation, ge
     'rankingMyRank', 'rankingMyPercentile', 'rankingMyPower', 'rankingTopFiftyGap',
     'rankingProgressBar', 'rankingFormation',
     'rankerDeckDialog', 'rankerDeckEyebrow', 'rankerDeckTitle', 'rankerDeckPower', 'rankerDeckGrid',
-    'rankerDeckGuild',
+    'rankerDeckGuild', 'rankerDeckAchievement',
   ].map((id) => [id, document.getElementById(id)]));
   const cardsById = new Map(cards.map((card) => [card.id, card]));
   let renderSequence = 0;
@@ -34,7 +39,7 @@ export function createRankingController({ cards = [], getState, getFormation, ge
 
   function rowMarkup(entry) {
     return `<li class="${entry.mine ? 'mine' : ''}" data-rank="${entry.rank}" role="button" tabindex="0">
-      <b>${entry.rank}</b><span>${escapeHtml(entry.nickname)}</span><strong>${number.format(entry.power)} <small>CP</small></strong>
+      <b>${entry.rank}</b><span>${escapeHtml(entry.nickname)}${hellMedalMarkup(entry.hellConqueror, 'ranking-inline-medal')}</span><strong>${number.format(entry.power)} <small>CP</small></strong>
     </li>`;
   }
 
@@ -54,6 +59,7 @@ export function createRankingController({ cards = [], getState, getFormation, ge
     elements.rankerDeckGuild.hidden = !guildBadge;
     elements.rankerDeckGuild.innerHTML = guildBadge;
     elements.rankerDeckTitle.textContent = `${entry.nickname}님의 편성`;
+    elements.rankerDeckAchievement.innerHTML = hellMedalMarkup(entry.hellConqueror, 'ranker-deck-medal');
     elements.rankerDeckPower.textContent = `전투력 ${number.format(entry.power)}`;
     elements.rankerDeckGrid.innerHTML = deck.length ? deck.map((card) => `<figure class="card-visual" data-rarity="${card.rarity}" data-stars="${card.enhancement}" style="--rarity:${RARITIES[card.rarity].color}">
       <img class="card-photo" src="${imagePath(card)}" alt="${escapeHtml(card.member)}">${cardVisualChrome(card)}<figcaption>${escapeHtml(card.member)}</figcaption>
@@ -104,13 +110,16 @@ export function createRankingController({ cards = [], getState, getFormation, ge
         <img class="card-photo" src="${imagePath(card)}" alt="${escapeHtml(card.member)} 대표 카드">${cardVisualChrome(card)}
       </figure>` : '';
       return `<article class="ranking-podium-item rank-${entry.rank}${entry.mine ? ' mine' : ''}" data-rank="${entry.rank}" role="button" tabindex="0">
-        <span>${entry.rank}위</span><div class="ranking-podium-emblem"><i data-lucide="${entry.rank === 1 ? 'crown' : 'medal'}"></i></div>${cardMarkup}<div class="ranking-podium-copy"><strong>${escapeHtml(entry.nickname)}</strong><b>${number.format(entry.power)} CP</b></div>
+        <span>${entry.rank}위</span><div class="ranking-podium-emblem"><i data-lucide="${entry.rank === 1 ? 'crown' : 'medal'}"></i></div>${cardMarkup}<div class="ranking-podium-copy"><strong>${escapeHtml(entry.nickname)}${hellMedalMarkup(entry.hellConqueror, 'ranking-inline-medal')}</strong><b>${number.format(entry.power)} CP</b></div>
       </article>`;
     }).join('');
     elements.rankingList.innerHTML = ranking.leaders.slice(3).map(rowMarkup).join('');
     const myGuildBadge = guildBadgeMarkup(ranking.player.guild);
     const myNickname = escapeHtml(ranking.player.nickname ?? state.nickname);
-    elements.rankingNickname.innerHTML = myGuildBadge ? `${myNickname}  ${myGuildBadge}` : myNickname;
+    const myHellMedal = hellMedalMarkup(ranking.player.hellConqueror, 'ranking-inline-medal');
+    elements.rankingNickname.innerHTML = myGuildBadge
+      ? `${myNickname}${myHellMedal} ${myGuildBadge}`
+      : `${myNickname}${myHellMedal}`;
     elements.rankingMyRank.textContent = ranking.player.rank ? number.format(ranking.player.rank) : '-';
     elements.rankingMyPercentile.textContent = `상위 ${Number(ranking.player.topPercent ?? 100).toFixed(1)}%`;
     elements.rankingMyPower.textContent = number.format(ranking.player.power ?? 0);
@@ -134,7 +143,12 @@ export function createRankingController({ cards = [], getState, getFormation, ge
       applyRanking(cachedRanking);
       return;
     }
-    const request = gameService.getPowerRanking(() => buildCombatPowerRanking(state.nickname, combatPower));
+    const request = gameService.getPowerRanking(() => buildCombatPowerRanking(
+      state.nickname,
+      combatPower,
+      undefined,
+      Number(state.clearedStage ?? 0) >= 110,
+    ));
     if (!request || typeof request.then !== 'function') {
       cachedRanking = request;
       applyRanking(request);

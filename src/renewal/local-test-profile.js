@@ -19,7 +19,14 @@ export function applyLocalTestProfile(state, cards, hostname = globalThis.locati
     state.supportItems.ssCardSelector = 1;
     state.supportItems.sssCardSelector = 1;
   }
+  state.cardProgress ??= {};
   cards.forEach((card) => { state.cardCopies[card.id] = 1; });
   state.collectionRecords = Object.fromEntries(cards.map((card) => [card.id, true]));
+  // 최종 콘텐츠를 로컬에서 즉시 검수할 수 있는 기준 편성.
+  const hellFormation = ['juharang-2', 'kimyunhwan-4', 'jjiking-12', 'tomato-11', 'kimmincheol-7'];
+  state.formation = hellFormation;
+  hellFormation.forEach((cardId) => { state.cardProgress[cardId] = { enhancement: 9, exp: 0 }; });
+  state.clearedStage = 110;
+  state.guildBuff = { guildId: 'local-hell-qa', level: 10, atk: 0.05, hp: 0.05, def: 0.04, points: 0.05 };
   return true;
 }

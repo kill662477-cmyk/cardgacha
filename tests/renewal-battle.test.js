@@ -8,7 +8,7 @@ const formation = cards.slice(0, 5);
 
 assert.equal(cards.length, 20, 'demo card pool must contain 20 cards');
 assert.equal(new Set(cards.map((card) => card.id)).size, 20, 'demo card ids must be unique');
-assert.equal(STAGES.length, 100, 'normal and hard adventure must contain 100 stages');
+assert.equal(STAGES.length, 110, 'normal, hard, and HELL adventure must contain 110 stages');
 
 Object.entries(PACKS).forEach(([packId, pack]) => {
   const total = Object.values(pack.rates).reduce((sum, rate) => sum + rate, 0);

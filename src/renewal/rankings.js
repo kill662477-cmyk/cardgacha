@@ -15,7 +15,12 @@ export const COMBAT_POWER_LEADERS = Array.from({ length: 50 }, (_, index) => ({
   power: 450_000 - index * 8_500,
 }));
 
-export function buildCombatPowerRanking(nickname, combatPower, population = COMBAT_RANKING_RULES.population) {
+export function buildCombatPowerRanking(
+  nickname,
+  combatPower,
+  population = COMBAT_RANKING_RULES.population,
+  hellConqueror = false,
+) {
   const safePopulation = Math.max(COMBAT_POWER_LEADERS.length, Math.floor(Number(population) || COMBAT_RANKING_RULES.population));
   const power = Math.max(0, Math.floor(Number(combatPower) || 0));
   const higherFeatured = COMBAT_POWER_LEADERS.filter((entry) => entry.power > power).length;
@@ -31,13 +36,13 @@ export function buildCombatPowerRanking(nickname, combatPower, population = COMB
   rank = Math.max(1, Math.min(safePopulation, rank));
   const topPercent = Math.max(0.1, rank / safePopulation * 100);
   const topFiftyPower = COMBAT_POWER_LEADERS.at(-1).power;
-  const leaders = [...COMBAT_POWER_LEADERS, { nickname, power, mine: true }]
+  const leaders = [...COMBAT_POWER_LEADERS, { nickname, power, mine: true, hellConqueror }]
     .sort((left, right) => right.power - left.power)
     .slice(0, COMBAT_RANKING_RULES.visibleCount)
     .map((entry, index) => ({ ...entry, rank: index + 1 }));
   return {
     population: safePopulation,
-    player: { nickname, power, rank, topPercent },
+    player: { nickname, power, rank, topPercent, hellConqueror },
     leaders,
     topFiftyPower,
     powerToTopFifty: Math.max(0, topFiftyPower - power),

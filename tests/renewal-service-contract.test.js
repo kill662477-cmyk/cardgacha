@@ -92,7 +92,20 @@ const hardQuickBattle = createGameCommand({
   clientSentAt: clock.now(),
 });
 assert.equal(validateGameCommand(hardQuickBattle).valid, true);
+assert.equal(
+  validateGameCommand({ ...hardQuickBattle, payload: { mode: 'hell' } }).valid,
+  false,
+  'HELL quick battle must be rejected by the shared client/edge contract',
+);
 assert.equal(validateGameCommand({ ...hardQuickBattle, payload: { mode: 'nightmare' } }).valid, false);
+const hellAdventure = createGameCommand({
+  type: GAME_COMMAND_TYPES.START_ADVENTURE_RUN,
+  payload: { mode: 'hell' },
+  expectedRevision: 6,
+  idempotencyKey: 'hell-start-contract-1',
+  clientSentAt: clock.now(),
+});
+assert.equal(validateGameCommand(hellAdventure).valid, true);
 const minigameFinish = createGameCommand({
   type: GAME_COMMAND_TYPES.FINISH_MINIGAME,
   payload: { runId: 'run-00000001', inputLog: [{ start: 2, end: 3, atMs: 120 }], score: 0 },

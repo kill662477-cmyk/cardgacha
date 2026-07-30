@@ -8,10 +8,12 @@ const highScoreRewardFixSql = await readFile(new URL('../supabase/migrations/202
 const ladderSql = await readFile(new URL('../supabase/migrations/20260722000057_ladder_minigame.sql', import.meta.url), 'utf8');
 const dailyCapSql = await readFile(new URL('../supabase/migrations/20260722000059_enforce_minigame_daily_cap.sql', import.meta.url), 'utf8');
 const hardAdventureSql = await readFile(new URL('../supabase/migrations/20260723000077_hard_adventure.sql', import.meta.url), 'utf8');
+const hellAdventureSql = await readFile(new URL('../supabase/migrations/20260730103000_hell_adventure_and_conqueror_medal.sql', import.meta.url), 'utf8');
 const contract = await readFile(new URL('../src/renewal/service-contract.js', import.meta.url), 'utf8');
 const normalizedLadder = ladderSql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const normalizedDailyCap = dailyCapSql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const normalizedHardAdventure = hardAdventureSql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
+const normalizedHellAdventure = hellAdventureSql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const normalized = sql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const section = (start, end) => normalized.slice(
   normalized.indexOf(`create or replace function public.${start}`),
@@ -210,5 +212,11 @@ assert.match(normalizedHardAdventure, /then 50 \+ p_verified_cleared_stages/);
 assert.match(normalizedHardAdventure, /gacha_s2_start_adventure_run\(uuid, bigint, text, integer, text, text\)/);
 assert.match(normalizedHardAdventure, /gacha_s2_claim_quick_battle\(uuid, bigint, text, integer, text, text\)/);
 assert.match(contract, /\[GAME_COMMAND_TYPES\.CLAIM_QUICK_BATTLE\]: \['mode'\]/);
+assert.match(normalizedHellAdventure, /"minpointsperrun":12000,"maxpointsperrun":25000/);
+assert.match(normalizedHellAdventure, /check \(cleared_stage between 0 and 110\)/);
+assert.match(normalizedHellAdventure, /p_mode not in \(''normal'',''hard'',''hell''\)/);
+assert.match(normalizedHellAdventure, /when p_mode = ''hell'' then 101/);
+assert.match(normalizedHellAdventure, /'hellmedalawarded'/);
+assert.doesNotMatch(normalizedHellAdventure, /quick-hell/);
 
 console.log('renewal adventure/minigame RPC tests passed: trusted battle verdict, atomic rewards, server boards, replayed input logs');

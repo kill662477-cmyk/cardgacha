@@ -100,9 +100,12 @@ assert.equal(EX_DISTRIBUTION_RULES.milestones.length, 8);
 assert.equal(Object.values(PACKS).some((pack) => Object.hasOwn(pack.rates, 'EX')), false);
 assert.deepEqual(EX_DISTRIBUTION_RULES.milestones.map(({ clearedStage }) => clearedStage), [5, 10, 15, 20, 25, 30, 40, 50]);
 assert.equal(new Set(EX_DISTRIBUTION_RULES.milestones.map(({ cardId }) => cardId)).size, 8);
-assert.strictEqual(BALANCE_VERSION, '2026.07.23-hard-adventure-1');
+assert.strictEqual(BALANCE_VERSION, '2026.07.30-hell-adventure-1');
 assert.deepEqual(ADVENTURE_RULES.modes.hard, {
   label: '하드 모험', startStage: 51, endStage: 100, stageCount: 50, unlockStage: 50,
+});
+assert.deepEqual(ADVENTURE_RULES.modes.hell, {
+  label: 'HELL', startStage: 101, endStage: 110, stageCount: 10, unlockStage: 100,
 });
 assert.equal(ADVENTURE_RULES.hardRunReward.minPointsPerRun, 7000);
 assert.equal(ADVENTURE_RULES.hardRunReward.maxPointsPerRun, 20000);
@@ -130,12 +133,14 @@ assert.equal(REGIONS[4].bossAttack, 16_000);
 assert.equal(REGIONS[9].bossHp, 27_216_000, 'hard final boss tuned to SSS+8/full-collection all-clear spec');
 assert.equal(REGIONS[9].bossAttack, 48_195);
 assert.deepEqual(
-  REGIONS.slice(5).map((region) => [region.hpBase, region.attackBase]),
+  REGIONS.slice(5, 10).map((region) => [region.hpBase, region.attackBase]),
   [[8_862_500, 26_393], [10_803_200, 30_281], [12_922_800, 36_975], [15_150_400, 44_880], [17_985_600, 48_960]],
   'hard region stats must stay on the rebalanced curve',
 );
-assert.equal(REGIONS.length, 10);
-assert.ok(REGIONS.slice(5).every((region) => region.mode === 'hard'));
+assert.equal(REGIONS.length, 11);
+assert.ok(REGIONS.slice(5, 10).every((region) => region.mode === 'hard'));
+assert.equal(REGIONS[10].mode, 'hell');
+assert.equal(REGIONS[10].bossHp, 38_000_000);
 assert.equal(Object.hasOwn(BALANCE_GOVERNANCE, 'ACCOUNT_RULES'), false);
 assert.ok(BALANCE_GOVERNANCE.locked.includes('ADVENTURE_RULES'));
 assert.deepEqual(Object.keys(GROWTH_SIMULATION_PROFILES), ['low', 'mid', 'high']);

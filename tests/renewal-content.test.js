@@ -156,16 +156,20 @@ assert.ok(Object.entries(localProfile.supportItems).every(([itemId, count]) => (
 assert.equal(Object.keys(localProfile.collectionRecords).length, cards.length, 'local QA profile has full collection');
 assert.ok(cards.every((card) => localProfile.collectionRecords[card.id] === true), 'every card registered in local collection');
 assert.ok(cards.every((card) => localProfile.cardCopies[card.id] === 1), 'every card available for local QA');
+assert.equal(localProfile.clearedStage, 110, 'local QA profile unlocks final HELL content');
+assert.equal(localProfile.guildBuff.level, 10, 'local QA profile uses the Hell10 guild benchmark');
 const ongoingProfile = { revision: 5, points: 42 };
 assert.equal(applyLocalTestProfile(ongoingProfile, cards, '127.0.0.1'), false, 'saved progress must not be reset');
 assert.equal(ongoingProfile.points, 42);
 const productionProfile = { nickname: 'live', points: 7, cardCopies: {}, collectionRecords: {} };
 assert.equal(applyLocalTestProfile(productionProfile, cards, 'card-gacha.example.com'), false);
 assert.equal(productionProfile.points, 7);
-assert.equal(REGIONS.length, 10);
-assert.equal(STAGES.length, 100);
-assert.equal(STAGES.filter((stage) => stage.boss).length, 10);
+assert.equal(REGIONS.length, 11);
+assert.equal(STAGES.length, 110);
+assert.equal(STAGES.filter((stage) => stage.boss).length, 11);
 assert.equal(STAGES.filter((stage) => stage.mode === 'hard').length, 50);
+assert.equal(STAGES.filter((stage) => stage.mode === 'hell').length, 10);
+assert.deepEqual(STAGES.slice(100).map((stage) => stage.displayName), Array.from({ length: 10 }, (_, index) => `Hell${index + 1}`));
 assert.ok(STAGES.every((stage, index) => stage.globalNumber === index + 1));
 
 const fullRecords = Object.fromEntries(cards.map((card) => [card.id, true]));
@@ -180,11 +184,11 @@ const raceDecks = [...new Set(maxedCards.map((card) => card.race))].map((race) =
 const endgameDeck = raceDecks.sort((left, right) => (
   computeFormationPower(right, collectionBonuses) - computeFormationPower(left, collectionBonuses)
 ))[0];
-STAGES.filter((stage) => stage.boss).forEach((boss) => {
+STAGES.filter((stage) => stage.boss && stage.mode !== 'hell').forEach((boss) => {
   assert.equal(simulateBattle(endgameDeck, boss, collectionBonuses).victory, true, `${boss.id} must be reachable through card growth`);
 });
 const baseEndgameDeck = endgameDeck.map((card) => ({ ...card, enhancement: 0 }));
 assert.equal(simulateBattle(baseEndgameDeck, STAGES[9], collectionBonuses).victory, true, 'high-rarity base deck clears region 1');
 assert.equal(simulateBattle(baseEndgameDeck, STAGES[49]).victory, false, 'without a completed collection, enhancement remains required for final boss');
 
-console.log(`renewal content tests passed: ${cards.length} cards, 10 regions, 100 stages, hard adventure assets`);
+console.log(`renewal content tests passed: ${cards.length} cards, 11 regions, 110 stages, hard/hell adventure assets`);

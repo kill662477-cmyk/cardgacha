@@ -68,6 +68,9 @@ button[aria-busy="true"]::after {
 .profile-mark span { width: 34px; height: 34px; overflow: hidden; background: url('../../assets/renewal/brand/card-gacha-s2-symbol.png') center / contain no-repeat; font-size: 0; line-height: 1; }
 .profile-copy { display: grid; gap: 4px; min-width: 0; }
 .profile-copy strong { font-size: 15px; }
+.profile-name-line { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.hell-conqueror-medal { display: inline-block; width: 25px; height: 25px; flex: none; object-fit: contain; vertical-align: middle; filter: drop-shadow(0 0 5px rgba(255,210,92,.72)); }
+.hell-conqueror-medal[hidden] { display: none; }
 .profile-stats { display: flex; align-items: baseline; gap: 10px; white-space: nowrap; }
 .profile-stats span { color: var(--muted); font-size: var(--font-label); }
 .profile-stats b { color: var(--text); font-variant-numeric: tabular-nums; }
@@ -162,10 +165,15 @@ button[aria-busy="true"]::after {
 .battlefield[data-region="nightmare-studio"] { background: linear-gradient(to bottom, rgba(30,3,25,.07), rgba(16,2,12,.4) 70%, #0d0209 100%), url('../../assets/renewal/regions/hard-nightmare-studio.webp') center / cover no-repeat; }
 .battlefield[data-region="omega-fortress"] { background: linear-gradient(to bottom, rgba(20,9,2,.06), rgba(12,5,2,.38) 69%, #0b0502 100%), url('../../assets/renewal/regions/hard-omega-fortress.webp') center / cover no-repeat; }
 .battlefield[data-region="hell-core"] { background: linear-gradient(to bottom, rgba(30,2,4,.06), rgba(17,2,3,.4) 69%, #0c0203 100%), url('../../assets/renewal/regions/hard-hell-core.webp') center / cover no-repeat; }
+.battlefield[data-region="hell-final"] { background: linear-gradient(to bottom, rgba(8,5,2,.03), rgba(9,4,3,.28) 64%, #080504 100%), url('../../assets/renewal/regions/hell-final-sanctum.webp') center / cover no-repeat; }
 .battlefield[data-mode="hard"]::before { display: none; }
 .battlefield[data-mode="hard"]::after { background-image: linear-gradient(rgba(188,73,255,.055) 1px, transparent 1px), linear-gradient(90deg, rgba(255,58,91,.04) 1px, transparent 1px); }
 .battlefield[data-mode="hard"] .stage-heading h1 b { color: #ff4d79; text-shadow: 0 0 14px rgba(255,77,121,.72); }
 .battlefield[data-mode="hard"] .stage-meter span { background: #ff4d79; box-shadow: 0 0 12px #ff4d79; }
+.battlefield[data-mode="hell"]::before { display: none; }
+.battlefield[data-mode="hell"]::after { background-image: linear-gradient(rgba(255,215,115,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(202,44,33,.045) 1px, transparent 1px); }
+.battlefield[data-mode="hell"] .stage-heading h1 b { color: #ffe4a0; text-shadow: 0 0 7px #fff, 0 0 18px rgba(255,112,55,.9); }
+.battlefield[data-mode="hell"] .stage-meter span { background: linear-gradient(90deg, #b41318, #fff0b0); box-shadow: 0 0 14px rgba(255,208,101,.92); }
 .battlefield[data-region="relay-base"]::after { background-image: linear-gradient(rgba(57,211,229,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(57,211,229,.035) 1px, transparent 1px); }
 .battlefield[data-region="black-studio"]::after { background-image: linear-gradient(rgba(235,72,139,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(235,72,139,.03) 1px, transparent 1px); }
 .battlefield[data-region="data-fortress"]::after { background-image: linear-gradient(rgba(238,186,64,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(238,186,64,.03) 1px, transparent 1px); }
@@ -209,6 +217,14 @@ button[aria-busy="true"]::after {
 .enemy-unit.hard-jammer::before, .enemy-unit.hard-jammer::after,
 .enemy-unit.hard-leech::before, .enemy-unit.hard-leech::after,
 .enemy-unit.hard-crusher::before, .enemy-unit.hard-crusher::after { display: none; }
+.enemy-unit.hell-crawler { width: clamp(88px, 10vw, 145px); background: url('../../assets/renewal/enemies/hell-crawler.webp') center bottom / contain no-repeat; }
+.enemy-unit.hell-jammer { width: clamp(78px, 9vw, 132px); background: url('../../assets/renewal/enemies/hell-jammer.webp') center bottom / contain no-repeat; }
+.enemy-unit.hell-leech { width: clamp(88px, 10vw, 145px); background: url('../../assets/renewal/enemies/hell-leech.webp') center bottom / contain no-repeat; }
+.enemy-unit.hell-crusher { width: clamp(100px, 11.5vw, 165px); background: url('../../assets/renewal/enemies/hell-crusher.webp') center bottom / contain no-repeat; transform: scale(1.08); }
+.enemy-unit.hell-crawler::before, .enemy-unit.hell-crawler::after,
+.enemy-unit.hell-jammer::before, .enemy-unit.hell-jammer::after,
+.enemy-unit.hell-leech::before, .enemy-unit.hell-leech::after,
+.enemy-unit.hell-crusher::before, .enemy-unit.hell-crusher::after { display: none; }
 .enemy-unit.boss { width: clamp(130px, 16vw, 220px); height: clamp(180px, 22vw, 310px); }
 .enemy-unit.boss::before { border-color: #8b3035; background: #241012; }
 .enemy-unit.boss::after { top: 28%; height: 34%; border-color: #b7595e; box-shadow: inset 0 0 24px #ff2530, 0 0 22px rgba(255,37,48,.66); }
@@ -227,11 +243,13 @@ button[aria-busy="true"]::after {
 .enemy-unit.boss-nightmare-studio { width: clamp(175px, 21vw, 290px); background: url('../../assets/renewal/enemies/boss-nightmare-studio.webp') center bottom / contain no-repeat; }
 .enemy-unit.boss-omega-fortress { width: clamp(190px, 23vw, 315px); background: url('../../assets/renewal/enemies/boss-omega-fortress.webp') center bottom / contain no-repeat; }
 .enemy-unit.boss-hell-core { width: clamp(190px, 23vw, 315px); background: url('../../assets/renewal/enemies/boss-hell-core.webp') center bottom / contain no-repeat; }
+.enemy-unit.boss-hell-final { width: clamp(205px, 25vw, 340px); background: url('../../assets/renewal/enemies/boss-hell-final.webp') center bottom / contain no-repeat; filter: drop-shadow(0 0 14px rgba(255,211,107,.35)) drop-shadow(0 14px 10px rgba(0,0,0,.8)); }
 .enemy-unit.boss-void-rift::before, .enemy-unit.boss-void-rift::after,
 .enemy-unit.boss-abyss-relay::before, .enemy-unit.boss-abyss-relay::after,
 .enemy-unit.boss-nightmare-studio::before, .enemy-unit.boss-nightmare-studio::after,
 .enemy-unit.boss-omega-fortress::before, .enemy-unit.boss-omega-fortress::after,
-.enemy-unit.boss-hell-core::before, .enemy-unit.boss-hell-core::after { display: none; }
+.enemy-unit.boss-hell-core::before, .enemy-unit.boss-hell-core::after,
+.enemy-unit.boss-hell-final::before, .enemy-unit.boss-hell-final::after { display: none; }
 .enemy-unit.hit { animation: enemy-hit .18s ease; }
 
 .signal-wave { position: absolute; left: 50%; bottom: 28%; display: flex; align-items: end; gap: 7px; height: 55px; transform: translateX(-50%); opacity: .7; }
@@ -353,16 +371,18 @@ button[aria-busy="true"]::after {
 .panel-section { padding: 22px 20px; border-bottom: 1px solid var(--line); }
 .section-title { display: flex; justify-content: space-between; align-items: center; color: var(--acid); font-size: 15px; font-weight: 900; }
 .section-title svg { width: 18px; }
-.adventure-mode-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 14px; }
+.adventure-mode-switch { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 14px; }
 .adventure-mode-switch button { display: grid; gap: 3px; min-height: 52px; padding: 8px; border: 1px solid #343d37; background: #0a0e0c; color: #7e8881; text-align: left; cursor: pointer; }
 .adventure-mode-switch button span { font-size: 12px; font-weight: 950; letter-spacing: .06em; }
 .adventure-mode-switch button b { font-size: 8px; font-weight: 750; }
 .adventure-mode-switch button.active { border-color: var(--acid); background: rgba(200,245,46,.08); color: var(--acid); box-shadow: inset 0 0 14px rgba(200,245,46,.06); }
 .adventure-mode-switch #adventureModeHard.active { border-color: #ff4d79; background: rgba(255,77,121,.09); color: #ff7899; box-shadow: inset 0 0 14px rgba(255,77,121,.08); }
+.adventure-mode-switch #adventureModeHell.active { border-color: #f4cf76; background: rgba(244,207,118,.09); color: #ffe5a5; box-shadow: inset 0 0 16px rgba(219,57,39,.14), 0 0 10px rgba(244,207,118,.1); }
 .adventure-mode-switch button:disabled { cursor: not-allowed; opacity: .38; }
 .adventure-mode-switch button.active:disabled { opacity: .75; }
 .adventure-mode-lock { display: block; margin-top: 8px; color: #727b75; font-size: 8px; font-weight: 750; }
 .adventure-mode-lock.unlocked { color: #ff7899; }
+.adventure-mode-lock.hell-unlocked { color: #f4cf76; }
 .stage-nodes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 22px; }
 .stage-node { display: grid; justify-items: center; gap: 8px; color: #6f7771; font-size: 9px; }
 .stage-node i { display: grid; place-items: center; width: 27px; height: 27px; border: 2px solid #3b443e; border-radius: 50%; background: #0b0f0d; font-style: normal; }
@@ -925,6 +945,7 @@ button[aria-busy="true"]::after {
 .ranking-podium-copy { min-width: 0; }
 .ranking-podium-copy strong, .ranking-podium-copy b { display: block; }
 .ranking-podium-copy strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.ranking-inline-medal { width: 20px; height: 20px; margin-left: 4px; }
 .ranking-podium-copy b { margin-top: 7px; color: var(--gold); font-size: 10px; font-variant-numeric: tabular-nums; }
 .ranking-podium-item.mine { box-shadow: inset 0 0 0 2px var(--acid); }
 .ranking-table-head { display: grid; grid-template-columns: 58px minmax(0, 1fr) 150px; padding: 10px 20px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 10px; }
@@ -935,6 +956,21 @@ button[aria-busy="true"]::after {
 .ranker-deck-dialog { width: min(480px, calc(100vw - 28px)); max-height: min(80vh, calc(100vh - 28px)); padding: 0; border: 1px solid var(--line-bright); background: #080b09; color: var(--text); }
 .ranker-deck-dialog .ranking-formation-block { padding: 16px 18px 0; }
 .ranker-deck-dialog .ranking-note { padding: 11px 18px; }
+.ranker-deck-title-line { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.ranker-deck-title-line #rankerDeckAchievement { display: inline-flex; }
+.ranker-deck-medal { width: 34px; height: 34px; }
+.hell-achievement-dialog { width: min(420px, calc(100vw - 28px)); padding: 0; border: 1px solid #d7ae58; background: #080604; color: #f8f3e8; box-shadow: 0 0 60px rgba(187,40,24,.35); }
+.hell-achievement-dialog::backdrop { background: rgba(2,1,1,.86); backdrop-filter: blur(5px); }
+.hell-achievement-shell { display: grid; place-items: center; padding: 30px 28px 26px; overflow: hidden; text-align: center; background: radial-gradient(circle at 50% 34%, rgba(255,218,120,.13), transparent 38%), linear-gradient(145deg, rgba(142,25,19,.13), transparent 48%); }
+.hell-achievement-shell > span { color: #cfad68; font-size: 9px; font-weight: 950; letter-spacing: .18em; }
+.hell-achievement-shell img { width: 190px; height: 190px; margin: 8px 0 -3px; object-fit: contain; filter: drop-shadow(0 0 16px rgba(255,209,97,.52)); animation: hell-medal-arrive .8s cubic-bezier(.2,.85,.25,1.15) both; }
+.hell-achievement-shell h2 { margin: 0; color: #fff0c6; font-size: 28px; letter-spacing: -.03em; text-shadow: 0 0 14px rgba(255,207,96,.4); }
+.hell-achievement-shell p { max-width: 310px; margin: 9px 0 20px; color: #aaa297; font-size: 12px; line-height: 1.65; }
+.hell-achievement-shell button { width: 100%; border-color: #e4bb61; background: #d6aa50; color: #100b05; }
+@keyframes hell-medal-arrive {
+  from { opacity: 0; transform: scale(.55) translateY(18px) rotate(-5deg); filter: drop-shadow(0 0 0 transparent); }
+  to { opacity: 1; transform: scale(1) translateY(0) rotate(0); filter: drop-shadow(0 0 16px rgba(255,209,97,.52)); }
+}
 @media (max-width: 900px) {
   .ranker-deck-dialog { width: min(360px, calc(100vw - 20px)); }
   .ranker-deck-dialog .ranking-formation-block { padding: 12px 14px 0; }
@@ -1587,7 +1623,7 @@ button[aria-busy="true"]::after {
   .mission-panel .panel-section { display: none; }
   .mission-panel .adventure-mode-panel { display: block; padding: 0 0 6px; border: 0; background: transparent; }
   .adventure-mode-panel .section-title, .adventure-mode-lock { display: none; }
-  .adventure-mode-switch { width: min(250px, 42vw); margin: 0 auto; gap: 3px; }
+  .adventure-mode-switch { width: min(330px, 74vw); margin: 0 auto; gap: 3px; }
   .adventure-mode-switch button { min-height: 30px; padding: 3px 7px; text-align: center; }
   .adventure-mode-switch button span { font-size: 9px; }
   .adventure-mode-switch button b { font-size: 6px; }
@@ -1903,7 +1939,7 @@ button[aria-busy="true"]::after {
   .enemy-unit.boss-malice-core { width: 102px; }
   .enemy-unit.boss-void-rift, .enemy-unit.boss-abyss-relay { width: 108px; }
   .enemy-unit.boss-nightmare-studio { width: 102px; }
-  .enemy-unit.boss-omega-fortress, .enemy-unit.boss-hell-core { width: 112px; }
+  .enemy-unit.boss-omega-fortress, .enemy-unit.boss-hell-core, .enemy-unit.boss-hell-final { width: 118px; }
   .signal-wave { bottom: 37%; height: 34px; }
   .party-dock { left: 8px; right: 8px; bottom: 3px; }
   .synergy-chip { margin-bottom: 3px; padding: 2px 6px; font-size: 8px; }

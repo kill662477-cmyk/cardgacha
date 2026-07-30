@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/renewal/brand/card-gacha-s2-favicon-32.png">
   <link rel="apple-touch-icon" sizes="192x192" href="assets/renewal/brand/card-gacha-s2-icon-192.png">
   <link rel="stylesheet" href="styles/renewal/tokens.css">
-  <link rel="stylesheet" href="styles/renewal/main.css?v=202607291000">
+  <link rel="stylesheet" href="styles/renewal/main.css?v=202607301100">
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
 </head>
 <body>
@@ -20,7 +20,10 @@
           <span id="profileCardFallback">카드가챠 시즌2</span>
         </button>
         <div class="profile-copy">
-          <strong id="nickname">방송국장_세린</strong>
+          <div class="profile-name-line">
+            <strong id="nickname">방송국장_세린</strong>
+            <img class="hell-conqueror-medal" id="hellConquerorMedal" src="assets/renewal/ui/hell-conqueror-medal.webp" alt="HELL 정복자" title="Hell10 정복자" hidden>
+          </div>
           <div class="profile-stats">
             <span class="profile-power">전투력 <b id="combatPower">0</b></span>
           </div>
@@ -102,6 +105,7 @@
           <div class="adventure-mode-switch" role="group" aria-label="모험 난이도 선택">
             <button class="active" id="adventureModeNormal" type="button"><span>NORMAL</span><b>1-1 ~ 5-10</b></button>
             <button id="adventureModeHard" type="button" disabled><span>HARD</span><b>6-1 ~ 10-10</b></button>
+            <button id="adventureModeHell" type="button" disabled><span>HELL</span><b>Hell1 ~ Hell10</b></button>
           </div>
           <small class="adventure-mode-lock" id="adventureModeLock">일반 모험 5-10 클리어 시 해금</small>
         </section>
@@ -792,7 +796,7 @@
   <dialog class="ranker-deck-dialog" id="rankerDeckDialog">
     <form method="dialog" class="dialog-shell">
       <header>
-        <div class="ranker-deck-ident"><span id="rankerDeckEyebrow">RANKER LOADOUT</span><div class="ranker-deck-guild" id="rankerDeckGuild" hidden></div></div><h2 id="rankerDeckTitle">편성 카드 5장</h2>
+        <div class="ranker-deck-ident"><span id="rankerDeckEyebrow">RANKER LOADOUT</span><div class="ranker-deck-guild" id="rankerDeckGuild" hidden></div></div><div class="ranker-deck-title-line"><h2 id="rankerDeckTitle">편성 카드 5장</h2><span id="rankerDeckAchievement"></span></div>
       </header>
       <section class="ranking-formation-block">
         <header><span id="rankerDeckPower">전투력 -</span><small>5 CARDS</small></header>
@@ -800,6 +804,16 @@
       </section>
       <p class="ranking-note">화면 아무 곳이나 클릭하면 닫힙니다.</p>
     </form>
+  </dialog>
+
+  <dialog class="hell-achievement-dialog" id="hellAchievementDialog">
+    <div class="hell-achievement-shell">
+      <span>FINAL CONTENT CLEARED</span>
+      <img src="assets/renewal/ui/hell-conqueror-medal.webp" alt="HELL 정복 메달">
+      <h2>HELL 정복자</h2>
+      <p>Hell10을 돌파했습니다. 정복 메달이 아이디와 랭킹에 영구 표시됩니다.</p>
+      <button class="confirm-button" id="hellAchievementClose" type="button">메달 획득</button>
+    </div>
   </dialog>
 
   <dialog class="reward-dialog" id="rewardDialog">
@@ -929,6 +943,6 @@
   </dialog>
 
   <script src="runtime-config.js?v=202607290915"></script>
-  <script type="module" src="src/renewal/app.js?v=202607291000"></script>
+  <script type="module" src="src/renewal/app.js?v=202607301100"></script>
 </body>
 </html>

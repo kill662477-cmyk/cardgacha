@@ -276,12 +276,17 @@ export function createServerCommandRouter(options) {
         || command.type === GAME_COMMAND_TYPES.CLAIM_QUICK_BATTLE) {
         const context = await verifiedContext(userId, command);
         const mode = command.payload.mode ?? 'normal';
-        if (mode === 'hard'
-          && Number(context.snapshot.clearedStage ?? 0) < ADVENTURE_RULES.modes.hard.unlockStage) {
+        const modeRules = ADVENTURE_RULES.modes[mode];
+        if (!modeRules) {
+          return commandError(command, GAME_ERROR_CODES.VALIDATION_FAILED, '존재하지 않는 모험 모드입니다.', clock);
+        }
+        if (Number(context.snapshot.clearedStage ?? 0) < modeRules.unlockStage) {
           return commandError(
             command,
             GAME_ERROR_CODES.COMMAND_REJECTED,
-            '하드 모험은 일반 모험 5-10 클리어 후 해금됩니다.',
+            mode === 'hell'
+              ? 'HELL은 하드 모험 10-10 클리어 후 해금됩니다.'
+              : '하드 모험은 일반 모험 5-10 클리어 후 해금됩니다.',
             clock,
           );
         }

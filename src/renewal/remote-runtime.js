@@ -1,6 +1,7 @@
 import { createClient } from '../vendor/supabase.js';
 import { createAuthSessionService } from './auth-session-service.js?v=202607241835';
 import { createSupabaseGameService } from './supabase-game-service.js?v=202607290900';
+import { REWARD_RULES } from './config.js';
 
 export function readRemoteConfig(source = globalThis.__CARD_GACHA_CONFIG__) {
   if (globalThis.location && new URLSearchParams(globalThis.location.search).has('local')) {
@@ -67,7 +68,7 @@ export function mergeServerSnapshot(snapshot, clientCache = {}) {
   return {
     ...snapshot,
     worldBoss: snapshot.worldBoss?.eventId ? snapshot.worldBoss : clientCache.worldBoss,
-    currentStage: Math.max(1, Math.min(100, Number(activeRunStage ?? clientCache.currentStage ?? snapshot.clearedStage + 1) || 1)),
+    currentStage: Math.max(1, Math.min(REWARD_RULES.maxStage, Number(activeRunStage ?? clientCache.currentStage ?? snapshot.clearedStage + 1) || 1)),
     autoBattle: Boolean(clientCache.autoBattle),
     soundEnabled: clientCache.soundEnabled !== false,
   };

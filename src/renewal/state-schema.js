@@ -86,10 +86,10 @@ function validateAdventure(issues, state) {
   const run = state.adventureRun;
   if (!isRecord(run)) return issue(issues, 'adventureRun', '객체 필요');
   if (typeof run.active !== 'boolean') issue(issues, 'adventureRun.active', 'boolean 필요');
-  const mode = run.mode === 'hard' ? 'hard' : 'normal';
+  const mode = run.mode === 'hell' ? 'hell' : run.mode === 'hard' ? 'hard' : 'normal';
   const modeRules = ADVENTURE_RULES.modes[mode];
-  if (run.mode !== undefined && !['normal', 'hard'].includes(run.mode)) {
-    issue(issues, 'adventureRun.mode', 'normal 또는 hard 필요');
+  if (run.mode !== undefined && !['normal', 'hard', 'hell'].includes(run.mode)) {
+    issue(issues, 'adventureRun.mode', 'normal, hard 또는 hell 필요');
   }
   if (!isIntegerBetween(
     run.currentStage,
@@ -109,7 +109,7 @@ function validateAdventure(issues, state) {
   }
   if (run.verifiedClearedStages !== undefined
     && !isIntegerBetween(run.verifiedClearedStages, 0, modeRules.stageCount)) {
-    issue(issues, 'adventureRun.verifiedClearedStages', '0~50 정수 필요');
+    issue(issues, 'adventureRun.verifiedClearedStages', `0~${modeRules.stageCount} 정수 필요`);
   }
   if (run.verificationDigest !== undefined
     && (typeof run.verificationDigest !== 'string' || !/^[0-9a-f]{64}$/i.test(run.verificationDigest))) {

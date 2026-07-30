@@ -142,8 +142,8 @@ function validatePayload(type, payload, issues) {
       if (payload.mode !== 'offline') addIssue(issues, 'payload.mode', 'offline required');
       break;
     case GAME_COMMAND_TYPES.START_ADVENTURE_RUN:
-      if (payload.mode !== undefined && !['normal', 'hard'].includes(payload.mode)) {
-        addIssue(issues, 'payload.mode', 'normal 또는 hard 필요');
+      if (payload.mode !== undefined && !['normal', 'hard', 'hell'].includes(payload.mode)) {
+        addIssue(issues, 'payload.mode', 'normal, hard 또는 hell 필요');
       }
       break;
     case GAME_COMMAND_TYPES.CLAIM_QUICK_BATTLE:

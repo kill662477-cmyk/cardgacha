@@ -15,5 +15,8 @@ const champion = buildCombatPowerRanking('내계정', 1_000_000);
 assert.equal(champion.player.rank, 1);
 assert.equal(champion.powerToTopFifty, 0);
 assert.equal(champion.leaders[0].nickname, '내계정');
+const hellChampion = buildCombatPowerRanking('HELL정복자', 1_000_001, undefined, true);
+assert.equal(hellChampion.player.hellConqueror, true);
+assert.equal(hellChampion.leaders[0].hellConqueror, true);
 
 console.log(`renewal ranking tests passed: ${outside.player.rank}/${outside.population}, top ${outside.player.topPercent.toFixed(1)}%`);

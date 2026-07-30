@@ -1,4 +1,4 @@
-export const BALANCE_VERSION = '2026.07.23-hard-adventure-1';
+export const BALANCE_VERSION = '2026.07.30-hell-adventure-1';
 
 export const RARITY_ORDER = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
 
@@ -212,6 +212,13 @@ export const REGIONS = [
     hpBase: 17985600, attackBase: 48960, bossHp: 27216000, bossAttack: 48195,
     duration: 59, bossDuration: 64,
   },
+  // 최종 콘텐츠. Hell10 기준선은 SSS 9강 5장 + 도감 100% + 길드 Lv.10.
+  // 역할이 갖춰진 편성만 제한시간 끝자락에 통과하고 SSS 8강은 막히도록 실전 시뮬레이션으로 조정했다.
+  {
+    id: 11, name: '최후 심판 성역', code: 'hell-final', mode: 'hell',
+    hpBase: 24000000, attackBase: 52000, bossHp: 38000000, bossAttack: 68000,
+    duration: 66, bossDuration: 78,
+  },
 ];
 
 const ENEMY_TYPES = ['crawler', 'jammer', 'leech', 'crusher'];
@@ -222,24 +229,27 @@ export const STAGES = REGIONS.flatMap((region, regionIndex) => Array.from({ leng
   const boss = stageNumber === 10;
   const firstRegion = region.id === 1;
   const hard = region.mode === 'hard';
+  const hell = region.mode === 'hell';
   return {
     id: `${region.id}-${stageNumber}`,
+    displayName: hell ? `Hell${stageNumber}` : `${region.id}-${stageNumber}`,
     region: region.name,
     regionCode: region.code,
     regionIndex,
     stageNumber,
     globalNumber,
-    mode: hard ? 'hard' : 'normal',
+    mode: region.mode ?? 'normal',
     hard,
+    hell,
     enemyType: boss ? 'boss' : ENEMY_TYPES[(stageIndex + regionIndex) % ENEMY_TYPES.length],
     enemyCount: boss ? 1 : Math.min(7, 4 + Math.floor(stageNumber / 3)),
     enemyHp: Math.round(boss
       ? region.bossHp
-      : region.hpBase * Math.pow(hard ? 1.018 : firstRegion ? 1.08 : 1.025, stageIndex)),
+      : region.hpBase * Math.pow(hell ? 1.008 : hard ? 1.018 : firstRegion ? 1.08 : 1.025, stageIndex)),
     enemyAttack: Math.round(boss
       ? region.bossAttack
-      : region.attackBase * Math.pow(hard ? 1.012 : firstRegion ? 1.03 : 1.02, stageIndex)),
-    duration: hard
+      : region.attackBase * Math.pow(hell ? 1.01 : hard ? 1.012 : firstRegion ? 1.03 : 1.02, stageIndex)),
+    duration: hard || hell
       ? (boss ? region.bossDuration : region.duration)
       : (boss ? 40 + regionIndex * 3 : 30 + regionIndex * 2 + (firstRegion ? stageIndex : 0)),
     rewardPoints: 18 + globalNumber * 4,
@@ -265,6 +275,7 @@ export const ADVENTURE_RULES = {
   modes: {
     normal: { label: '일반 모험', startStage: 1, endStage: 50, stageCount: 50, unlockStage: 0 },
     hard: { label: '하드 모험', startStage: 51, endStage: 100, stageCount: 50, unlockStage: 50 },
+    hell: { label: 'HELL', startStage: 101, endStage: 110, stageCount: 10, unlockStage: 100 },
   },
   runReward: {
     pointsBasePerStage: 20,
@@ -277,10 +288,15 @@ export const ADVENTURE_RULES = {
     maxPointsPerRun: 20000,
     cardExpPerClearedStage: 1,
   },
+  hellRunReward: {
+    minPointsPerRun: 12000,
+    maxPointsPerRun: 25000,
+    cardExpPerClearedStage: 2,
+  },
 };
 
 export const REWARD_RULES = {
-  maxStage: 100,
+  maxStage: 110,
   maxActionEnergy: 120,
   offlineCapHours: 24,
   quickBattleHours: 2,

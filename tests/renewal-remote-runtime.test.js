@@ -23,6 +23,11 @@ assert.equal(merged.currentStage, 4);
 assert.equal(merged.autoBattle, true);
 assert.equal(merged.soundEnabled, false);
 assert.equal(merged.worldBoss.eventId, 'local-placeholder');
+assert.equal(mergeServerSnapshot({
+  revision: 8,
+  clearedStage: 110,
+  adventureRun: { active: true, currentStage: 110 },
+}, {}).currentStage, 110, 'HELL stage must survive the remote snapshot merge');
 
 const app = await readFile(new URL('../src/renewal/app.js', import.meta.url), 'utf8');
 const runtime = await readFile(new URL('../src/renewal/remote-runtime.js', import.meta.url), 'utf8');

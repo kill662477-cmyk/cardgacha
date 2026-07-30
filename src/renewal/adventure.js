@@ -1,7 +1,7 @@
 import { ADVENTURE_RULES, EX_DISTRIBUTION_RULES } from './config.js';
 
 export function normalizeAdventureMode(mode) {
-  return mode === 'hard' ? 'hard' : 'normal';
+  return mode === 'hell' ? 'hell' : mode === 'hard' ? 'hard' : 'normal';
 }
 
 export function adventureModeRules(mode) {
@@ -95,9 +95,10 @@ export function advanceAdventureRun(run) {
 
 export function calculateAdventureRunReward(clearedStages, mode = 'normal') {
   const cleared = Math.max(0, Math.floor(Number(clearedStages) || 0));
-  if (normalizeAdventureMode(mode) === 'hard') {
-    const rules = ADVENTURE_RULES.hardRunReward;
-    const stageCount = ADVENTURE_RULES.modes.hard.stageCount;
+  const normalizedMode = normalizeAdventureMode(mode);
+  if (normalizedMode === 'hard' || normalizedMode === 'hell') {
+    const rules = normalizedMode === 'hell' ? ADVENTURE_RULES.hellRunReward : ADVENTURE_RULES.hardRunReward;
+    const stageCount = ADVENTURE_RULES.modes[normalizedMode].stageCount;
     const points = cleared <= 0
       ? 0
       : Math.floor(rules.minPointsPerRun
@@ -117,6 +118,10 @@ export function calculateAdventureRunReward(clearedStages, mode = 'normal') {
     // nolevel-1: 계정 EXP 보상 제거. 카드 EXP만 지급한다.
     cardExp: cleared * rules.cardExpPerClearedStage,
   };
+}
+
+export function hasHellConquerorMedal(highestClearedStage = 0) {
+  return Number(highestClearedStage) >= ADVENTURE_RULES.modes.hell.endStage;
 }
 
 export function claimAdventureExMilestones(highestClearedStage, claims = {}, copies = {}, records = {}) {

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { STAGES } from '../src/renewal/config.js';
 import { computeCardPower, simulateBattle } from '../src/renewal/battle.js';
-import { calculateCollectionBonuses } from '../src/renewal/collection.js';
+import { applyGuildBuff, calculateCollectionBonuses } from '../src/renewal/collection.js';
 
 const cards = JSON.parse(await fs.readFile(new URL('../data/renewal-demo-cards.json', import.meta.url), 'utf8'));
 const allCards = JSON.parse(await fs.readFile(new URL('../data/renewal-cards.json', import.meta.url), 'utf8'));
@@ -97,5 +97,26 @@ assert.equal(stallsBeforeEnd(isolatedRarityDeck('E', 9), cardOnlyBonuses), true,
 assert.equal(stallsBeforeEnd(isolatedRarityDeck('D', 9), cardOnlyBonuses), true, 'D 9성 deck must retain an endgame wall');
 const lowRegion5Deck = [...rarityDeck('D', 9).slice(0, 2), ...rarityDeck('E', 9).slice(0, 2), ...rarityDeck('F', 9).slice(0, 1)];
 assert.equal(stallsBeforeEnd(lowRegion5Deck, cardOnlyBonuses), true, 'low-rarity D/E/F 9성 deck must NOT full-clear (endgame wall)');
+
+// 최종 HELL: SSS 9강 + 올도감 + 길드 Lv.10의 역할 편성만 완주한다.
+// 같은 편성의 8강 또는 길드 버프 누락은 적어도 한 스테이지에서 막혀야 한다.
+const hellStages = STAGES.filter((stage) => stage.mode === 'hell');
+const hellTargetIds = ['juharang-2', 'kimyunhwan-4', 'jjiking-12', 'tomato-11', 'kimmincheol-7'];
+const hellDeck = hellTargetIds.map((id) => ({ ...allCards.find((card) => card.id === id), enhancement: 9 }));
+const guildLevel10Bonuses = applyGuildBuff(fullCollection, { level: 10, atk: 0.05, hp: 0.05, def: 0.04 });
+assert.equal(hellStages.length, 10);
+assert.equal(hellStages.every((stage) => simulateBattle(hellDeck, stage, guildLevel10Bonuses).victory), true);
+assert.equal(
+  hellStages.every((stage) => simulateBattle(hellDeck.map((card) => ({ ...card, enhancement: 8 })), stage, guildLevel10Bonuses).victory),
+  false,
+  'SSS 8성 편성은 HELL을 완주할 수 없어야 한다',
+);
+assert.equal(
+  hellStages.every((stage) => simulateBattle(hellDeck, stage, fullCollection).victory),
+  false,
+  '길드 Lv.10 버프가 없는 편성은 HELL을 완주할 수 없어야 한다',
+);
+const hellFinalResult = simulateBattle(hellDeck, hellStages.at(-1), guildLevel10Bonuses);
+assert.ok(hellFinalResult.duration >= hellStages.at(-1).duration * 0.9, 'Hell10은 제한시간 끝자락에서 클리어되어야 한다');
 
 console.log('renewal balance tests passed: monotonic stages, low-rarity region 1, S9/SS5-6 full-clear, low-deck endgame wall');

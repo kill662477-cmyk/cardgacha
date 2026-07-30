@@ -69,6 +69,16 @@ assert.equal(calculateAdventureRunReward(1, 'hard').points, 7000);
 assert.equal(calculateAdventureRunReward(50, 'hard').points, 20000);
 assert.equal(isAdventureModeUnlocked('hard', 49), false);
 assert.equal(isAdventureModeUnlocked('hard', 50), true);
+const hellRun = createAdventureRun(now, 'hell');
+assert.equal(hellRun.currentStage, 101);
+assert.equal(hellRun.mode, 'hell');
+assert.equal(advanceAdventureRun(hellRun).currentStage, 102);
+assert.equal(calculateAdventureRunReward(0, 'hell').points, 0);
+assert.equal(calculateAdventureRunReward(1, 'hell').points, 12000);
+assert.equal(calculateAdventureRunReward(9, 'hell').points, 23555);
+assert.equal(calculateAdventureRunReward(10, 'hell').points, 25000);
+assert.equal(isAdventureModeUnlocked('hell', 99), false);
+assert.equal(isAdventureModeUnlocked('hell', 100), true);
 
 const exGrant = claimAdventureExMilestones(20, {}, {}, {});
 assert.deepEqual(exGrant.awarded.map((reward) => reward.cardId), ['group-1', 'group-2', 'group-3', 'group-4']);

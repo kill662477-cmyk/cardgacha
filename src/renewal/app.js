@@ -11,6 +11,7 @@ import {
   createAdventureRun,
   adventureModeRules,
   getAdventureRunLimitStatus,
+  hasHellConquerorMedal,
   isAdventureModeUnlocked,
   normalizeAdventureRun,
   normalizeAdventureRuns,
@@ -217,7 +218,7 @@ function imagePath(card) {
 
 function cacheElements() {
   [
-    'nickname', 'combatPower', 'energyValue', 'pointValue', 'profileCardButton', 'apiLinkButton', 'logoutButton',
+    'nickname', 'hellConquerorMedal', 'combatPower', 'energyValue', 'pointValue', 'profileCardButton', 'apiLinkButton', 'logoutButton',
     'mailButton', 'mailDialog', 'mailBadge', 'mailboxStatus', 'mailboxList', 'mailboxSummary', 'mailCloseButton',
     'worldBossNavBadge',
     'guildScreen', 'guildHome', 'guildBrowse', 'guildEmblem', 'guildTagLine', 'guildName', 'guildMeta',
@@ -228,13 +229,14 @@ function cacheElements() {
     'stageLabel', 'stageMeter', 'battleState', 'battleClock', 'enemyName', 'enemyHpBar', 'enemyHpText',
     'enemyRow', 'partyGrid', 'synergyChip', 'resultBanner', 'stageNodes',
     'cardExpPerMinute', 'runPointReward', 'nextAdventureRecharge', 'autoBattleButton',
-    'adventureModeNormal', 'adventureModeHard', 'adventureModeLock',
+    'adventureModeNormal', 'adventureModeHard', 'adventureModeHell', 'adventureModeLock',
     'formationButton', 'quickBattleButton', 'quickBattleCount', 'claimButton', 'pendingReward',
     'formationDialog', 'selectedFormation', 'inventoryGrid', 'selectionCount',
     'formationPresetList', 'formationPresetName', 'formationPresetSave',
     'confirmFormation', 'clearFormation', 'toast', 'attackEcho', 'battlefield', 'offlineTime', 'offlineSummary',
     'rewardDialog', 'rewardEyebrow', 'rewardTitle', 'rewardDuration',
     'rewardCardExp', 'rewardPoints', 'rewardParty', 'rewardNote', 'confirmReward',
+    'hellAchievementDialog', 'hellAchievementClose',
     'adventureScreen', 'enhanceScreen', 'enhanceOwnedCount', 'enhanceTargetList', 'enhanceCardName',
     'enhanceLockButton', 'enhanceCardPreview', 'enhanceCardMeta', 'enhanceExpText', 'enhanceExpBar',
     'cardExpPotionLargeButton', 'cardExpPotionLargeCount', 'cardExpPotionButton', 'cardExpPotionCount',
@@ -690,8 +692,9 @@ function synchronizeTimedState(now = gameService.now()) {
 function renderStage() {
   const stage = STAGES[state.currentStage - 1];
   const rates = rewardRates(productionStageNumber());
-  elements.regionLabel.textContent = `${stage.hard ? 'HARD · ' : ''}지역 ${stage.regionIndex + 1} · ${stage.region}`;
-  elements.stageLabel.textContent = stage.id;
+  const modePrefix = stage.hell ? 'HELL · ' : stage.hard ? 'HARD · ' : '';
+  elements.regionLabel.textContent = `${modePrefix}지역 ${stage.regionIndex + 1} · ${stage.region}`;
+  elements.stageLabel.textContent = stage.displayName ?? stage.id;
   elements.stageMeter.style.width = `${stage.stageNumber * 10}%`;
   elements.battlefield.dataset.region = stage.regionCode;
   elements.battlefield.dataset.mode = stage.mode;
@@ -700,7 +703,9 @@ function renderStage() {
   elements.cardExpPerMinute.textContent = rates.cardExpPerMinute.toFixed(2);
   const activeRun = normalizeAdventureRun(state.adventureRun);
   const displayMode = activeRun.active ? activeRun.mode : selectedAdventureMode;
-  const modeReward = displayMode === 'hard' ? ADVENTURE_RULES.hardRunReward : ADVENTURE_RULES.runReward;
+  const modeReward = displayMode === 'hell'
+    ? ADVENTURE_RULES.hellRunReward
+    : displayMode === 'hard' ? ADVENTURE_RULES.hardRunReward : ADVENTURE_RULES.runReward;
   const runPoints = calculateAdventureRunReward(activeRun.clearedStages, displayMode).points;
   elements.runPointReward.textContent = `${number.format(runPoints)} / ${number.format(modeReward.maxPointsPerRun)} P`;
   elements.stageNodes.innerHTML = stageWindow(state.currentStage).map((globalNumber) => {
@@ -708,7 +713,7 @@ function renderStage() {
     const complete = globalNumber <= state.clearedStage;
     const current = globalNumber === state.currentStage;
     return `<div class="stage-node${complete ? ' complete' : ''}${current ? ' current' : ''}">
-      <i>${complete ? '✓' : nodeStage.stageNumber}</i><span>${nodeStage.id}</span>
+      <i>${complete ? '✓' : nodeStage.stageNumber}</i><span>${nodeStage.displayName ?? nodeStage.id}</span>
     </div>`;
   }).join('');
   renderEnemies(stage);
@@ -716,13 +721,23 @@ function renderStage() {
 
 function renderEnemies(stage) {
   const count = stage.boss ? 1 : Math.min(stage.enemyCount, 5);
-  const enemyClass = stage.boss ? `boss boss-${stage.regionCode}` : `${stage.hard ? 'hard-' : ''}${stage.enemyType}`;
+  const enemyClass = stage.boss
+    ? `boss boss-${stage.regionCode}`
+    : `${stage.hell ? 'hell-' : stage.hard ? 'hard-' : ''}${stage.enemyType}`;
   const enemyLabels = {
     crawler: stage.hard ? '공허 추적체' : '신호 포식체',
     jammer: stage.hard ? '심연 교란체' : '전파 교란체',
     leech: stage.hard ? '악몽 흡수체' : '데이터 흡수체',
     crusher: stage.hard ? '오메가 파쇄체' : '중계 파쇄체',
   };
+  if (stage.hell) {
+    Object.assign(enemyLabels, {
+      crawler: '심판 추적수',
+      jammer: '종말 신호탑',
+      leech: '천벌 포식룡',
+      crusher: '성역 파쇄거신',
+    });
+  }
   const bossLabels = {
     'signal-city': '도시 포식 코어',
     'relay-base': '침묵의 중계 거신',
@@ -734,6 +749,7 @@ function renderEnemies(stage) {
     'nightmare-studio': '악몽 송출 군주',
     'omega-fortress': '오메가 성채 파괴자',
     'hell-core': '지옥 악플 코어',
+    'hell-final': '최후 심판자',
   };
   elements.enemyName.textContent = stage.boss
     ? `${bossLabels[stage.regionCode]} · BOSS`
@@ -752,6 +768,7 @@ function renderHeader() {
   const collectionBonuses = combatBonuses;
   const idleReward = currentIdleReward();
   elements.nickname.textContent = state.nickname;
+  elements.hellConquerorMedal.hidden = !hasHellConquerorMedal(state.clearedStage);
   const profileCard = representativeCard();
   if (profileCard) {
     const source = imagePath(profileCard);
@@ -786,19 +803,29 @@ function renderHeader() {
   const adventureStatus = getAdventureRunLimitStatus(state.adventureRuns, gameService.now());
   const activeRun = normalizeAdventureRun(state.adventureRun);
   const hardUnlocked = isAdventureModeUnlocked('hard', state.clearedStage);
+  const hellUnlocked = isAdventureModeUnlocked('hell', state.clearedStage);
   const displayMode = activeRun.active ? activeRun.mode : selectedAdventureMode;
   elements.adventureModeNormal.classList.toggle('active', displayMode === 'normal');
   elements.adventureModeHard.classList.toggle('active', displayMode === 'hard');
+  elements.adventureModeHell.classList.toggle('active', displayMode === 'hell');
   elements.adventureModeNormal.disabled = activeRun.active;
   elements.adventureModeHard.disabled = activeRun.active || !hardUnlocked;
+  elements.adventureModeHell.disabled = activeRun.active || !hellUnlocked;
   elements.adventureModeHard.setAttribute('aria-disabled', String(activeRun.active || !hardUnlocked));
-  elements.adventureModeLock.textContent = hardUnlocked ? '5-10 클리어 완료 · 하드 해금' : '일반 모험 5-10 클리어 시 해금';
+  elements.adventureModeHell.setAttribute('aria-disabled', String(activeRun.active || !hellUnlocked));
+  elements.adventureModeLock.textContent = hellUnlocked
+    ? '10-10 클리어 완료 · HELL 해금'
+    : hardUnlocked ? '하드 모험 10-10 클리어 시 HELL 해금' : '일반 모험 5-10 클리어 시 하드 해금';
   elements.adventureModeLock.classList.toggle('unlocked', hardUnlocked);
+  elements.adventureModeLock.classList.toggle('hell-unlocked', hellUnlocked);
   // 자동전투 진행 중 빠른전투를 누르면 진행 중이던 스테이지 전투가 무효 처리되던 버그(battleToken 무효화) 방지.
-  elements.quickBattleButton.disabled = state.autoBattle && activeRun.active;
-  elements.quickBattleButton.title = elements.quickBattleButton.disabled
-    ? '모험 진행 중에는 사용할 수 없음'
-    : `${adventureModeRules(displayMode).label} 기준 즉시 정산`;
+  const hellQuickBlocked = displayMode === 'hell';
+  elements.quickBattleButton.disabled = hellQuickBlocked || (state.autoBattle && activeRun.active);
+  elements.quickBattleButton.title = hellQuickBlocked
+    ? 'HELL에서는 빠른 전투를 사용할 수 없습니다.'
+    : elements.quickBattleButton.disabled
+      ? '모험 진행 중에는 사용할 수 없음'
+      : `${adventureModeRules(displayMode).label} 기준 즉시 정산`;
   elements.autoBattleButton.classList.toggle('active', state.autoBattle);
   elements.autoBattleButton.disabled = !activeRun.active && adventureStatus.remaining <= 0;
   const modeLabel = adventureModeRules(displayMode).label;
@@ -840,6 +867,10 @@ function showToast(message) {
   elements.toast.textContent = message;
   elements.toast.classList.add('show');
   toastTimer = setTimeout(() => elements.toast.classList.remove('show'), 2100);
+}
+
+function showHellAchievement() {
+  if (!elements.hellAchievementDialog?.open) elements.hellAchievementDialog?.showModal();
 }
 
 function wait(ms) {
@@ -903,7 +934,7 @@ function showResult(victory, clearedStages) {
   elements.resultBanner.classList.add('show');
 }
 
-function finishAdventureRun(reason) {
+function finishAdventureRun(reason, { hellMedalAwarded = false } = {}) {
   if (remoteMode) {
     const runId = state.adventureRun?.runId;
     if (!runId) return;
@@ -916,6 +947,7 @@ function finishAdventureRun(reason) {
       renderAll();
       const result = response.result ?? {};
       showToast(`${result.clearedStages ?? 0}단계 보상 · +${number.format(result.points ?? 0)}P · 카드 EXP +${number.format(result.cardExp ?? 0)}`);
+      if (result.hellMedalAwarded) showHellAchievement();
       return response;
     });
   }
@@ -940,6 +972,7 @@ function finishAdventureRun(reason) {
     `${reward.clearedStages}단계 보상 · +${number.format(reward.points)}P · 카드 EXP +${number.format(cardExp)}`,
     bonusDropText(bonusDrop),
   ].filter(Boolean).join(' · '));
+  if (hellMedalAwarded) showHellAchievement();
 }
 
 function grantAdventureExRewards() {
@@ -989,12 +1022,15 @@ async function runBattle() {
   battleRunning = false;
 
   if (result.victory) {
+    const hadHellMedal = hasHellConquerorMedal(state.clearedStage);
     state.adventureRun = advanceAdventureRun(state.adventureRun);
     state.clearedStage = Math.max(state.clearedStage, state.currentStage);
     grantAdventureExRewards();
     showResult(true, state.adventureRun.clearedStages);
     if (stage.globalNumber >= adventureModeRules(activeRun.mode).endStage) {
-      finishAdventureRun('complete');
+      finishAdventureRun('complete', {
+        hellMedalAwarded: !hadHellMedal && hasHellConquerorMedal(state.clearedStage),
+      });
       return;
     }
     state.currentStage = state.adventureRun.currentStage;
@@ -1217,7 +1253,13 @@ function renderRewardDialog() {
 function openRewardDialog(mode) {
   synchronizeTimedState();
   if (mode === 'quick') {
-    if (state.autoBattle && normalizeAdventureRun(state.adventureRun).active) {
+    const activeRun = normalizeAdventureRun(state.adventureRun);
+    const quickMode = activeRun.active ? activeRun.mode : selectedAdventureMode;
+    if (quickMode === 'hell') {
+      showToast('HELL에서는 빠른 전투를 사용할 수 없습니다.');
+      return;
+    }
+    if (state.autoBattle && activeRun.active) {
       showToast('모험 진행 중에는 빠른 전투를 사용할 수 없음');
       return;
     }
@@ -2457,7 +2499,9 @@ function selectAdventureMode(mode) {
   const activeRun = normalizeAdventureRun(state.adventureRun);
   if (activeRun.active) return showToast('진행 중인 모험을 먼저 종료하세요.');
   if (!isAdventureModeUnlocked(normalized, state.clearedStage)) {
-    return showToast('일반 모험 5-10 클리어 후 하드 모험이 해금됩니다.');
+    return showToast(normalized === 'hell'
+      ? '하드 모험 10-10 클리어 후 HELL이 해금됩니다.'
+      : '일반 모험 5-10 클리어 후 하드 모험이 해금됩니다.');
   }
   selectedAdventureMode = normalized;
   state.currentStage = adventureModeRules(normalized).startStage;
@@ -2644,6 +2688,8 @@ function bindEvents() {
   });
   elements.adventureModeNormal.addEventListener('click', () => selectAdventureMode('normal'));
   elements.adventureModeHard.addEventListener('click', () => selectAdventureMode('hard'));
+  elements.adventureModeHell.addEventListener('click', () => selectAdventureMode('hell'));
+  elements.hellAchievementClose.addEventListener('click', () => elements.hellAchievementDialog.close());
   elements.autoBattleButton.addEventListener('click', async () => {
     if (state.autoBattle) {
       state.autoBattle = false;

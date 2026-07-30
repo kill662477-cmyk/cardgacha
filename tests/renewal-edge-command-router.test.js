@@ -90,6 +90,14 @@ const hardQuick = await router.execute('user-fixed-by-auth', command(
 ));
 assert.equal(hardQuick.rpc, 'gacha_s2_claim_quick_battle');
 assert.equal(hardQuick.args.p_mode, 'hard');
+const hellQuickCommand = command(
+  GAME_COMMAND_TYPES.CLAIM_QUICK_BATTLE,
+  { mode: 'hard' },
+  'hell-quick-edge-0001',
+);
+hellQuickCommand.payload.mode = 'hell';
+const hellQuick = await router.execute('user-fixed-by-auth', hellQuickCommand);
+assert.equal(hellQuick.code, 'VALIDATION_FAILED', 'edge router must reject HELL quick battle before any RPC');
 snapshot.clearedStage = 0;
 
 calls.length = 0;

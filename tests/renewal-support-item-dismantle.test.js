@@ -123,9 +123,18 @@ assert.match(rpc, /if v_unit_points is null or v_unit_points <= 0 then/, '목록
 assert.match(rpc, /if v_owned < p_count then/, '보유 수량 검사가 있어야 한다');
 assert.match(rpc, /p_count > 100000 then/, 'RPC 수량 상한이 계약 상한과 같아야 한다');
 assert.match(rpc, /revision = revision \+ 1/, '리비전을 올려야 한다');
+// 회귀: serverSeed 를 빼먹었더니 validateGameResponse 가 성공 응답을 거부해
+// 서버는 커밋된 채로 화면만 "요청 처리 실패"가 떴다(아이템은 사라지고 UI 는 실패).
+assert.match(rpc, /'serverSeed', v_seed/, '성공 응답에 serverSeed 가 있어야 한다');
+assert.match(rpc, /v_seed := public\.gacha_s2_new_seed\(\)/, 'serverSeed 는 서버가 생성해야 한다');
 assert.match(rpc, /IDEMPOTENCY_KEY_REUSED/, '멱등성 재사용 가드가 있어야 한다');
 assert.match(rpc, /VERSION_CONFLICT/, '리비전 충돌 가드가 있어야 한다');
 assert.doesNotMatch(rpc, /grant execute[\s\S]*to authenticated/, 'RPC 는 service_role 전용이어야 한다');
+
+// validateGameResponse 가 ok:true 에 요구하는 필드는 RPC 응답에 전부 있어야 한다.
+for (const field of ['contractVersion', 'ok', 'commandId', 'idempotencyKey', 'revision', 'serverTime', 'serverSeed', 'snapshot', 'result']) {
+  assert.ok(rpc.includes(`'${field}'`), `RPC 성공 응답에 ${field} 가 없다`);
+}
 
 // 밸런스 카탈로그에 분해 단가가 실려야 서버가 읽을 수 있다.
 const catalogBuilder = await read('scripts/build-renewal-database-catalog.js');

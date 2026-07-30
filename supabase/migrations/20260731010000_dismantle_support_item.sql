@@ -19,6 +19,7 @@ declare
   v_request_hash text;
   v_previous public.gacha_s2_idempotency%rowtype;
   v_config jsonb;
+  v_seed bigint;
   v_unit_points integer;
   v_owned integer;
   v_gained_points integer;
@@ -92,6 +93,11 @@ begin
     );
   end if;
 
+  -- 분해에는 난수가 없지만 응답 계약이 serverSeed(32비트)를 필수로 요구한다.
+  -- 이게 빠지면 클라이언트가 성공 응답을 거부해 "요청 처리 실패"가 뜬다(서버는 이미 커밋된 뒤라
+  -- 아이템은 사라지고 화면만 실패로 보인다).
+  v_seed := public.gacha_s2_new_seed();
+
   v_gained_points := v_unit_points * p_count;
   v_remaining := v_owned - p_count;
   v_support_items := jsonb_set(v_support_items, array[p_item_id], to_jsonb(v_remaining), true);
@@ -108,7 +114,7 @@ begin
   v_response := jsonb_build_object(
     'contractVersion', 1, 'ok', true,
     'commandId', p_idempotency_key, 'idempotencyKey', p_idempotency_key,
-    'revision', v_revision, 'serverTime', public.gacha_s2_now_ms(),
+    'revision', v_revision, 'serverTime', public.gacha_s2_now_ms(), 'serverSeed', v_seed,
     'snapshot', v_snapshot,
     'result', jsonb_build_object(
       'itemId', p_item_id,
@@ -125,9 +131,9 @@ begin
     p_user_id, p_idempotency_key, 'dismantleSupportItem', v_request_hash, v_response, now() + interval '24 hours'
   );
   insert into public.gacha_s2_command_audit (
-    user_id, command_id, command_type, request_hash, expected_revision, committed_revision
+    user_id, command_id, command_type, request_hash, expected_revision, committed_revision, server_seed
   ) values (
-    p_user_id, p_idempotency_key, 'dismantleSupportItem', v_request_hash, p_expected_revision, v_revision
+    p_user_id, p_idempotency_key, 'dismantleSupportItem', v_request_hash, p_expected_revision, v_revision, v_seed
   );
 
   return v_response;

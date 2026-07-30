@@ -1,4 +1,4 @@
-export const BALANCE_VERSION = '2026.07.30-hell10-worldboss-retune-1';
+export const BALANCE_VERSION = '2026.07.30-hell10-worldboss-retune-2';
 
 export const RARITY_ORDER = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
 

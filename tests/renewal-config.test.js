@@ -40,6 +40,10 @@ const hell10RetuneMigration = await readFile(
   new URL('../supabase/migrations/20260730201000_hell10_boss_trait_retune.sql', import.meta.url),
   'utf8',
 );
+const adventureBalanceSyncMigration = await readFile(
+  new URL('../supabase/migrations/20260730203000_sync_full_adventure_balance_config.sql', import.meta.url),
+  'utf8',
+);
 
 const rateTotal = (rates) => Object.values(rates).reduce((sum, rate) => sum + rate, 0);
 Object.values(PACKS).forEach((pack) => assert.ok(Math.abs(rateTotal(pack.rates) - 100) < 1e-9));
@@ -106,7 +110,7 @@ assert.equal(EX_DISTRIBUTION_RULES.milestones.length, 8);
 assert.equal(Object.values(PACKS).some((pack) => Object.hasOwn(pack.rates, 'EX')), false);
 assert.deepEqual(EX_DISTRIBUTION_RULES.milestones.map(({ clearedStage }) => clearedStage), [5, 10, 15, 20, 25, 30, 40, 50]);
 assert.equal(new Set(EX_DISTRIBUTION_RULES.milestones.map(({ cardId }) => cardId)).size, 8);
-assert.strictEqual(BALANCE_VERSION, '2026.07.30-hell10-worldboss-retune-1');
+assert.strictEqual(BALANCE_VERSION, '2026.07.30-hell10-worldboss-retune-2');
 assert.equal(ARCHETYPES.boss.bossDamage, 2.0);
 assert.equal(ARCHETYPES.area.area, 1.5);
 assert.match(appSource, /\$\{ARCHETYPES\.combo\.multiHit\}배/, '연타 설명은 현재 설정값을 표시해야 한다');
@@ -122,6 +126,9 @@ assert.match(hell10RetuneMigration, /\{stages,109,enemyHp\}.*48000000/s);
 assert.match(hell10RetuneMigration, /2026\.07\.30-hell10-worldboss-retune-1/);
 assert.match(hell10RetuneMigration, /\{worldBossRules,slotTiers,20,maxHp\}.*13000000000/s);
 assert.match(hell10RetuneMigration, /gacha_s2_resync_world_boss_hp\(now\(\)\)/);
+assert.match(adventureBalanceSyncMigration, /jsonb_array_length\(v_config->'regions'\) is distinct from 11/);
+assert.match(adventureBalanceSyncMigration, /jsonb_array_length\(v_config->'stages'\) is distinct from 110/);
+assert.match(adventureBalanceSyncMigration, /2026\.07\.30-hell10-worldboss-retune-2/);
 assert.deepEqual(ADVENTURE_RULES.modes.hard, {
   label: '하드 모험', startStage: 51, endStage: 100, stageCount: 50, unlockStage: 50,
 });

@@ -121,6 +121,50 @@ export const SUPPORT_PACK = {
   },
 };
 
+// 보급품 분해. 환급 포인트는 "보급팩 1회 가격 ÷ 해당 아이템 출현 확률"에서 나온다.
+// 나오기 어려운 아이템일수록 환급이 크다. 기본식은 round(basis / rate) 이고,
+// basis 는 보급팩 1회 가격(150P) 기준으로 기대 환급률이 약 24% 가 되도록 잡았다.
+// (기대 환급 = sum(rate/100 * value) 이므로 basis 를 올리면 그대로 환급률이 올라간다.)
+//
+// 교환권만 예외다. 교환권은 "팩 정가"라는 별도 기준가가 있어서 확률식만 쓰면 앞뒤가 안 맞는다.
+// 종족팩 교환권은 확률식으로 150P 인데 종족팩 정가는 100P 라, 분해가 구매보다 이득이 되어버린다.
+// 그래서 교환권은 팩 정가의 packPriceShare 로 상한을 둔다.
+//
+// 선택권(ssCardSelector/sssCardSelector)은 보급팩에서 나오지 않아 확률 기준이 없다.
+// 기준가를 지어내지 않고 분해 대상에서 제외한다(values 에 없으면 분해 불가).
+export const SUPPORT_ITEM_DISMANTLE = {
+  basis: 300,
+  packPriceShare: 0.3,
+  values: {
+    energySmall: 21,
+    energyMedium: 38,
+    energyLarge: 150,
+    enhance5: 19,
+    enhance10: 50,
+    destructionGuard: 60,
+    cardExpPotion: 30,
+    // 보급팩에 없는 아이템. 효과가 cardExpPotion(+300 EXP, 30P)의 1/15 이라 그 비율로 맞췄다.
+    cardExpPotionLarge: 5,
+    exp30m: 19,
+    exp2h: 33,
+    // 아래 4종은 팩 정가 상한이 걸린 값이다(확률식 값 -> 상한 적용 값).
+    generalTicket: 15,
+    eliteTicket: 45,
+    raceTicket: 30,
+    premiumTicket: 150,
+    adventureRunReset: 1200,
+    quickBattleReset: 400,
+  },
+};
+
+export function supportItemDismantleValue(itemId) {
+  return SUPPORT_ITEM_DISMANTLE.values[itemId] ?? 0;
+}
+
+export function canDismantleSupportItem(itemId) {
+  return Object.hasOwn(SUPPORT_ITEM_DISMANTLE.values, itemId);
+}
+
 export const SUPPORT_ITEMS = {
   energySmall: { name: '전술 배터리 S', category: '행동력', effect: '행동력 +20', energy: 20 },
   energyMedium: { name: '전술 배터리 M', category: '행동력', effect: '행동력 +50', energy: 50 },

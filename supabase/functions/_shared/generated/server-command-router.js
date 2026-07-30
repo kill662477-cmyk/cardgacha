@@ -28,6 +28,7 @@ const DIRECT_RPCS = Object.freeze({
   [GAME_COMMAND_TYPES.BUY_LOTTO_TICKET]: 'gacha_s2_buy_lotto_ticket',
   [GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD]: 'gacha_s2_claim_world_boss_reward',
   [GAME_COMMAND_TYPES.DISMANTLE_CARDS]: 'gacha_s2_dismantle_cards',
+  [GAME_COMMAND_TYPES.DISMANTLE_SUPPORT_ITEM]: 'gacha_s2_dismantle_support_item',
   // 길드(PDB-16 M1). 전부 서버 상태만 바꾸므로 클라 재현 검증이 필요 없다.
   [GAME_COMMAND_TYPES.CREATE_GUILD]: 'gacha_s2_create_guild',
   [GAME_COMMAND_TYPES.DISBAND_GUILD]: 'gacha_s2_disband_guild',
@@ -125,6 +126,8 @@ function directArgs(userId, command) {
       return { ...args, p_event_id: payload.eventId };
     case GAME_COMMAND_TYPES.DISMANTLE_CARDS:
       return { ...args, p_rarity: payload.rarity };
+    case GAME_COMMAND_TYPES.DISMANTLE_SUPPORT_ITEM:
+      return { ...args, p_item_id: payload.itemId, p_count: payload.count };
     case GAME_COMMAND_TYPES.CREATE_GUILD:
       return {
         ...args,

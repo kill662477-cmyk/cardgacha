@@ -572,6 +572,10 @@ button[aria-busy="true"]::after {
 .shop-item-copy small { margin-top: 3px; color: var(--gold); font-size: 8px; }
 .shop-item-action { min-width: 47px; min-height: 31px; border: 1px solid var(--acid); background: transparent; color: var(--acid); font-size: 8px; font-weight: 900; cursor: pointer; }
 .shop-item-action:disabled { border-color: var(--line); color: #626962; cursor: not-allowed; }
+.shop-item-actions { display: flex; gap: 4px; flex-shrink: 0; }
+/* 분해는 되돌릴 수 없어 사용 버튼과 색으로 구분한다. */
+.shop-item-action.dismantle { border-color: #7a5c3a; color: #d09a5c; }
+.shop-item-action.dismantle:disabled { border-color: var(--line); color: #626962; }
 .shop-item-row.card-selector-item { border-color: color-mix(in srgb, var(--selector-rarity) 42%, var(--line)); box-shadow: inset 3px 0 var(--selector-rarity); }
 .shop-item-row.card-selector-item .shop-item-icon,
 .shop-item-row.card-selector-item .shop-item-action { border-color: var(--selector-rarity); color: var(--selector-rarity); }

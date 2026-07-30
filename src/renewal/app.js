@@ -1,5 +1,6 @@
 import {
   ADVENTURE_RULES, ARCHETYPES, DISMANTLE_RULES, ENHANCEMENT, GAME_RULES, PACKS, RARITIES, RARITY_ORDER,
+  canDismantleSupportItem, supportItemDismantleValue,
   REWARD_RULES, STAGES, SUPPORT_ITEMS, SUPPORT_PACK,
 } from './config.js';
 import { computeCardPower, computeCardStats, computeFormationPower, getRaceSynergy, simulateBattle } from './battle.js';
@@ -1914,10 +1915,16 @@ function shopItemMarkup(itemId) {
   const item = SUPPORT_ITEMS[itemId];
   const count = state.supportItems[itemId] ?? 0;
   const directlyUsable = Boolean(item.energy || item.durationMinutes || item.pack || item.cardExp || item.cardSelectorRarity || item.reset);
+  // 선택권처럼 보급팩 확률이 없는 아이템은 환급 기준가가 없어 분해 대상이 아니다.
+  const dismantlable = canDismantleSupportItem(itemId);
+  const unitPoints = supportItemDismantleValue(itemId);
   return `<article class="shop-item-row${item.cardSelectorRarity ? ' card-selector-item' : ''}"${item.cardSelectorRarity ? ` style="--selector-rarity:${RARITIES[item.cardSelectorRarity].color}"` : ''}>
     <div class="shop-item-icon">${supportItemIconMarkup(itemId, item)}</div>
     <div class="shop-item-copy"><b>${item.name}</b><span>${item.effect}</span><small>보유 ${count}개</small></div>
-    <button class="shop-item-action" type="button" data-use-shop-item="${itemId}" ${count <= 0 || !directlyUsable ? 'disabled' : ''}>${item.cardSelectorRarity ? '선택' : item.pack ? '교환' : item.cardExp ? '강화' : '사용'}</button>
+    <div class="shop-item-actions">
+      <button class="shop-item-action" type="button" data-use-shop-item="${itemId}" ${count <= 0 || !directlyUsable ? 'disabled' : ''}>${item.cardSelectorRarity ? '선택' : item.pack ? '교환' : item.cardExp ? '강화' : '사용'}</button>
+      ${dismantlable ? `<button class="shop-item-action dismantle" type="button" data-dismantle-shop-item="${itemId}" ${count <= 0 ? 'disabled' : ''} title="1개당 ${number.format(unitPoints)}P 환급">분해</button>` : ''}
+    </div>
   </article>`;
 }
 
@@ -2204,6 +2211,44 @@ function purchaseSupportPack(amount = 1, triggerButton = null) {
     renderShop();
     showSupportResults(itemIds, cost);
   });
+}
+
+async function dismantleShopItem(itemId) {
+  const item = SUPPORT_ITEMS[itemId];
+  if (!item || !canDismantleSupportItem(itemId)) return;
+  const owned = state.supportItems[itemId] ?? 0;
+  if (owned <= 0) return;
+
+  // 분해는 되돌릴 수 없다. 몇 개가 사라지고 얼마를 받는지 숫자로 보여주고 한 번 더 묻는다.
+  const unitPoints = supportItemDismantleValue(itemId);
+  const gained = unitPoints * owned;
+  const confirmed = window.confirm(
+    `${item.name} ${number.format(owned)}개를 분해합니다.
+`
+    + `${number.format(gained)} P 를 받고 아이템은 사라집니다. (1개당 ${number.format(unitPoints)} P)
+`
+    + '되돌릴 수 없습니다. 분해할까요?',
+  );
+  if (!confirmed) return;
+
+  if (remoteMode) {
+    return runUiOperation('dismantleSupportItem', null, async () => {
+      const response = await executeServerCommand(GAME_COMMAND_TYPES.DISMANTLE_SUPPORT_ITEM, { itemId, count: owned });
+      if (!response?.ok) return response;
+      renderHeader();
+      renderShop();
+      showToast(`${item.name} ${number.format(owned)}개 분해 · ${number.format(response.result?.gainedPoints ?? gained)} P`);
+      return response;
+    });
+  }
+
+  state.supportItems[itemId] = 0;
+  state.points += gained;
+  persist();
+  renderHeader();
+  renderShop();
+  showToast(`${item.name} ${number.format(owned)}개 분해 · ${number.format(gained)} P`);
+  return null;
 }
 
 async function activateShopItem(itemId) {
@@ -2955,7 +3000,12 @@ function bindEvents() {
   });
   elements.shopInventoryGrid.addEventListener('click', (event) => {
     const button = event.target.closest('[data-use-shop-item]');
-    if (button && !button.disabled) activateShopItem(button.dataset.useShopItem);
+    if (button && !button.disabled) {
+      activateShopItem(button.dataset.useShopItem);
+      return;
+    }
+    const dismantleButton = event.target.closest('[data-dismantle-shop-item]');
+    if (dismantleButton && !dismantleButton.disabled) dismantleShopItem(dismantleButton.dataset.dismantleShopItem);
   });
   elements.cardSelectorGrid.addEventListener('click', (event) => {
     const button = event.target.closest('[data-selector-card]');

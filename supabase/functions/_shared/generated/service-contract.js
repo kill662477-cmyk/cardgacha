@@ -17,6 +17,7 @@ export const GAME_COMMAND_TYPES = Object.freeze({
   REDEEM_CARD_SELECTOR: 'redeemCardSelector',
   ENHANCE_CARD: 'enhanceCard',
   DISMANTLE_CARDS: 'dismantleCards',
+  DISMANTLE_SUPPORT_ITEM: 'dismantleSupportItem',
   SET_REPRESENTATIVE_CARD: 'setRepresentativeCard',
   SET_CARD_LOCK: 'setCardLock',
   START_MINIGAME: 'startMinigame',
@@ -87,6 +88,7 @@ function validatePayload(type, payload, issues) {
     [GAME_COMMAND_TYPES.REDEEM_CARD_SELECTOR]: ['itemId', 'cardId'],
     [GAME_COMMAND_TYPES.ENHANCE_CARD]: ['cardId', 'targetEnhancement', 'materialCardIds', 'boosterId'],
     [GAME_COMMAND_TYPES.DISMANTLE_CARDS]: ['rarity'],
+    [GAME_COMMAND_TYPES.DISMANTLE_SUPPORT_ITEM]: ['itemId', 'count'],
     [GAME_COMMAND_TYPES.SET_REPRESENTATIVE_CARD]: ['cardId'],
     [GAME_COMMAND_TYPES.SET_CARD_LOCK]: ['cardId', 'locked'],
     [GAME_COMMAND_TYPES.START_MINIGAME]: ['game', 'difficulty'],
@@ -175,6 +177,13 @@ function validatePayload(type, payload, issues) {
     case GAME_COMMAND_TYPES.DISMANTLE_CARDS:
       if (!['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'].includes(payload.rarity)) {
         addIssue(issues, 'payload.rarity', 'F~SSS 등급 필요');
+      }
+      break;
+    case GAME_COMMAND_TYPES.DISMANTLE_SUPPORT_ITEM:
+      validateString(issues, payload.itemId, 'payload.itemId', 80);
+      // 분해 가능 여부는 서버가 다시 판정한다. 여기서는 형식만 본다.
+      if (!Number.isInteger(payload.count) || payload.count < 1 || payload.count > 999) {
+        addIssue(issues, 'payload.count', '1~999 정수 필요');
       }
       break;
     case GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK:

@@ -76,6 +76,9 @@ assert.deepEqual(WORLD_BOSS_RULES.rewardTiers.map(({ damage, points, failurePoin
   [40_000_000, 24000, 9000],
   [50_000_000, 30000, 12000],
   [60_000_000, 40000, 15000],
+  [70_000_000, 50000, 18000],
+  [80_000_000, 60000, 21000],
+  [90_000_000, 70000, 24000],
 ]);
 // 티어 개수와 최대 지급액은 gacha_s2_world_boss_players 의 CHECK 제약 안에 있어야 한다.
 // 과거 claimed_tier(<=5), reward_points(<=10000) 를 넘겨 보상 수령이 전부 실패한 사고가 있었다.
@@ -103,7 +106,7 @@ assert.deepEqual(Object.values(WORLD_BOSS_RULES.slotTiers).map(({ serverDamagePe
 assert.equal(WORLD_BOSS_RULES.serverDamagePerSecond, 0);
 assert.deepEqual(Object.values(WORLD_BOSS_RULES.slotTiers).map(({ clearDestructionGuardRate }) => clearDestructionGuardRate), [0.05, 0.10, 0.15, 0.20]);
 assert.equal(WORLD_BOSS_RULES.raidDurationSeconds, 30 * 60);
-assert.equal(Math.max(...WORLD_BOSS_RULES.rewardTiers.flatMap(({ points, failurePoints }) => [points, failurePoints])), 40000);
+assert.equal(Math.max(...WORLD_BOSS_RULES.rewardTiers.flatMap(({ points, failurePoints }) => [points, failurePoints])), 70000);
 assert.equal(SOOP_RULES.pointsPerBalloon, 5);
 assert.equal(EX_DISTRIBUTION_RULES.enabled, true);
 assert.equal(EX_DISTRIBUTION_RULES.milestones.length, 8);

@@ -403,6 +403,9 @@ export const WORLD_BOSS_RULES = {
     { damage: 40_000_000, points: 24000, failurePoints: 9000, label: '4,000만' },
     { damage: 50_000_000, points: 30000, failurePoints: 12000, label: '5,000만' },
     { damage: 60_000_000, points: 40000, failurePoints: 15000, label: '6,000만' },
+    { damage: 70_000_000, points: 50000, failurePoints: 18000, label: '7,000만' },
+    { damage: 80_000_000, points: 60000, failurePoints: 21000, label: '8,000만' },
+    { damage: 90_000_000, points: 70000, failurePoints: 24000, label: '9,000만' },
   ],
 };
 

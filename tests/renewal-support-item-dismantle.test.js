@@ -8,7 +8,7 @@ import {
   canDismantleSupportItem,
   supportItemDismantleValue,
 } from '../src/renewal/config.js';
-import { GAME_COMMAND_TYPES, validateGameCommand } from '../src/renewal/service-contract.js';
+import { GAME_COMMAND_TYPES, SUPPORT_ITEM_DISMANTLE_MAX_COUNT, validateGameCommand } from '../src/renewal/service-contract.js';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
@@ -87,6 +87,24 @@ assert.equal(
   false,
   '정수가 아닌 count 는 거부해야 한다',
 );
+// 회귀: 상한을 999 로 잡았다가 보유 1,000개 이상인 유저의 전량 분해가 전부 거부됐다.
+// 실제 최대 보유량이 22,947 개였다.
+assert.ok(SUPPORT_ITEM_DISMANTLE_MAX_COUNT >= 30000, '수량 상한이 실제 보유량을 감당하지 못한다');
+assert.equal(
+  validateGameCommand({ ...baseCommand, payload: { itemId: 'energySmall', count: 22947 } }).valid,
+  true,
+  '실제 보유 최대치(22,947개) 전량 분해가 통과해야 한다',
+);
+assert.equal(
+  validateGameCommand({ ...baseCommand, payload: { itemId: 'energySmall', count: SUPPORT_ITEM_DISMANTLE_MAX_COUNT + 1 } }).valid,
+  false,
+  '상한 초과는 거부해야 한다',
+);
+// 최대 단가 * 최대 수량이 정수 범위를 넘으면 포인트가 깨진다.
+assert.ok(
+  Math.max(...Object.values(values)) * SUPPORT_ITEM_DISMANTLE_MAX_COUNT < 2_147_483_647,
+  '최대 환급액이 integer 범위를 넘는다',
+);
 assert.equal(
   validateGameCommand({ ...baseCommand, payload: { itemId: 'energySmall', count: 1, sneak: 1 } }).valid,
   false,
@@ -103,6 +121,7 @@ const rpc = await read('supabase/migrations/20260731010000_dismantle_support_ite
 assert.match(rpc, /supportItemDismantle'->'values'->>p_item_id/, '환급 단가는 서버가 밸런스 설정에서 다시 읽어야 한다');
 assert.match(rpc, /if v_unit_points is null or v_unit_points <= 0 then/, '목록에 없는 아이템은 서버가 거부해야 한다');
 assert.match(rpc, /if v_owned < p_count then/, '보유 수량 검사가 있어야 한다');
+assert.match(rpc, /p_count > 100000 then/, 'RPC 수량 상한이 계약 상한과 같아야 한다');
 assert.match(rpc, /revision = revision \+ 1/, '리비전을 올려야 한다');
 assert.match(rpc, /IDEMPOTENCY_KEY_REUSED/, '멱등성 재사용 가드가 있어야 한다');
 assert.match(rpc, /VERSION_CONFLICT/, '리비전 충돌 가드가 있어야 한다');

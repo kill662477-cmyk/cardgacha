@@ -55,7 +55,7 @@ import {
 import { assertValidGameState, migrateGameState } from './state-schema.js';
 import { createLocalGameService } from './local-game-service.js';
 import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './remote-runtime.js?v=202607290900';
-import { GAME_COMMAND_TYPES, isRetryableGameError } from './service-contract.js';
+import { GAME_COMMAND_TYPES, SUPPORT_ITEM_DISMANTLE_MAX_COUNT, isRetryableGameError } from './service-contract.js';
 import { createRequestCoordinator, REQUEST_PHASES } from './request-coordinator.js?v=202607211025';
 import { createMiniGameController } from './minigame-controller.js?v=202607290900';
 import { executeCommandWithVersionRetry } from './server-command-retry.js';
@@ -2216,7 +2216,8 @@ function purchaseSupportPack(amount = 1, triggerButton = null) {
 async function dismantleShopItem(itemId) {
   const item = SUPPORT_ITEMS[itemId];
   if (!item || !canDismantleSupportItem(itemId)) return;
-  const owned = state.supportItems[itemId] ?? 0;
+  // 한 번에 보낼 수 있는 수량에는 상한이 있다. 초과 보유분은 나눠서 분해한다.
+  const owned = Math.min(state.supportItems[itemId] ?? 0, SUPPORT_ITEM_DISMANTLE_MAX_COUNT);
   if (owned <= 0) return;
 
   // 분해는 되돌릴 수 없다. 몇 개가 사라지고 얼마를 받는지 숫자로 보여주고 한 번 더 묻는다.
@@ -2242,7 +2243,7 @@ async function dismantleShopItem(itemId) {
     });
   }
 
-  state.supportItems[itemId] = 0;
+  state.supportItems[itemId] = (state.supportItems[itemId] ?? 0) - owned;
   state.points += gained;
   persist();
   renderHeader();

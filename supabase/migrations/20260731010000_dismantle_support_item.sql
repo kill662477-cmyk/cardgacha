@@ -26,11 +26,13 @@ declare
   v_snapshot jsonb;
   v_response jsonb;
 begin
+  -- 수량 상한 100000. 999 로 잡았다가 보유 1,000개 이상인 유저(655명, 최대 22,947개)의
+  -- 전량 분해가 전부 거부된 사고가 있었다.
   if p_user_id is null
     or p_expected_revision is null or p_expected_revision < 0
     or p_idempotency_key is null or length(trim(p_idempotency_key)) < 8 or length(p_idempotency_key) > 128
     or p_item_id is null or length(trim(p_item_id)) < 1 or length(p_item_id) > 80
-    or p_count is null or p_count < 1 or p_count > 999 then
+    or p_count is null or p_count < 1 or p_count > 100000 then
     return public.gacha_s2_command_error(
       p_idempotency_key, 'VALIDATION_FAILED', '분해 요청이 올바르지 않습니다.',
       greatest(coalesce(p_expected_revision, 0), 0), null, null

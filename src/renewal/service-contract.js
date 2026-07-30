@@ -1,5 +1,8 @@
 export const GAME_API_CONTRACT_VERSION = 1;
 
+// 보급품 분해 1회 최대 수량. 단가 최고치(1,200P)를 곱해도 정수 범위에 여유가 크다.
+export const SUPPORT_ITEM_DISMANTLE_MAX_COUNT = 100000;
+
 export const GAME_COMMAND_TYPES = Object.freeze({
   UPDATE_FORMATION: 'updateFormation',
   // 편성 프리셋(최대 5개). 상태 필드(formationPresets/activeFormationPresetId)와 5개 상한은
@@ -182,8 +185,10 @@ function validatePayload(type, payload, issues) {
     case GAME_COMMAND_TYPES.DISMANTLE_SUPPORT_ITEM:
       validateString(issues, payload.itemId, 'payload.itemId', 80);
       // 분해 가능 여부는 서버가 다시 판정한다. 여기서는 형식만 본다.
-      if (!Number.isInteger(payload.count) || payload.count < 1 || payload.count > 999) {
-        addIssue(issues, 'payload.count', '1~999 정수 필요');
+      // 상한은 실제 보유량을 감당해야 한다. 999 로 잡았다가 보유 1,000개 이상인
+      // 유저(655명, 최대 22,947개)의 전량 분해가 전부 거부된 사고가 있었다.
+      if (!Number.isInteger(payload.count) || payload.count < 1 || payload.count > SUPPORT_ITEM_DISMANTLE_MAX_COUNT) {
+        addIssue(issues, 'payload.count', `1~${SUPPORT_ITEM_DISMANTLE_MAX_COUNT} 정수 필요`);
       }
       break;
     case GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK:

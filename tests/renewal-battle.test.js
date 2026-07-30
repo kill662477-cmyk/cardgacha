@@ -62,12 +62,27 @@ const areaBoss = simulateBattle(areaDeck, { ...target, boss: true });
 const totalDamage = (result) => result.damageByCard.reduce((sum, entry) => sum + entry.damage, 0);
 assert.ok(totalDamage(areaNormal) > totalDamage(areaBoss), 'area bonus must apply to normal waves only');
 
+const bossSpecialistDeck = Array.from({ length: 5 }, (_, index) => ({
+  ...roleCard('boss'), id: `boss-specialist-${index}`,
+}));
+const quickBossDeck = bossSpecialistDeck.map((card) => ({ ...card, archetype: 'quick' }));
+const bossAuditTarget = { id: 'boss-specialist-target', enemyHp: 999_999_999, enemyAttack: 0, duration: 20, boss: true };
+const bossSpecialistDamage = totalDamage(simulateBattle(bossSpecialistDeck, bossAuditTarget));
+const quickBossDamage = totalDamage(simulateBattle(quickBossDeck, bossAuditTarget));
+assert.ok(bossSpecialistDamage > quickBossDamage * 1.5, 'boss trait 2.0 must clearly outperform quick on bosses');
+
 console.log(`renewal battle tests passed: ${cards.length} cards, ${STAGES.length} stages, ${first.events.length} events`);
 
 // 약화 감소폭은 하드코딩이 아니라 ARCHETYPES.weaken.weaken 을 따라야 한다.
 // 하드코딩으로 되돌아가면 설정을 바꿔도 전투가 안 변한다(실제로 0.08 설정과 0.92 하드코딩이
 // 따로 놀아, 설정값은 전투력 점수에만 쓰이고 전투에는 반영되지 않았다).
 const battleSource = await fs.readFile(new URL('../src/renewal/battle.js', import.meta.url), 'utf8');
+const bossTraitMigration = await fs.readFile(
+  new URL('../supabase/migrations/20260730123000_boss_trait_damage_2.sql', import.meta.url),
+  'utf8',
+);
+assert.match(bossTraitMigration, /\{archetypes,boss,bossDamage\}.*'2\.0'::jsonb/s);
+assert.match(bossTraitMigration, /2026\.07\.30-boss-trait-2/);
 assert.match(battleSource, /1 - weakenAmount/, '약화 감소폭은 특성 설정값에서 와야 한다');
 assert.doesNotMatch(battleSource, /weakenedUntil \? 0\.92/, '하드코딩된 0.92 가 남아 있으면 안 된다');
 assert.equal(ARCHETYPES.weaken.weaken, 0.15);

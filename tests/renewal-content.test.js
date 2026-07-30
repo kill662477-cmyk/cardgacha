@@ -174,7 +174,10 @@ assert.ok(STAGES.every((stage, index) => stage.globalNumber === index + 1));
 
 const fullRecords = Object.fromEntries(cards.map((card) => [card.id, true]));
 const collectionBonuses = calculateCollectionBonuses(cards, fullRecords);
-const maxedCards = cards.filter((card) => card.rarity !== 'EX').map((card) => ({ ...card, enhancement: 9 }));
+// 모험 도달성 기준 덱은 월드보스 전용 계수 변경에 따라 카드 구성이 뒤집히지 않아야 한다.
+const maxedCards = cards
+  .filter((card) => card.rarity !== 'EX' && card.archetype !== 'boss')
+  .map((card) => ({ ...card, enhancement: 9 }));
 const raceDecks = [...new Set(maxedCards.map((card) => card.race))].map((race) => (
   maxedCards.filter((card) => card.race === race)
     .sort((left, right) => computeFormationPower([right, right, right, right, right], collectionBonuses)

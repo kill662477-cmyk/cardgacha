@@ -42,11 +42,11 @@ const rewardBefore = getWorldBossReward(recorded, now);
 assert.equal(rewardBefore.available, false, 'reward stays locked during the 30-minute raid');
 const resultSnapshot = getWorldBossSnapshot(recorded, resultAt);
 assert.equal(resultSnapshot.resultsOpen, true);
-// balance-tune: 서버 자동딜 폐지 -> 처치는 순수 참가자 합산딜(여기선 34.4M) vs maxHp(95억) 비교.
-// 34.4M << 95억이라 이 소규모 참여로는 처치 실패(참여 부족 시 실패도 발생하는 것이 의도된 설계).
-assert.equal(resultSnapshot.defeated, false, '34.4M pooled damage falls far short of the 95억 maxHp target');
+// balance-tune: 서버 자동딜 폐지 -> 처치는 순수 참가자 합산딜(여기선 43.8M) vs maxHp(95억) 비교.
+// 43.8M << 95억이라 이 소규모 참여로는 처치 실패(참여 부족 시 실패도 발생하는 것이 의도된 설계).
+assert.equal(resultSnapshot.defeated, false, '43.8M pooled damage falls far short of the 95억 maxHp target');
 const claimed = claimWorldBossReward(recorded, resultAt);
-assert.equal(claimed.reward.points, 6000, '3,000만 티어의 실패 보상 포인트');
+assert.equal(claimed.reward.points, 9000, '4,000만 티어의 실패 보상 포인트');
 assert.equal(getWorldBossReward(claimed.progress, resultAt).available, false);
 
 const participationOnly = claimWorldBossReward(recordWorldBossAttempt(progress, 1, now), resultAt);

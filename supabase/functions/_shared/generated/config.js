@@ -1,4 +1,4 @@
-export const BALANCE_VERSION = '2026.07.30-hell-adventure-1';
+export const BALANCE_VERSION = '2026.07.30-boss-trait-2';
 
 export const RARITY_ORDER = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
 
@@ -22,7 +22,7 @@ export const ARCHETYPES = {
   heavy: { label: '강타', atk: 1.31, hp: 1.04, def: 1, speed: 0.78, crit: 0.12, critDamage: 0.2 },
   combo: { label: '연타', atk: 0.96, hp: 0.96, def: 0.94, speed: 1.12, multiHit: 1.1 },
   area: { label: '광역', atk: 1.04, hp: 0.98, def: 0.94, speed: 0.94, area: 1.18 },
-  boss: { label: '보스', atk: 1.08, hp: 1.03, def: 1, speed: 0.91, bossDamage: 1.28 },
+  boss: { label: '보스', atk: 1.08, hp: 1.03, def: 1, speed: 0.91, bossDamage: 2.0 },
   // 증폭: 자기 치명타만 올리던 특성을 파티 전체 치명타 오라로 바꿨다. 강타가 치명타 담당이
   // 되면서 역할이 겹쳤고, 기존 파티 딜 +4%(중첩)는 5장을 다 넣어도 이득이 +0.66%p 뿐이었다.
   // critAura 는 편성 전체에 합산되므로 많이 넣을수록 강해지는 유일한 특성이다.

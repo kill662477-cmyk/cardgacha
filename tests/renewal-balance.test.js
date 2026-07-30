@@ -98,10 +98,13 @@ assert.equal(stallsBeforeEnd(lowRegion5Deck, cardOnlyBonuses), true, 'low-rarity
 // 최종 HELL: SSS 9강 + 올도감 + 길드 Lv.10의 역할 편성만 완주한다.
 // 같은 편성의 8강 또는 길드 버프 누락은 적어도 한 스테이지에서 막혀야 한다.
 const hellStages = STAGES.filter((stage) => stage.mode === 'hell');
-const hellTargetIds = ['juharang-2', 'kimyunhwan-4', 'jjiking-12', 'tomato-11', 'kimmincheol-7'];
+const hellTargetIds = ['jidudu-1', 'tomato-11', 'haetsal-12', 'kimmincheol-7', 'jidongwon-8'];
 const hellDeck = hellTargetIds.map((id) => ({ ...allCards.find((card) => card.id === id), enhancement: 9 }));
 const guildLevel10Bonuses = applyGuildBuff(fullCollection, { level: 10, atk: 0.05, hp: 0.05, def: 0.04 });
+const guildOnlyBonuses = applyGuildBuff(cardOnlyBonuses, { level: 10, atk: 0.05, hp: 0.05, def: 0.04 });
 assert.equal(hellStages.length, 10);
+assert.equal(hellStages.at(-1).enemyHp, 48_000_000);
+assert.equal(hellStages.at(-1).enemyAttack, 50_000);
 assert.equal(hellStages.every((stage) => simulateBattle(hellDeck, stage, guildLevel10Bonuses).victory), true);
 assert.equal(
   hellStages.every((stage) => simulateBattle(hellDeck.map((card) => ({ ...card, enhancement: 8 })), stage, guildLevel10Bonuses).victory),
@@ -115,5 +118,63 @@ assert.equal(
 );
 const hellFinalResult = simulateBattle(hellDeck, hellStages.at(-1), guildLevel10Bonuses);
 assert.ok(hellFinalResult.duration >= hellStages.at(-1).duration * 0.9, 'Hell10은 제한시간 끝자락에서 클리어되어야 한다');
+
+// 고정 기준 덱만 검사하면 새 카드/특성 상향 뒤 다른 조합이 난이도 조건을 우회할 수 있다.
+// 현재 SSS 21장의 모든 5장 조합을 검사해 길드·도감·9강 조건과 최단 클리어 시간을 함께 잠근다.
+const hellSssCards = allCards
+  .filter((card) => card.rarity === 'SSS' && card.archetype)
+  .map((card) => ({ ...card, enhancement: 9 }));
+const hellDeckCandidates = [];
+for (let first = 0; first < hellSssCards.length - 4; first += 1) {
+  for (let second = first + 1; second < hellSssCards.length - 3; second += 1) {
+    for (let third = second + 1; third < hellSssCards.length - 2; third += 1) {
+      for (let fourth = third + 1; fourth < hellSssCards.length - 1; fourth += 1) {
+        for (let fifth = fourth + 1; fifth < hellSssCards.length; fifth += 1) {
+          hellDeckCandidates.push([
+            hellSssCards[first],
+            hellSssCards[second],
+            hellSssCards[third],
+            hellSssCards[fourth],
+            hellSssCards[fifth],
+          ]);
+        }
+      }
+    }
+  }
+}
+const fullHellResult = (deck, bonuses) => {
+  let finalResult = null;
+  for (const stage of hellStages) {
+    finalResult = simulateBattle(deck, stage, bonuses);
+    if (!finalResult.victory) return null;
+  }
+  return finalResult;
+};
+const qualifiedHellResults = hellDeckCandidates
+  .map((deck) => fullHellResult(deck, guildLevel10Bonuses))
+  .filter(Boolean);
+assert.ok(qualifiedHellResults.length > 0, '올 SSS 9강·올도감·길드 Lv.10 조합은 HELL 완주가 가능해야 한다');
+assert.ok(
+  Math.min(...qualifiedHellResults.map(({ duration }) => duration)) >= hellStages.at(-1).duration * 0.9,
+  '어떤 SSS 9강 조합도 Hell10을 제한시간 90% 전에 끝내면 안 된다',
+);
+assert.equal(
+  hellDeckCandidates.some((deck) => fullHellResult(deck, fullCollection)),
+  false,
+  '길드 Lv.10 없이 완주 가능한 SSS 9강 조합이 있으면 안 된다',
+);
+assert.equal(
+  hellDeckCandidates.some((deck) => fullHellResult(
+    deck.map((card) => ({ ...card, enhancement: 8 })),
+    guildLevel10Bonuses,
+  )),
+  false,
+  'SSS 8강으로 완주 가능한 조합이 있으면 안 된다',
+);
+assert.equal(
+  hellDeckCandidates.some((deck) => fullHellResult(deck, guildOnlyBonuses)),
+  false,
+  '도감 100% 없이 완주 가능한 조합이 있으면 안 된다',
+);
 
 console.log('renewal balance tests passed: monotonic stages, low-rarity region 1, S9/SS5-6 full-clear, low-deck endgame wall');

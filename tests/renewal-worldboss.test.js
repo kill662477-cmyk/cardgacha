@@ -69,10 +69,10 @@ const atOpen = resolveWorldBossSlot(kst(2026, 7, 17, 17, 0, 0));
 assert.equal(atOpen.live, true);
 assert.equal(atOpen.slot.id, 'noise-zero-20260717-17');
 assert.equal(getWorldBossSnapshot(createWorldBossProgress(kst(2026, 7, 17, 17, 0, 0)), kst(2026, 7, 17, 17, 0, 0)).active, true);
-assert.equal(getWorldBossTier(atOpen.slot.id).maxHp, 9_500_000_000, '17:00 baseline HP = 95억 (server DPS removed)');
-assert.equal(getWorldBossTier('noise-zero-20260717-18').maxHp, 10_000_000_000);
-assert.equal(getWorldBossTier('noise-zero-20260717-19').maxHp, 10_500_000_000);
-assert.equal(getWorldBossTier('noise-zero-20260717-20').maxHp, 11_500_000_000);
+assert.equal(getWorldBossTier(atOpen.slot.id).maxHp, 11_000_000_000, '17:00 baseline HP = 110억 (server DPS removed)');
+assert.equal(getWorldBossTier('noise-zero-20260717-18').maxHp, 11_500_000_000);
+assert.equal(getWorldBossTier('noise-zero-20260717-19').maxHp, 12_000_000_000);
+assert.equal(getWorldBossTier('noise-zero-20260717-20').maxHp, 13_000_000_000);
 assert.deepEqual(
   WORLD_BOSS_RULES.scheduleHours.map((hour) => getWorldBossTier(`noise-zero-20260717-${hour}`).serverDamagePerSecond),
   [0, 0, 0, 0],
@@ -95,9 +95,9 @@ assert.equal(resultWindow.active, false);
 assert.equal(resultWindow.resultsOpen, true);
 assert.equal(kstSlotLabel(resultWindow.raidEndsAt), '17:30');
 assert.equal(getWorldBossReward(recorded, kst(2026, 7, 17, 17, 30, 0)).available, true);
-// balance-tune: 서버 자동딜 폐지 -> 처치 기준은 순수 참가자 합산딜 vs maxHp(17:00 슬롯 95억)의 경계값.
-const successBoundary = { ...progress, attempts: 1, totalDamage: 9_500_000_000 };
-const belowSuccessBoundary = { ...progress, attempts: 1, totalDamage: 9_499_999_999 };
+// balance-tune: 서버 자동딜 폐지 -> 처치 기준은 순수 참가자 합산딜 vs maxHp(17:00 슬롯 110억)의 경계값.
+const successBoundary = { ...progress, attempts: 1, totalDamage: 11_000_000_000 };
+const belowSuccessBoundary = { ...progress, attempts: 1, totalDamage: 10_999_999_999 };
 assert.equal(getWorldBossSnapshot(successBoundary, resultAt).defeated, true, 'pooled damage reaching maxHp exactly clears the raid');
 assert.equal(getWorldBossSnapshot(belowSuccessBoundary, resultAt).defeated, false, 'damage below the modeled gap remains failed');
 

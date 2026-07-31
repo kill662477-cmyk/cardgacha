@@ -96,11 +96,21 @@ assert.equal(WORLD_BOSS_RULES.timeZone, 'Asia/Seoul');
 assert.deepEqual(WORLD_BOSS_RULES.scheduleHours, [17, 18, 19, 20]);
 assert.equal(WORLD_BOSS_RULES.attackEnergyCost, 10);
 assert.deepEqual(Object.values(WORLD_BOSS_RULES.slotTiers).map(({ difficultyMultiplier, maxHp }) => [difficultyMultiplier, maxHp]), [
-  [1, 11_000_000_000],
-  [1.045, 11_500_000_000],
-  [1.091, 12_000_000_000],
-  [1.182, 13_000_000_000],
+  [1, 12_500_000_000],
+  [1.08, 13_500_000_000],
+  [1.16, 14_500_000_000],
+  [1.24, 15_500_000_000],
 ]);
+// difficultyMultiplier 는 표시 전용이라 17시 대비 HP 비율과 어긋나면 안내 문구가 거짓말이 된다.
+for (const tier of Object.values(WORLD_BOSS_RULES.slotTiers)) {
+  const ratio = tier.maxHp / WORLD_BOSS_RULES.slotTiers[17].maxHp;
+  assert.ok(
+    Math.abs(tier.difficultyMultiplier - ratio) < 0.005,
+    `${tier.name} 난이도 배수(${tier.difficultyMultiplier})가 HP 비율(${ratio.toFixed(3)})과 다르다`,
+  );
+}
+// 기본 maxHp 는 17시 슬롯과 같아야 한다(슬롯 조회 실패 시 폴백 값).
+assert.equal(WORLD_BOSS_RULES.maxHp, WORLD_BOSS_RULES.slotTiers[17].maxHp);
 // balance-tune: 서버 자동딜 폐지 -> 모든 슬롯 serverDamagePerSecond는 0.
 assert.deepEqual(Object.values(WORLD_BOSS_RULES.slotTiers).map(({ serverDamagePerSecond }) => serverDamagePerSecond), [0, 0, 0, 0]);
 assert.equal(WORLD_BOSS_RULES.serverDamagePerSecond, 0);

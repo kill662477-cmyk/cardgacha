@@ -69,10 +69,16 @@ const atOpen = resolveWorldBossSlot(kst(2026, 7, 17, 17, 0, 0));
 assert.equal(atOpen.live, true);
 assert.equal(atOpen.slot.id, 'noise-zero-20260717-17');
 assert.equal(getWorldBossSnapshot(createWorldBossProgress(kst(2026, 7, 17, 17, 0, 0)), kst(2026, 7, 17, 17, 0, 0)).active, true);
-assert.equal(getWorldBossTier(atOpen.slot.id).maxHp, 11_000_000_000, '17:00 baseline HP = 110억 (server DPS removed)');
-assert.equal(getWorldBossTier('noise-zero-20260717-18').maxHp, 11_500_000_000);
-assert.equal(getWorldBossTier('noise-zero-20260717-19').maxHp, 12_000_000_000);
-assert.equal(getWorldBossTier('noise-zero-20260717-20').maxHp, 13_000_000_000);
+// 슬롯 HP 실수치는 운영 튜닝으로 자주 바뀐다. 정확한 값은 renewal-config.test.js 가 고정하고,
+// 여기서는 슬롯 조회가 설정과 일치하고 시간대가 오를수록 어려워지는지만 본다.
+const slotHps = WORLD_BOSS_RULES.scheduleHours.map((hour) => getWorldBossTier(`noise-zero-20260717-${hour}`).maxHp);
+assert.deepEqual(
+  slotHps,
+  WORLD_BOSS_RULES.scheduleHours.map((hour) => WORLD_BOSS_RULES.slotTiers[hour].maxHp),
+  'slot lookup must return the configured HP for each hour',
+);
+assert.deepEqual(slotHps, [...slotHps].sort((a, b) => a - b), 'later slots must not be easier');
+assert.ok(slotHps[0] > 0, '17:00 slot HP must be positive');
 assert.deepEqual(
   WORLD_BOSS_RULES.scheduleHours.map((hour) => getWorldBossTier(`noise-zero-20260717-${hour}`).serverDamagePerSecond),
   [0, 0, 0, 0],
@@ -95,9 +101,10 @@ assert.equal(resultWindow.active, false);
 assert.equal(resultWindow.resultsOpen, true);
 assert.equal(kstSlotLabel(resultWindow.raidEndsAt), '17:30');
 assert.equal(getWorldBossReward(recorded, kst(2026, 7, 17, 17, 30, 0)).available, true);
-// balance-tune: 서버 자동딜 폐지 -> 처치 기준은 순수 참가자 합산딜 vs maxHp(17:00 슬롯 110억)의 경계값.
-const successBoundary = { ...progress, attempts: 1, totalDamage: 11_000_000_000 };
-const belowSuccessBoundary = { ...progress, attempts: 1, totalDamage: 10_999_999_999 };
+// balance-tune: 서버 자동딜 폐지 -> 처치 기준은 순수 참가자 합산딜 vs 17:00 슬롯 maxHp 의 경계값.
+const slot17Hp = WORLD_BOSS_RULES.slotTiers[17].maxHp;
+const successBoundary = { ...progress, attempts: 1, totalDamage: slot17Hp };
+const belowSuccessBoundary = { ...progress, attempts: 1, totalDamage: slot17Hp - 1 };
 assert.equal(getWorldBossSnapshot(successBoundary, resultAt).defeated, true, 'pooled damage reaching maxHp exactly clears the raid');
 assert.equal(getWorldBossSnapshot(belowSuccessBoundary, resultAt).defeated, false, 'damage below the modeled gap remains failed');
 

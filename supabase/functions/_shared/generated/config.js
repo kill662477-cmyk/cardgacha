@@ -182,8 +182,9 @@ export const SUPPORT_ITEMS = {
   eliteTicket: { name: '정예 카드팩 교환권', category: '교환권', effect: '정예팩 1개', pack: 'elite' },
   raceTicket: { name: '종족 선택팩 교환권', category: '교환권', effect: '종족팩 1개', pack: 'race' },
   premiumTicket: { name: '프리미엄 카드팩 교환권', category: '교환권', effect: '프리미엄팩 1개', pack: 'premium' },
-  ssCardSelector: { name: 'SS 카드 선택권', category: '선택권', effect: '원하는 SS 카드 1장 선택', cardSelectorRarity: 'SS' },
-  sssCardSelector: { name: 'SSS 카드 선택권', category: '선택권', effect: '원하는 SSS 카드 1장 선택', cardSelectorRarity: 'SSS' },
+  // hiddenInInventory: 인벤토리 목록에서 감춘다(운영 요청). 아이템 자체와 서버 사용 경로는 그대로다.
+  ssCardSelector: { name: 'SS 카드 선택권', category: '선택권', effect: '원하는 SS 카드 1장 선택', cardSelectorRarity: 'SS', hiddenInInventory: true },
+  sssCardSelector: { name: 'SSS 카드 선택권', category: '선택권', effect: '원하는 SSS 카드 1장 선택', cardSelectorRarity: 'SSS', hiddenInInventory: true },
   adventureRunReset: { name: '모험 시작 초기화권', category: '초기화', effect: '모험 시작 횟수 3회 복구', reset: 'adventureRuns' },
   quickBattleReset: { name: '빠른 전투 초기화권', category: '초기화', effect: '오늘 빠른 전투 횟수 3회 복구', reset: 'quickBattle' },
 };

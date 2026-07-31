@@ -2057,7 +2057,10 @@ function renderShop() {
   } else {
     elements.shopEyebrow.textContent = 'ITEM INVENTORY';
     elements.shopTitle.textContent = '보유 아이템';
-    elements.shopInventoryGrid.innerHTML = Object.keys(SUPPORT_ITEMS).map(shopItemMarkup).join('');
+    // hiddenInInventory 가 붙은 아이템은 목록에서 제외한다(config 한 줄로 되돌릴 수 있다).
+    elements.shopInventoryGrid.innerHTML = Object.keys(SUPPORT_ITEMS)
+      .filter((itemId) => !SUPPORT_ITEMS[itemId].hiddenInInventory)
+      .map(shopItemMarkup).join('');
   }
   renderShopBuff();
   renderShopDetail();

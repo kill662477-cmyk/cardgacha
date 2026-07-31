@@ -60,4 +60,18 @@ assert.match(appSource, /data-buy-count="100"/, '100개 구매 버튼이 없다'
 const buyRowButtons = (appSource.match(/data-buy-count="\d+"/g) ?? []).length;
 assert.ok(buyRowButtons >= 3, `카드팩 구매 버튼이 ${buyRowButtons}개뿐이다`);
 
+// --- 강화 화면 EXP 포션 블록 ---
+// 회귀: 포션 버튼 라벨이 좁은 칸에서 2줄로 접혀 버튼이 67px 로 부풀었고,
+// 그만큼 밀린 '일괄 채우기' 버튼이 .enhance-focus 의 overflow:hidden 에 잘렸다.
+assert.match(
+  css,
+  /@media \(max-width: 900px\)[\s\S]*?\.card-exp-potion-button span \{[^}]*white-space:\s*nowrap/,
+  '포션 버튼 라벨이 접히면 버튼이 부풀어 아래 버튼을 밀어낸다',
+);
+assert.match(
+  css,
+  /@media \(max-width: 900px\)[\s\S]*?\.enhance-focus \{[^}]*overflow-y:\s*auto/,
+  '세로 공간이 모자란 기기에서도 일괄 채우기 버튼에 닿을 수 있어야 한다',
+);
+
 console.log(`mobile layout tests passed: ${navItemCount} nav items on one row, state panel stacks, ${buyRowButtons} buy buttons in one row`);

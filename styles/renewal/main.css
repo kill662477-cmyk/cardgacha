@@ -1829,14 +1829,25 @@ button[aria-busy="true"]::after {
   .enhance-target-card { grid-template-columns: 38px minmax(0, 1fr) auto; min-height: 45px; gap: 5px; padding: 3px; }
   .enhance-target-card img { width: 38px; height: 39px; }
   .enhance-target-card small { display: none; }
-  .enhance-focus { grid-template-rows: auto minmax(118px, 1fr) auto auto auto; }
+  /* 세로 공간이 모자라면 auto 행(경험치 블록·스탯 비교)이 overflow:hidden 에 잘린다.
+     실제로 '일괄 채우기' 버튼이 잘려 안 보였다. 줄이는 것만으로는 기기마다 또 잘릴 수
+     있으므로 세로 스크롤을 허용해 어떤 높이에서도 닿을 수 있게 한다. */
+  .enhance-focus { grid-template-rows: auto minmax(118px, 1fr) auto auto auto; overflow-y: auto; }
   .enhance-card-stage { padding: 6px; }
   .enhance-preview-card { height: min(42vh, 170px); }
   .enhance-preview-card strong { bottom: 7px; font-size: 11px; }
   .enhance-preview-card b { font-size: 15px; }
   .enhance-card-meta { min-height: 18px; font-size: 8px; }
   .enhance-exp-block { padding: 5px 9px; }
-  .card-exp-potion-button { min-height: 44px; margin-top: 5px; }
+  /* 라벨('EXP 포션 +300')이 좁은 칸에서 2줄로 접히면 버튼이 46px 로 부풀고,
+     그만큼 아래 '일괄 채우기'가 밀려 잘렸다. 줄바꿈을 막고 전체를 압축한다. */
+  .enhance-exp-actions { gap: 5px; }
+  .card-exp-potion-group { gap: 3px; }
+  .card-exp-potion-button { min-height: 38px; margin-top: 4px; gap: 4px; padding: 0 5px; font-size: 10px; }
+  .card-exp-potion-button svg { display: none; }
+  .card-exp-potion-button span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-exp-potion-button b { min-width: 20px; padding: 2px 4px; font-size: 10px; }
+  .card-exp-potion-fill-button { min-height: 26px; font-size: 9px; }
   .enhance-stat-compare { padding: 5px 7px 7px; }
   .enhance-stat-compare div { padding: 0 4px; }
   .enhance-stat-compare dd { display: grid; margin-top: 2px; font-size: 9px; line-height: 1.15; white-space: nowrap; }

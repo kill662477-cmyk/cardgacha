@@ -2057,9 +2057,10 @@ function renderShop() {
   } else {
     elements.shopEyebrow.textContent = 'ITEM INVENTORY';
     elements.shopTitle.textContent = '보유 아이템';
-    // hiddenInInventory 가 붙은 아이템은 목록에서 제외한다(config 한 줄로 되돌릴 수 있다).
+    // hideWhenEmpty 가 붙은 아이템은 보유 0개일 때만 감춘다. 보유 중이면 그대로 보여야
+    // 사용할 수 있다(선택권을 무조건 감추면 미사용 보유분을 쓸 경로가 사라진다).
     elements.shopInventoryGrid.innerHTML = Object.keys(SUPPORT_ITEMS)
-      .filter((itemId) => !SUPPORT_ITEMS[itemId].hiddenInInventory)
+      .filter((itemId) => !SUPPORT_ITEMS[itemId].hideWhenEmpty || (state.supportItems[itemId] ?? 0) > 0)
       .map(shopItemMarkup).join('');
   }
   renderShopBuff();

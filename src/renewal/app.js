@@ -326,8 +326,59 @@ function runUiOperation(operation, button, task) {
   return requestCoordinator.run(operation, task, { button });
 }
 
+// 새 카드가 배포되면 이미 열려 있던 탭은 옛 카드 목록(cardsById)을 들고 있다.
+// 그 상태에서 서버가 새 카드를 지급하면 스냅샷 검증이 '존재하지 않는 카드 ID' 로 실패하고,
+// 서버는 이미 커밋된 뒤라 "카드는 들어왔는데 화면엔 오류"가 된다(왜냐맨 카드 추가 때 발생).
+// 서버가 정본이므로 모르는 카드는 거부하지 말고 걸러낸 뒤, 카드 목록을 한 번 다시 받는다.
+let cardCatalogRefreshing = false;
+let cardCatalogReloadCount = 0;
+
+function dropUnknownCardIds(snapshot) {
+  if (!snapshot || !cardsById || cardsById.size === 0) return { snapshot, dropped: [] };
+  const dropped = new Set();
+  const clean = { ...snapshot };
+  for (const field of ['cardCopies', 'cardLocks', 'collectionRecords', 'cardProgress']) {
+    const record = snapshot[field];
+    if (!record || typeof record !== 'object') continue;
+    const kept = {};
+    for (const [cardId, value] of Object.entries(record)) {
+      if (cardsById.has(cardId)) kept[cardId] = value;
+      else dropped.add(cardId);
+    }
+    if (dropped.size) clean[field] = kept;
+  }
+  if (dropped.size && Array.isArray(snapshot.formation)) {
+    clean.formation = snapshot.formation.filter((cardId) => !dropped.has(cardId));
+  }
+  if (dropped.size && dropped.has(snapshot.representativeCardId)) clean.representativeCardId = null;
+  return { snapshot: dropped.size ? clean : snapshot, dropped: [...dropped] };
+}
+
+async function refreshCardCatalog() {
+  if (cardCatalogRefreshing) return;
+  cardCatalogRefreshing = true;
+  try {
+    cardCatalogReloadCount += 1;
+    const response = await fetch(`data/renewal-cards.json?reload=${cardCatalogReloadCount}`, { cache: 'reload' });
+    if (!response.ok) return;
+    const next = await response.json();
+    if (!Array.isArray(next) || next.length === 0) return;
+    cards = next;
+    cardsById = new Map(cards.map((card) => [card.id, card]));
+  } catch (error) {
+    console.warn('[cards] catalog refresh failed:', error);
+  } finally {
+    cardCatalogRefreshing = false;
+  }
+}
+
 function applyServerSnapshot(snapshot) {
-  const migrated = migrateGameState(snapshot);
+  const { snapshot: usable, dropped } = dropUnknownCardIds(snapshot);
+  if (dropped.length) {
+    console.warn('[cards] unknown card ids in snapshot, reloading catalog:', dropped);
+    void refreshCardCatalog();
+  }
+  const migrated = migrateGameState(usable);
   if (!migrated.ok) throw new Error(`Snapshot migration failed: ${migrated.issues[0]?.message}`);
   state = mergeServerSnapshot(migrated.state, state);
   ensureValidAdventureProgress();

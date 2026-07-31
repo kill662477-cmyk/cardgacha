@@ -195,4 +195,16 @@ const baseEndgameDeck = endgameDeck.map((card) => ({ ...card, enhancement: 0 }))
 assert.equal(simulateBattle(baseEndgameDeck, STAGES[9], collectionBonuses).victory, true, 'high-rarity base deck clears region 1');
 assert.equal(simulateBattle(baseEndgameDeck, STAGES[49]).victory, false, 'without a completed collection, enhancement remains required for final boss');
 
+// 회귀: 새 카드를 배포하면 이미 열려 있던 탭은 옛 카드 목록을 들고 있다. 서버가 새 카드를
+// 지급하면 스냅샷 검증이 '존재하지 않는 카드 ID' 로 실패해 "카드는 들어왔는데 화면엔 오류"가
+// 됐다(왜냐맨 카드 추가 시 발생). 서버가 정본이므로 모르는 카드는 걸러내고 목록을 다시 받아야 한다.
+const appSourceForCards = fs.readFileSync(path.join(root, 'src', 'renewal', 'app.js'), 'utf8');
+assert.match(appSourceForCards, /function dropUnknownCardIds/, '모르는 카드 ID 를 걸러내는 경로가 있어야 한다');
+assert.match(appSourceForCards, /function refreshCardCatalog/, '카드 목록을 다시 받는 경로가 있어야 한다');
+assert.match(
+  appSourceForCards,
+  /function applyServerSnapshot[\s\S]{0,400}?dropUnknownCardIds\(snapshot\)/,
+  '스냅샷 적용 전에 모르는 카드를 걸러야 한다',
+);
+
 console.log(`renewal content tests passed: ${cards.length} cards, 11 regions, 110 stages, hard/hell adventure assets`);

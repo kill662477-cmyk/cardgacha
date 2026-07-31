@@ -2975,5 +2975,83 @@
     "copies": 0,
     "sourceRarity": "MUR",
     "group": false
+  },
+  {
+    "id": "waenyaman-1",
+    "member": "왜냐맨",
+    "file": "waenyaman-1.jpg",
+    "rarity": "SS",
+    "race": "프로토스",
+    "archetype": "amplify",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "MUR",
+    "group": false
+  },
+  {
+    "id": "waenyaman-2",
+    "member": "왜냐맨",
+    "file": "waenyaman-2.jpg",
+    "rarity": "S",
+    "race": "프로토스",
+    "archetype": "sustain",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "UR",
+    "group": false
+  },
+  {
+    "id": "waenyaman-3",
+    "member": "왜냐맨",
+    "file": "waenyaman-3.jpg",
+    "rarity": "A",
+    "race": "프로토스",
+    "archetype": "weaken",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "HR",
+    "group": false
+  },
+  {
+    "id": "waenyaman-4",
+    "member": "왜냐맨",
+    "file": "waenyaman-4.webp",
+    "rarity": "B",
+    "race": "프로토스",
+    "archetype": "heavy",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "SR",
+    "group": false
+  },
+  {
+    "id": "waenyaman-5",
+    "member": "왜냐맨",
+    "file": "waenyaman-5.jpg",
+    "rarity": "C",
+    "race": "프로토스",
+    "archetype": "combo",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "RR",
+    "group": false
+  },
+  {
+    "id": "waenyaman-6",
+    "member": "왜냐맨",
+    "file": "waenyaman-6.jpg",
+    "rarity": "D",
+    "race": "프로토스",
+    "archetype": "area",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "R",
+    "group": false
   }
 ]

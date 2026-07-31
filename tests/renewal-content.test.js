@@ -19,8 +19,8 @@ const sateGrantMigration = fs.readFileSync(path.join(root, 'supabase', 'migratio
 const chiriNangniMigration = fs.readFileSync(path.join(root, 'supabase', 'migrations', '20260728231100_add_chiri19_refresh_nangni8.sql'), 'utf8');
 const combatRarities = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
 const combatArchetypes = ['quick', 'heavy', 'combo', 'area', 'boss', 'amplify', 'weaken', 'sustain'];
-assert.equal(cards.length, 229);
-assert.equal(new Set(cards.map((card) => card.id)).size, 229);
+assert.equal(cards.length, 235);
+assert.equal(new Set(cards.map((card) => card.id)).size, 235);
 assert.equal(cards.filter((card) => card.rarity === 'EX').length, 8);
 assert.ok(cards.filter((card) => card.rarity === 'EX').every((card) => card.member === '단체사진' && card.archetype === null));
 const nonKimFurCards = cards.filter((card) => card.sourceRarity === 'FUR' && card.member !== '김윤환' && !card.group);
@@ -119,7 +119,8 @@ assert.match(chiriNangniMigration, /catalog must contain exactly 229 cards/i);
 assert.deepEqual(Object.fromEntries(['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS'].map((rarity) => [
   rarity,
   cards.filter((card) => card.rarity === rarity).length,
-])), { F: 25, E: 24, D: 25, C: 24, B: 23, A: 26, S: 25, SS: 28 });
+// 왜냐맨(장민철) 6장 추가로 D/C/B/A/S/SS 각 +1.
+])), { F: 25, E: 24, D: 26, C: 25, B: 24, A: 27, S: 26, SS: 29 });
 assert.equal(cards.find((card) => card.id === 'group-1').rarity, 'EX');
 assert.equal(cards.filter((card) => card.copies > 0).length, 20);
 assert.ok(cards.filter((card) => card.rarity !== 'EX').every((card) => ['저그', '테란', '프로토스'].includes(card.race)));

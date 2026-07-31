@@ -40,4 +40,24 @@ assert.match(
   '재시도 버튼은 모바일에서 가로 폭을 채워야 한다',
 );
 
-console.log(`mobile layout tests passed: ${navItemCount} nav items on one row, state panel stacks under 900px`);
+// --- 상점 구매 버튼 줄 ---
+// 회귀: .shop-buy-row 가 grid-template-columns: 1fr 1fr 로 2열 고정이었는데
+// 카드팩 상품은 버튼이 3개(1개/10개/100개)라 100개 버튼이 다음 줄로 밀렸다.
+// 모바일에서는 구매행 높이가 49px 로 고정이고 카드가 overflow:hidden 이라 잘려서 안 보였다.
+assert.match(
+  css,
+  /\.shop-buy-row \{[^}]*grid-auto-flow:\s*column[^}]*grid-auto-columns:\s*minmax\(0, 1fr\)/,
+  '구매 버튼 줄은 버튼 개수와 무관하게 한 줄에 배치되어야 한다',
+);
+assert.doesNotMatch(
+  css,
+  /\.shop-buy-row \{[^}]*grid-template-columns:\s*1fr 1fr/,
+  '구매 버튼 열을 2개로 고정하면 100개 구매 버튼이 밀려 잘린다',
+);
+// 카드팩 상품에 100개 구매 버튼이 실제로 있어야 이 가드가 의미를 가진다.
+const appSource = await read('src/renewal/app.js');
+assert.match(appSource, /data-buy-count="100"/, '100개 구매 버튼이 없다');
+const buyRowButtons = (appSource.match(/data-buy-count="\d+"/g) ?? []).length;
+assert.ok(buyRowButtons >= 3, `카드팩 구매 버튼이 ${buyRowButtons}개뿐이다`);
+
+console.log(`mobile layout tests passed: ${navItemCount} nav items on one row, state panel stacks, ${buyRowButtons} buy buttons in one row`);

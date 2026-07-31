@@ -553,7 +553,10 @@ button[aria-busy="true"]::after {
 .shop-product-copy p { display: flex; justify-content: space-between; gap: 6px; margin: 6px 0 0; color: var(--muted); font-size: 8px; }
 .shop-product-copy p b { color: var(--gold); font-size: 11px; }
 .shop-product-copy p i { overflow: hidden; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
-.shop-buy-row { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; padding: 0 9px 9px; }
+/* 버튼 개수가 상품마다 다르다(카드팩 3개: 1/10/100개, 보급팩 2개).
+   열을 2개로 고정하면 3번째 버튼이 다음 줄로 밀리고, 모바일에서는 구매행 높이가
+   49px 로 고정이라 밀린 버튼이 overflow:hidden 에 잘려 아예 보이지 않았다. */
+.shop-buy-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 5px; padding: 0 9px 9px; }
 .shop-buy-row button { min-height: 44px; border: 1px solid var(--line-bright); background: transparent; color: var(--text); font-size: 10px; font-weight: 900; cursor: pointer; }
 .shop-buy-row button:first-child { border-color: var(--accent); background: var(--accent); color: #070a09; }
 .shop-buy-row button:disabled { filter: grayscale(1); opacity: .38; cursor: not-allowed; }
@@ -1916,8 +1919,12 @@ button[aria-busy="true"]::after {
   .shop-product-copy p b { font-size: 9px; }
   .shop-product-copy p i { display: none; }
   .shop-buy-row { grid-column: 2; grid-row: 2; gap: 3px; padding: 0 5px 5px; }
-  .shop-buy-row button { min-height: 44px; font-size: 8px; }
+  .shop-buy-row { gap: 2px; }
+  .shop-buy-row button { min-height: 44px; padding: 0 1px; font-size: 8px; letter-spacing: -.03em; }
   .shop-buy-row small { font-size: 6px; }
+  /* 버튼이 3개인 카드팩은 칸이 좁아 글자가 넘친다. */
+  .shop-buy-row:has(button:nth-child(3)) button { font-size: 7px; }
+  .shop-buy-row:has(button:nth-child(3)) small { font-size: 5px; }
   .shop-inventory-grid { grid-template-columns: repeat(3, minmax(130px, 1fr)); gap: 4px; padding: 6px; }
   .shop-item-row { grid-template-columns: 31px minmax(0, 1fr) auto; min-height: 48px; gap: 5px; padding: 4px; }
   .shop-item-icon { width: 31px; height: 31px; }

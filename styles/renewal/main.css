@@ -1603,7 +1603,10 @@ button[aria-busy="true"]::after {
   .currency-bar { grid-column: 2; grid-row: 1; }
   .live-ticker { grid-column: 1 / -1; grid-row: 2; border-left: none; border-right: none; margin: 0 -10px; }
   .profile-mark { width: 38px; height: 38px; }
-  .currency.energy, .currency-bar .icon-button { display: none; }
+  /* 아이콘 버튼을 한꺼번에 숨기면 우편함까지 사라진다. 우편함은 운영 안내와 보상이
+     도착하는 곳이라 모바일에서도 반드시 닿을 수 있어야 한다. */
+  .currency.energy, .currency-bar .icon-button, .api-link-button { display: none; }
+  .currency-bar #mailButton { display: inline-grid; }
   .profile-stats { gap: 7px; }
   .profile-stats .profile-power { padding-left: 7px; }
   .currency { padding: 0 7px; border: 0; font-size: 12px; }
@@ -1693,7 +1696,14 @@ button[aria-busy="true"]::after {
 @media (max-width: 900px) and (orientation: landscape) and (max-height: 520px) {
   .game-shell { grid-template-rows: 52px minmax(0, 1fr) 52px; }
   .topbar { height: 52px; grid-template-rows: 52px; gap: 0; }
-  .live-ticker { display: none; }
+  /* 가로 모드는 상단바가 1행 52px 이라 전광판을 아래 행에 둘 수 없었고, 그래서 통째로
+     숨겨져 있었다. 가로에서는 폭이 넉넉하므로 프로필과 재화 사이에 같은 행으로 넣는다. */
+  .topbar { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .profile-block { grid-column: 1; grid-row: 1; }
+  .live-ticker { display: grid; grid-column: 2; grid-row: 1; height: 30px; margin: 0 8px; border-left: 1px solid #354139; border-right: 1px solid #354139; }
+  .live-ticker-label { padding: 0 7px; font-size: 8px; }
+  .live-ticker-track { font-size: 10px; }
+  .currency-bar { grid-column: 3; grid-row: 1; }
   .currency.energy { display: inline-flex; }
   .currency-bar .sound-toggle { display: inline-grid; }
   .profile-block { grid-template-columns: 44px auto; gap: 6px; }

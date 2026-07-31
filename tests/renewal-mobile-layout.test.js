@@ -74,4 +74,28 @@ assert.match(
   '세로 공간이 모자란 기기에서도 일괄 채우기 버튼에 닿을 수 있어야 한다',
 );
 
+// --- 상단바: 우편함 / 전광판 ---
+// 회귀: 모바일에서 .currency-bar .icon-button 을 통째로 숨기면서 우편함까지 사라졌다.
+// 우편함은 운영 안내와 보상이 도착하는 곳이라 반드시 닿을 수 있어야 한다.
+assert.match(
+  css,
+  /@media \(max-width: 900px\)[\s\S]*?\.currency-bar #mailButton \{[^}]*display:\s*inline-grid/,
+  '모바일에서 우편함 버튼이 보여야 한다',
+);
+assert.match(html, /id="mailButton"/, '우편함 버튼이 마크업에 있어야 한다');
+
+// 회귀: 가로(전체화면)에서 전광판이 display:none 으로 통째로 숨겨져 있었다.
+const landscapeBlock = css.match(/@media \(max-width: 900px\) and \(orientation: landscape\)[\s\S]*?\n\}/)?.[0] ?? '';
+assert.ok(landscapeBlock, '가로 모드 미디어 블록을 찾지 못했다');
+assert.doesNotMatch(
+  landscapeBlock,
+  /\.live-ticker \{[^}]*display:\s*none/,
+  '가로 모드에서 전광판을 숨기면 안 된다',
+);
+assert.match(
+  landscapeBlock,
+  /\.live-ticker \{[^}]*display:\s*grid/,
+  '가로 모드에서는 전광판을 상단바 같은 행에 배치해야 한다',
+);
+
 console.log(`mobile layout tests passed: ${navItemCount} nav items on one row, state panel stacks, ${buyRowButtons} buy buttons in one row`);

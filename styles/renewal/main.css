@@ -1606,12 +1606,25 @@ button[aria-busy="true"]::after {
   .currency { padding: 0 7px; border: 0; font-size: 12px; }
   .side-nav { grid-column: 1; grid-row: 3; position: sticky; bottom: 0; height: 66px; border-top: 1px solid var(--line); border-right: 0; }
   .brand-lockup { display: none; }
-  .side-nav nav { grid-template-columns: repeat(9, 1fr); gap: 0; height: 100%; padding: 0; }
+  /* 메뉴 개수를 하드코딩하면(과거 repeat(9,1fr)) 메뉴가 늘었을 때 마지막 항목이
+     두 번째 줄로 밀려 화면 밖으로 사라진다. 실제로 '미니게임'이 안 보였다.
+     열을 자동으로 만들어 몇 개가 되든 한 줄에 균등 배치한다. */
+  .side-nav nav { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); grid-template-columns: none; gap: 0; height: 100%; padding: 0; }
+  .nav-item span { min-width: 0; overflow: hidden; text-overflow: clip; white-space: nowrap; }
   .nav-item { min-height: 0; height: 65px; padding: 9px 1px 6px; border-left: 0; border-top: 2px solid transparent; }
   .nav-item.active { border-top-color: var(--acid); border-left-color: transparent; }
   .nav-item svg { width: 17px; height: 17px; }
   .nav-item span { font-size: 8px; letter-spacing: -.02em; }
   .nav-item[data-screen="worldboss"]::after { top: 3px; right: 2px; }
+  /* 132px + minmax(260px,...) + 여백 = 최소 476px 라 375px 화면에서 오른쪽이 잘렸다.
+     세로로 쌓고 시각 요소를 줄인다. */
+  .system-state-layer { padding: 16px; }
+  .system-state-panel { grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 16px; min-height: 0; padding: 22px 18px; text-align: center; }
+  .system-state-visual { width: 96px; }
+  .system-state-visual > img { width: 50px; height: 50px; }
+  .system-state-copy h2 { font-size: 20px; }
+  .system-state-copy p { margin: 8px 0 12px; }
+  .system-state-retry { grid-column: 1; width: 100%; max-width: 260px; margin-top: 0; }
   .adventure-screen { grid-column: 1; grid-row: 2; display: block; min-height: calc(100svh - 130px); }
   .enhance-screen { grid-column: 1; grid-row: 2; grid-template-columns: 240px minmax(280px, 1fr) 310px; min-height: calc(100svh - 130px); overflow-x: auto; }
   .collection-screen { grid-column: 1; grid-row: 2; grid-template-columns: 190px minmax(330px, 1fr) 260px; min-height: calc(100svh - 130px); overflow-x: auto; }

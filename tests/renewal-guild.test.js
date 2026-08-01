@@ -23,6 +23,7 @@ const penaltyException = squash(await read('supabase/migrations/20260726123000_c
 const requestedPenaltyException = squash(await read('supabase/migrations/20260728190000_clear_llliiiiilli_guild_penalty.sql'));
 const levelFourCapacity = squash(await read('supabase/migrations/20260730120000_guild_level_four_capacity_60.sql'));
 const levelFiveCapacity = squash(await read('supabase/migrations/20260801205326_guild_level_five_capacity_70.sql'));
+const correctedLevelFiveCapacity = squash(await read('supabase/migrations/20260801211214_guild_level_five_capacity_65.sql'));
 const applicantProfile = squash(await read('supabase/migrations/20260727000001_guild_applicant_profile.sql'));
 const memberProgressAndDecks = squash(await read('supabase/migrations/20260728103000_guild_member_progress_and_decks.sql'));
 const quickBattleGp = squash(await read('supabase/migrations/20260727142000_guild_quick_battle_gp.sql'));
@@ -197,8 +198,8 @@ assert.equal(GUILD_RULES.levels[0].memberLimit, 30);
 assert.equal(GUILD_RULES.levels[1].memberLimit, 40, '레벨2 정원 40');
 assert.equal(GUILD_RULES.levels[2].memberLimit, 50, '레벨3 정원 50');
 assert.equal(GUILD_RULES.levels[3].memberLimit, 60, '레벨4 정원 60');
-assert.equal(GUILD_RULES.levels[4].memberLimit, 70, '레벨5 정원 70');
-assert.ok(GUILD_RULES.levels.slice(4).every((tier) => tier.memberLimit === 70), '레벨5 이상 정원 70 유지');
+assert.equal(GUILD_RULES.levels[4].memberLimit, 65, '레벨5 정원 65');
+assert.ok(GUILD_RULES.levels.slice(4).every((tier) => tier.memberLimit === 65), '레벨5 이상 정원 65 유지');
 // 무소속 유저를 무력화하지 않도록 스탯 버프 상한을 +5% 로 묶는다.
 for (const tier of GUILD_RULES.levels) {
   for (const key of ['atk', 'hp', 'def', 'points']) {
@@ -253,6 +254,10 @@ assert.match(levelFiveCapacity, /check \(member_limit between 1 and 70\)/);
 assert.match(levelFiveCapacity, /where level >= 5/);
 assert.match(levelFiveCapacity, /where level >= 5 and disbanded_at is null/);
 assert.match(levelFiveCapacity, /set member_limit = greatest\(member_limit, 70\)/);
+assert.match(correctedLevelFiveCapacity, /having count\(member\.user_id\) > 65/);
+assert.match(correctedLevelFiveCapacity, /check \(member_limit between 1 and 65\)/);
+assert.match(correctedLevelFiveCapacity, /set member_limit = 65/);
+assert.match(correctedLevelFiveCapacity, /where level >= 5/);
 assert.match(gpLevels, /create table if not exists public\.gacha_s2_guild_levels/);
 assert.match(gpLevels, /create table if not exists public\.gacha_s2_guild_contributions/);
 assert.match(gpLevels, /create or replace function public\.gacha_s2_guild_buff/);

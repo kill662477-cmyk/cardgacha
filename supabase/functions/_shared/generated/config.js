@@ -512,12 +512,12 @@ export const GUILD_RULES = {
     { level: 2, requiredGp: 3_000, memberLimit: 40, atk: 0.02, hp: 0, def: 0, points: 0 },
     { level: 3, requiredGp: 8_000, memberLimit: 50, atk: 0.02, hp: 0.02, def: 0, points: 0 },
     { level: 4, requiredGp: 15_000, memberLimit: 60, atk: 0.03, hp: 0.02, def: 0.02, points: 0 },
-    { level: 5, requiredGp: 25_000, memberLimit: 60, atk: 0.03, hp: 0.03, def: 0.03, points: 0 },
-    { level: 6, requiredGp: 36_000, memberLimit: 60, atk: 0.04, hp: 0.03, def: 0.03, points: 0 },
-    { level: 7, requiredGp: 50_000, memberLimit: 60, atk: 0.04, hp: 0.04, def: 0.03, points: 0.03 },
-    { level: 8, requiredGp: 70_000, memberLimit: 60, atk: 0.04, hp: 0.04, def: 0.04, points: 0.03 },
-    { level: 9, requiredGp: 92_000, memberLimit: 60, atk: 0.05, hp: 0.04, def: 0.04, points: 0.04 },
-    { level: 10, requiredGp: 120_000, memberLimit: 60, atk: 0.05, hp: 0.05, def: 0.04, points: 0.05 },
+    { level: 5, requiredGp: 25_000, memberLimit: 70, atk: 0.03, hp: 0.03, def: 0.03, points: 0 },
+    { level: 6, requiredGp: 36_000, memberLimit: 70, atk: 0.04, hp: 0.03, def: 0.03, points: 0 },
+    { level: 7, requiredGp: 50_000, memberLimit: 70, atk: 0.04, hp: 0.04, def: 0.03, points: 0.03 },
+    { level: 8, requiredGp: 70_000, memberLimit: 70, atk: 0.04, hp: 0.04, def: 0.04, points: 0.03 },
+    { level: 9, requiredGp: 92_000, memberLimit: 70, atk: 0.05, hp: 0.04, def: 0.04, points: 0.04 },
+    { level: 10, requiredGp: 120_000, memberLimit: 70, atk: 0.05, hp: 0.05, def: 0.04, points: 0.05 },
   ],
 };
 

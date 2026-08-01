@@ -393,7 +393,7 @@ export const WORLD_BOSS_RULES = {
   slotTiers: {
     // balance-tune: 서버 자동딜(서버DPS) 완전 폐지 -> 이제 참가자 전원의 합산 딜만으로
     // 처치 여부가 갈린다(0으로 두면 서버RPC가 자동으로 자동딜 0으로 계산, 로직 변경 불필요).
-    // maxHp는 지정값(17:125억/18:135억/19:145억/20:155억)으로 고정 -> 참여가 부족한 회차는 실패 가능.
+    // maxHp는 지정값(17:140억/18:150억/19:160억/20:180억)으로 고정 -> 참여가 부족한 회차는 실패 가능.
     // 2026-07-26 1차: 특성 상향으로 각 슬롯 +5억(55~70 -> 60~75).
     // 2026-07-26 2차: 17시 실측 최대 개인딜 49.0M -> 54.3M(+11%). 슬롯당 +5억.
     // 2026-07-26 3차: 18시(70억)가 4분 만에 98% 소진돼 후반 슬롯만 크게 올림(19:85억/20:95억).
@@ -401,30 +401,32 @@ export const WORLD_BOSS_RULES = {
     //   앞 두 회차가 너무 빨라 크게 올리고, 벽 역할인 뒤쪽은 소폭만 올린다(2026-07-28 적용).
     // 2026-07-31: 110/115/120/130억 4회차 전부 격파, 초과딜이 회차당 0.1~0.2억뿐이라 여유가 없어 보였지만
     //   4회차 모두 뚫린 이상 벽이 아니다. 08-01 부터 대폭 상향(125/135/145/155억, 슬롯 간격도 5억 -> 10억).
+    // 2026-08-01: 125/135/145/155억도 4회차 전부 격파(초과딜 0.05~0.12억). 08-02 부터 다시 상향하고
+    //   20시만 간격을 20억으로 벌려 마지막 회차를 확실한 벽으로 만든다(140/150/160/180억).
     // difficultyMultiplier는 표시 전용(worldboss-controller 안내 문구)이라 17시 대비 HP 비율로 맞춘다.
     17: {
       title: '신호 요새', name: 'SIGNAL//BASTION', difficultyMultiplier: 1,
-      maxHp: 12_500_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.05,
+      maxHp: 14_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.05,
       image: 'assets/renewal/worldboss/boss-17-signal-bastion.webp',
     },
     18: {
-      title: '중계 포식자', name: 'RELAY//DEVOURER', difficultyMultiplier: 1.08,
-      maxHp: 13_500_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.10,
+      title: '중계 포식자', name: 'RELAY//DEVOURER', difficultyMultiplier: 1.071,
+      maxHp: 15_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.10,
       image: 'assets/renewal/worldboss/boss-18-relay-devourer.webp',
     },
     19: {
-      title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 1.16,
-      maxHp: 14_500_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.15,
+      title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 1.143,
+      maxHp: 16_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.15,
       image: 'assets/renewal/worldboss/boss-19-void-harvester.webp',
     },
     20: {
-      title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 1.24,
-      maxHp: 15_500_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.20,
+      title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 1.286,
+      maxHp: 18_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.20,
       image: 'assets/renewal/worldboss/boss-20-malice-singularity.webp',
     },
   },
   // nolevel-1: 서버DPS 폐지로 공동 HP가 곧 참가자 합산딜 목표치. 기본값은 17시 슬롯과 동일.
-  maxHp: 12_500_000_000,
+  maxHp: 14_000_000_000,
   battleDuration: 60,
   maxAttempts: 3,
   eventDurationSeconds: 60 * 60,

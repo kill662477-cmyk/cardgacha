@@ -532,7 +532,7 @@ export function guildLevelFor(totalGp) {
 }
 
 export const SOOP_RULES = {
-  pointsPerBalloon: 5,
+  pointsPerBalloon: 100,
 };
 
 export const EX_DISTRIBUTION_RULES = {

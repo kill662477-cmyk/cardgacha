@@ -19,6 +19,10 @@ const expandedDonationTypes = (await readFile(
   new URL('../supabase/migrations/20260730000500_expand_soop_donation_types.sql', import.meta.url),
   'utf8',
 )).replace(/\s+/g, ' ');
+const donationRatio100 = (await readFile(
+  new URL('../supabase/migrations/20260801200627_donation_ratio_100.sql', import.meta.url),
+  'utf8',
+)).replace(/\s+/g, ' ');
 const bridgeHtml = await readFile(new URL('../bridge.html', import.meta.url), 'utf8');
 
 assert.match(sql, /create or replace function public\.gacha_s2_get_power_ranking/);
@@ -67,6 +71,13 @@ assert.match(expandedDonationTypes, /drop constraint gacha_s2_soop_donation_even
 assert.match(expandedDonationTypes, /v_points := p_amount \* 30/);
 assert.match(expandedDonationTypes, /donation event id reused with different payload/);
 assert.match(expandedDonationTypes, /grant execute on function public\.gacha_s2_apply_soop_donation/);
+assert.match(donationRatio100, /v_points := p_amount \* 100/);
+assert.match(donationRatio100, /\{soopRules,pointsPerBalloon\}.*'100'::jsonb/);
+assert.match(donationRatio100, /donation event id reused with different payload/);
+assert.match(donationRatio100, /grant execute on function public\.gacha_s2_apply_soop_donation/);
+for (const action of ['BALLOON_GIFTED', 'ADBALLOON_GIFTED', 'VIDEOBALLOON_GIFTED', 'BATTLE_MISSION_GIFTED']) {
+  assert.match(donationRatio100, new RegExp(`'${action}'`));
+}
 assert.doesNotMatch(worldBoss, /subscribeWorldBoss/);
 assert.match(worldBoss, /SERVER_STATUS_REFRESH_MS = 30_000/);
 assert.match(worldBoss, /refreshServerStatus/);

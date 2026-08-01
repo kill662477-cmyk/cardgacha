@@ -117,7 +117,7 @@ assert.equal(WORLD_BOSS_RULES.serverDamagePerSecond, 0);
 assert.deepEqual(Object.values(WORLD_BOSS_RULES.slotTiers).map(({ clearDestructionGuardRate }) => clearDestructionGuardRate), [0.05, 0.10, 0.15, 0.20]);
 assert.equal(WORLD_BOSS_RULES.raidDurationSeconds, 30 * 60);
 assert.equal(Math.max(...WORLD_BOSS_RULES.rewardTiers.flatMap(({ points, failurePoints }) => [points, failurePoints])), 70000);
-assert.equal(SOOP_RULES.pointsPerBalloon, 5);
+assert.equal(SOOP_RULES.pointsPerBalloon, 100);
 assert.equal(EX_DISTRIBUTION_RULES.enabled, true);
 assert.equal(EX_DISTRIBUTION_RULES.milestones.length, 8);
 assert.equal(Object.values(PACKS).some((pack) => Object.hasOwn(pack.rates, 'EX')), false);

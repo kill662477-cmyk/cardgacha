@@ -491,7 +491,7 @@ export const GUILD_RULES = {
     resultDurationSeconds: 30 * 60,
     maxAttempts: 3,
     // 월드보스 실측(시도당 약 1,000만 딜 × 인당 3회)에 목표 참여율 0.7 을 곱한 값.
-    hpPerActiveMember: 21_000_000,
+    hpPerActiveMember: 63_000_000,
     activeWindowDays: 7,
     successPoints: 50_000,
     failurePoints: 15_000,

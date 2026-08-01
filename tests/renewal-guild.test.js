@@ -18,6 +18,7 @@ const snapshotSql = squash(await read('supabase/migrations/20260725000098_guild_
 const weekly = squash(await read('supabase/migrations/20260725000099_guild_m3_weekly_goals.sql'));
 const raidSchema = squash(await read('supabase/migrations/20260725000100_guild_m4_raid_schema.sql'));
 const raidRpc = squash(await read('supabase/migrations/20260725000101_guild_m4_raid_rpc.sql'));
+const tripleRaidDifficulty = squash(await read('supabase/migrations/20260801212229_guild_raid_difficulty_triple.sql'));
 const pendingJoinState = squash(await read('supabase/migrations/20260726121500_guild_pending_join_state.sql'));
 const penaltyException = squash(await read('supabase/migrations/20260726123000_clear_mstz_sonsilba_guild_penalty.sql'));
 const requestedPenaltyException = squash(await read('supabase/migrations/20260728190000_clear_llliiiiilli_guild_penalty.sql'));
@@ -346,12 +347,14 @@ assert.match(router, /'gacha_s2_claim_guild_weekly_reward'/);
 assert.deepEqual(GUILD_RULES.raid.scheduleIsoDays, [3, 6], '수·토');
 assert.equal(GUILD_RULES.raid.hourKst, 21);
 assert.equal(GUILD_RULES.raid.maxAttempts, 3);
-assert.equal(GUILD_RULES.raid.hpPerActiveMember, 21_000_000);
+assert.equal(GUILD_RULES.raid.hpPerActiveMember, 63_000_000);
 assert.equal(GUILD_RULES.raid.successPoints, 50_000);
 assert.equal(GUILD_RULES.raid.failurePoints, 15_000);
 
 // HP 는 참여자 수가 아니라 활동 길드원 수 기준이어야 다수 참여 유인이 생긴다.
 assert.match(raidSchema, /greatest\(v_active, 1\)::bigint \* 21000000/);
+assert.match(tripleRaidDifficulty, /greatest\(v_active, 1\)::bigint \* 63000000/);
+assert.doesNotMatch(tripleRaidDifficulty, /update public\.gacha_s2_guild_raids/, '진행·종료 회차는 변경하지 않는다');
 assert.match(raidSchema, /last_contributed_at >= p_now - interval '7 days'/, '활동 길드원 7일 기준');
 assert.match(raidSchema, /active_member_count integer not null/, 'HP 산정 근거 스냅샷');
 // 보상 명단은 시작 시점 소속 전원. 처치 후 가입해 보상만 받는 것을 막는다.

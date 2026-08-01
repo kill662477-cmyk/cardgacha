@@ -379,20 +379,20 @@ assert.match(emblemSource, /harang: `assets\/renewal\/guild\/emblems\/harang\.pn
 assert.match(emblemSource, /calmsnal: `assets\/renewal\/guild\/emblems\/calmsnal\.png\?v=/);
 assert.match(emblemSource, /jjiking: `assets\/renewal\/guild\/emblems\/jjiking\.png\?v=/);
 assert.match(emblemSource, /sexyterran: `assets\/renewal\/guild\/emblems\/sexyterran\.png\?v=/);
-assert.match(emblemSource, /s2jjaek: `assets\/renewal\/guild\/emblems\/s2jjaek\.jpg\?v=/);
+assert.match(emblemSource, /s2jjaek: `assets\/renewal\/guild\/emblems\/s2jjaek\.png\?v=/);
 // 화이트리스트에 키만 추가하고 파일을 안 올리면 깨진 이미지가 뜬다. 실제 파일 존재를 함께 잠근다.
-// 기존 PNG 엠블럼은 256x256 원형 마스크 규격을 유지한다. 별도 제공된 가로형 원본은
-// JPEG를 보존하고 전용 cover 클래스에서 중앙 크롭한다.
+// 기존 PNG 엠블럼은 256x256 원형 마스크 규격을 유지한다.
 for (const key of Object.keys(EMBLEM_IMAGES).filter((key) => key !== 's2jjaek')) {
   const png = await readFile(new URL(`../assets/renewal/guild/emblems/${key}.png`, import.meta.url));
   assert.equal(png.readUInt32BE(16), 256, `${key}.png 너비는 256 이어야 한다`);
   assert.equal(png.readUInt32BE(20), 256, `${key}.png 높이는 256 이어야 한다`);
   assert.ok(png.includes('tRNS'), `${key}.png 에 원형 마스크(투명 영역)가 없다`);
 }
-const s2jjaekJpeg = await readFile(new URL('../assets/renewal/guild/emblems/s2jjaek.jpg', import.meta.url));
-assert.deepEqual([...s2jjaekJpeg.subarray(0, 3)], [0xff, 0xd8, 0xff], 's2jjaek 길드마크는 전달받은 JPEG여야 한다');
-assert.ok(s2jjaekJpeg.length > 90_000, 's2jjaek 길드마크가 비어 있거나 지나치게 작다');
-assert.match(emblemSource, /COVER_EMBLEM_IMAGES = new Set\(\['s2jjaek'\]\)/);
+const s2jjaekPng = await readFile(new URL('../assets/renewal/guild/emblems/s2jjaek.png', import.meta.url));
+assert.equal(s2jjaekPng.subarray(1, 4).toString('ascii'), 'PNG', 's2jjaek 길드마크는 전달받은 PNG여야 한다');
+assert.equal(s2jjaekPng.readUInt32BE(16), 1024, 's2jjaek.png 너비는 1024 이어야 한다');
+assert.equal(s2jjaekPng.readUInt32BE(20), 1024, 's2jjaek.png 높이는 1024 이어야 한다');
+assert.ok(s2jjaekPng.length > 1_000_000, 's2jjaek 길드마크가 비어 있거나 지나치게 작다');
 assert.match(
   emblemSource,
   /EMBLEM_ASSET_VERSION/,
@@ -404,7 +404,6 @@ const guildStyles = await readFile(new URL('../styles/renewal/main.css', import.
 const guildPageHtml = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const guildRaidArenaAsset = await readFile(new URL('../assets/renewal/guild/raid-arena.webp', import.meta.url));
 const guildRaidBossAsset = await readFile(new URL('../assets/renewal/guild/raid-boss.webp', import.meta.url));
-assert.match(guildStyles, /\.guild-emblem-image--cover\s*\{[^}]*object-fit:\s*cover;[^}]*object-position:\s*center;/);
 
 // 길드 레이드는 홈의 텍스트 목록이 아니라 입장 버튼 → 전용 전투 화면 흐름이어야 한다.
 for (const id of [

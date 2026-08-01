@@ -2260,7 +2260,6 @@ button[aria-busy="true"]::after {
 .guild-emblem-option.selected { border-color: var(--cyan); box-shadow: 0 0 0 2px color-mix(in srgb, var(--cyan) 30%, transparent); }
 /* 이미지 엠블럼(PDB-16 7.2). 이모지 자리를 그대로 채우도록 부모 크기에 맞춘다. */
 .guild-emblem-image { display: block; width: 100%; height: 100%; object-fit: contain; }
-.guild-emblem-image--cover { object-fit: cover; object-position: center; }
 .guild-emblem .guild-emblem-mark { width: 100%; height: 100%; }
 .guild-list-emblem .guild-list-emblem-mark { width: 100%; height: 100%; }
 .guild-emblem-option .guild-emblem-option-mark { width: 100%; height: 100%; }

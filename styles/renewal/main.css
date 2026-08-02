@@ -80,6 +80,11 @@ button[aria-busy="true"]::after {
 .currency { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 12px; border-left: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .currency svg { width: 18px; color: var(--acid); }
 .points svg { color: var(--gold); }
+.energy-use-button { display: inline-grid; place-items: center; width: 26px; height: 26px; margin-left: 1px; padding: 0; border: 1px solid #60752a; background: #11180d; color: var(--acid); cursor: pointer; transition: border-color var(--ease-fast), background-color var(--ease-fast), color var(--ease-fast), transform var(--ease-fast); }
+.energy-use-button svg { width: 14px; height: 14px; color: currentColor; }
+.energy-use-button:hover, .energy-use-button:focus-visible { border-color: var(--acid); background: #1a2412; color: var(--text); outline: 2px solid color-mix(in srgb, var(--acid) 32%, transparent); outline-offset: 2px; }
+.energy-use-button:active { transform: scale(.92); }
+.energy-use-button[aria-busy="true"] { color: var(--muted); cursor: wait; }
 .icon-button { display: inline-grid; place-items: center; width: var(--control-sm); height: var(--control-sm); padding: 0; border: 1px solid var(--line); background: var(--panel); color: var(--muted); cursor: pointer; }
 .icon-button:hover { border-color: var(--line-active); background: var(--surface-raised); color: var(--text); }
 .icon-button svg { width: 17px; }
@@ -1305,6 +1310,35 @@ button[aria-busy="true"]::after {
 
 .formation-dialog { width: min(980px, calc(100vw - 28px)); max-height: min(790px, calc(100vh - 28px)); padding: 0; border: 1px solid var(--line-bright); background: #080b09; color: var(--text); }
 .formation-dialog::backdrop { background: rgba(0,0,0,.82); backdrop-filter: blur(5px); }
+.energy-item-dialog { width: min(520px, calc(100vw - 28px)); max-height: min(680px, calc(100dvh - 28px)); padding: 0; overflow: hidden; border: 1px solid var(--line-bright); background: #080b09; color: var(--text); box-shadow: var(--shadow-panel); }
+.energy-item-dialog::backdrop { background: rgba(0,0,0,.82); backdrop-filter: blur(5px); }
+.energy-item-shell { display: grid; grid-template-rows: auto auto auto minmax(0, 1fr) auto; max-height: min(680px, calc(100dvh - 30px)); }
+.energy-item-shell > header { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+.energy-item-shell > header span { color: var(--acid); font-size: 10px; font-weight: 900; }
+.energy-item-shell h2 { margin: 3px 0 0; font-size: 22px; }
+.energy-item-summary { display: flex; justify-content: space-between; align-items: end; gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--line); background: #0c110d; }
+.energy-item-summary span, .energy-item-summary strong { display: block; }
+.energy-item-summary span { color: var(--muted); font-size: 9px; }
+.energy-item-summary strong { margin-top: 3px; color: var(--acid); font-size: 22px; font-variant-numeric: tabular-nums; }
+.energy-item-summary small { max-width: 210px; color: var(--muted); font-size: 9px; line-height: 1.45; text-align: right; }
+.energy-item-status { min-height: 0; padding: 0 20px; color: var(--muted); font-size: 10px; }
+.energy-item-status:not(:empty) { padding-block: 10px; border-bottom: 1px solid var(--line); }
+.energy-item-status[data-state="cap"] { color: var(--gold); }
+.energy-item-list { display: grid; gap: 7px; min-height: 220px; padding: 14px 20px; overflow-y: auto; }
+.energy-item-row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; align-items: center; gap: 11px; min-height: 72px; padding: 9px; border: 1px solid var(--line); background: #0d120e; }
+.energy-item-icon { display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid #556057; background: #111713; }
+.energy-item-icon img { width: 41px; height: 41px; object-fit: contain; filter: drop-shadow(0 4px 5px rgba(0,0,0,.5)); }
+.energy-item-copy { min-width: 0; }
+.energy-item-copy b, .energy-item-copy span, .energy-item-copy small { display: block; }
+.energy-item-copy b { font-size: 12px; }
+.energy-item-copy span { margin-top: 4px; color: var(--muted); font-size: 10px; }
+.energy-item-copy small { margin-top: 4px; color: var(--gold); font-size: 9px; }
+.energy-item-row > button { min-width: 62px; min-height: 36px; border: 1px solid var(--acid); background: transparent; color: var(--acid); font-size: 10px; font-weight: 900; cursor: pointer; transition: background-color var(--ease-fast), color var(--ease-fast), transform var(--ease-fast); }
+.energy-item-row > button:hover, .energy-item-row > button:focus-visible { background: var(--acid); color: #070a09; outline: 2px solid color-mix(in srgb, var(--acid) 32%, transparent); outline-offset: 2px; }
+.energy-item-row > button:active { transform: scale(.96); }
+.energy-item-row > button:disabled { border-color: var(--line); color: #626962; cursor: not-allowed; }
+.energy-item-row > button[aria-busy="true"] { color: var(--muted); cursor: wait; }
+.energy-item-shell > footer { padding: 12px 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
 .dialog-shell { display: grid; grid-template-rows: auto auto minmax(0,1fr); max-height: calc(100vh - 30px); }
 .dialog-shell > header { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; border-bottom: 1px solid var(--line); }
 .formation-head-actions { display: flex; align-items: center; gap: 12px; }
@@ -1605,7 +1639,10 @@ button[aria-busy="true"]::after {
   .profile-mark { width: 38px; height: 38px; }
   /* 아이콘 버튼을 한꺼번에 숨기면 우편함까지 사라진다. 우편함은 운영 안내와 보상이
      도착하는 곳이라 모바일에서도 반드시 닿을 수 있어야 한다. */
-  .currency.energy, .currency-bar .icon-button, .api-link-button { display: none; }
+  .currency-bar .icon-button, .api-link-button { display: none; }
+  .currency.energy { display: inline-flex; gap: 4px; padding: 0 5px; font-size: 10px; }
+  .currency.energy > svg { width: 14px; }
+  .energy-use-button { width: 28px; height: 28px; }
   .currency-bar #mailButton { display: inline-grid; }
   .profile-stats { gap: 7px; }
   .profile-stats .profile-power { padding-left: 7px; }
@@ -1672,7 +1709,10 @@ button[aria-busy="true"]::after {
 
 @media (max-width: 520px) {
   .profile-copy strong { max-width: 112px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .currency-bar { gap: 2px; }
+  .currency.energy { padding-inline: 3px; }
   .currency.points strong { font-size: 10px; }
+  .currency.points { padding-inline: 4px; }
   .profile-stats > span:first-child { display: none; }
   .profile-stats .profile-power { padding-left: 0; border-left: 0; }
   .api-link-button { min-width: 48px; padding: 0 7px; }
@@ -2026,6 +2066,17 @@ button[aria-busy="true"]::after {
   .mail-item-body { line-height: 1.45; }
   .mailbox-shell > footer { padding: 7px 14px; }
   .mailbox-shell > footer button { min-height: 34px; }
+  .energy-item-dialog { max-height: calc(100dvh - 10px); }
+  .energy-item-shell { max-height: calc(100dvh - 12px); }
+  .energy-item-shell > header { padding: 10px 14px; }
+  .energy-item-shell h2 { font-size: 18px; }
+  .energy-item-summary { padding: 12px 14px; }
+  .energy-item-summary strong { font-size: 19px; }
+  .energy-item-list { min-height: 190px; padding: 10px 14px; }
+  .energy-item-row { grid-template-columns: 43px minmax(0, 1fr) auto; gap: 8px; min-height: 64px; padding: 7px; }
+  .energy-item-icon { width: 43px; height: 43px; }
+  .energy-item-icon img { width: 37px; height: 37px; }
+  .energy-item-row > button { min-width: 54px; min-height: 34px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

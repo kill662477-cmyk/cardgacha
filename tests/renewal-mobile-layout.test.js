@@ -84,6 +84,25 @@ assert.match(
 );
 assert.match(html, /id="mailButton"/, '우편함 버튼이 마크업에 있어야 한다');
 
+// 행동력은 모든 화면에서 공통 헤더로 접근한다. 모바일에서도 숨기면 안 된다.
+assert.match(html, /id="energyUseButton"[^>]*aria-label="행동력 아이템 사용"/, '상단 행동력 사용 버튼이 있어야 한다');
+assert.match(html, /id="energyItemDialog"/, '행동력 아이템 모달이 있어야 한다');
+assert.match(html, /id="energyItemList"/, '행동력 아이템 목록이 있어야 한다');
+assert.match(
+  css,
+  /@media \(max-width: 900px\)[\s\S]*?\.currency\.energy \{[^}]*display:\s*inline-flex/,
+  '모바일에서도 행동력과 사용 버튼이 보여야 한다',
+);
+assert.doesNotMatch(
+  css,
+  /\.currency\.energy\s*,\s*\.currency-bar \.icon-button\s*\{[^}]*display:\s*none/,
+  '모바일 공통 숨김 규칙에 행동력을 포함하면 안 된다',
+);
+assert.match(appSource, /const ENERGY_ITEM_IDS = Object\.freeze\(\['energySmall', 'energyMedium', 'energyLarge'\]\)/, '행동력 아이템 3종만 모달에 노출해야 한다');
+assert.match(appSource, /energyUseButton\.addEventListener\('click', openEnergyItemDialog\)/, '상단 + 버튼이 모달 열기에 연결돼야 한다');
+assert.match(appSource, /data-energy-item="\$\{itemId\}"/, '모달 사용 버튼에 아이템 ID가 연결돼야 한다');
+assert.match(appSource, /activateShopItem\(button\.dataset\.energyItem, button\)/, '모달 사용 버튼이 기존 아이템 사용 경로를 호출해야 한다');
+
 // 회귀: 가로(전체화면)에서 전광판이 display:none 으로 통째로 숨겨져 있었다.
 const landscapeBlock = css.match(/@media \(max-width: 900px\) and \(orientation: landscape\)[\s\S]*?\n\}/)?.[0] ?? '';
 assert.ok(landscapeBlock, '가로 모드 미디어 블록을 찾지 못했다');

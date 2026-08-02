@@ -82,6 +82,7 @@ const mailDate = new Intl.DateTimeFormat('ko-KR', {
   hour12: false,
 });
 const CARD_BACK_PATH = 'assets/card-back.jpg';
+const ENERGY_ITEM_IDS = Object.freeze(['energySmall', 'energyMedium', 'energyLarge']);
 // 'inventory'는 별도 DOM 없이 shopScreen을 보유아이템 탭으로 열어주는 별칭 화면.
 const SCREEN_IDS = new Set(['shop', 'inventory', 'enhance', 'collection', 'ranking', 'guild', 'adventure', 'worldboss', 'minigame']);
 // Temporary: world boss disabled to cap Supabase free-tier realtime/edge load until Pro (2026-07-24). Flip to true + redeploy to re-enable.
@@ -220,6 +221,8 @@ function imagePath(card) {
 function cacheElements() {
   [
     'nickname', 'hellConquerorMedal', 'combatPower', 'energyValue', 'pointValue', 'profileCardButton', 'apiLinkButton', 'logoutButton',
+    'energyUseButton', 'energyItemDialog', 'energyItemClose', 'energyItemCurrent',
+    'energyItemStatus', 'energyItemList', 'energyItemOwnedSummary',
     'mailButton', 'mailDialog', 'mailBadge', 'mailboxStatus', 'mailboxList', 'mailboxSummary', 'mailCloseButton',
     'worldBossNavBadge',
     'guildScreen', 'guildHome', 'guildBrowse', 'guildEmblem', 'guildTagLine', 'guildName', 'guildMeta',
@@ -1962,6 +1965,35 @@ function supportPackProductMarkup() {
   </article>`;
 }
 
+function renderEnergyItemDialog() {
+  if (!elements.energyItemList) return;
+  const cap = state.maxActionEnergy * 2;
+  const ownedTotal = ENERGY_ITEM_IDS.reduce((sum, itemId) => sum + (state.supportItems[itemId] ?? 0), 0);
+  const atCap = state.actionEnergy >= cap;
+
+  elements.energyItemCurrent.textContent = `${number.format(state.actionEnergy)} / ${number.format(state.maxActionEnergy)}`;
+  elements.energyItemOwnedSummary.textContent = `행동력 아이템 ${number.format(ownedTotal)}개`;
+  elements.energyItemStatus.textContent = atCap
+    ? `행동력 충전 상한 ${number.format(cap)}에 도달했습니다.`
+    : ownedTotal <= 0 ? '보유한 행동력 아이템이 없습니다.' : '';
+  elements.energyItemStatus.dataset.state = atCap ? 'cap' : ownedTotal <= 0 ? 'empty' : 'ready';
+  elements.energyItemList.innerHTML = ENERGY_ITEM_IDS.map((itemId) => {
+    const item = SUPPORT_ITEMS[itemId];
+    const count = state.supportItems[itemId] ?? 0;
+    return `<article class="energy-item-row" role="listitem">
+      <div class="energy-item-icon">${supportItemIconMarkup(itemId, item)}</div>
+      <div class="energy-item-copy"><b>${item.name}</b><span>${item.effect}</span><small>보유 ${number.format(count)}개</small></div>
+      <button type="button" data-energy-item="${itemId}" ${count <= 0 || atCap ? 'disabled' : ''}>사용</button>
+    </article>`;
+  }).join('');
+  window.lucide?.createIcons();
+}
+
+function openEnergyItemDialog() {
+  renderEnergyItemDialog();
+  if (!elements.energyItemDialog.open) elements.energyItemDialog.showModal();
+}
+
 function shopItemMarkup(itemId) {
   const item = SUPPORT_ITEMS[itemId];
   const count = state.supportItems[itemId] ?? 0;
@@ -2307,7 +2339,7 @@ async function dismantleShopItem(itemId) {
   return null;
 }
 
-async function activateShopItem(itemId) {
+async function activateShopItem(itemId, triggerButton = null) {
   const item = SUPPORT_ITEMS[itemId];
   if (!item) return;
   if (item.cardSelectorRarity) {
@@ -2324,22 +2356,39 @@ async function activateShopItem(itemId) {
     return;
   }
   if (remoteMode) {
-    return runUiOperation('useSupportItem', null, async () => {
+    return runUiOperation('useSupportItem', triggerButton, async () => {
       const response = await executeServerCommand(GAME_COMMAND_TYPES.USE_SUPPORT_ITEM, { itemId, targetCardId: null, race: null });
-      if (!response?.ok) return response;
+      if (!response?.ok) {
+        renderEnergyItemDialog();
+        showToast(response?.message ?? '아이템을 사용할 수 없습니다.', 'warning');
+        return response;
+      }
       renderHeader();
       renderShop();
+      renderEnergyItemDialog();
       showToast(`${item.name} 사용`);
+      if (elements.energyItemDialog?.open) {
+        const nextButton = elements.energyItemList.querySelector(`[data-energy-item="${itemId}"]:not(:disabled)`);
+        (nextButton ?? elements.energyItemClose).focus();
+      }
       return response;
     });
   }
   const result = useSupportItem(state, itemId, gameService.now());
-  if (!result.used) return showToast(result.reason);
+  if (!result.used) {
+    renderEnergyItemDialog();
+    return showToast(result.reason);
+  }
   state = result.state;
   gameService.persistSnapshot(state);
   renderHeader();
   renderShop();
+  renderEnergyItemDialog();
   showToast(result.reason);
+  if (elements.energyItemDialog?.open) {
+    const nextButton = elements.energyItemList.querySelector(`[data-energy-item="${itemId}"]:not(:disabled)`);
+    (nextButton ?? elements.energyItemClose).focus();
+  }
 }
 
 async function useSelectedCardExpPotion() {
@@ -2745,6 +2794,12 @@ async function markMailboxRead(mailId, button) {
 
 function bindEvents() {
   elements.profileCardButton.addEventListener('click', openRepresentativeCardDetail);
+  elements.energyUseButton.addEventListener('click', openEnergyItemDialog);
+  elements.energyItemClose.addEventListener('click', () => elements.energyItemDialog.close());
+  elements.energyItemList.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-energy-item]');
+    if (button && !button.disabled) void activateShopItem(button.dataset.energyItem, button);
+  });
   elements.mailButton.addEventListener('click', async () => {
     elements.mailDialog.showModal();
     await refreshMailbox({ showLoading: mailbox.messages.length === 0 });
@@ -3057,7 +3112,7 @@ function bindEvents() {
   elements.shopInventoryGrid.addEventListener('click', (event) => {
     const button = event.target.closest('[data-use-shop-item]');
     if (button && !button.disabled) {
-      activateShopItem(button.dataset.useShopItem);
+      activateShopItem(button.dataset.useShopItem, button);
       return;
     }
     const dismantleButton = event.target.closest('[data-dismantle-shop-item]');

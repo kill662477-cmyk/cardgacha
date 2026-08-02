@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/renewal/brand/card-gacha-s2-favicon-32.png">
   <link rel="apple-touch-icon" sizes="192x192" href="assets/renewal/brand/card-gacha-s2-icon-192.png">
   <link rel="stylesheet" href="styles/renewal/tokens.css">
-  <link rel="stylesheet" href="styles/renewal/main.css?v=202607310610">
+  <link rel="stylesheet" href="styles/renewal/main.css?v=202608020930">
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
 </head>
 <body>
@@ -38,7 +38,11 @@
       </section>
 
       <div class="currency-bar">
-        <div class="currency energy"><i data-lucide="zap"></i><strong id="energyValue">64 / 120</strong></div>
+        <div class="currency energy">
+          <i data-lucide="zap"></i>
+          <strong id="energyValue">64 / 120</strong>
+          <button class="energy-use-button" id="energyUseButton" type="button" aria-label="행동력 아이템 사용" title="행동력 아이템 사용"><i data-lucide="plus"></i></button>
+        </div>
         <div class="currency points"><i data-lucide="sparkles"></i><strong id="pointValue">8,450 P</strong></div>
         <button class="icon-button sound-toggle active" id="soundToggleButton" type="button" aria-label="효과음 끄기" aria-pressed="true" title="효과음 끄기"><i data-lucide="volume-2"></i></button>
         <button class="icon-button" id="mailButton" type="button" aria-label="우편함" title="우편함">
@@ -770,6 +774,22 @@
     <button class="fx-skip" data-fx-skip type="button" hidden><i data-lucide="fast-forward"></i><span>연출 건너뛰기</span></button>
   </section>
 
+  <dialog class="energy-item-dialog" id="energyItemDialog">
+    <section class="energy-item-shell">
+      <header>
+        <div><span>ENERGY SUPPLY</span><h2>행동력 아이템</h2></div>
+        <button class="icon-button" id="energyItemClose" type="button" aria-label="행동력 아이템 창 닫기" title="닫기"><i data-lucide="x"></i></button>
+      </header>
+      <div class="energy-item-summary">
+        <div><span>현재 행동력</span><strong id="energyItemCurrent">0 / 120</strong></div>
+        <small>최대 행동력의 2배까지 충전할 수 있습니다.</small>
+      </div>
+      <div class="energy-item-status" id="energyItemStatus" aria-live="polite"></div>
+      <div class="energy-item-list" id="energyItemList" role="list"></div>
+      <footer><span id="energyItemOwnedSummary">행동력 아이템 0개</span></footer>
+    </section>
+  </dialog>
+
   <dialog class="formation-dialog" id="formationDialog">
     <form method="dialog" class="dialog-shell">
       <header>
@@ -943,6 +963,6 @@
   </dialog>
 
   <script src="runtime-config.js?v=202607290915"></script>
-  <script type="module" src="src/renewal/app.js?v=202608012122"></script>
+  <script type="module" src="src/renewal/app.js?v=202608020930"></script>
 </body>
 </html>

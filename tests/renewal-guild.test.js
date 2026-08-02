@@ -28,6 +28,7 @@ const correctedLevelFiveCapacity = squash(await read('supabase/migrations/202608
 const levelSixCapacity = squash(await read('supabase/migrations/20260802165000_guild_level_six_capacity_70.sql'));
 const levelSixCapacityResync = squash(await read('supabase/migrations/20260802170000_resync_level_six_guild_capacity_70.sql'));
 const oneTimePenaltyClear = squash(await read('supabase/migrations/20260802183000_clear_active_guild_penalties_once.sql'));
+const hyeomjohnyangEmblemAndPenaltyClear = squash(await read('supabase/migrations/20260802193000_hyeomjohnyang_emblem_and_clear_penalties.sql'));
 const applicantProfile = squash(await read('supabase/migrations/20260727000001_guild_applicant_profile.sql'));
 const memberProgressAndDecks = squash(await read('supabase/migrations/20260728103000_guild_member_progress_and_decks.sql'));
 const quickBattleGp = squash(await read('supabase/migrations/20260727142000_guild_quick_battle_gp.sql'));
@@ -99,6 +100,9 @@ assert.match(member, /'leave'\)|'kick'\)/, '페널티 사유 기록');
 assert.match(oneTimePenaltyClear, /update public\.gacha_s2_guild_leave_penalties set penalty_until = now\(\) where penalty_until > now\(\)/, '활성 페널티만 즉시 만료해야 한다');
 assert.doesNotMatch(oneTimePenaltyClear, /delete from public\.gacha_s2_guild_leave_penalties/, '탈퇴·추방 이력을 삭제하면 안 된다');
 assert.match(oneTimePenaltyClear, /guild leave penalties still active/, '해제 후 잔여 페널티를 검증해야 한다');
+assert.match(hyeomjohnyangEmblemAndPenaltyClear, /update public\.gacha_s2_guild_leave_penalties set penalty_until = now\(\) where penalty_until > now\(\)/, '재요청 시점의 활성 페널티만 즉시 만료해야 한다');
+assert.doesNotMatch(hyeomjohnyangEmblemAndPenaltyClear, /delete from public\.gacha_s2_guild_leave_penalties/, '탈퇴·추방 이력을 삭제하면 안 된다');
+assert.match(hyeomjohnyangEmblemAndPenaltyClear, /guild leave penalties still active/, '해제 후 잔여 페널티를 검증해야 한다');
 
 // --- 조회 RPC ---
 assert.match(query, /create or replace function public\.gacha_s2_get_guild_state/);
@@ -408,9 +412,10 @@ assert.match(emblemSource, /calmsnal: `assets\/renewal\/guild\/emblems\/calmsnal
 assert.match(emblemSource, /jjiking: `assets\/renewal\/guild\/emblems\/jjiking\.png\?v=/);
 assert.match(emblemSource, /sexyterran: `assets\/renewal\/guild\/emblems\/sexyterran\.png\?v=/);
 assert.match(emblemSource, /s2jjaek: `assets\/renewal\/guild\/emblems\/s2jjaek\.png\?v=/);
+assert.match(emblemSource, /hyeomjohnyang: `assets\/renewal\/guild\/emblems\/hyeomjohnyang\.png\?v=/);
 // 화이트리스트에 키만 추가하고 파일을 안 올리면 깨진 이미지가 뜬다. 실제 파일 존재를 함께 잠근다.
 // 기존 PNG 엠블럼은 256x256 원형 마스크 규격을 유지한다.
-for (const key of Object.keys(EMBLEM_IMAGES).filter((key) => key !== 's2jjaek')) {
+for (const key of Object.keys(EMBLEM_IMAGES).filter((key) => !['s2jjaek', 'hyeomjohnyang'].includes(key))) {
   const png = await readFile(new URL(`../assets/renewal/guild/emblems/${key}.png`, import.meta.url));
   assert.equal(png.readUInt32BE(16), 256, `${key}.png 너비는 256 이어야 한다`);
   assert.equal(png.readUInt32BE(20), 256, `${key}.png 높이는 256 이어야 한다`);
@@ -421,6 +426,11 @@ assert.equal(s2jjaekPng.subarray(1, 4).toString('ascii'), 'PNG', 's2jjaek 길드
 assert.equal(s2jjaekPng.readUInt32BE(16), 1232, 's2jjaek.png 너비는 전달 원본 1232를 유지해야 한다');
 assert.equal(s2jjaekPng.readUInt32BE(20), 1232, 's2jjaek.png 높이는 전달 원본 1232를 유지해야 한다');
 assert.ok(s2jjaekPng.length > 1_000_000, 's2jjaek 길드마크가 비어 있거나 지나치게 작다');
+const hyeomjohnyangPng = await readFile(new URL('../assets/renewal/guild/emblems/hyeomjohnyang.png', import.meta.url));
+assert.equal(hyeomjohnyangPng.subarray(1, 4).toString('ascii'), 'PNG', '혐좋냥 길드마크는 PNG여야 한다');
+assert.equal(hyeomjohnyangPng.readUInt32BE(16), 256, '혐좋냥 길드마크 너비는 256이어야 한다');
+assert.equal(hyeomjohnyangPng.readUInt32BE(20), 256, '혐좋냥 길드마크 높이는 256이어야 한다');
+assert.ok(hyeomjohnyangPng.length > 50_000, '혐좋냥 길드마크가 비어 있거나 지나치게 작다');
 assert.match(
   emblemSource,
   /EMBLEM_ASSET_VERSION/,
@@ -518,6 +528,13 @@ assert.match(s2jjaekMigration, /values \('s2jjaek', 'S2 짹 S2 전용', 907, fal
 assert.match(s2jjaekMigration, /guild_id = 'bea1d9dc-48cc-4a33-b80d-243d59d069d4'::uuid/);
 assert.match(s2jjaekMigration, /name = 'S2 짹 S2'/);
 assert.match(s2jjaekMigration, /if v_count <> 1 then/);
+const hyeomjohnyangMigration = await readFile(
+  new URL('../supabase/migrations/20260802193000_hyeomjohnyang_emblem_and_clear_penalties.sql', import.meta.url),
+  'utf8',
+);
+assert.match(hyeomjohnyangMigration, /values \('hyeomjohnyang', '혐좋냥 전용', 908, false\)/);
+assert.match(hyeomjohnyangMigration, /name = '혐좋냥'/);
+assert.match(hyeomjohnyangMigration, /if v_guild_count <> 1 then/);
 
 console.log('guild custom emblem tests passed: image whitelist, markup render, escaping, inactive listing');
 

@@ -1,6 +1,6 @@
 import { escapeHtml } from './html.js';
 import { GUILD_RULES, RARITIES, guildLevelFor } from './config.js';
-import { EMBLEM_GLYPHS, emblemMarkup } from './guild-emblem.js?v=202608021135';
+import { EMBLEM_GLYPHS, emblemMarkup } from './guild-emblem.js?v=202608021930';
 import { cardVisualChrome } from './card-visual.js?v=202607271325';
 
 const number = new Intl.NumberFormat('ko-KR');

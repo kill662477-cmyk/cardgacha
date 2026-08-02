@@ -404,8 +404,8 @@ for (const key of Object.keys(EMBLEM_IMAGES).filter((key) => key !== 's2jjaek'))
 }
 const s2jjaekPng = await readFile(new URL('../assets/renewal/guild/emblems/s2jjaek.png', import.meta.url));
 assert.equal(s2jjaekPng.subarray(1, 4).toString('ascii'), 'PNG', 's2jjaek 길드마크는 전달받은 PNG여야 한다');
-assert.equal(s2jjaekPng.readUInt32BE(16), 1024, 's2jjaek.png 너비는 1024 이어야 한다');
-assert.equal(s2jjaekPng.readUInt32BE(20), 1024, 's2jjaek.png 높이는 1024 이어야 한다');
+assert.equal(s2jjaekPng.readUInt32BE(16), 1232, 's2jjaek.png 너비는 전달 원본 1232를 유지해야 한다');
+assert.equal(s2jjaekPng.readUInt32BE(20), 1232, 's2jjaek.png 높이는 전달 원본 1232를 유지해야 한다');
 assert.ok(s2jjaekPng.length > 1_000_000, 's2jjaek 길드마크가 비어 있거나 지나치게 작다');
 assert.match(
   emblemSource,

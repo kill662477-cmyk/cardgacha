@@ -2,7 +2,7 @@ import { RARITIES } from './config.js';
 import { buildCombatPowerRanking } from './rankings.js';
 import { cardVisualChrome } from './card-visual.js?v=202607271325';
 import { escapeHtml } from './html.js';
-import { emblemMarkup } from './guild-emblem.js';
+import { emblemMarkup } from './guild-emblem.js?v=202608021135';
 
 const number = new Intl.NumberFormat('ko-KR');
 

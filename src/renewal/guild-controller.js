@@ -7,6 +7,19 @@ const number = new Intl.NumberFormat('ko-KR');
 
 const ROLE_LABELS = Object.freeze({ owner: '길드장', officer: '부길드장', member: '길드원' });
 
+function guildTotalGp(guild) {
+  const totalGp = Number(guild?.totalGp);
+  return Number.isFinite(totalGp) ? totalGp : 0;
+}
+
+export function sortGuildsByGp(guilds) {
+  return [...guilds].sort((a, b) => (
+    guildTotalGp(b) - guildTotalGp(a)
+    || String(a?.name ?? '').localeCompare(String(b?.name ?? ''), 'ko')
+    || String(a?.guildId ?? '').localeCompare(String(b?.guildId ?? ''))
+  ));
+}
+
 function effectiveMemberLimit(guild) {
   const levelLimit = GUILD_RULES.levels.find((tier) => tier.level === Number(guild?.level))?.memberLimit ?? 0;
   return Math.max(Number(guild?.memberLimit) || 0, levelLimit);
@@ -410,23 +423,26 @@ export function createGuildController({ cards = [], getState, gameService, serve
     elements.guildCreateBox.hidden = !isStreamer;
     if (isStreamer) renderEmblemPicker(guildState?.emblems);
 
-    const guilds = Array.isArray(guildState?.guilds) ? guildState.guilds : [];
+    const guilds = sortGuildsByGp(Array.isArray(guildState?.guilds) ? guildState.guilds : []);
     const myRequests = new Set([
       ...pendingGuildIds,
       ...(guildState?.myRequests ?? []).map((request) => request.guildId),
     ]);
-    elements.guildList.innerHTML = guilds.map((g) => {
+    elements.guildList.innerHTML = guilds.map((g, index) => {
       const memberLimit = effectiveMemberLimit(g);
       const full = (g.memberCount ?? 0) >= memberLimit;
       const pending = myRequests.has(g.guildId);
       const mine = isMember && g.guildId === guildState?.guild?.guildId;
+      const rank = index + 1;
       return `
       <li class="guild-list-item">
+        <span class="guild-list-rank" aria-label="${rank}등"><strong>${rank}</strong><small>등</small></span>
         <div class="guild-list-emblem">${emblemMarkup(g.emblem, 'guild-list-emblem-mark')}</div>
         <div class="guild-list-main">
           <strong>${escapeHtml(g.name ?? '-')}${g.tag ? ` <em>[${escapeHtml(g.tag)}]</em>` : ''}</strong>
           <small>Lv.${g.level} · ${number.format(g.memberCount ?? 0)}/${memberLimit}명 · ${escapeHtml(g.ownerNickname ?? '')}</small>
         </div>
+        <strong class="guild-list-gp">${number.format(guildTotalGp(g))} GP</strong>
         ${mine
           ? '<span class="guild-list-mine">내 길드</span>'
           : isMember

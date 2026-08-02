@@ -4,6 +4,7 @@ import { EMBLEM_IMAGES } from '../src/renewal/guild-emblem.js';
 import { GAME_COMMAND_TYPES, validateGameCommand } from '../src/renewal/service-contract.js';
 import { GUILD_RULES, guildLevelFor } from '../src/renewal/config.js';
 import { applyGuildBuff } from '../src/renewal/collection.js';
+import { sortGuildsByGp } from '../src/renewal/guild-controller.js';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const squash = (sql) => sql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
@@ -29,6 +30,7 @@ const levelSixCapacity = squash(await read('supabase/migrations/20260802165000_g
 const levelSixCapacityResync = squash(await read('supabase/migrations/20260802170000_resync_level_six_guild_capacity_70.sql'));
 const oneTimePenaltyClear = squash(await read('supabase/migrations/20260802183000_clear_active_guild_penalties_once.sql'));
 const hyeomjohnyangEmblemAndPenaltyClear = squash(await read('supabase/migrations/20260802193000_hyeomjohnyang_emblem_and_clear_penalties.sql'));
+const guildGpRanking = squash(await read('supabase/migrations/20260802201000_guild_list_gp_ranking.sql'));
 const applicantProfile = squash(await read('supabase/migrations/20260727000001_guild_applicant_profile.sql'));
 const memberProgressAndDecks = squash(await read('supabase/migrations/20260728103000_guild_member_progress_and_decks.sql'));
 const quickBattleGp = squash(await read('supabase/migrations/20260727142000_guild_quick_battle_gp.sql'));
@@ -107,6 +109,8 @@ assert.match(hyeomjohnyangEmblemAndPenaltyClear, /guild leave penalties still ac
 // --- 조회 RPC ---
 assert.match(query, /create or replace function public\.gacha_s2_get_guild_state/);
 assert.match(query, /create or replace function public\.gacha_s2_list_guilds/);
+assert.match(guildGpRanking, /'totalgp', g\.total_gp/, '길드 목록 응답에 누적 GP가 있어야 한다');
+assert.match(guildGpRanking, /order by g\.total_gp desc, lower\(g\.name\), g\.guild_id/, '서버도 누적 GP 내림차순으로 정렬해야 한다');
 assert.match(query, /create or replace function public\.gacha_s2_list_guild_emblems/);
 // 기여도 판단 근거이므로 멤버 목록은 길드원 전원에게 공개한다(PDB-16 2.6).
 assert.match(query, /'weeklygp', m\.weekly_gp/);
@@ -560,6 +564,17 @@ assert.match(
   '소속 여부를 넘겨야 목록에서 가입 버튼과 생성 폼을 감출 수 있다',
 );
 assert.match(guildControllerSource, /guild-list-mine/, '목록에서 내 길드를 표시해야 한다');
+assert.deepEqual(
+  sortGuildsByGp([
+    { guildId: 'c', name: '하랑단', totalGp: 200 },
+    { guildId: 'b', name: '검투사', totalGp: 200 },
+    { guildId: 'a', name: '캄스날', totalGp: 500 },
+  ]).map((guild) => guild.guildId),
+  ['a', 'b', 'c'],
+  '클라이언트도 GP 내림차순, 동점 길드명 순으로 정렬해야 한다',
+);
+assert.match(guildControllerSource, /class="guild-list-rank" aria-label="\$\{rank\}등"/, '길드 앞에 등수를 표시해야 한다');
+assert.match(guildControllerSource, /class="guild-list-gp">\$\{number\.format\(guildTotalGp\(g\)\)\} GP/, '목록에서 누적 GP를 보여줘야 한다');
 assert.match(guildControllerSource, /guild-list-pending-button/, '가입 신청 버튼을 승인 대기 버튼으로 바꿔야 한다');
 assert.match(guildControllerSource, /승인 대기 중/, '가입 신청 상태 문구 누락');
 assert.match(guildControllerSource, /가입 신청 완료 · 승인 대기 중입니다/, '가입 신청 완료 피드백 누락');
@@ -577,6 +592,8 @@ assert.match(guildControllerSource, /Number\(profile\.power\)/, '서버가 계�
 assert.match(guildStyles, /\.guild-request-profile\s*\{/, '신청자 상세 버튼 스타일 누락');
 assert.match(guildStyles, /\.guild-list-pending-actions\s*\{/, '승인 대기 버튼 묶음 스타일 누락');
 assert.match(guildStyles, /\.guild-list-item \.guild-list-pending-button:disabled\s*\{/, '승인 대기 버튼 스타일 누락');
+assert.match(guildStyles, /\.guild-list-rank\s*\{/, '길드 등수 스타일 누락');
+assert.match(guildStyles, /\.guild-list-gp\s*\{/, '길드 GP 스타일 누락');
 
 console.log('guild browse-while-member tests passed: buttons wired, member-aware list');
 

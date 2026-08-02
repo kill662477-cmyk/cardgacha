@@ -39,6 +39,7 @@ import {
   drawSupportPack,
   effectivePackRates,
   redeemCardSelector,
+  rerollCardArchetype,
   useCardExpPotion,
   useCardExpPotionBatch,
   useSupportItem,
@@ -1905,7 +1906,7 @@ const SHOP_CARD_PRODUCT_ORDER = ['general', 'elite', 'premium', 'zerg', 'terran'
 
 const ITEM_ICONS = {
   행동력: 'battery-charging', 강화: 'chevrons-up', 경험치: 'radio', 교환권: 'ticket',
-  선택권: 'badge-check', 초기화: 'rotate-ccw',
+  선택권: 'badge-check', 특성: 'shuffle', 초기화: 'rotate-ccw',
 };
 
 const ITEM_IMAGES = {
@@ -1960,7 +1961,7 @@ function cardPackProductMarkup(productId) {
 function supportPackProductMarkup() {
   return `<article class="shop-product support selected" data-shop-product="support" style="--accent:#62d4d0">
     <div class="shop-product-visual"><img src="assets/renewal/shop/support-case.webp" alt="${SUPPORT_PACK.name}"></div>
-    <div class="shop-product-copy"><span>TACTICAL ITEM</span><h3>${SUPPORT_PACK.name}</h3><p>행동력·강화·경험치·초기화권·카드팩 교환권</p></div>
+    <div class="shop-product-copy"><span>TACTICAL ITEM</span><h3>${SUPPORT_PACK.name}</h3><p>행동력·강화·경험치·초기화권·카드팩 교환권·랜덤특성변경권</p></div>
     <div class="shop-buy-row"><button type="button" data-buy-support="1" ${state.points < SUPPORT_PACK.price ? 'disabled' : ''}><b>1회 보급</b><small>${number.format(SUPPORT_PACK.price)}P</small></button><button type="button" data-buy-support="10" ${state.points < SUPPORT_PACK.tenPrice ? 'disabled' : ''}><b>10회 보급</b><small>${number.format(SUPPORT_PACK.tenPrice)}P · 희귀 1개 보장</small></button></div>
   </article>`;
 }
@@ -1997,15 +1998,15 @@ function openEnergyItemDialog() {
 function shopItemMarkup(itemId) {
   const item = SUPPORT_ITEMS[itemId];
   const count = state.supportItems[itemId] ?? 0;
-  const directlyUsable = Boolean(item.energy || item.durationMinutes || item.pack || item.cardExp || item.cardSelectorRarity || item.reset);
+  const directlyUsable = Boolean(item.energy || item.durationMinutes || item.pack || item.cardExp || item.cardSelectorRarity || item.traitReroll || item.reset);
   // 선택권처럼 보급팩 확률이 없는 아이템은 환급 기준가가 없어 분해 대상이 아니다.
   const dismantlable = canDismantleSupportItem(itemId);
   const unitPoints = supportItemDismantleValue(itemId);
-  return `<article class="shop-item-row${item.cardSelectorRarity ? ' card-selector-item' : ''}"${item.cardSelectorRarity ? ` style="--selector-rarity:${RARITIES[item.cardSelectorRarity].color}"` : ''}>
+  return `<article class="shop-item-row${item.cardSelectorRarity ? ' card-selector-item' : ''}${item.ultraRare ? ' ultra-rare-item' : ''}"${item.cardSelectorRarity ? ` style="--selector-rarity:${RARITIES[item.cardSelectorRarity].color}"` : ''}>
     <div class="shop-item-icon">${supportItemIconMarkup(itemId, item)}</div>
     <div class="shop-item-copy"><b>${item.name}</b><span>${item.effect}</span><small>보유 ${count}개</small></div>
     <div class="shop-item-actions">
-      <button class="shop-item-action" type="button" data-use-shop-item="${itemId}" ${count <= 0 || !directlyUsable ? 'disabled' : ''}>${item.cardSelectorRarity ? '선택' : item.pack ? '교환' : item.cardExp ? '강화' : '사용'}</button>
+      <button class="shop-item-action" type="button" data-use-shop-item="${itemId}" ${count <= 0 || !directlyUsable ? 'disabled' : ''}>${item.cardSelectorRarity ? '선택' : item.traitReroll ? '변경' : item.pack ? '교환' : item.cardExp ? '강화' : '사용'}</button>
       ${dismantlable ? `<button class="shop-item-action dismantle" type="button" data-dismantle-shop-item="${itemId}" ${count <= 0 ? 'disabled' : ''} title="1개당 ${number.format(unitPoints)}P 환급">분해</button>` : ''}
     </div>
   </article>`;
@@ -2028,9 +2029,10 @@ function renderShopDetail() {
     elements.shopProbabilityList.innerHTML = Object.entries(SUPPORT_PACK.items).map(([itemId, rate]) => {
       const item = SUPPORT_ITEMS[itemId];
       const rare = SUPPORT_PACK.rareItems.includes(itemId);
-      return `<div class="shop-rate-row${rare ? ' rare' : ''}"><b>${rare ? '★ ' : ''}${item.name}</b><span>${rate}%</span><small>${item.effect}</small></div>`;
+      const ultraRare = Boolean(item.ultraRare);
+      return `<div class="shop-rate-row${rare || ultraRare ? ' rare' : ''}"><b>${ultraRare ? '◆ ' : rare ? '★ ' : ''}${item.name}</b><span>${rate}%</span><small>${item.effect}</small></div>`;
     }).join('');
-    elements.shopDetailNote.textContent = `10회 결과의 앞 9개에 희귀 보급품이 없을 때만 10번째 보장 전용 확률표 적용. 희귀 보급품 기준: ${SUPPORT_PACK.rareItems.map((id) => SUPPORT_ITEMS[id].name).join(', ')}.`;
+    elements.shopDetailNote.textContent = `10회 결과의 앞 9개에 희귀 보급품이 없을 때만 10번째 보장 전용 확률표 적용. 랜덤특성변경권은 희귀 보장 대상에서 제외. 희귀 보급품 기준: ${SUPPORT_PACK.rareItems.map((id) => SUPPORT_ITEMS[id].name).join(', ')}.`;
   } else {
     elements.shopDetailTitle.textContent = '아이템 사용 규칙';
     elements.shopDetailSummary.innerHTML = `<strong>${Object.values(state.supportItems).reduce((sum, count) => sum + count, 0)}개</strong><span>현재 보유 보급품</span>`;
@@ -2041,12 +2043,20 @@ function renderShopDetail() {
       ['초기화', '사용한 모험 시작 또는 빠른 전투 횟수를 최대치로 복구'],
       ['교환권', '동일 카드팩의 장수와 확률 그대로 적용'],
       ['선택권', '표시 등급 카드 중 원하는 카드 1장을 직접 선택'],
+      ['특성', '선택 카드의 현재 특성을 제외한 나머지 7종 중 서버 무작위 변경'],
     ].map(([name, rule]) => `<div class="shop-rate-row"><b>${name}</b><span></span><small>${rule}</small></div>`).join('');
     elements.shopDetailNote.textContent = '모든 아이템은 만료 기간 없음.';
   }
 }
 
 function cardSelectorCandidates(itemId) {
+  if (SUPPORT_ITEMS[itemId]?.traitReroll) {
+    return cards
+      .filter((card) => !card.group && card.rarity !== 'EX' && (state.cardCopies[card.id] ?? 0) > 0)
+      .map(cardWithProgress)
+      .sort((left, right) => RARITY_ORDER.indexOf(right.rarity) - RARITY_ORDER.indexOf(left.rarity)
+        || left.member.localeCompare(right.member, 'ko') || left.id.localeCompare(right.id));
+  }
   const rarity = SUPPORT_ITEMS[itemId]?.cardSelectorRarity;
   return cards
     .filter((card) => card.rarity === rarity && !card.group)
@@ -2055,28 +2065,34 @@ function cardSelectorCandidates(itemId) {
 
 function renderCardSelectorDialog() {
   const item = SUPPORT_ITEMS[selectedCardSelectorItemId];
-  if (!item?.cardSelectorRarity) return;
+  if (!item?.cardSelectorRarity && !item?.traitReroll) return;
   const candidates = cardSelectorCandidates(selectedCardSelectorItemId);
-  const selected = cardsById.get(selectedCardSelectorCardId);
+  const selectedBase = cardsById.get(selectedCardSelectorCardId);
+  const selected = selectedBase ? cardWithProgress(selectedBase) : null;
   elements.cardSelectorTitle.textContent = item.name;
-  elements.cardSelectorSummary.textContent = `${item.cardSelectorRarity} 등급 ${candidates.length}종 · 1장 선택`;
+  elements.cardSelectorSummary.textContent = item.traitReroll
+    ? `보유 전투 카드 ${candidates.length}종 · 현재 특성을 제외한 7종 중 무작위 변경`
+    : `${item.cardSelectorRarity} 등급 ${candidates.length}종 · 1장 선택`;
   elements.cardSelectorGrid.innerHTML = candidates.map((card) => {
     const active = card.id === selectedCardSelectorCardId;
     return `<button class="card-selector-card${active ? ' selected' : ''}" type="button" data-selector-card="${card.id}" aria-pressed="${active}" style="--rarity:${RARITIES[card.rarity].color}">
       <span class="card-selector-photo"><img src="${imagePath(card)}" alt="${escapeHtml(card.member)} ${card.rarity} 카드"></span>
-      <span class="card-selector-copy"><b>${escapeHtml(card.member)}</b><small>${card.race} · ${ARCHETYPES[card.archetype].label}</small><em>현재 보유 ${state.cardCopies[card.id] ?? 0}장</em></span>
+      <span class="card-selector-copy"><b>${escapeHtml(card.member)}</b><small>${card.race} · 현재 ${ARCHETYPES[card.archetype].label}</small><em>현재 보유 ${state.cardCopies[card.id] ?? 0}장</em></span>
       <strong>${card.rarity}</strong>
     </button>`;
   }).join('');
   elements.cardSelectorSelection.textContent = selected
-    ? `${selected.member} ${selected.rarity} 카드 선택됨`
-    : '받을 카드를 선택하세요.';
+    ? item.traitReroll
+      ? `${selected.member} · 현재 ${ARCHETYPES[selected.archetype].label} · 결과는 사용 후 공개`
+      : `${selected.member} ${selected.rarity} 카드 선택됨`
+    : item.traitReroll ? '특성을 변경할 카드를 선택하세요.' : '받을 카드를 선택하세요.';
+  elements.cardSelectorConfirm.textContent = item.traitReroll ? '랜덤 특성 변경' : '선택 카드 받기';
   elements.cardSelectorConfirm.disabled = !selected;
 }
 
 function openCardSelector(itemId) {
   const item = SUPPORT_ITEMS[itemId];
-  if (!item?.cardSelectorRarity || (state.supportItems[itemId] ?? 0) <= 0) return;
+  if ((!item?.cardSelectorRarity && !item?.traitReroll) || (state.supportItems[itemId] ?? 0) <= 0) return;
   selectedCardSelectorItemId = itemId;
   selectedCardSelectorCardId = null;
   renderCardSelectorDialog();
@@ -2118,6 +2134,56 @@ async function redeemSelectedCardSelector() {
     renderShop();
     showCardSelectorResult(cardId, item);
   });
+}
+
+function showTraitRerollResult(card, previousArchetype, archetype) {
+  elements.shopResultTitle.textContent = '랜덤 특성 변경 완료';
+  elements.shopResultSummary.textContent = `${card.member} · ${ARCHETYPES[previousArchetype].label} → ${ARCHETYPES[archetype].label}`;
+  elements.shopResultGrid.dataset.resultType = 'items';
+  elements.shopResultPager.hidden = true;
+  elements.shopResultGrid.classList.remove('bulk');
+  elements.shopResultGrid.style.removeProperty('--result-columns');
+  elements.shopResultGrid.style.removeProperty('--result-card-width');
+  elements.shopResultGrid.innerHTML = `<article class="shop-result-item rare"><em class="rare-badge">RANDOM</em><i data-lucide="shuffle"></i><b>${escapeHtml(card.member)}</b><span>${ARCHETYPES[previousArchetype].label} → ${ARCHETYPES[archetype].label}</span></article>`;
+  window.lucide?.createIcons();
+  elements.shopResultDialog.showModal();
+}
+
+async function rerollSelectedCardTrait() {
+  const itemId = selectedCardSelectorItemId;
+  const cardId = selectedCardSelectorCardId;
+  const item = SUPPORT_ITEMS[itemId];
+  const card = cardsById.get(cardId);
+  if (!item?.traitReroll || !card) return;
+  return runUiOperation('rerollCardArchetype', elements.cardSelectorConfirm, async () => {
+    if (remoteMode) {
+      const response = await executeServerCommand(GAME_COMMAND_TYPES.USE_SUPPORT_ITEM, {
+        itemId, targetCardId: cardId, race: null,
+      });
+      if (!response?.ok) return response;
+      const previousArchetype = response.result?.previousArchetype ?? card.archetype;
+      const archetype = response.result?.archetype ?? cardWithProgress(card).archetype;
+      elements.cardSelectorDialog.close();
+      renderHeader();
+      renderShop();
+      showTraitRerollResult(card, previousArchetype, archetype);
+      return response;
+    }
+    const result = rerollCardArchetype(state, cardId, cards, gameService.random);
+    if (!result.used) return showToast(result.reason);
+    state = result.state;
+    gameService.persistSnapshot(state);
+    elements.cardSelectorDialog.close();
+    renderHeader();
+    renderShop();
+    showTraitRerollResult(card, result.previousArchetype, result.archetype);
+  });
+}
+
+function confirmSelectedCardItem() {
+  return SUPPORT_ITEMS[selectedCardSelectorItemId]?.traitReroll
+    ? rerollSelectedCardTrait()
+    : redeemSelectedCardSelector();
 }
 
 function renderShop() {
@@ -2202,7 +2268,8 @@ function showSupportResults(itemIds, paidPoints) {
   elements.shopResultGrid.innerHTML = itemIds.map((itemId, index) => {
     const item = SUPPORT_ITEMS[itemId];
     const rare = rareSet.has(itemId);
-    return `<article class="shop-result-item${rare ? ' rare' : ''}" style="--reveal-delay:${index * 60}ms">${rare ? '<em class="rare-badge">RARE</em>' : ''}${supportItemIconMarkup(itemId, item)}<b>${item.name}</b><span>${item.effect}</span></article>`;
+    const ultraRare = Boolean(item?.ultraRare);
+    return `<article class="shop-result-item${rare || ultraRare ? ' rare' : ''}" style="--reveal-delay:${index * 60}ms">${ultraRare ? '<em class="rare-badge">0.001%</em>' : rare ? '<em class="rare-badge">RARE</em>' : ''}${supportItemIconMarkup(itemId, item)}<b>${item.name}</b><span>${item.effect}</span></article>`;
   }).join('');
   window.lucide?.createIcons();
   elements.shopResultDialog.showModal();
@@ -2343,6 +2410,10 @@ async function activateShopItem(itemId, triggerButton = null) {
   const item = SUPPORT_ITEMS[itemId];
   if (!item) return;
   if (item.cardSelectorRarity) {
+    openCardSelector(itemId);
+    return;
+  }
+  if (item.traitReroll) {
     openCardSelector(itemId);
     return;
   }
@@ -3124,7 +3195,7 @@ function bindEvents() {
     selectedCardSelectorCardId = button.dataset.selectorCard;
     renderCardSelectorDialog();
   });
-  elements.cardSelectorConfirm.addEventListener('click', redeemSelectedCardSelector);
+  elements.cardSelectorConfirm.addEventListener('click', confirmSelectedCardItem);
   elements.cardSelectorClose.addEventListener('click', () => elements.cardSelectorDialog.close());
   elements.shopResultPager.addEventListener('click', (event) => {
     const button = event.target.closest('[data-result-page]');

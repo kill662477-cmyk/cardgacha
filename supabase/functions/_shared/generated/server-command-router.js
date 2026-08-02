@@ -180,6 +180,7 @@ function formationFromSnapshot(snapshot, cardsById) {
       ...base,
       enhancement: Number(progress.enhancement ?? base.enhancement ?? 0),
       exp: Number(progress.exp ?? base.exp ?? 0),
+      archetype: progress.archetype ?? base.archetype,
     };
   });
 }
@@ -198,7 +199,7 @@ export function buildGuildApplicantProfile(profile, cards) {
   const formation = (Array.isArray(profile?.formation) ? profile.formation : []).map((item) => {
     const card = cardsById.get(item?.cardId);
     if (!card) return null;
-    return { ...card, enhancement: Number(item?.enhancement) || 0 };
+    return { ...card, enhancement: Number(item?.enhancement) || 0, archetype: item?.archetype ?? card.archetype };
   }).filter(Boolean);
   const collectionRecords = Object.fromEntries(
     (Array.isArray(profile?.registeredCardIds) ? profile.registeredCardIds : [])
@@ -217,6 +218,7 @@ export function buildGuildApplicantProfile(profile, cards) {
     formation: formation.map((card) => ({
       cardId: card.id,
       enhancement: card.enhancement,
+      archetype: card.archetype,
     })),
   };
 }
@@ -300,7 +302,7 @@ export function createServerCommandRouter(options) {
           type: command.type,
           userId,
           mode,
-          formation: context.formation.map((card) => ({ id: card.id, enhancement: card.enhancement })),
+          formation: context.formation.map((card) => ({ id: card.id, enhancement: card.enhancement, archetype: card.archetype })),
           bonuses: context.bonuses,
           clearedStages,
         });
@@ -341,7 +343,7 @@ export function createServerCommandRouter(options) {
           userId,
           raidId,
           attemptNumber,
-          formation: context.formation.map((card) => ({ id: card.id, enhancement: card.enhancement })),
+          formation: context.formation.map((card) => ({ id: card.id, enhancement: card.enhancement, archetype: card.archetype })),
           bonuses: context.bonuses,
           damageByCard: battle.damageByCard,
           totalDamage: battle.totalDamage,
@@ -373,7 +375,7 @@ export function createServerCommandRouter(options) {
           userId,
           eventId: command.payload.eventId,
           attemptNumber,
-          formation: context.formation.map((card) => ({ id: card.id, enhancement: card.enhancement })),
+          formation: context.formation.map((card) => ({ id: card.id, enhancement: card.enhancement, archetype: card.archetype })),
           bonuses: context.bonuses,
           damageByCard: battle.damageByCard,
           totalDamage: battle.totalDamage,

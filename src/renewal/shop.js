@@ -1,4 +1,4 @@
-import { PACKS, SUPPORT_ITEMS, SUPPORT_PACK } from './config.js';
+import { ARCHETYPES, PACKS, SUPPORT_ITEMS, SUPPORT_PACK } from './config.js';
 import { normalizeAdventureRuns } from './adventure.js';
 import { normalizeQuickBattle } from './rewards.js';
 
@@ -92,6 +92,35 @@ export function redeemCardSelector(state, itemId, cardId, cardCatalog) {
       supportItems: { ...state.supportItems, [itemId]: state.supportItems[itemId] - 1 },
       cardCopies: { ...state.cardCopies, [cardId]: (state.cardCopies[cardId] ?? 0) + 1 },
       collectionRecords: { ...state.collectionRecords, [cardId]: true },
+    },
+  };
+}
+
+export function rerollCardArchetype(state, cardId, cardCatalog, random = Math.random) {
+  const itemId = 'traitReroll';
+  const item = SUPPORT_ITEMS[itemId];
+  const card = cardCatalog.find((candidate) => candidate.id === cardId);
+  if ((state.supportItems[itemId] ?? 0) <= 0) return { used: false, reason: `${item.name} 없음`, state };
+  if (!card || card.group || card.rarity === 'EX' || (state.cardCopies[cardId] ?? 0) <= 0) {
+    return { used: false, reason: '보유 중인 전투 카드만 변경 가능', state };
+  }
+  const current = state.cardProgress[cardId] ?? { enhancement: 0, exp: 0 };
+  const previousArchetype = current.archetype ?? card.archetype;
+  const candidates = Object.keys(ARCHETYPES).filter((archetype) => archetype !== previousArchetype);
+  const archetype = candidates[Math.min(candidates.length - 1, Math.floor(random() * candidates.length))];
+  return {
+    used: true,
+    cardId,
+    previousArchetype,
+    archetype,
+    reason: `${ARCHETYPES[previousArchetype].label} → ${ARCHETYPES[archetype].label}`,
+    state: {
+      ...state,
+      supportItems: { ...state.supportItems, [itemId]: state.supportItems[itemId] - 1 },
+      cardProgress: {
+        ...state.cardProgress,
+        [cardId]: { ...current, archetype },
+      },
     },
   };
 }

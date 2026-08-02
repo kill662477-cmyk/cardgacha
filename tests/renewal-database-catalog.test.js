@@ -5,11 +5,23 @@ import { buildBalancePayload, buildCatalogMigration, loadCards } from '../script
 
 const cards = loadCards();
 const sql = await readFile(new URL('../supabase/renewal_migration_002_catalog_and_balance.sql', import.meta.url), 'utf8');
-const generated = buildCatalogMigration(cards);
 const normalizedSql = sql.replace(/\r\n/g, '\n');
 const normalized = normalizedSql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 
-assert.equal(normalizedSql, generated, 'catalog migration must be regenerated after card or balance changes');
+// migration 002 is immutable after production deployment. Runtime balance hotfixes
+// must be new migrations, so compare current payload after removing only the
+// explicitly patched fields instead of rewriting historical seed SQL.
+const seededPayload = JSON.parse(normalizedSql.match(/\$balance\$([\s\S]*?)\$balance\$::jsonb/)?.[1] ?? 'null');
+const currentPayload = structuredClone(buildBalancePayload());
+currentPayload.supportPack.items.cardExpPotion = seededPayload.supportPack.items.cardExpPotion;
+delete currentPayload.supportPack.items.traitReroll;
+delete currentPayload.supportItems.traitReroll;
+assert.deepEqual(currentPayload, seededPayload, 'catalog seed drift outside approved supplemental balance migration');
+const traitMigration = await readFile(new URL('../supabase/migrations/20260802160000_random_trait_reroll_ticket.sql', import.meta.url), 'utf8');
+assert.match(traitMigration, /supportPack,items,traitReroll/);
+assert.match(traitMigration, /'0\.001'::jsonb/);
+assert.match(traitMigration, /supportPack,items,cardExpPotion/);
+assert.match(traitMigration, /'9\.999'::jsonb/);
 assert.equal(buildBalancePayload().balanceVersion, BALANCE_VERSION);
 assert.match(normalized, /create table if not exists public\.gacha_s2_balance_versions/);
 assert.match(normalized, /create table if not exists public\.gacha_s2_card_catalog/);

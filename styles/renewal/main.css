@@ -588,6 +588,9 @@ button[aria-busy="true"]::after {
 .shop-item-row.card-selector-item .shop-item-icon,
 .shop-item-row.card-selector-item .shop-item-action { border-color: var(--selector-rarity); color: var(--selector-rarity); }
 .shop-item-row.card-selector-item .shop-item-action:disabled { border-color: var(--line); color: #626962; }
+.shop-item-row.ultra-rare-item { border-color: #e5bd4e; box-shadow: inset 3px 0 #e5bd4e, 0 0 16px rgba(229,189,78,.12); }
+.shop-item-row.ultra-rare-item .shop-item-icon,
+.shop-item-row.ultra-rare-item .shop-item-action { border-color: #e5bd4e; color: #e5bd4e; }
 
 .shop-detail { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; overflow: hidden; border-right: 0; background: #090c0a; }
 .shop-detail-summary { min-height: 95px; padding: 14px 16px; border-bottom: 1px solid var(--line); }

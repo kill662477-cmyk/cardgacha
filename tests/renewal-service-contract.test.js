@@ -176,6 +176,7 @@ assert.equal(validateGameCommand({
 for (const supportCommand of [
   createGameCommand({ type: GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK, payload: { quantity: 10 }, expectedRevision: 8, idempotencyKey: 'support-pack-00001', clientSentAt: clock.now() }),
   createGameCommand({ type: GAME_COMMAND_TYPES.USE_SUPPORT_ITEM, payload: { itemId: 'cardExpPotion', targetCardId: 'card-a', race: null }, expectedRevision: 8, idempotencyKey: 'support-use-000001', clientSentAt: clock.now() }),
+  createGameCommand({ type: GAME_COMMAND_TYPES.USE_SUPPORT_ITEM, payload: { itemId: 'traitReroll', targetCardId: 'card-a', race: null }, expectedRevision: 8, idempotencyKey: 'trait-reroll-00001', clientSentAt: clock.now() }),
   createGameCommand({ type: GAME_COMMAND_TYPES.SET_REPRESENTATIVE_CARD, payload: { cardId: 'card-a' }, expectedRevision: 8, idempotencyKey: 'representative-0001', clientSentAt: clock.now() }),
   createGameCommand({ type: GAME_COMMAND_TYPES.SET_CARD_LOCK, payload: { cardId: 'card-a', locked: true }, expectedRevision: 8, idempotencyKey: 'card-lock-0000001', clientSentAt: clock.now() }),
 ]) assert.equal(validateGameCommand(supportCommand).valid, true);

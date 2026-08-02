@@ -196,14 +196,15 @@ function validatePayload(type, payload, issues) {
       break;
     case GAME_COMMAND_TYPES.USE_SUPPORT_ITEM: {
       validateString(issues, payload.itemId, 'payload.itemId', 80);
-      const targetRequired = payload.itemId === 'cardExpPotion' || payload.itemId === 'cardExpPotionLarge';
+      const expTargetRequired = payload.itemId === 'cardExpPotion' || payload.itemId === 'cardExpPotionLarge';
+      const targetRequired = expTargetRequired || payload.itemId === 'traitReroll';
       const raceRequired = payload.itemId === 'raceTicket';
       if (targetRequired) validateString(issues, payload.targetCardId, 'payload.targetCardId', 80);
-      else if (payload.targetCardId !== null && payload.targetCardId !== undefined) addIssue(issues, 'payload.targetCardId', 'targetCardId is only valid for EXP potions');
+      else if (payload.targetCardId !== null && payload.targetCardId !== undefined) addIssue(issues, 'payload.targetCardId', 'targetCardId is only valid for card-target items');
       if (raceRequired && !['저그', '테란', '프로토스'].includes(payload.race)) addIssue(issues, 'payload.race', 'valid race required');
       else if (!raceRequired && payload.race !== null && payload.race !== undefined) addIssue(issues, 'payload.race', 'race is only valid for raceTicket');
       if (payload.count !== null && payload.count !== undefined) {
-        if (!targetRequired) addIssue(issues, 'payload.count', 'count is only valid for EXP potions');
+        if (!expTargetRequired) addIssue(issues, 'payload.count', 'count is only valid for EXP potions');
         else if (!Number.isInteger(payload.count) || payload.count < 1 || payload.count > 9999) addIssue(issues, 'payload.count', '1~9999 정수 필요');
       }
       break;

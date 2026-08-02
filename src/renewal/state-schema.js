@@ -1,5 +1,5 @@
 import {
-  ADVENTURE_RULES, ENHANCEMENT, EX_DISTRIBUTION_RULES, GAME_RULES, MINI_GAME_RULES, REWARD_RULES,
+  ADVENTURE_RULES, ARCHETYPES, ENHANCEMENT, EX_DISTRIBUTION_RULES, GAME_RULES, MINI_GAME_RULES, REWARD_RULES,
   SUPPORT_ITEMS, WORLD_BOSS_RULES,
 } from './config.js';
 
@@ -60,6 +60,9 @@ function validateCardProgress(issues, value, cardIds) {
     if (!isIntegerBetween(progress.enhancement, 0, 9)) issue(issues, `${path}.enhancement`, '0~9 정수 필요');
     const maximumExp = ENHANCEMENT.expRequirements[progress.enhancement] ?? 0;
     if (!isIntegerBetween(progress.exp, 0, maximumExp)) issue(issues, `${path}.exp`, `0~${maximumExp} 정수 필요`);
+    if (progress.archetype !== undefined && !Object.hasOwn(ARCHETYPES, progress.archetype)) {
+      issue(issues, `${path}.archetype`, '존재하지 않는 특성 ID');
+    }
   });
 }
 

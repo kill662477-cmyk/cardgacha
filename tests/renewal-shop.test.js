@@ -10,6 +10,7 @@ import {
   drawSupportPack,
   effectivePackRates,
   redeemCardSelector,
+  rerollCardArchetype,
   useSupportItem,
   useCardExpPotion,
   useCardExpPotionBatch,
@@ -27,6 +28,10 @@ assert.equal(SUPPORT_ITEMS.ssCardSelector.cardSelectorRarity, 'SS');
 assert.equal(SUPPORT_ITEMS.sssCardSelector.cardSelectorRarity, 'SSS');
 assert.equal(Object.hasOwn(SUPPORT_PACK.items, 'ssCardSelector'), false, 'event selector must not drop from support pack');
 assert.equal(Object.hasOwn(SUPPORT_PACK.items, 'sssCardSelector'), false, 'event selector must not drop from support pack');
+assert.equal(SUPPORT_PACK.items.traitReroll, 0.001);
+assert.equal(SUPPORT_PACK.rareItems.includes('traitReroll'), false, 'trait reroll must not be inflated by 10-draw guarantee');
+assert.equal(Object.hasOwn(SUPPORT_PACK.guaranteeRates, 'traitReroll'), false);
+assert.equal(SUPPORT_ITEMS.traitReroll.name, '랜덤특성변경권');
 
 const general = drawCardPack('general', cards, { random: () => 0 });
 assert.equal(general.length, PACKS.general.count);
@@ -159,4 +164,18 @@ assert.equal(batchOverTenThousandOwned.used, true);
 assert.equal(batchOverTenThousandOwned.potionsUsed, 15);
 assert.equal(batchOverTenThousandOwned.state.supportItems.cardExpPotionLarge, 9_986);
 
-console.log('renewal shop tests passed: card packs, support guarantee, selectors, consumables, resets, batch EXP potion fill');
+const rerollCard = cards.find((card) => card.rarity !== 'EX' && !card.group);
+const rerollState = {
+  supportItems: { traitReroll: 1 },
+  cardCopies: { [rerollCard.id]: 1 },
+  cardProgress: { [rerollCard.id]: { enhancement: 7, exp: 123 } },
+};
+const rerolled = rerollCardArchetype(rerollState, rerollCard.id, cards, () => 0);
+assert.equal(rerolled.used, true);
+assert.notEqual(rerolled.archetype, rerollCard.archetype, 'current trait must be excluded from random candidates');
+assert.equal(rerolled.state.supportItems.traitReroll, 0);
+assert.equal(rerolled.state.cardProgress[rerollCard.id].enhancement, 7);
+assert.equal(rerolled.state.cardProgress[rerollCard.id].exp, 123);
+assert.equal(rerolled.state.cardProgress[rerollCard.id].archetype, rerolled.archetype);
+
+console.log('renewal shop tests passed: card packs, support guarantee, selectors, random traits, consumables, resets, batch EXP potion fill');

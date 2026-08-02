@@ -51,7 +51,7 @@ export function createRankingController({ cards = [], getState, getFormation, ge
       const card = cardsById.get(id);
       if (!card) return null;
       const enhancement = typeof item === 'string' ? 0 : Number(item?.enhancement) || 0;
-      return { ...card, enhancement };
+      return { ...card, enhancement, archetype: item?.archetype ?? card.archetype };
     }).filter(Boolean);
     elements.rankerDeckEyebrow.textContent = `${entry.rank}위 · ${entry.nickname}`;
     // 길드는 별도 줄로 크게 보여 준다. 태그는 길어서 여기선 빼고 엠블럼 + 길드명만 쓴다.

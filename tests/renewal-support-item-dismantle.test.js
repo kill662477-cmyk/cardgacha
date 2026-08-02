@@ -15,9 +15,11 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 // --- 환급 단가가 설계식과 일치하는지 ---
 // 기본식: round(basis / 출현확률). 교환권만 팩 정가 * packPriceShare 로 상한.
 const TICKET_PACKS = { generalTicket: 'general', eliteTicket: 'elite', raceTicket: 'race', premiumTicket: 'premium' };
+const NON_DISMANTLE_ITEMS = new Set(['traitReroll']);
 const { basis, packPriceShare, values } = SUPPORT_ITEM_DISMANTLE;
 
 for (const [itemId, rate] of Object.entries(SUPPORT_PACK.items)) {
+  if (NON_DISMANTLE_ITEMS.has(itemId)) continue;
   const derived = Math.round(basis / rate);
   const packKey = TICKET_PACKS[itemId];
   const expected = packKey ? Math.min(derived, Math.round(PACKS[packKey].price * packPriceShare)) : derived;
@@ -35,7 +37,7 @@ for (const [itemId, packKey] of Object.entries(TICKET_PACKS)) {
 // 기대 환급률: 보급팩 1회를 까서 나온 아이템을 그대로 분해했을 때 회수되는 비율.
 // 100% 를 넘으면 무한 포인트 루프가 된다. 여유를 크게 두고 상한을 잠근다.
 const expectedRefund = Object.entries(SUPPORT_PACK.items)
-  .reduce((sum, [itemId, rate]) => sum + (rate / 100) * values[itemId], 0);
+  .reduce((sum, [itemId, rate]) => sum + (rate / 100) * (values[itemId] ?? 0), 0);
 assert.ok(
   expectedRefund < SUPPORT_PACK.price * 0.5,
   `기대 환급 ${expectedRefund.toFixed(1)}P 가 보급팩 가격 ${SUPPORT_PACK.price}P 의 50% 이상이다`,
@@ -43,7 +45,7 @@ assert.ok(
 assert.ok(expectedRefund > 0, '기대 환급이 0 이면 분해 기능이 무의미하다');
 
 // 확률이 낮을수록 환급이 커야 한다(교환권 상한 대상 제외).
-const curved = Object.entries(SUPPORT_PACK.items).filter(([itemId]) => !TICKET_PACKS[itemId]);
+const curved = Object.entries(SUPPORT_PACK.items).filter(([itemId]) => !TICKET_PACKS[itemId] && !NON_DISMANTLE_ITEMS.has(itemId));
 for (const [aId, aRate] of curved) {
   for (const [bId, bRate] of curved) {
     if (aRate >= bRate) continue;
@@ -55,6 +57,7 @@ for (const [aId, aRate] of curved) {
 // 선택권은 보급팩 확률이 없어 기준가를 만들 수 없다. 분해 불가여야 한다.
 assert.equal(canDismantleSupportItem('ssCardSelector'), false, 'SS 선택권은 분해 대상이 아니어야 한다');
 assert.equal(canDismantleSupportItem('sssCardSelector'), false, 'SSS 선택권은 분해 대상이 아니어야 한다');
+assert.equal(canDismantleSupportItem('traitReroll'), false, '초희귀 특성변경권은 오분해 방지를 위해 분해 대상이 아니어야 한다');
 assert.equal(supportItemDismantleValue('ssCardSelector'), 0);
 assert.equal(canDismantleSupportItem('energySmall'), true);
 // values 의 모든 키는 실재하는 보급품이어야 한다(오타 방지).

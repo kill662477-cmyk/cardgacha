@@ -105,9 +105,10 @@ export const SUPPORT_PACK = {
   items: {
     energySmall: 14, energyMedium: 8, energyLarge: 2,
     enhance5: 16, enhance10: 6, destructionGuard: 5,
-    cardExpPotion: 10, exp30m: 16, exp2h: 9,
+    cardExpPotion: 9.999, exp30m: 16, exp2h: 9,
     generalTicket: 7, eliteTicket: 3.5, raceTicket: 2, premiumTicket: 0.5,
     adventureRunReset: 0.25, quickBattleReset: 0.75,
+    traitReroll: 0.001,
   },
   rareItems: [
     'energyLarge', 'enhance10', 'destructionGuard', 'exp2h',
@@ -131,7 +132,8 @@ export const SUPPORT_PACK = {
 // 그래서 교환권은 팩 정가의 packPriceShare 로 상한을 둔다.
 //
 // 선택권(ssCardSelector/sssCardSelector)은 보급팩에서 나오지 않아 확률 기준이 없다.
-// 기준가를 지어내지 않고 분해 대상에서 제외한다(values 에 없으면 분해 불가).
+// 랜덤특성변경권은 0.001% 초희귀 아이템이라 오분해 복구 문제를 막기 위해 제외한다.
+// values 에 없으면 분해 불가.
 export const SUPPORT_ITEM_DISMANTLE = {
   basis: 300,
   packPriceShare: 0.3,
@@ -186,6 +188,10 @@ export const SUPPORT_ITEMS = {
   // 사용할 수 있다(선택권은 현재 2,030개가 미사용 상태로 남아 있다).
   ssCardSelector: { name: 'SS 카드 선택권', category: '선택권', effect: '원하는 SS 카드 1장 선택', cardSelectorRarity: 'SS', hideWhenEmpty: true },
   sssCardSelector: { name: 'SSS 카드 선택권', category: '선택권', effect: '원하는 SSS 카드 1장 선택', cardSelectorRarity: 'SSS', hideWhenEmpty: true },
+  traitReroll: {
+    name: '랜덤특성변경권', category: '특성', effect: '선택 카드의 현재 특성을 제외한 다른 특성으로 무작위 변경',
+    traitReroll: true, ultraRare: true, hideWhenEmpty: true,
+  },
   adventureRunReset: { name: '모험 시작 초기화권', category: '초기화', effect: '모험 시작 횟수 3회 복구', reset: 'adventureRuns' },
   quickBattleReset: { name: '빠른 전투 초기화권', category: '초기화', effect: '오늘 빠른 전투 횟수 3회 복구', reset: 'quickBattle' },
 };

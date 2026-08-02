@@ -35,6 +35,7 @@ export function createDefaultState(now = Date.now()) {
       cardExpPotion: 1, cardExpPotionLarge: 0, exp30m: 1, exp2h: 0,
       generalTicket: 1, eliteTicket: 0, raceTicket: 0, premiumTicket: 0,
       ssCardSelector: 0, sssCardSelector: 0,
+      traitReroll: 0,
       adventureRunReset: 0, quickBattleReset: 0,
     },
     activeBuffs: { cardExpStartAt: 0, cardExpEndAt: 0 },

@@ -124,6 +124,11 @@ const invalidProgressResult = validateGameState(invalidProgress, { cardIds });
 assert.equal(invalidProgressResult.valid, false);
 assert.ok(invalidProgressResult.issues.some(({ path }) => path === 'cardProgress.bad'));
 
+const exProgressWithoutArchetype = clone(state);
+const firstCardId = [...cardIds][0];
+exProgressWithoutArchetype.cardProgress[firstCardId] = { enhancement: 0, exp: 0, archetype: null };
+assert.equal(validateGameState(exProgressWithoutArchetype, { cardIds }).valid, true, 'EX card null archetype must remain compatible');
+
 const unknownField = { ...state, cheatPoints: 999999 };
 assert.ok(validateGameState(unknownField).issues.some(({ path }) => path === 'cheatPoints'));
 

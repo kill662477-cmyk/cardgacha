@@ -60,7 +60,7 @@ function validateCardProgress(issues, value, cardIds) {
     if (!isIntegerBetween(progress.enhancement, 0, 9)) issue(issues, `${path}.enhancement`, '0~9 정수 필요');
     const maximumExp = ENHANCEMENT.expRequirements[progress.enhancement] ?? 0;
     if (!isIntegerBetween(progress.exp, 0, maximumExp)) issue(issues, `${path}.exp`, `0~${maximumExp} 정수 필요`);
-    if (progress.archetype !== undefined && !Object.hasOwn(ARCHETYPES, progress.archetype)) {
+    if (progress.archetype != null && !Object.hasOwn(ARCHETYPES, progress.archetype)) {
       issue(issues, `${path}.archetype`, '존재하지 않는 특성 ID');
     }
   });

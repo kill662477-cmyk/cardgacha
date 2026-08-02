@@ -16,14 +16,15 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 // 기본식: round(basis / 출현확률). 교환권만 팩 정가 * packPriceShare 로 상한.
 const TICKET_PACKS = { generalTicket: 'general', eliteTicket: 'elite', raceTicket: 'race', premiumTicket: 'premium' };
 const NON_DISMANTLE_ITEMS = new Set(['traitReroll']);
-const { basis, packPriceShare, rareValueMultiplier, values } = SUPPORT_ITEM_DISMANTLE;
+const { basis, packPriceShare, rareValueMultiplier, baseValueCaps, values } = SUPPORT_ITEM_DISMANTLE;
 const RARE_DISMANTLE_ITEMS = new Set(SUPPORT_PACK.rareItems.filter((itemId) => !NON_DISMANTLE_ITEMS.has(itemId)));
 
 for (const [itemId, rate] of Object.entries(SUPPORT_PACK.items)) {
   if (NON_DISMANTLE_ITEMS.has(itemId)) continue;
   const derived = Math.round(basis / rate);
   const packKey = TICKET_PACKS[itemId];
-  const baseValue = packKey ? Math.min(derived, Math.round(PACKS[packKey].price * packPriceShare)) : derived;
+  const uncappedBaseValue = packKey ? Math.min(derived, Math.round(PACKS[packKey].price * packPriceShare)) : derived;
+  const baseValue = Math.min(uncappedBaseValue, baseValueCaps[itemId] ?? Number.POSITIVE_INFINITY);
   const expected = RARE_DISMANTLE_ITEMS.has(itemId) ? Math.round(baseValue * rareValueMultiplier) : baseValue;
   assert.equal(values[itemId], expected, `${itemId} 환급 단가가 설계식과 다르다`);
 }

@@ -58,13 +58,15 @@ assert.equal(rateTotal(SUPPORT_PACK.items), 100);
 assert.equal(rateTotal(SUPPORT_PACK.guaranteeRates), 100);
 assert.equal(rateTotal(ADVANCED_SUPPORT_PACK.items), 100);
 assert.equal(rateTotal(ADVANCED_SUPPORT_PACK.guaranteeRates), 100);
-assert.equal(SUPPORT_PACK.items.energySmall + SUPPORT_PACK.items.energyMedium + SUPPORT_PACK.items.energyLarge, 24);
+assert.equal(SUPPORT_PACK.items.energySmall + SUPPORT_PACK.items.energyMedium + SUPPORT_PACK.items.energyLarge, 24.21875);
 assert.equal(SUPPORT_PACK.items.destructionGuard, 5);
+assert.equal(SUPPORT_PACK.items.adventureRunReset, 0.03125);
 assert.deepEqual(SUPPORT_PACK.rareItems, ['destructionGuard', 'premiumTicket', 'adventureRunReset', 'quickBattleReset', 'traitReroll']);
-assert.deepEqual(ADVANCED_SUPPORT_PACK.rareItems, ['destructionGuard', 'traitReroll']);
+assert.deepEqual(ADVANCED_SUPPORT_PACK.rareItems, ['destructionGuard', 'adventureRunReset', 'traitReroll']);
 assert.equal(ADVANCED_SUPPORT_PACK.price, 1500);
 assert.equal(ADVANCED_SUPPORT_PACK.tenPrice, 15000);
 assert.equal(ADVANCED_SUPPORT_PACK.items.destructionGuard, 15);
+assert.equal(ADVANCED_SUPPORT_PACK.items.adventureRunReset, 0.5);
 assert.equal(ADVANCED_SUPPORT_PACK.items.traitReroll, 0.01);
 for (const pack of [SUPPORT_PACK, ADVANCED_SUPPORT_PACK]) {
   assert.equal(pack.tenGuarantee, false);

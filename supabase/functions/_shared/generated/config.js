@@ -104,11 +104,11 @@ export const SUPPORT_PACK = {
   name: '작전 지원 보급팩', price: 150, tenPrice: 1500,
   tenGuarantee: false,
   items: {
-    energySmall: 14, energyMedium: 8, energyLarge: 2,
+    energySmall: 14.21875, energyMedium: 8, energyLarge: 2,
     enhance5: 16, enhance10: 6, destructionGuard: 5,
     cardExpPotion: 9.999, exp30m: 16, exp2h: 9,
     generalTicket: 7, eliteTicket: 3.5, raceTicket: 2, premiumTicket: 0.5,
-    adventureRunReset: 0.25, quickBattleReset: 0.75,
+    adventureRunReset: 0.03125, quickBattleReset: 0.75,
     traitReroll: 0.001,
   },
   rareItems: [
@@ -116,10 +116,10 @@ export const SUPPORT_PACK = {
   ],
   // 서버 RPC의 10번째 슬롯도 일반 확률표로 굴린다. 레어 확정 없음.
   guaranteeRates: {
-    energySmall: 14, energyMedium: 8, energyLarge: 2, enhance5: 16, enhance10: 6,
+    energySmall: 14.21875, energyMedium: 8, energyLarge: 2, enhance5: 16, enhance10: 6,
     destructionGuard: 5, cardExpPotion: 9.999, exp30m: 16, exp2h: 9,
     generalTicket: 7, eliteTicket: 3.5, raceTicket: 2, premiumTicket: 0.5,
-    adventureRunReset: 0.25, quickBattleReset: 0.75, traitReroll: 0.001,
+    adventureRunReset: 0.03125, quickBattleReset: 0.75, traitReroll: 0.001,
   },
 };
 
@@ -127,7 +127,7 @@ export const ADVANCED_SUPPORT_PACK = {
   name: '고급 작전 지원 보급팩', price: 1500, tenPrice: 15000,
   tenGuarantee: false,
   items: {
-    energyLarge: 12,
+    energyLarge: 14.5,
     enhance10: 18,
     destructionGuard: 15,
     cardExpPotion: 12,
@@ -135,15 +135,15 @@ export const ADVANCED_SUPPORT_PACK = {
     eliteTicket: 10,
     raceTicket: 8,
     premiumTicket: 6,
-    adventureRunReset: 3,
+    adventureRunReset: 0.5,
     quickBattleReset: 3.99,
     traitReroll: 0.01,
   },
-  rareItems: ['destructionGuard', 'traitReroll'],
+  rareItems: ['destructionGuard', 'adventureRunReset', 'traitReroll'],
   // 서버 RPC의 10번째 슬롯도 일반 확률표로 굴린다. 레어 확정 없음.
   guaranteeRates: {
-    energyLarge: 12, enhance10: 18, destructionGuard: 15, cardExpPotion: 12, exp2h: 12,
-    eliteTicket: 10, raceTicket: 8, premiumTicket: 6, adventureRunReset: 3,
+    energyLarge: 14.5, enhance10: 18, destructionGuard: 15, cardExpPotion: 12, exp2h: 12,
+    eliteTicket: 10, raceTicket: 8, premiumTicket: 6, adventureRunReset: 0.5,
     quickBattleReset: 3.99, traitReroll: 0.01,
   },
 };
@@ -165,6 +165,8 @@ export const SUPPORT_ITEM_DISMANTLE = {
   packPriceShare: 0.3,
   // 보급팩에서 레어로 표시되는 아이템은 일반 산식의 50%만 환급한다.
   rareValueMultiplier: 0.5,
+  // 확률 하향 뒤에도 분해 환급이 다시 오르지 않게 운영 기준가를 잠근다.
+  baseValueCaps: { adventureRunReset: 1200 },
   values: {
     energySmall: 21,
     energyMedium: 38,

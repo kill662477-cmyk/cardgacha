@@ -64,12 +64,14 @@ assert.deepEqual(SUPPORT_PACK.rareItems, ['destructionGuard', 'premiumTicket', '
 assert.deepEqual(ADVANCED_SUPPORT_PACK.rareItems, ['destructionGuard', 'traitReroll']);
 assert.equal(ADVANCED_SUPPORT_PACK.price, 1500);
 assert.equal(ADVANCED_SUPPORT_PACK.tenPrice, 15000);
+assert.equal(ADVANCED_SUPPORT_PACK.items.destructionGuard, 15);
 assert.equal(ADVANCED_SUPPORT_PACK.items.traitReroll, 0.01);
 for (const pack of [SUPPORT_PACK, ADVANCED_SUPPORT_PACK]) {
+  assert.equal(pack.tenGuarantee, false);
+  assert.deepEqual(pack.guaranteeRates, pack.items, `${pack.name} 10회 확정 제거`);
   for (const [itemId, rate] of Object.entries(pack.items)) {
     assert.equal(pack.rareItems.includes(itemId), rate < 1 || itemId === 'destructionGuard', `${pack.name} ${itemId} rare label mismatch`);
   }
-  assert.equal(Object.hasOwn(pack.guaranteeRates, 'traitReroll'), false, 'trait reroll guarantee inflation');
 }
 assert.equal(EXPORTED_MINI_GAME_RULES, MINI_GAME_RULES);
 assert.equal(EXPORTED_WORLD_BOSS_RULES, WORLD_BOSS_RULES);

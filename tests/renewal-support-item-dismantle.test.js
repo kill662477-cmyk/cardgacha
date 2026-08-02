@@ -16,13 +16,15 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 // 기본식: round(basis / 출현확률). 교환권만 팩 정가 * packPriceShare 로 상한.
 const TICKET_PACKS = { generalTicket: 'general', eliteTicket: 'elite', raceTicket: 'race', premiumTicket: 'premium' };
 const NON_DISMANTLE_ITEMS = new Set(['traitReroll']);
-const { basis, packPriceShare, values } = SUPPORT_ITEM_DISMANTLE;
+const { basis, packPriceShare, rareValueMultiplier, values } = SUPPORT_ITEM_DISMANTLE;
+const RARE_DISMANTLE_ITEMS = new Set(SUPPORT_PACK.rareItems.filter((itemId) => !NON_DISMANTLE_ITEMS.has(itemId)));
 
 for (const [itemId, rate] of Object.entries(SUPPORT_PACK.items)) {
   if (NON_DISMANTLE_ITEMS.has(itemId)) continue;
   const derived = Math.round(basis / rate);
   const packKey = TICKET_PACKS[itemId];
-  const expected = packKey ? Math.min(derived, Math.round(PACKS[packKey].price * packPriceShare)) : derived;
+  const baseValue = packKey ? Math.min(derived, Math.round(PACKS[packKey].price * packPriceShare)) : derived;
+  const expected = RARE_DISMANTLE_ITEMS.has(itemId) ? Math.round(baseValue * rareValueMultiplier) : baseValue;
   assert.equal(values[itemId], expected, `${itemId} 환급 단가가 설계식과 다르다`);
 }
 
@@ -45,7 +47,9 @@ assert.ok(
 assert.ok(expectedRefund > 0, '기대 환급이 0 이면 분해 기능이 무의미하다');
 
 // 확률이 낮을수록 환급이 커야 한다(교환권 상한 대상 제외).
-const curved = Object.entries(SUPPORT_PACK.items).filter(([itemId]) => !TICKET_PACKS[itemId] && !NON_DISMANTLE_ITEMS.has(itemId));
+const curved = Object.entries(SUPPORT_PACK.items).filter(([itemId]) => (
+  !TICKET_PACKS[itemId] && !NON_DISMANTLE_ITEMS.has(itemId) && !RARE_DISMANTLE_ITEMS.has(itemId)
+));
 for (const [aId, aRate] of curved) {
   for (const [bId, bRate] of curved) {
     if (aRate >= bRate) continue;

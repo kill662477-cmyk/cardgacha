@@ -102,6 +102,7 @@ export const PACKS = {
 
 export const SUPPORT_PACK = {
   name: '작전 지원 보급팩', price: 150, tenPrice: 1500,
+  tenGuarantee: false,
   items: {
     energySmall: 14, energyMedium: 8, energyLarge: 2,
     enhance5: 16, enhance10: 6, destructionGuard: 5,
@@ -113,13 +114,18 @@ export const SUPPORT_PACK = {
   rareItems: [
     'destructionGuard', 'premiumTicket', 'adventureRunReset', 'quickBattleReset', 'traitReroll',
   ],
+  // 서버 RPC의 10번째 슬롯도 일반 확률표로 굴린다. 레어 확정 없음.
   guaranteeRates: {
-    destructionGuard: 77, premiumTicket: 8, adventureRunReset: 4, quickBattleReset: 11,
+    energySmall: 14, energyMedium: 8, energyLarge: 2, enhance5: 16, enhance10: 6,
+    destructionGuard: 5, cardExpPotion: 9.999, exp30m: 16, exp2h: 9,
+    generalTicket: 7, eliteTicket: 3.5, raceTicket: 2, premiumTicket: 0.5,
+    adventureRunReset: 0.25, quickBattleReset: 0.75, traitReroll: 0.001,
   },
 };
 
 export const ADVANCED_SUPPORT_PACK = {
   name: '고급 작전 지원 보급팩', price: 1500, tenPrice: 15000,
+  tenGuarantee: false,
   items: {
     energyLarge: 12,
     enhance10: 18,
@@ -134,8 +140,12 @@ export const ADVANCED_SUPPORT_PACK = {
     traitReroll: 0.01,
   },
   rareItems: ['destructionGuard', 'traitReroll'],
-  // 랜덤특성변경권은 10회 보장으로 확률이 부풀지 않게 제외한다.
-  guaranteeRates: { destructionGuard: 100 },
+  // 서버 RPC의 10번째 슬롯도 일반 확률표로 굴린다. 레어 확정 없음.
+  guaranteeRates: {
+    energyLarge: 12, enhance10: 18, destructionGuard: 15, cardExpPotion: 12, exp2h: 12,
+    eliteTicket: 10, raceTicket: 8, premiumTicket: 6, adventureRunReset: 3,
+    quickBattleReset: 3.99, traitReroll: 0.01,
+  },
 };
 
 // 보급품 분해. 환급 포인트는 "보급팩 1회 가격 ÷ 해당 아이템 출현 확률"에서 나온다.
@@ -153,13 +163,15 @@ export const ADVANCED_SUPPORT_PACK = {
 export const SUPPORT_ITEM_DISMANTLE = {
   basis: 300,
   packPriceShare: 0.3,
+  // 보급팩에서 레어로 표시되는 아이템은 일반 산식의 50%만 환급한다.
+  rareValueMultiplier: 0.5,
   values: {
     energySmall: 21,
     energyMedium: 38,
     energyLarge: 150,
     enhance5: 19,
     enhance10: 50,
-    destructionGuard: 60,
+    destructionGuard: 30,
     cardExpPotion: 30,
     // 보급팩에 없는 아이템. 효과가 cardExpPotion(+300 EXP, 30P)의 1/15 이라 그 비율로 맞췄다.
     cardExpPotionLarge: 5,
@@ -169,9 +181,9 @@ export const SUPPORT_ITEM_DISMANTLE = {
     generalTicket: 15,
     eliteTicket: 45,
     raceTicket: 30,
-    premiumTicket: 150,
-    adventureRunReset: 1200,
-    quickBattleReset: 400,
+    premiumTicket: 75,
+    adventureRunReset: 600,
+    quickBattleReset: 200,
   },
 };
 

@@ -1971,7 +1971,7 @@ function supportPackProductMarkup(productId) {
   return `<article class="shop-product support${selected ? ' selected' : ''}" data-shop-product="${productId}" style="--accent:${product.accent}">
     <div class="shop-product-visual"><img src="assets/renewal/shop/support-case.webp" alt="${pack.name}"></div>
     <div class="shop-product-copy"><span>${product.eyebrow}</span><h3>${pack.name}</h3><p>${productId === 'advancedSupport' ? '고급 보급품 중심 · 저급 품목 제외' : '행동력·강화·경험치·초기화권·카드팩 교환권'}</p></div>
-    <div class="shop-buy-row"><button type="button" data-buy-support="1" data-support-product="${productId}" ${state.points < pack.price ? 'disabled' : ''}><b>1회 보급</b><small>${number.format(pack.price)}P</small></button><button type="button" data-buy-support="10" data-support-product="${productId}" ${state.points < pack.tenPrice ? 'disabled' : ''}><b>10회 보급</b><small>${number.format(pack.tenPrice)}P · 레어 1개 보장</small></button></div>
+    <div class="shop-buy-row"><button type="button" data-buy-support="1" data-support-product="${productId}" ${state.points < pack.price ? 'disabled' : ''}><b>1회 보급</b><small>${number.format(pack.price)}P</small></button><button type="button" data-buy-support="10" data-support-product="${productId}" ${state.points < pack.tenPrice ? 'disabled' : ''}><b>10회 보급</b><small>${number.format(pack.tenPrice)}P · 개별 확률 적용</small></button></div>
   </article>`;
 }
 
@@ -2035,13 +2035,13 @@ function renderShopDetail() {
   } else if (shopTab === 'support') {
     const pack = SHOP_SUPPORT_PRODUCTS[selectedShopProduct]?.pack ?? SUPPORT_PACK;
     elements.shopDetailTitle.textContent = pack.name;
-    elements.shopDetailSummary.innerHTML = `<strong>${number.format(pack.price)} P</strong><span>1회 1개 · 10회 레어 보급품 최소 1개</span>`;
+    elements.shopDetailSummary.innerHTML = `<strong>${number.format(pack.price)} P</strong><span>1회 1개 · 10회도 매회 개별 확률 적용</span>`;
     elements.shopProbabilityList.innerHTML = Object.entries(pack.items).map(([itemId, rate]) => {
       const item = SUPPORT_ITEMS[itemId];
       const rare = pack.rareItems.includes(itemId);
       return `<div class="shop-rate-row${rare ? ' rare' : ''}"><b>${rare ? '★ ' : ''}${item.name}</b><span>${rate}%</span><small>${item.effect}</small></div>`;
     }).join('');
-    elements.shopDetailNote.textContent = '레어 표시는 출현율 1% 미만 또는 파괴 차단제. 10회 결과의 앞 9개에 레어가 없을 때만 10번째 보장 전용 확률표 적용. 랜덤특성변경권은 보장 확률표에서 제외.';
+    elements.shopDetailNote.textContent = '레어 표시는 출현율 1% 미만 또는 파괴 차단제. 10회 구매도 레어 확정 없이 각 보급품의 개별 확률을 적용.';
   } else {
     elements.shopDetailTitle.textContent = '아이템 사용 규칙';
     elements.shopDetailSummary.innerHTML = `<strong>${Object.values(state.supportItems).reduce((sum, count) => sum + count, 0)}개</strong><span>현재 보유 보급품</span>`;

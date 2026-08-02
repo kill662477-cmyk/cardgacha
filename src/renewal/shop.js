@@ -49,14 +49,7 @@ export function drawCardPack(packKey, cards, options = {}) {
 
 export function drawSupportPack(count = 1, random = Math.random, pack = SUPPORT_PACK) {
   if (count !== 1 && count !== 10) throw new Error('Support pack count must be 1 or 10.');
-  const results = [];
-  const normalSlots = count === 10 ? 9 : count;
-  for (let index = 0; index < normalSlots; index += 1) results.push(weightedPick(pack.items, random()));
-  if (count === 10) {
-    const hasRare = results.some((itemId) => pack.rareItems.includes(itemId));
-    results.push(weightedPick(hasRare ? pack.items : pack.guaranteeRates, random()));
-  }
-  return results;
+  return Array.from({ length: count }, () => weightedPick(pack.items, random()));
 }
 
 export function addCardResults(copies, collectionRecords, cardIds) {

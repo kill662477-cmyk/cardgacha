@@ -442,7 +442,6 @@ export function createGuildController({ cards = [], getState, gameService, serve
           <strong>${escapeHtml(g.name ?? '-')}${g.tag ? ` <em>[${escapeHtml(g.tag)}]</em>` : ''}</strong>
           <small>Lv.${g.level} · ${number.format(g.memberCount ?? 0)}/${memberLimit}명 · ${escapeHtml(g.ownerNickname ?? '')}</small>
         </div>
-        <strong class="guild-list-gp">${number.format(guildTotalGp(g))} GP</strong>
         ${mine
           ? '<span class="guild-list-mine">내 길드</span>'
           : isMember

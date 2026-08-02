@@ -2301,9 +2301,6 @@ button[aria-busy="true"]::after {
 .guild-list-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .guild-list-main em { font-style: normal; color: var(--muted); font-size: .8rem; }
 .guild-list-main small { color: var(--muted); font-size: .74rem; }
-.guild-list-gp {
-  margin-left: auto; color: var(--gold); font-size: .78rem; font-variant-numeric: tabular-nums; white-space: nowrap;
-}
 .guild-list-item button { margin-left: auto; }
 .guild-list-pending-actions {
   display: flex; align-items: center; gap: 7px; margin-left: auto;
@@ -2325,7 +2322,6 @@ button[aria-busy="true"]::after {
 @media (max-width: 560px) {
   .guild-list-rank { width: 28px; }
   .guild-list-main { flex: 1 1 calc(100% - 86px); }
-  .guild-list-gp { margin-left: 76px; }
   .guild-list-item > button, .guild-list-pending-actions, .guild-list-mine { margin-left: auto; }
 }
 

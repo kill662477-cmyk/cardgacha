@@ -574,7 +574,7 @@ assert.deepEqual(
   '클라이언트도 GP 내림차순, 동점 길드명 순으로 정렬해야 한다',
 );
 assert.match(guildControllerSource, /class="guild-list-rank" aria-label="\$\{rank\}등"/, '길드 앞에 등수를 표시해야 한다');
-assert.match(guildControllerSource, /class="guild-list-gp">\$\{number\.format\(guildTotalGp\(g\)\)\} GP/, '목록에서 누적 GP를 보여줘야 한다');
+assert.doesNotMatch(guildControllerSource, /class="guild-list-gp"/, '길드 목록에 누적 GP 숫자를 노출하면 안 된다');
 assert.match(guildControllerSource, /guild-list-pending-button/, '가입 신청 버튼을 승인 대기 버튼으로 바꿔야 한다');
 assert.match(guildControllerSource, /승인 대기 중/, '가입 신청 상태 문구 누락');
 assert.match(guildControllerSource, /가입 신청 완료 · 승인 대기 중입니다/, '가입 신청 완료 피드백 누락');
@@ -593,7 +593,7 @@ assert.match(guildStyles, /\.guild-request-profile\s*\{/, '신청자 상세 버�
 assert.match(guildStyles, /\.guild-list-pending-actions\s*\{/, '승인 대기 버튼 묶음 스타일 누락');
 assert.match(guildStyles, /\.guild-list-item \.guild-list-pending-button:disabled\s*\{/, '승인 대기 버튼 스타일 누락');
 assert.match(guildStyles, /\.guild-list-rank\s*\{/, '길드 등수 스타일 누락');
-assert.match(guildStyles, /\.guild-list-gp\s*\{/, '길드 GP 스타일 누락');
+assert.doesNotMatch(guildStyles, /\.guild-list-gp\s*\{/, '숨긴 길드 GP용 스타일이 남으면 안 된다');
 
 console.log('guild browse-while-member tests passed: buttons wired, member-aware list');
 

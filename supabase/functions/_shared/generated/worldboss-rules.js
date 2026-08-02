@@ -13,29 +13,31 @@ export const WORLD_BOSS_RULES = {
     // 2026-08-02 긴급 조정: 17시 140억 유지, 남은 회차 160/170/190억.
     // 2026-08-03: 위 긴급 상향분까지 네 회차 전부 격파돼 180/210/240/270억으로 올린다.
     //   슬롯 간격도 10~20억에서 30억으로 벌린다.
+    // 2026-08-03 재조정: 08-02 에 포인트를 과하게 지급해 전체 화력이 더 오를 것으로 보고
+    //   회차 시작 전에 220/250/280/340억으로 한 번 더 올린다. 20시만 간격 60억.
     // difficultyMultiplier는 표시용이며 17시 대비 HP 비율과 맞춘다.
     17: {
       title: '신호 요새', name: 'SIGNAL//BASTION', difficultyMultiplier: 1,
-      maxHp: 18_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.05,
+      maxHp: 22_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.05,
       image: 'assets/renewal/worldboss/boss-17-signal-bastion.webp',
     },
     18: {
-      title: '중계 포식자', name: 'RELAY//DEVOURER', difficultyMultiplier: 1.167,
-      maxHp: 21_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.10,
+      title: '중계 포식자', name: 'RELAY//DEVOURER', difficultyMultiplier: 1.136,
+      maxHp: 25_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.10,
       image: 'assets/renewal/worldboss/boss-18-relay-devourer.webp',
     },
     19: {
-      title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 1.333,
-      maxHp: 24_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.15,
+      title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 1.273,
+      maxHp: 28_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.15,
       image: 'assets/renewal/worldboss/boss-19-void-harvester.webp',
     },
     20: {
-      title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 1.5,
-      maxHp: 27_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.20,
+      title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 1.545,
+      maxHp: 34_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.20,
       image: 'assets/renewal/worldboss/boss-20-malice-singularity.webp',
     },
   },
-  maxHp: 18_000_000_000,
+  maxHp: 22_000_000_000,
   battleDuration: 60,
   maxAttempts: 3,
   eventDurationSeconds: 60 * 60,

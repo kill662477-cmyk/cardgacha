@@ -17,6 +17,10 @@ import {
 } from '../src/renewal/shop.js';
 
 const cards = JSON.parse(fs.readFileSync(new URL('../data/renewal-demo-cards.json', import.meta.url), 'utf8'));
+const advancedTraitRateMigration = fs.readFileSync(
+  new URL('../supabase/migrations/20260802203500_raise_advanced_trait_reroll_rate.sql', import.meta.url),
+  'utf8',
+);
 Object.values(PACKS).forEach((pack) => assert.ok(Math.abs(Object.values(pack.rates).reduce((sum, rate) => sum + rate, 0) - 100) < 1e-9));
 assert.equal(Object.values(SUPPORT_PACK.items).reduce((sum, rate) => sum + rate, 0), 100);
 assert.equal(Object.values(SUPPORT_PACK.guaranteeRates).reduce((sum, rate) => sum + rate, 0), 100);
@@ -24,6 +28,8 @@ assert.equal(SUPPORT_PACK.items.energySmall + SUPPORT_PACK.items.energyMedium + 
 assert.equal(SUPPORT_PACK.items.destructionGuard, 5);
 assert.equal(SUPPORT_PACK.items.adventureRunReset, 0.03125);
 assert.equal(ADVANCED_SUPPORT_PACK.items.adventureRunReset, 0.5);
+assert.equal(ADVANCED_SUPPORT_PACK.items.quickBattleReset, 3.97);
+assert.equal(ADVANCED_SUPPORT_PACK.items.traitReroll, 0.03);
 assert.equal(Object.values(ADVANCED_SUPPORT_PACK.items).reduce((sum, rate) => sum + rate, 0), 100);
 assert.equal(Object.values(ADVANCED_SUPPORT_PACK.guaranteeRates).reduce((sum, rate) => sum + rate, 0), 100);
 assert.equal(SUPPORT_ITEMS.ssCardSelector.cardSelectorRarity, 'SS');
@@ -35,6 +41,11 @@ assert.equal(SUPPORT_PACK.rareItems.includes('traitReroll'), true, 'sub-1% item 
 assert.equal(SUPPORT_PACK.tenGuarantee, false);
 assert.equal(ADVANCED_SUPPORT_PACK.tenGuarantee, false);
 assert.equal(SUPPORT_ITEMS.traitReroll.name, '랜덤특성변경권');
+assert.equal(drawSupportPack(1, () => 0.9998, ADVANCED_SUPPORT_PACK)[0], 'traitReroll');
+assert.equal(drawSupportPack(1, () => 0.9996, ADVANCED_SUPPORT_PACK)[0], 'quickBattleReset');
+assert.match(advancedTraitRateMigration, /'traitReroll', 0\.03/);
+assert.match(advancedTraitRateMigration, /'quickBattleReset', 3\.97/);
+assert.match(advancedTraitRateMigration, /advanced support weights must total 100/);
 
 const general = drawCardPack('general', cards, { random: () => 0 });
 assert.equal(general.length, PACKS.general.count);

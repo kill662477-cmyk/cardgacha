@@ -140,15 +140,15 @@ export const ADVANCED_SUPPORT_PACK = {
     raceTicket: 8,
     premiumTicket: 6,
     adventureRunReset: 0.5,
-    quickBattleReset: 3.99,
-    traitReroll: 0.01,
+    quickBattleReset: 3.97,
+    traitReroll: 0.03,
   },
   rareItems: ['destructionGuard', 'adventureRunReset', 'traitReroll'],
   // 서버 RPC의 10번째 슬롯도 일반 확률표로 굴린다. 레어 확정 없음.
   guaranteeRates: {
     energyLarge: 14.5, enhance10: 18, destructionGuard: 15, cardExpPotion: 12, exp2h: 12,
     eliteTicket: 10, raceTicket: 8, premiumTicket: 6, adventureRunReset: 0.5,
-    quickBattleReset: 3.99, traitReroll: 0.01,
+    quickBattleReset: 3.97, traitReroll: 0.03,
   },
 };
 

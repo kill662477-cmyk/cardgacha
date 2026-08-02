@@ -68,7 +68,8 @@ assert.equal(ADVANCED_SUPPORT_PACK.price, 1500);
 assert.equal(ADVANCED_SUPPORT_PACK.tenPrice, 15000);
 assert.equal(ADVANCED_SUPPORT_PACK.items.destructionGuard, 15);
 assert.equal(ADVANCED_SUPPORT_PACK.items.adventureRunReset, 0.5);
-assert.equal(ADVANCED_SUPPORT_PACK.items.traitReroll, 0.01);
+assert.equal(ADVANCED_SUPPORT_PACK.items.quickBattleReset, 3.97);
+assert.equal(ADVANCED_SUPPORT_PACK.items.traitReroll, 0.03);
 for (const pack of [SUPPORT_PACK, ADVANCED_SUPPORT_PACK]) {
   assert.equal(pack.tenGuarantee, false);
   assert.deepEqual(pack.guaranteeRates, pack.items, `${pack.name} 10회 확정 제거`);

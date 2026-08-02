@@ -12,6 +12,7 @@ import {
   REGIONS,
   SOOP_RULES,
   SUPPORT_PACK,
+  ADVANCED_SUPPORT_PACK,
   WORLD_BOSS_RULES,
   RARITIES,
 } from '../src/renewal/config.js';
@@ -55,10 +56,21 @@ assert.deepEqual(Object.fromEntries(Object.entries(PACKS).map(([key, pack]) => [
 });
 assert.equal(rateTotal(SUPPORT_PACK.items), 100);
 assert.equal(rateTotal(SUPPORT_PACK.guaranteeRates), 100);
+assert.equal(rateTotal(ADVANCED_SUPPORT_PACK.items), 100);
+assert.equal(rateTotal(ADVANCED_SUPPORT_PACK.guaranteeRates), 100);
 assert.equal(SUPPORT_PACK.items.energySmall + SUPPORT_PACK.items.energyMedium + SUPPORT_PACK.items.energyLarge, 24);
 assert.equal(SUPPORT_PACK.items.destructionGuard, 5);
-assert.equal(SUPPORT_PACK.guaranteeRates.energyLarge, 7);
-assert.equal(SUPPORT_PACK.guaranteeRates.destructionGuard, 6);
+assert.deepEqual(SUPPORT_PACK.rareItems, ['destructionGuard', 'premiumTicket', 'adventureRunReset', 'quickBattleReset', 'traitReroll']);
+assert.deepEqual(ADVANCED_SUPPORT_PACK.rareItems, ['destructionGuard', 'traitReroll']);
+assert.equal(ADVANCED_SUPPORT_PACK.price, 1500);
+assert.equal(ADVANCED_SUPPORT_PACK.tenPrice, 15000);
+assert.equal(ADVANCED_SUPPORT_PACK.items.traitReroll, 0.01);
+for (const pack of [SUPPORT_PACK, ADVANCED_SUPPORT_PACK]) {
+  for (const [itemId, rate] of Object.entries(pack.items)) {
+    assert.equal(pack.rareItems.includes(itemId), rate < 1 || itemId === 'destructionGuard', `${pack.name} ${itemId} rare label mismatch`);
+  }
+  assert.equal(Object.hasOwn(pack.guaranteeRates, 'traitReroll'), false, 'trait reroll guarantee inflation');
+}
 assert.equal(EXPORTED_MINI_GAME_RULES, MINI_GAME_RULES);
 assert.equal(EXPORTED_WORLD_BOSS_RULES, WORLD_BOSS_RULES);
 assert.equal(MATERIAL_RULES.SSS[1].count, 1);

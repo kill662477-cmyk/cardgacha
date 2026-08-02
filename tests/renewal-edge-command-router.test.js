@@ -126,6 +126,13 @@ const supportPack = await router.execute('user-fixed-by-auth', command(
 ));
 assert.equal(supportPack.rpc, 'gacha_s2_purchase_support_pack');
 
+const advancedSupportPack = await router.execute('user-fixed-by-auth', command(
+  GAME_COMMAND_TYPES.PURCHASE_ADVANCED_SUPPORT_PACK,
+  { quantity: 10 },
+  'advanced-pack-0001',
+));
+assert.equal(advancedSupportPack.rpc, 'gacha_s2_purchase_advanced_support_pack');
+
 const cardSelector = await router.execute('user-fixed-by-auth', command(
   GAME_COMMAND_TYPES.REDEEM_CARD_SELECTOR,
   { itemId: 'sssCardSelector', cardId: 'jidudu-1' },

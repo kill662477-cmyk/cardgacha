@@ -111,15 +111,31 @@ export const SUPPORT_PACK = {
     traitReroll: 0.001,
   },
   rareItems: [
-    'energyLarge', 'enhance10', 'destructionGuard', 'exp2h',
-    'generalTicket', 'eliteTicket', 'raceTicket', 'premiumTicket',
-    'adventureRunReset', 'quickBattleReset',
+    'destructionGuard', 'premiumTicket', 'adventureRunReset', 'quickBattleReset', 'traitReroll',
   ],
   guaranteeRates: {
-    energyLarge: 7, enhance10: 24, destructionGuard: 6, exp2h: 28,
-    generalTicket: 15, eliteTicket: 8, raceTicket: 5, premiumTicket: 2,
-    adventureRunReset: 1, quickBattleReset: 4,
+    destructionGuard: 77, premiumTicket: 8, adventureRunReset: 4, quickBattleReset: 11,
   },
+};
+
+export const ADVANCED_SUPPORT_PACK = {
+  name: '고급 작전 지원 보급팩', price: 1500, tenPrice: 15000,
+  items: {
+    energyLarge: 12,
+    enhance10: 18,
+    destructionGuard: 15,
+    cardExpPotion: 12,
+    exp2h: 12,
+    eliteTicket: 10,
+    raceTicket: 8,
+    premiumTicket: 6,
+    adventureRunReset: 3,
+    quickBattleReset: 3.99,
+    traitReroll: 0.01,
+  },
+  rareItems: ['destructionGuard', 'traitReroll'],
+  // 랜덤특성변경권은 10회 보장으로 확률이 부풀지 않게 제외한다.
+  guaranteeRates: { destructionGuard: 100 },
 };
 
 // 보급품 분해. 환급 포인트는 "보급팩 1회 가격 ÷ 해당 아이템 출현 확률"에서 나온다.
@@ -594,7 +610,7 @@ export const GROWTH_SIMULATION_PROFILES = {
 export const BALANCE_GOVERNANCE = {
   locked: [
     'RARITIES', 'GAME_RULES', 'ADVENTURE_RULES', 'ENHANCEMENT', 'MATERIAL_RULES',
-    'PACKS', 'SUPPORT_PACK', 'SUPPORT_ITEMS', 'BONUS_DROP_RULES',
+    'PACKS', 'SUPPORT_PACK', 'ADVANCED_SUPPORT_PACK', 'SUPPORT_ITEMS', 'BONUS_DROP_RULES',
     'REWARD_RULES', 'COLLECTION_RULES', 'MINI_GAME_RULES',
     'SOOP_RULES.pointsPerBalloon', 'EX_DISTRIBUTION_RULES',
   ],

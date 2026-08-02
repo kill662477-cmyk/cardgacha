@@ -16,6 +16,7 @@ const DIRECT_RPCS = Object.freeze({
   [GAME_COMMAND_TYPES.DELETE_FORMATION_PRESET]: 'gacha_s2_delete_formation_preset',
   [GAME_COMMAND_TYPES.PURCHASE_PACK]: 'gacha_s2_purchase_pack',
   [GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK]: 'gacha_s2_purchase_support_pack',
+  [GAME_COMMAND_TYPES.PURCHASE_ADVANCED_SUPPORT_PACK]: 'gacha_s2_purchase_advanced_support_pack',
   [GAME_COMMAND_TYPES.USE_SUPPORT_ITEM]: 'gacha_s2_use_support_item',
   [GAME_COMMAND_TYPES.REDEEM_CARD_SELECTOR]: 'gacha_s2_redeem_card_selector',
   [GAME_COMMAND_TYPES.ENHANCE_CARD]: 'gacha_s2_enhance_card',
@@ -84,6 +85,7 @@ function directArgs(userId, command) {
         p_race: payload.race ?? null,
       };
     case GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK:
+    case GAME_COMMAND_TYPES.PURCHASE_ADVANCED_SUPPORT_PACK:
       return { ...args, p_quantity: payload.quantity };
     case GAME_COMMAND_TYPES.USE_SUPPORT_ITEM:
       return {

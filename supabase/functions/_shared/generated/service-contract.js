@@ -16,6 +16,7 @@ export const GAME_COMMAND_TYPES = Object.freeze({
   CLAIM_QUICK_BATTLE: 'claimQuickBattle',
   PURCHASE_PACK: 'purchasePack',
   PURCHASE_SUPPORT_PACK: 'purchaseSupportPack',
+  PURCHASE_ADVANCED_SUPPORT_PACK: 'purchaseAdvancedSupportPack',
   USE_SUPPORT_ITEM: 'useSupportItem',
   REDEEM_CARD_SELECTOR: 'redeemCardSelector',
   ENHANCE_CARD: 'enhanceCard',
@@ -87,6 +88,7 @@ function validatePayload(type, payload, issues) {
     [GAME_COMMAND_TYPES.CLAIM_QUICK_BATTLE]: ['mode'],
     [GAME_COMMAND_TYPES.PURCHASE_PACK]: ['productId', 'quantity', 'race'],
     [GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK]: ['quantity'],
+    [GAME_COMMAND_TYPES.PURCHASE_ADVANCED_SUPPORT_PACK]: ['quantity'],
     [GAME_COMMAND_TYPES.USE_SUPPORT_ITEM]: ['itemId', 'targetCardId', 'race', 'count'],
     [GAME_COMMAND_TYPES.REDEEM_CARD_SELECTOR]: ['itemId', 'cardId'],
     [GAME_COMMAND_TYPES.ENHANCE_CARD]: ['cardId', 'targetEnhancement', 'materialCardIds', 'boosterId'],
@@ -192,6 +194,7 @@ function validatePayload(type, payload, issues) {
       }
       break;
     case GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK:
+    case GAME_COMMAND_TYPES.PURCHASE_ADVANCED_SUPPORT_PACK:
       if (![1, 10].includes(payload.quantity)) addIssue(issues, 'payload.quantity', '1 or 10 required');
       break;
     case GAME_COMMAND_TYPES.USE_SUPPORT_ITEM: {

@@ -8,6 +8,11 @@ const selectorSql = await readFile(
   'utf8',
 );
 const normalizedSelector = selectorSql.replace(/\s+/g, ' ');
+const advancedSupportSql = await readFile(
+  new URL('../supabase/migrations/20260802162000_advanced_support_pack.sql', import.meta.url),
+  'utf8',
+);
+const normalizedAdvancedSupport = advancedSupportSql.replace(/\s+/g, ' ');
 
 for (const signature of [
   'gacha_s2_purchase_support_pack',
@@ -39,5 +44,13 @@ assert.match(normalizedSelector, /gacha_s2_idempotency/);
 assert.match(normalizedSelector, /gacha_s2_command_audit/);
 assert.match(normalizedSelector, /event-only card selection tickets must not enter support-pack rates/);
 assert.doesNotMatch(normalizedSelector, /grant execute .* to authenticated/);
+
+assert.match(normalizedAdvancedSupport, /create or replace function public\.gacha_s2_purchase_advanced_support_pack\(/);
+assert.match(normalizedAdvancedSupport, /'purchaseAdvancedSupportPack'/);
+assert.match(normalizedAdvancedSupport, /'advancedSupportPack'/);
+assert.match(normalizedAdvancedSupport, /"price":1500/);
+assert.match(normalizedAdvancedSupport, /"tenPrice":15000/);
+assert.match(normalizedAdvancedSupport, /"traitReroll":0\.01/);
+assert.doesNotMatch(normalizedAdvancedSupport, /grant execute .* to authenticated/);
 
 console.log('renewal economy/profile RPC tests passed: support economy, idle rewards, profile commands');

@@ -1,7 +1,7 @@
 import {
   ADVENTURE_RULES, ARCHETYPES, DISMANTLE_RULES, ENHANCEMENT, GAME_RULES, PACKS, RARITIES, RARITY_ORDER,
   canDismantleSupportItem, supportItemDismantleValue,
-  REWARD_RULES, STAGES, SUPPORT_ITEMS, SUPPORT_PACK,
+  REWARD_RULES, STAGES, ADVANCED_SUPPORT_PACK, SUPPORT_ITEMS, SUPPORT_PACK,
 } from './config.js';
 import { computeCardPower, computeCardStats, computeFormationPower, getRaceSynergy, simulateBattle } from './battle.js';
 import { escapeHtml } from './html.js';
@@ -1904,6 +1904,12 @@ const SHOP_CARD_PRODUCTS = {
 
 const SHOP_CARD_PRODUCT_ORDER = ['general', 'elite', 'premium', 'zerg', 'terran', 'protoss'];
 
+const SHOP_SUPPORT_PRODUCTS = {
+  support: { pack: SUPPORT_PACK, eyebrow: 'TACTICAL ITEM', accent: '#62d4d0' },
+  advancedSupport: { pack: ADVANCED_SUPPORT_PACK, eyebrow: 'ADVANCED TACTICAL', accent: '#e5bd4e' },
+};
+const SHOP_SUPPORT_PRODUCT_ORDER = ['support', 'advancedSupport'];
+
 const ITEM_ICONS = {
   행동력: 'battery-charging', 강화: 'chevrons-up', 경험치: 'radio', 교환권: 'ticket',
   선택권: 'badge-check', 특성: 'shuffle', 초기화: 'rotate-ccw',
@@ -1958,11 +1964,14 @@ function cardPackProductMarkup(productId) {
   </article>`;
 }
 
-function supportPackProductMarkup() {
-  return `<article class="shop-product support selected" data-shop-product="support" style="--accent:#62d4d0">
-    <div class="shop-product-visual"><img src="assets/renewal/shop/support-case.webp" alt="${SUPPORT_PACK.name}"></div>
-    <div class="shop-product-copy"><span>TACTICAL ITEM</span><h3>${SUPPORT_PACK.name}</h3><p>행동력·강화·경험치·초기화권·카드팩 교환권·랜덤특성변경권</p></div>
-    <div class="shop-buy-row"><button type="button" data-buy-support="1" ${state.points < SUPPORT_PACK.price ? 'disabled' : ''}><b>1회 보급</b><small>${number.format(SUPPORT_PACK.price)}P</small></button><button type="button" data-buy-support="10" ${state.points < SUPPORT_PACK.tenPrice ? 'disabled' : ''}><b>10회 보급</b><small>${number.format(SUPPORT_PACK.tenPrice)}P · 희귀 1개 보장</small></button></div>
+function supportPackProductMarkup(productId) {
+  const product = SHOP_SUPPORT_PRODUCTS[productId];
+  const pack = product.pack;
+  const selected = selectedShopProduct === productId;
+  return `<article class="shop-product support${selected ? ' selected' : ''}" data-shop-product="${productId}" style="--accent:${product.accent}">
+    <div class="shop-product-visual"><img src="assets/renewal/shop/support-case.webp" alt="${pack.name}"></div>
+    <div class="shop-product-copy"><span>${product.eyebrow}</span><h3>${pack.name}</h3><p>${productId === 'advancedSupport' ? '고급 보급품 중심 · 저급 품목 제외' : '행동력·강화·경험치·초기화권·카드팩 교환권'}</p></div>
+    <div class="shop-buy-row"><button type="button" data-buy-support="1" data-support-product="${productId}" ${state.points < pack.price ? 'disabled' : ''}><b>1회 보급</b><small>${number.format(pack.price)}P</small></button><button type="button" data-buy-support="10" data-support-product="${productId}" ${state.points < pack.tenPrice ? 'disabled' : ''}><b>10회 보급</b><small>${number.format(pack.tenPrice)}P · 레어 1개 보장</small></button></div>
   </article>`;
 }
 
@@ -2024,15 +2033,15 @@ function renderShopDetail() {
       ? `${product.race} 카드만 등장. 인물군을 좁히는 대신 상위 등급 확률이 더 낮음.`
       : '등급 확정 슬롯과 누적 천장 없음. 표시 확률로 모든 카드 슬롯을 독립 추첨.';
   } else if (shopTab === 'support') {
-    elements.shopDetailTitle.textContent = SUPPORT_PACK.name;
-    elements.shopDetailSummary.innerHTML = `<strong>${number.format(SUPPORT_PACK.price)} P</strong><span>1회 1개 · 10회 희귀 보급품 최소 1개</span>`;
-    elements.shopProbabilityList.innerHTML = Object.entries(SUPPORT_PACK.items).map(([itemId, rate]) => {
+    const pack = SHOP_SUPPORT_PRODUCTS[selectedShopProduct]?.pack ?? SUPPORT_PACK;
+    elements.shopDetailTitle.textContent = pack.name;
+    elements.shopDetailSummary.innerHTML = `<strong>${number.format(pack.price)} P</strong><span>1회 1개 · 10회 레어 보급품 최소 1개</span>`;
+    elements.shopProbabilityList.innerHTML = Object.entries(pack.items).map(([itemId, rate]) => {
       const item = SUPPORT_ITEMS[itemId];
-      const rare = SUPPORT_PACK.rareItems.includes(itemId);
-      const ultraRare = Boolean(item.ultraRare);
-      return `<div class="shop-rate-row${rare || ultraRare ? ' rare' : ''}"><b>${ultraRare ? '◆ ' : rare ? '★ ' : ''}${item.name}</b><span>${rate}%</span><small>${item.effect}</small></div>`;
+      const rare = pack.rareItems.includes(itemId);
+      return `<div class="shop-rate-row${rare ? ' rare' : ''}"><b>${rare ? '★ ' : ''}${item.name}</b><span>${rate}%</span><small>${item.effect}</small></div>`;
     }).join('');
-    elements.shopDetailNote.textContent = `10회 결과의 앞 9개에 희귀 보급품이 없을 때만 10번째 보장 전용 확률표 적용. 랜덤특성변경권은 희귀 보장 대상에서 제외. 희귀 보급품 기준: ${SUPPORT_PACK.rareItems.map((id) => SUPPORT_ITEMS[id].name).join(', ')}.`;
+    elements.shopDetailNote.textContent = '레어 표시는 출현율 1% 미만 또는 파괴 차단제. 10회 결과의 앞 9개에 레어가 없을 때만 10번째 보장 전용 확률표 적용. 랜덤특성변경권은 보장 확률표에서 제외.';
   } else {
     elements.shopDetailTitle.textContent = '아이템 사용 규칙';
     elements.shopDetailSummary.innerHTML = `<strong>${Object.values(state.supportItems).reduce((sum, count) => sum + count, 0)}개</strong><span>현재 보유 보급품</span>`;
@@ -2199,10 +2208,10 @@ function renderShop() {
     elements.shopTitle.textContent = '카드팩';
     elements.shopProductGrid.innerHTML = SHOP_CARD_PRODUCT_ORDER.map(cardPackProductMarkup).join('');
   } else if (shopTab === 'support') {
-    selectedShopProduct = 'support';
+    if (!SHOP_SUPPORT_PRODUCTS[selectedShopProduct]) selectedShopProduct = 'support';
     elements.shopEyebrow.textContent = 'TACTICAL SUPPLY';
     elements.shopTitle.textContent = '작전 지원 보급';
-    elements.shopProductGrid.innerHTML = supportPackProductMarkup();
+    elements.shopProductGrid.innerHTML = SHOP_SUPPORT_PRODUCT_ORDER.map(supportPackProductMarkup).join('');
   } else {
     elements.shopEyebrow.textContent = 'ITEM INVENTORY';
     elements.shopTitle.textContent = '보유 아이템';
@@ -2253,10 +2262,10 @@ function showCardPackResults(packKey, cardIds, paidPoints, ticket = false) {
   elements.shopResultDialog.showModal();
 }
 
-function showSupportResults(itemIds, paidPoints) {
-  const rareSet = new Set(SUPPORT_PACK.rareItems);
+function showSupportResults(pack, itemIds, paidPoints) {
+  const rareSet = new Set(pack.rareItems);
   const rareCount = itemIds.filter((itemId) => rareSet.has(itemId)).length;
-  elements.shopResultTitle.textContent = `${SUPPORT_PACK.name} 결과`;
+  elements.shopResultTitle.textContent = `${pack.name} 결과`;
   elements.shopResultSummary.textContent = `${itemIds.length}개 획득 · ${number.format(paidPoints)}P 사용${rareCount > 0 ? ` · 희귀 ${rareCount}개` : ''}`;
   elements.shopResultGrid.dataset.resultType = 'items';
   // 보급품 결과는 최대 10개라 페이지가 필요 없다. 카드 결과에서 켜 둔 페이저를 끈다.
@@ -2269,7 +2278,7 @@ function showSupportResults(itemIds, paidPoints) {
     const item = SUPPORT_ITEMS[itemId];
     const rare = rareSet.has(itemId);
     const ultraRare = Boolean(item?.ultraRare);
-    return `<article class="shop-result-item${rare || ultraRare ? ' rare' : ''}" style="--reveal-delay:${index * 60}ms">${ultraRare ? '<em class="rare-badge">0.001%</em>' : rare ? '<em class="rare-badge">RARE</em>' : ''}${supportItemIconMarkup(itemId, item)}<b>${item.name}</b><span>${item.effect}</span></article>`;
+    return `<article class="shop-result-item${rare ? ' rare' : ''}" style="--reveal-delay:${index * 60}ms">${rare ? `<em class="rare-badge">${ultraRare ? `${pack.items[itemId]}%` : 'RARE'}</em>` : ''}${supportItemIconMarkup(itemId, item)}<b>${item.name}</b><span>${item.effect}</span></article>`;
   }).join('');
   window.lucide?.createIcons();
   elements.shopResultDialog.showModal();
@@ -2344,26 +2353,30 @@ async function purchaseCardPack(packKey, amount = 1, useTicketId = null, raceOve
   });
 }
 
-function purchaseSupportPack(amount = 1, triggerButton = null) {
-  return runUiOperation('purchaseSupportPack', triggerButton, async () => {
+function purchaseSupportPack(productId = 'support', amount = 1, triggerButton = null) {
+  const pack = SHOP_SUPPORT_PRODUCTS[productId]?.pack ?? SUPPORT_PACK;
+  return runUiOperation(`purchaseSupportPack:${productId}`, triggerButton, async () => {
     if (remoteMode) {
-      const response = await executeServerCommand(GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK, { quantity: amount });
+      const commandType = productId === 'advancedSupport'
+        ? GAME_COMMAND_TYPES.PURCHASE_ADVANCED_SUPPORT_PACK
+        : GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK;
+      const response = await executeServerCommand(commandType, { quantity: amount });
       if (!response?.ok) return response;
       renderHeader();
       renderShop();
-      showSupportResults(response.result?.items ?? [], response.result?.spentPoints ?? 0);
+      showSupportResults(pack, response.result?.items ?? [], response.result?.spentPoints ?? 0);
       return response;
     }
-    const cost = amount === 10 ? SUPPORT_PACK.tenPrice : SUPPORT_PACK.price;
+    const cost = amount === 10 ? pack.tenPrice : pack.price;
     if (state.points < cost) return showToast('포인트 부족');
-    const itemIds = drawSupportPack(amount, gameService.random);
+    const itemIds = drawSupportPack(amount, gameService.random, pack);
     state.supportItems = addSupportResults(state.supportItems, itemIds);
     state.points -= cost;
     state.shopTransactions += 1;
     gameService.purchasePack(state);
     renderHeader();
     renderShop();
-    showSupportResults(itemIds, cost);
+    showSupportResults(pack, itemIds, cost);
   });
 }
 
@@ -3171,11 +3184,11 @@ function bindEvents() {
     }
     const supportPurchase = event.target.closest('[data-buy-support]');
     if (supportPurchase) {
-      purchaseSupportPack(Number(supportPurchase.dataset.buySupport), supportPurchase);
+      purchaseSupportPack(supportPurchase.dataset.supportProduct, Number(supportPurchase.dataset.buySupport), supportPurchase);
       return;
     }
     const product = event.target.closest('[data-shop-product]');
-    if (!product || product.dataset.shopProduct === 'support') return;
+    if (!product) return;
     selectedShopProduct = product.dataset.shopProduct;
     selectedShopRace = SHOP_CARD_PRODUCTS[selectedShopProduct]?.race ?? selectedShopRace;
     renderShop();

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { PACKS, SUPPORT_ITEMS, SUPPORT_PACK } from '../src/renewal/config.js';
+import { ADVANCED_SUPPORT_PACK, PACKS, SUPPORT_ITEMS, SUPPORT_PACK } from '../src/renewal/config.js';
 import {
   addCardResults,
   cardExpPotionsNeeded,
@@ -22,14 +22,14 @@ assert.equal(Object.values(SUPPORT_PACK.items).reduce((sum, rate) => sum + rate,
 assert.equal(Object.values(SUPPORT_PACK.guaranteeRates).reduce((sum, rate) => sum + rate, 0), 100);
 assert.equal(SUPPORT_PACK.items.energySmall + SUPPORT_PACK.items.energyMedium + SUPPORT_PACK.items.energyLarge, 24);
 assert.equal(SUPPORT_PACK.items.destructionGuard, 5);
-assert.equal(SUPPORT_PACK.guaranteeRates.energyLarge, 7);
-assert.equal(SUPPORT_PACK.guaranteeRates.destructionGuard, 6);
+assert.equal(Object.values(ADVANCED_SUPPORT_PACK.items).reduce((sum, rate) => sum + rate, 0), 100);
+assert.equal(Object.values(ADVANCED_SUPPORT_PACK.guaranteeRates).reduce((sum, rate) => sum + rate, 0), 100);
 assert.equal(SUPPORT_ITEMS.ssCardSelector.cardSelectorRarity, 'SS');
 assert.equal(SUPPORT_ITEMS.sssCardSelector.cardSelectorRarity, 'SSS');
 assert.equal(Object.hasOwn(SUPPORT_PACK.items, 'ssCardSelector'), false, 'event selector must not drop from support pack');
 assert.equal(Object.hasOwn(SUPPORT_PACK.items, 'sssCardSelector'), false, 'event selector must not drop from support pack');
 assert.equal(SUPPORT_PACK.items.traitReroll, 0.001);
-assert.equal(SUPPORT_PACK.rareItems.includes('traitReroll'), false, 'trait reroll must not be inflated by 10-draw guarantee');
+assert.equal(SUPPORT_PACK.rareItems.includes('traitReroll'), true, 'sub-1% item must be marked rare');
 assert.equal(Object.hasOwn(SUPPORT_PACK.guaranteeRates, 'traitReroll'), false);
 assert.equal(SUPPORT_ITEMS.traitReroll.name, '랜덤특성변경권');
 
@@ -44,6 +44,9 @@ assert.ok(Object.keys(terranRates).every((rarity) => cards.some((card) => card.r
 const guaranteed = drawSupportPack(10, () => 0);
 assert.equal(guaranteed.length, 10);
 assert.ok(SUPPORT_PACK.rareItems.includes(guaranteed[9]), 'tenth slot must guarantee rare when first nine are common');
+const advancedGuaranteed = drawSupportPack(10, () => 0, ADVANCED_SUPPORT_PACK);
+assert.equal(advancedGuaranteed.length, 10);
+assert.ok(ADVANCED_SUPPORT_PACK.rareItems.includes(advancedGuaranteed[9]), 'advanced tenth slot must guarantee rare');
 
 const cardState = addCardResults({}, {}, [cards[0].id, cards[0].id]);
 assert.equal(cardState.copies[cards[0].id], 2);

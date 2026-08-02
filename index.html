@@ -611,7 +611,10 @@
             <div class="lotto-number-grid" id="lottoNumberGrid" aria-label="로또 번호 선택"></div>
             <div class="lotto-ticket-strip">
               <span>선택 번호</span>
-              <div id="lottoSelectedNumbers"><i>?</i><i>?</i><i>?</i><i>?</i><i>?</i><i>?</i></div>
+              <div class="lotto-ticket-actions">
+                <div id="lottoSelectedNumbers"><i>?</i><i>?</i><i>?</i><i>?</i><i>?</i><i>?</i></div>
+                <button id="lottoAutoPickButton" type="button"><i data-lucide="shuffle"></i><span>자동 선택</span></button>
+              </div>
             </div>
             <div class="lotto-result-grid">
               <section>
@@ -665,7 +668,7 @@
             <li><b>4등</b><span>3개 일치</span><strong>1,000 P</strong></li>
           </ul>
           <p id="lottoEntryStatus">번호 6개를 선택하세요.</p>
-          <small>계정당 회차별 1장 · 추첨 10분 전 마감 · 자동 지급 · 1·2등 누적 최대 500,000P</small>
+          <small>계정당 회차별 2장 · 1장 1,000P · 추첨 10분 전 마감 · 자동 지급 · 1등 누적 최대 1,000,000P</small>
         </section>
         <button class="minigame-start-button" id="miniGameStartButton" type="button"><i data-lucide="play"></i><span>게임 시작</span></button>
         <button class="minigame-stop-button" id="miniGameStopButton" type="button" hidden><i data-lucide="square"></i><span>게임 종료</span></button>

@@ -1139,7 +1139,13 @@ button[aria-busy="true"]::after {
 .lotto-number-grid button:disabled { cursor: default; filter: grayscale(.7); opacity: .55; transform: none; }
 .lotto-ticket-strip { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; border-left: 3px solid var(--gold); background: rgba(229,189,78,.08); }
 .lotto-ticket-strip > span { color: var(--gold); font-size: 9px; font-weight: 950; }
-.lotto-ticket-strip > div { display: flex; gap: 6px; }
+.lotto-ticket-actions { display: flex; align-items: center; gap: 10px; }
+.lotto-ticket-actions > div { display: flex; gap: 6px; }
+.lotto-ticket-actions > button { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 5px 9px; border: 1px solid #8b7a44; background: #17150c; color: var(--gold); font-size: 8px; font-weight: 950; cursor: pointer; }
+.lotto-ticket-actions > button svg { width: 12px; height: 12px; }
+.lotto-ticket-actions > button:hover, .lotto-ticket-actions > button:focus-visible { border-color: var(--gold); background: var(--gold); color: #121006; outline: none; }
+.lotto-ticket-actions > button:active { transform: translateY(1px); }
+.lotto-ticket-actions > button:disabled { cursor: default; filter: grayscale(.7); opacity: .45; transform: none; }
 .lotto-ball { display: inline-grid; place-items: center; width: 28px; height: 28px; border: 1px solid #8b7a44; border-radius: 50%; background: #17150c; color: var(--gold); font-size: 10px; font-style: normal; font-weight: 950; }
 .lotto-ball.hit { border-color: var(--acid); background: var(--acid); color: #071009; }
 .lotto-result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -1149,14 +1155,19 @@ button[aria-busy="true"]::after {
 .lotto-result-head button:hover, .lotto-result-head button:focus-visible { border-color: var(--gold); outline: none; }
 .lotto-result-head button:disabled { opacity: .45; cursor: wait; }
 .lotto-result-grid section > div { margin-top: 7px; color: #d9dfda; font-size: 9px; line-height: 1.6; }
+.lotto-ticket-list { display: grid; gap: 6px; }
+.lotto-ticket-entry { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; }
+.lotto-ticket-entry > b { color: var(--gold); font-size: 8px; white-space: nowrap; }
+.lotto-ticket-entry .lotto-inline-balls { min-width: 0; }
 .lotto-result-grid .lotto-inline-balls { display: flex; flex-wrap: wrap; gap: 4px; }
 .lotto-result-grid .lotto-inline-balls .lotto-ball { width: 23px; height: 23px; font-size: 8px; }
 .lotto-result-summary { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 7px; color: var(--muted); }
 .lotto-result-summary strong { color: var(--acid); font-size: 10px; }
-.lotto-winners { min-height: 0; padding: 10px 12px; border: 1px solid #554c2e; background: rgba(14,12,5,.92); }
+.lotto-winners { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; padding: 10px 12px; border: 1px solid #554c2e; background: rgba(14,12,5,.92); overflow: hidden; }
 .lotto-winners header { display: flex; justify-content: space-between; align-items: end; padding-bottom: 7px; border-bottom: 1px solid #3f3925; }
 .lotto-winners header strong { color: var(--gold); font-size: 10px; }
-.lotto-winners > div { display: grid; gap: 4px; max-height: 92px; margin-top: 6px; overflow-y: auto; }
+.lotto-winners > div { display: grid; align-content: start; gap: 4px; min-height: 0; height: 100%; margin-top: 6px; overflow-y: auto; }
+.lotto-winners > div.empty { place-items: center; align-content: center; color: var(--muted); font-size: 9px; }
 .lotto-winner-row { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 5px 2px; border-bottom: 1px solid #2f2b1d; font-size: 9px; }
 .lotto-winner-row b { color: var(--gold); }
 .lotto-winner-row strong { color: var(--acid); font-variant-numeric: tabular-nums; }

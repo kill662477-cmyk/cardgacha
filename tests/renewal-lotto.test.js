@@ -4,13 +4,16 @@ import {
   LOTTO_RULES,
   lottoRankForMatches,
   normalizeLottoNumbers,
+  pickRandomLottoNumbers,
 } from '../src/renewal/lotto.js';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const sql = await read('supabase/migrations/20260727093000_lotto_minigame.sql');
 const historySql = await read('supabase/migrations/20260727113000_lotto_weekly_history.sql');
+const expansionSql = await read('supabase/migrations/20260802123000_lotto_two_tickets_first_pool_1m.sql');
 const normalizedSql = sql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const normalizedHistorySql = historySql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
+const normalizedExpansionSql = expansionSql.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const html = await read('index.html');
 const controller = await read('src/renewal/minigame-controller.js');
 const runtime = await read('src/renewal/remote-runtime.js');
@@ -20,11 +23,14 @@ assert.equal(LOTTO_RULES.minimumNumber, 1);
 assert.equal(LOTTO_RULES.maximumNumber, 18);
 assert.equal(LOTTO_RULES.picks, 6);
 assert.equal(LOTTO_RULES.ticketCost, 1_000);
+assert.equal(LOTTO_RULES.ticketLimit, 2);
+assert.equal(LOTTO_RULES.firstPoolCap, 1_000_000);
 assert.equal(LOTTO_RULES.salesCloseMinutes, 10);
 assert.equal(LOTTO_RULES.thirdPrize, 2_000);
 assert.equal(LOTTO_RULES.fourthPrize, 1_000);
 assert.deepEqual(normalizeLottoNumbers([18, 4, 1, 13, 10, 7]), [1, 4, 7, 10, 13, 18]);
 assert.deepEqual(normalizeLottoNumbers([1, 1, 7, 10, 13, 18]), []);
+assert.deepEqual(pickRandomLottoNumbers(() => 0), [2, 3, 4, 5, 6, 7]);
 assert.deepEqual([6, 5, 4, 3, 2].map(lottoRankForMatches), [1, 2, 3, 4, null]);
 
 for (const table of ['gacha_s2_lotto_rounds', 'gacha_s2_lotto_tickets', 'gacha_s2_lotto_payouts']) {
@@ -32,7 +38,12 @@ for (const table of ['gacha_s2_lotto_rounds', 'gacha_s2_lotto_tickets', 'gacha_s
   assert.match(normalizedSql, new RegExp(`alter table public\\.${table} enable row level security`));
   assert.match(normalizedSql, new RegExp(`revoke all on table public\\.${table} from public, anon, authenticated`));
 }
-assert.match(normalizedSql, /unique \(round_id, user_id\)/, '계정당 회차별 티켓은 1장이어야 한다');
+assert.match(normalizedExpansionSql, /drop constraint if exists gacha_s2_lotto_tickets_round_id_user_id_key/);
+assert.match(normalizedExpansionSql, /v_ticket_count >= 2/);
+assert.match(normalizedExpansionSql, /'ticketlimit', 2/);
+assert.match(normalizedExpansionSql, /least\(1000000::bigint/);
+assert.match(normalizedExpansionSql, /on conflict \(ticket_id\) do nothing/);
+assert.match(normalizedExpansionSql, /sum\(inserted\.points\)/);
 assert.match(normalizedSql, /cardinality\(p_numbers\) = 6/);
 assert.match(normalizedSql, /min\(value\) >= 1 and max\(value\) <= 18/);
 assert.match(normalizedSql, /p_draw_at - interval '10 minutes'/);
@@ -51,10 +62,12 @@ assert.doesNotMatch(normalizedSql, /gacha_s2_minigame_daily/, '로또는 기존 
 
 assert.match(html, /data-minigame-select="lotto"/);
 assert.match(html, /id="lottoNumberGrid"/);
+assert.match(html, /id="lottoAutoPickButton"/);
 assert.match(html, /최근 1·2등 당첨자/);
 assert.match(html, /id="lottoHistoryButton"[^>]*>역대 당첨번호</);
 assert.match(html, /id="lottoHistoryDialog"/);
 assert.match(controller, /GAME_COMMAND_TYPES|buyLottoTicket|loadLottoState/);
+assert.match(controller, /pickRandomLottoNumbers\(random\)/);
 assert.match(controller, /getState\(\)\.points < LOTTO_RULES\.ticketCost/);
 assert.match(controller, /miniGameMode\.hidden = lotto \|\| ladder/);
 assert.match(controller, /Array\.isArray\(lottoState\?\.history\)/);

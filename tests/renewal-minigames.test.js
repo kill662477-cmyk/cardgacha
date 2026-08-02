@@ -16,6 +16,10 @@ import {
 } from '../src/renewal/minigames.js';
 
 const cards = JSON.parse(fs.readFileSync(new URL('../data/renewal-cards.json', import.meta.url), 'utf8'));
+const minigameStyles = fs.readFileSync(new URL('../styles/renewal/main.css', import.meta.url), 'utf8');
+assert.match(minigameStyles, /\.sum-tile \{[^}]*background: #242a26;[^}]*color: #d6ded9;/, 'apple tiles use softened charcoal and off-white');
+assert.match(minigameStyles, /\.sum-tile span \{[^}]*font-weight: 800;[^}]*color: #d6ded9;/, 'apple numbers avoid harsh pure-white heavy type');
+assert.doesNotMatch(minigameStyles, /\.sum-tile\.selected \{[^}]*filter: brightness/, 'apple selection must not use glare-inducing brightness');
 const memory = createMemoryDeck(cards, 'basic', 'fixed-seed');
 const memoryAgain = createMemoryDeck(cards, 'basic', 'fixed-seed');
 assert.deepEqual(memory, memoryAgain, 'same seed must reproduce memory deck');

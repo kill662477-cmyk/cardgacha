@@ -7,6 +7,11 @@ const number = new Intl.NumberFormat('ko-KR');
 
 const ROLE_LABELS = Object.freeze({ owner: '길드장', officer: '부길드장', member: '길드원' });
 
+function effectiveMemberLimit(guild) {
+  const levelLimit = GUILD_RULES.levels.find((tier) => tier.level === Number(guild?.level))?.memberLimit ?? 0;
+  return Math.max(Number(guild?.memberLimit) || 0, levelLimit);
+}
+
 
 function formatDate(ms) {
   if (!Number.isFinite(ms)) return '-';
@@ -347,7 +352,7 @@ export function createGuildController({ cards = [], getState, gameService, serve
       tier.points ? `포인트 +${(tier.points * 100).toFixed(0)}%` : null,
     ].filter(Boolean);
     elements.guildMeta.textContent =
-      `Lv.${guild.level} · ${number.format(guild.memberCount ?? 0)}/${guild.memberLimit}명 · ${ROLE_LABELS[role] ?? '길드원'}`
+      `Lv.${guild.level} · ${number.format(guild.memberCount ?? 0)}/${effectiveMemberLimit(guild)}명 · ${ROLE_LABELS[role] ?? '길드원'}`
       + ` · 누적 ${number.format(guild.totalGp ?? 0)} GP`
       + (buffs.length ? ` · ${buffs.join(' / ')}` : ' · 버프 없음');
     renderLevelProgress(guild, tier);
@@ -411,7 +416,8 @@ export function createGuildController({ cards = [], getState, gameService, serve
       ...(guildState?.myRequests ?? []).map((request) => request.guildId),
     ]);
     elements.guildList.innerHTML = guilds.map((g) => {
-      const full = (g.memberCount ?? 0) >= g.memberLimit;
+      const memberLimit = effectiveMemberLimit(g);
+      const full = (g.memberCount ?? 0) >= memberLimit;
       const pending = myRequests.has(g.guildId);
       const mine = isMember && g.guildId === guildState?.guild?.guildId;
       return `
@@ -419,7 +425,7 @@ export function createGuildController({ cards = [], getState, gameService, serve
         <div class="guild-list-emblem">${emblemMarkup(g.emblem, 'guild-list-emblem-mark')}</div>
         <div class="guild-list-main">
           <strong>${escapeHtml(g.name ?? '-')}${g.tag ? ` <em>[${escapeHtml(g.tag)}]</em>` : ''}</strong>
-          <small>Lv.${g.level} · ${number.format(g.memberCount ?? 0)}/${g.memberLimit}명 · ${escapeHtml(g.ownerNickname ?? '')}</small>
+          <small>Lv.${g.level} · ${number.format(g.memberCount ?? 0)}/${memberLimit}명 · ${escapeHtml(g.ownerNickname ?? '')}</small>
         </div>
         ${mine
           ? '<span class="guild-list-mine">내 길드</span>'

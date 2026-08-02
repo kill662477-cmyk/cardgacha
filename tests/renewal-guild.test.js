@@ -26,12 +26,14 @@ const levelFourCapacity = squash(await read('supabase/migrations/20260730120000_
 const levelFiveCapacity = squash(await read('supabase/migrations/20260801205326_guild_level_five_capacity_70.sql'));
 const correctedLevelFiveCapacity = squash(await read('supabase/migrations/20260801211214_guild_level_five_capacity_65.sql'));
 const levelSixCapacity = squash(await read('supabase/migrations/20260802165000_guild_level_six_capacity_70.sql'));
+const levelSixCapacityResync = squash(await read('supabase/migrations/20260802170000_resync_level_six_guild_capacity_70.sql'));
 const applicantProfile = squash(await read('supabase/migrations/20260727000001_guild_applicant_profile.sql'));
 const memberProgressAndDecks = squash(await read('supabase/migrations/20260728103000_guild_member_progress_and_decks.sql'));
 const quickBattleGp = squash(await read('supabase/migrations/20260727142000_guild_quick_battle_gp.sql'));
 const jolgeQuickBattleGp = squash(await read('supabase/migrations/20260727142500_compensate_jolge_quick_battle_gp.sql'));
 const router = await read('src/renewal/server-command-router.js');
 const edge = await read('supabase/functions/game-command/index.ts');
+const guildController = await read('src/renewal/guild-controller.js');
 
 // --- 스키마: 테이블·접근 통제 ---
 const tables = [
@@ -263,6 +265,10 @@ assert.match(correctedLevelFiveCapacity, /where level >= 5/);
 assert.match(levelSixCapacity, /check \(member_limit between 1 and 70\)/);
 assert.match(levelSixCapacity, /where level >= 6/);
 assert.match(levelSixCapacity, /set member_limit = greatest\(member_limit, 70\)/);
+assert.match(levelSixCapacityResync, /where level >= 6/);
+assert.match(levelSixCapacityResync, /member_limit <> 70/);
+assert.match(guildController, /function effectiveMemberLimit\(guild\)/);
+assert.match(guildController, /Math\.max\(Number\(guild\?\.memberLimit\) \|\| 0, levelLimit\)/);
 assert.match(gpLevels, /create table if not exists public\.gacha_s2_guild_levels/);
 assert.match(gpLevels, /create table if not exists public\.gacha_s2_guild_contributions/);
 assert.match(gpLevels, /create or replace function public\.gacha_s2_guild_buff/);

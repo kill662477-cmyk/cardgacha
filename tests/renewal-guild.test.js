@@ -27,6 +27,7 @@ const levelFiveCapacity = squash(await read('supabase/migrations/20260801205326_
 const correctedLevelFiveCapacity = squash(await read('supabase/migrations/20260801211214_guild_level_five_capacity_65.sql'));
 const levelSixCapacity = squash(await read('supabase/migrations/20260802165000_guild_level_six_capacity_70.sql'));
 const levelSixCapacityResync = squash(await read('supabase/migrations/20260802170000_resync_level_six_guild_capacity_70.sql'));
+const oneTimePenaltyClear = squash(await read('supabase/migrations/20260802183000_clear_active_guild_penalties_once.sql'));
 const applicantProfile = squash(await read('supabase/migrations/20260727000001_guild_applicant_profile.sql'));
 const memberProgressAndDecks = squash(await read('supabase/migrations/20260728103000_guild_member_progress_and_decks.sql'));
 const quickBattleGp = squash(await read('supabase/migrations/20260727142000_guild_quick_battle_gp.sql'));
@@ -95,6 +96,9 @@ assert.match(member, /부길드장은 길드장만 추방할 수 있습니다/);
 assert.match(member, /부길드장은 최대 2명까지 임명할 수 있습니다/);
 assert.match(member, /자기 자신을 추방할 수 없습니다/);
 assert.match(member, /'leave'\)|'kick'\)/, '페널티 사유 기록');
+assert.match(oneTimePenaltyClear, /update public\.gacha_s2_guild_leave_penalties set penalty_until = now\(\) where penalty_until > now\(\)/, '활성 페널티만 즉시 만료해야 한다');
+assert.doesNotMatch(oneTimePenaltyClear, /delete from public\.gacha_s2_guild_leave_penalties/, '탈퇴·추방 이력을 삭제하면 안 된다');
+assert.match(oneTimePenaltyClear, /guild leave penalties still active/, '해제 후 잔여 페널티를 검증해야 한다');
 
 // --- 조회 RPC ---
 assert.match(query, /create or replace function public\.gacha_s2_get_guild_state/);

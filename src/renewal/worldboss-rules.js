@@ -11,29 +11,31 @@ export const WORLD_BOSS_RULES = {
   slotTiers: {
     // 서버 자동딜은 0. 처치는 참가자 합산 피해와 maxHp 비교로만 결정한다.
     // 2026-08-02 긴급 조정: 17시 140억 유지, 남은 회차 160/170/190억.
+    // 2026-08-03: 위 긴급 상향분까지 네 회차 전부 격파돼 180/210/240/270억으로 올린다.
+    //   슬롯 간격도 10~20억에서 30억으로 벌린다.
     // difficultyMultiplier는 표시용이며 17시 대비 HP 비율과 맞춘다.
     17: {
       title: '신호 요새', name: 'SIGNAL//BASTION', difficultyMultiplier: 1,
-      maxHp: 14_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.05,
+      maxHp: 18_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.05,
       image: 'assets/renewal/worldboss/boss-17-signal-bastion.webp',
     },
     18: {
-      title: '중계 포식자', name: 'RELAY//DEVOURER', difficultyMultiplier: 1.143,
-      maxHp: 16_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.10,
+      title: '중계 포식자', name: 'RELAY//DEVOURER', difficultyMultiplier: 1.167,
+      maxHp: 21_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.10,
       image: 'assets/renewal/worldboss/boss-18-relay-devourer.webp',
     },
     19: {
-      title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 1.214,
-      maxHp: 17_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.15,
+      title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 1.333,
+      maxHp: 24_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.15,
       image: 'assets/renewal/worldboss/boss-19-void-harvester.webp',
     },
     20: {
-      title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 1.357,
-      maxHp: 19_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.20,
+      title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 1.5,
+      maxHp: 27_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.20,
       image: 'assets/renewal/worldboss/boss-20-malice-singularity.webp',
     },
   },
-  maxHp: 14_000_000_000,
+  maxHp: 18_000_000_000,
   battleDuration: 60,
   maxAttempts: 3,
   eventDurationSeconds: 60 * 60,

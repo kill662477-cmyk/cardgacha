@@ -61,7 +61,7 @@ import { createRequestCoordinator, REQUEST_PHASES } from './request-coordinator.
 import { createMiniGameController } from './minigame-controller.js?v=202607290900';
 import { executeCommandWithVersionRetry } from './server-command-retry.js';
 import { createWorldBossController } from './worldboss-controller.js?v=202607290900';
-import { createRankingController } from './ranking-controller.js?v=202608021930';
+import { createRankingController } from './ranking-controller.js?v=202608031600';
 import { createGuildController } from './guild-controller.js?v=202608022015';
 import { createFxController } from './fx-controller.js?v=202607271325';
 import { cardVisualChrome, enhancementLabel, enhancementStarMarkup, rarityMarkMarkup } from './card-visual.js?v=202607271325';

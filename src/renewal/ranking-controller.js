@@ -110,7 +110,7 @@ export function createRankingController({ cards = [], getState, getFormation, ge
         <img class="card-photo" src="${imagePath(card)}" alt="${escapeHtml(card.member)} 대표 카드">${cardVisualChrome(card)}
       </figure>` : '';
       return `<article class="ranking-podium-item rank-${entry.rank}${entry.mine ? ' mine' : ''}" data-rank="${entry.rank}" role="button" tabindex="0">
-        <span>${entry.rank}위</span><div class="ranking-podium-emblem"><i data-lucide="${entry.rank === 1 ? 'crown' : 'medal'}"></i></div>${cardMarkup}<div class="ranking-podium-copy"><strong>${escapeHtml(entry.nickname)}${hellMedalMarkup(entry.hellConqueror, 'ranking-inline-medal')}</strong><b>${number.format(entry.power)} CP</b></div>
+        <div class="ranking-podium-head"><span>${entry.rank}위</span><div class="ranking-podium-emblem"><i data-lucide="${entry.rank === 1 ? 'crown' : 'medal'}"></i></div></div>${cardMarkup}<div class="ranking-podium-copy"><strong><span class="ranking-podium-name">${escapeHtml(entry.nickname)}</span>${hellMedalMarkup(entry.hellConqueror, 'ranking-inline-medal')}</strong><b>${number.format(entry.power)} CP</b></div>
       </article>`;
     }).join('');
     elements.rankingList.innerHTML = ranking.leaders.slice(3).map(rowMarkup).join('');

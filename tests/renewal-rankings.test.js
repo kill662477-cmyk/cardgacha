@@ -1,5 +1,15 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { COMBAT_POWER_LEADERS, COMBAT_RANKING_RULES, buildCombatPowerRanking } from '../src/renewal/rankings.js';
+
+const rankingControllerSource = await readFile(new URL('../src/renewal/ranking-controller.js', import.meta.url), 'utf8');
+const rankingStyles = await readFile(new URL('../styles/renewal/main.css', import.meta.url), 'utf8');
+
+assert.match(rankingControllerSource, /class="ranking-podium-head"/);
+assert.match(rankingControllerSource, /class="ranking-podium-name"/);
+assert.match(rankingStyles, /\.ranking-podium-head \{[^}]*grid-area: head;[^}]*justify-content: space-between;/);
+assert.match(rankingStyles, /\.ranking-podium-name \{[^}]*overflow-wrap: anywhere;[^}]*-webkit-line-clamp: 2;/);
+assert.match(rankingStyles, /\.ranking-podium-copy \.ranking-inline-medal \{[^}]*flex: none;/);
 
 assert.equal(COMBAT_POWER_LEADERS.length, 50);
 assert.equal(new Set(COMBAT_POWER_LEADERS.map((entry) => entry.nickname)).size, 50);

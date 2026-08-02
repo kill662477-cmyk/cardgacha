@@ -6,6 +6,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const target = path.join(root, 'supabase', 'functions', '_shared', 'generated');
 const sources = [
   ['src/renewal/config.js', 'config.js'],
+  ['src/renewal/worldboss-rules.js', 'worldboss-rules.js'],
   ['src/renewal/battle.js', 'battle.js'],
   ['src/renewal/collection.js', 'collection.js'],
   ['src/renewal/worldboss-schedule.js', 'worldboss-schedule.js'],

@@ -8,6 +8,7 @@
     "build:renewal-content": "node scripts/build-renewal-content.js",
     "build:database-catalog": "node --no-warnings scripts/build-renewal-database-catalog.js",
     "build:edge-shared": "node scripts/build-edge-shared.mjs",
+    "check:deploy": "node scripts/check-deployment-ready.mjs && npx supabase db push --linked --dry-run",
     "build:browser-vendor": "node scripts/build-browser-vendor.mjs",
     "start": "npm run build:browser-vendor && node scripts/dev-server.js",
     "dev": "node scripts/dev-server.js",

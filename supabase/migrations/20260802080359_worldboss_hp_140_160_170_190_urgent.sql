@@ -1,13 +1,5 @@
--- 2026-08-02 당일 긴급 조정: 18시 160억 / 19시 170억 / 20시 190억. 17시는 140억 유지.
--- 08-02 17시 회차가 시작 3분 만에 140억이 뚫렸다(17:00 시작, 17:03 격파).
--- 오늘 남은 세 회차를 즉시 올린다.
---
--- 18시 회차는 17:00 에 nextSlot 으로 이미 생성돼 옛 값(150억)을 들고 있다.
--- resync 가 이걸 고친다. 진행이 끝난 17시 회차는 player_damage > 0 이라 건드리지 않는다.
--- 19시·20시 회차는 아직 생성 전이라 아래 config 값으로 만들어진다.
---
--- jsonb_set 은 worldBossRules 하위 경로만 바꾼다. 같은 config 컬럼의 soopRules
--- (API 후원 비율) 는 건드리지 않으며, 아래 검증에서 값이 살아있는지 확인한다.
+-- 운영 DB에 실제 적용된 2026-08-02 월드보스 긴급 조정 이력.
+-- 17시는 140억 유지, 18/19/20시는 160/170/190억으로 조정한다.
 update public.gacha_s2_balance_versions
 set config = jsonb_set(jsonb_set(jsonb_set(jsonb_set(jsonb_set(jsonb_set(
       config,
@@ -37,14 +29,12 @@ begin
     raise exception 'pending world boss rounds still out of sync: %', v_bad;
   end if;
 
-  -- 17시는 이번 조정 대상이 아니다. 실수로 바뀌지 않았는지 확인한다.
   select (config->'worldBossRules'->'slotTiers'->'17'->>'maxHp')::bigint into v_h17
   from public.gacha_s2_balance_versions where active;
   if v_h17 is distinct from 14000000000 then
     raise exception '17:00 slot HP changed unexpectedly: %', v_h17;
   end if;
 
-  -- 다른 작업(API 후원 비율)이 같은 config 를 쓰므로 덮어쓰지 않았는지 확인한다.
   select (config#>>'{soopRules,pointsPerBalloon}')::integer into v_balloon
   from public.gacha_s2_balance_versions where active;
   if v_balloon is null then

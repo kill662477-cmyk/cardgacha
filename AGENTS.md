@@ -8,6 +8,22 @@
 4. 변경 파일만 검토해서 Git 커밋 후 `main`에 푸시한다.
 5. Vercel 배포와 필요한 Supabase 마이그레이션/Edge Function 배포를 진행한다.
 6. Git HEAD, Vercel 배포 커밋, Supabase 배포본을 다시 대조한다.
+7. 실제 배포 직전 `npm run check:deploy`를 실행한다. 원격 `main`, 작업트리, Edge 생성본, 마이그레이션 이력이 다르면 배포하지 않는다.
+
+## 병행 작업
+
+- 작업 시작 전 `git fetch origin`과 `git status --short --branch`로 `HEAD == origin/main` 및 미커밋 변경 유무를 확인한다.
+- 다른 작업자의 변경이 보이면 같은 파일을 수정하지 않는다. 원격이 앞섰으면 먼저 최신 커밋을 반영한다.
+- 커밋 뒤 다른 커밋이 `main`에 추가되었으면 이전 커밋을 그대로 배포하지 않는다. 최신 `main`에서 다시 테스트하고 배포한다.
+- Vercel, Supabase Migration, Edge Function 배포는 한 작업자가 최신 `main` 전체를 기준으로 순서대로 마무리한다.
+
+## 월드보스 밸런스
+
+- 운영 수치의 단일 소스는 `src/renewal/worldboss-rules.js`다.
+- 월드보스 조정 시 전용 수치 파일, 관련 테스트, 새 `supabase/migrations/*.sql`만 직접 수정한다.
+- `src/renewal/config.js`, `supabase/functions/_shared/generated/*`, `supabase/renewal_migration_002_catalog_and_balance.sql`에 월드보스 수치를 수동 복사하지 않는다.
+- 소스 수정 후 `npm run build:edge-shared`로 Edge 생성본을 갱신한다.
+- 운영 DB에 먼저 생긴 마이그레이션 버전이 발견되면 새 번호로 중복 적용하지 않는다. 운영 이력을 회수해 같은 버전 파일로 Git에 복구한다.
 
 ## 데이터베이스
 

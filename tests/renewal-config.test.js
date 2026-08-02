@@ -19,6 +19,7 @@ import {
 import { MATERIAL_RULES } from '../src/renewal/enhancement.js';
 import { MINI_GAME_RULES as EXPORTED_MINI_GAME_RULES } from '../src/renewal/minigames.js';
 import { WORLD_BOSS_RULES as EXPORTED_WORLD_BOSS_RULES } from '../src/renewal/worldboss.js';
+import { WORLD_BOSS_RULES as SOURCE_WORLD_BOSS_RULES } from '../src/renewal/worldboss-rules.js';
 
 const sssMultiplierMigration = (await readFile(
   new URL('../supabase/migrations/20260723000071_sss_multiplier_5.sql', import.meta.url),
@@ -77,6 +78,7 @@ for (const pack of [SUPPORT_PACK, ADVANCED_SUPPORT_PACK]) {
 }
 assert.equal(EXPORTED_MINI_GAME_RULES, MINI_GAME_RULES);
 assert.equal(EXPORTED_WORLD_BOSS_RULES, WORLD_BOSS_RULES);
+assert.equal(SOURCE_WORLD_BOSS_RULES, WORLD_BOSS_RULES);
 assert.equal(MATERIAL_RULES.SSS[1].count, 1);
 assert.equal(ADVENTURE_RULES.maxRunsPerWindow, 3);
 assert.equal(MINI_GAME_RULES.dailyPointCapPerGame, 10000);

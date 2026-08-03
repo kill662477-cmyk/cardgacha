@@ -22,6 +22,8 @@ export const WORLD_BOSS_RULES = {
     //   18시와 19시가 같은 280억이 되고 20시만 소폭 높은 형태다.
     // 2026-08-03 당일 하향 2: 19시도 268.0억(95.7%)으로 실패해 20시를 280억까지 내린다.
     //   30분 회차 실측 딜이 268~273억 구간이라 250/280/280/280 계단이 된다.
+    // 2026-08-04: 08-03 결과는 250억 격파 / 280억 실패 / 280억 실패 / 280억 격파(280.2억)로
+    //   280억이 경계선이었다. 앞 회차를 낮춰 250/260/270/280억 10억 계단으로 만든다.
     // difficultyMultiplier는 표시용이며 17시 대비 HP 비율과 맞춘다.
     17: {
       title: '신호 요새', name: 'SIGNAL//BASTION', difficultyMultiplier: 1,
@@ -29,13 +31,13 @@ export const WORLD_BOSS_RULES = {
       image: 'assets/renewal/worldboss/boss-17-signal-bastion.webp',
     },
     18: {
-      title: '중계 포식자', name: 'RELAY//DEVOURER', difficultyMultiplier: 1.12,
-      maxHp: 28_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.10,
+      title: '중계 포식자', name: 'RELAY//DEVOURER', difficultyMultiplier: 1.04,
+      maxHp: 26_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.10,
       image: 'assets/renewal/worldboss/boss-18-relay-devourer.webp',
     },
     19: {
-      title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 1.12,
-      maxHp: 28_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.15,
+      title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 1.08,
+      maxHp: 27_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.15,
       image: 'assets/renewal/worldboss/boss-19-void-harvester.webp',
     },
     20: {

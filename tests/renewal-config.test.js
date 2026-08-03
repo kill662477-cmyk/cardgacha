@@ -118,7 +118,7 @@ assert.deepEqual(Object.values(WORLD_BOSS_RULES.slotTiers).map(({ difficultyMult
   [1, 25_000_000_000],
   [1.12, 28_000_000_000],
   [1.12, 28_000_000_000],
-  [1.2, 30_000_000_000],
+  [1.12, 28_000_000_000],
 ]);
 // difficultyMultiplier 는 표시 전용이라 17시 대비 HP 비율과 어긋나면 안내 문구가 거짓말이 된다.
 for (const tier of Object.values(WORLD_BOSS_RULES.slotTiers)) {

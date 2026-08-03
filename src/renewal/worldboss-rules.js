@@ -20,6 +20,8 @@ export const WORLD_BOSS_RULES = {
     // 2026-08-03 당일 하향: 실측 결과 17시 250억은 21분 격파(적정)였으나 18시 280억이
     //   마감 1분 전 97.65% 로 실패 직전이었다. 뒤 회차를 19:280억 / 20:300억으로 낮춘다.
     //   18시와 19시가 같은 280억이 되고 20시만 소폭 높은 형태다.
+    // 2026-08-03 당일 하향 2: 19시도 268.0억(95.7%)으로 실패해 20시를 280억까지 내린다.
+    //   30분 회차 실측 딜이 268~273억 구간이라 250/280/280/280 계단이 된다.
     // difficultyMultiplier는 표시용이며 17시 대비 HP 비율과 맞춘다.
     17: {
       title: '신호 요새', name: 'SIGNAL//BASTION', difficultyMultiplier: 1,
@@ -37,8 +39,8 @@ export const WORLD_BOSS_RULES = {
       image: 'assets/renewal/worldboss/boss-19-void-harvester.webp',
     },
     20: {
-      title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 1.2,
-      maxHp: 30_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.20,
+      title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 1.12,
+      maxHp: 28_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.20,
       image: 'assets/renewal/worldboss/boss-20-malice-singularity.webp',
     },
   },

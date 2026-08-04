@@ -130,6 +130,10 @@ export const SUPPORT_PACK = {
 export const ADVANCED_SUPPORT_PACK = {
   name: '고급 작전 지원 보급팩', price: 1500, tenPrice: 15000,
   tenGuarantee: false,
+  // 누적 구매액 기준 랜덤특성변경권 확정 지급. 고급팩에만 적용된다(일반 보급팩은 대상 아님).
+  // 이 팩에 쓴 포인트가 이 값을 넘을 때마다 traitReroll 1장을 지급하고 그만큼 차감한다.
+  // 확률 추첨과 별개로 인벤토리에 바로 들어가며, 뽑기 결과 목록에는 표시하지 않는다.
+  guaranteedTraitRerollPoints: 3_000_000,
   items: {
     energyLarge: 14.5,
     enhance10: 18,

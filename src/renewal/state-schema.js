@@ -17,6 +17,8 @@ export const SERVER_AUTHORITY_FIELDS = Object.freeze([
   // 길드 버프(PDB-16 M2). 서버 스냅샷이 내려보내므로 반드시 여기 선언돼야 한다.
   // 빠뜨리면 validateGameState 가 "v2에 선언되지 않은 필드"로 거부해 로그인이 막힌다.
   'guildBuff',
+  // 고급 작전 지원팩 확정 지급 진행도({ spent, granted, threshold }). 위와 같은 이유로 선언 필수.
+  'advancedPackPity',
 ]);
 
 export const CLIENT_CACHE_FIELDS = Object.freeze(['currentStage', 'autoBattle', 'soundEnabled']);

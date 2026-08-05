@@ -1964,6 +1964,23 @@ function cardPackProductMarkup(productId) {
   </article>`;
 }
 
+// 고급 작전 지원팩 확정 지급 진행도. 서버 스냅샷의 advancedPackPity 를 그대로 보여준다.
+// threshold 가 없거나 0 이면(확정 지급 비활성) 아무것도 그리지 않는다.
+function advancedPackPityMarkup() {
+  const pity = state.advancedPackPity;
+  const threshold = Number(pity?.threshold) || 0;
+  if (threshold <= 0) return '';
+  const spent = Math.max(0, Math.min(threshold, Number(pity?.spent) || 0));
+  const remaining = threshold - spent;
+  const percent = Math.min(100, Math.round((spent / threshold) * 1000) / 10);
+  const granted = Number(pity?.granted) || 0;
+  return `<div class="shop-pity" role="group" aria-label="랜덤특성변경권 확정 지급 진행도">
+    <div class="shop-pity-head"><b>랜덤특성변경권 확정까지</b><span>${number.format(remaining)}P</span></div>
+    <div class="shop-pity-bar"><i style="width:${percent}%"></i></div>
+    <small>${number.format(spent)} / ${number.format(threshold)}P (${percent}%)${granted > 0 ? ` · 지금까지 ${number.format(granted)}장 획득` : ''}</small>
+  </div>`;
+}
+
 function supportPackProductMarkup(productId) {
   const product = SHOP_SUPPORT_PRODUCTS[productId];
   const pack = product.pack;
@@ -1971,6 +1988,7 @@ function supportPackProductMarkup(productId) {
   return `<article class="shop-product support${selected ? ' selected' : ''}" data-shop-product="${productId}" style="--accent:${product.accent}">
     <div class="shop-product-visual"><img src="assets/renewal/shop/support-case.webp" alt="${pack.name}"></div>
     <div class="shop-product-copy"><span>${product.eyebrow}</span><h3>${pack.name}</h3><p>${productId === 'advancedSupport' ? '고급 보급품 중심 · 저급 품목 제외' : '행동력·강화·경험치·초기화권·카드팩 교환권'}</p></div>
+    ${productId === 'advancedSupport' ? advancedPackPityMarkup() : ''}
     <div class="shop-buy-row"><button type="button" data-buy-support="1" data-support-product="${productId}" ${state.points < pack.price ? 'disabled' : ''}><b>1회 보급</b><small>${number.format(pack.price)}P</small></button><button type="button" data-buy-support="10" data-support-product="${productId}" ${state.points < pack.tenPrice ? 'disabled' : ''}><b>10회 보급</b><small>${number.format(pack.tenPrice)}P · 개별 확률 적용</small></button></div>
   </article>`;
 }

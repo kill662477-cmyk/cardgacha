@@ -62,6 +62,8 @@ export function createDefaultState(now = Date.now()) {
     powerRanking: { seasonId: 'local-preview', snapshotAt: 0, power: 0, rank: null, population: 1500 },
     // 소속이 없으면 전부 0이라 전투 계산이 이전과 동일하다.
     guildBuff: { guildId: null, level: 0, atk: 0, hp: 0, def: 0, points: 0 },
+    // 고급 작전 지원팩 확정 지급 진행도. 서버 스냅샷이 실제 값으로 덮어쓴다.
+    advancedPackPity: { spent: 0, granted: 0, threshold: 0 },
   };
 }
 

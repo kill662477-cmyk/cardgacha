@@ -564,6 +564,15 @@ button[aria-busy="true"]::after {
 /* 버튼 개수가 상품마다 다르다(카드팩 3개: 1/10/100개, 보급팩 2개).
    열을 2개로 고정하면 3번째 버튼이 다음 줄로 밀리고, 모바일에서는 구매행 높이가
    49px 로 고정이라 밀린 버튼이 overflow:hidden 에 잘려 아예 보이지 않았다. */
+/* 고급 작전 지원팩 확정 지급 진행도. .shop-product 는 명시 행이 3개뿐이라
+   이 블록은 암시 행(grid-auto-rows: auto)에 들어간다. */
+.shop-pity { display: grid; gap: 4px; padding: 0 9px 7px; min-width: 0; }
+.shop-pity-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; font-size: 11px; }
+.shop-pity-head b { color: var(--dim); font-weight: 600; }
+.shop-pity-head span { color: var(--accent); font-variant-numeric: tabular-nums; font-weight: 700; }
+.shop-pity-bar { height: 4px; overflow: hidden; border: 1px solid var(--line); background: #080b09; }
+.shop-pity-bar i { display: block; height: 100%; background: var(--accent); transition: width .3s ease; }
+.shop-pity small { color: var(--dim); font-size: 10px; font-variant-numeric: tabular-nums; }
 .shop-buy-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 5px; padding: 0 9px 9px; }
 .shop-buy-row button { min-height: 44px; border: 1px solid var(--line-bright); background: transparent; color: var(--text); font-size: 10px; font-weight: 900; cursor: pointer; }
 .shop-buy-row button:first-child { border-color: var(--accent); background: var(--accent); color: #070a09; }
@@ -1990,6 +1999,15 @@ button[aria-busy="true"]::after {
   .shop-race-selector button { min-height: 24px; padding: 0 6px; font-size: 7px; }
   .shop-product-grid { grid-template-columns: repeat(3, minmax(205px, 1fr)); gap: 5px; padding: 6px; overflow-y: hidden; }
   .shop-product { grid-template: 58px 49px / 54px minmax(0, 1fr); min-height: 112px; }
+  /* 확정 지급 진행도가 붙는 고급팩만 행을 하나 더 쓴다. 나머지 상품은 2행 그대로. */
+  .shop-product:has(.shop-pity) { grid-template: 58px auto auto / 54px minmax(0, 1fr); }
+  .shop-product:has(.shop-pity) .shop-product-visual { grid-row: 1 / 4; }
+  .shop-pity { grid-column: 2; grid-row: 2; gap: 2px; padding: 0 5px 3px; }
+  .shop-pity-head { font-size: 7px; }
+  .shop-pity-bar { height: 3px; }
+  /* 좁은 화면에서는 백분율 줄까지 넣을 자리가 없다. 남은 포인트만 보여준다. */
+  .shop-pity small { display: none; }
+  .shop-product:has(.shop-pity) .shop-buy-row { grid-row: 3; }
   .shop-product-visual { grid-column: 1; grid-row: 1 / 3; }
   .shop-product-visual img { width: 50px; max-height: 88px; }
   .shop-product.support .shop-product-visual i { width: 62px; height: 78px; }

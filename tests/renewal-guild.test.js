@@ -20,6 +20,7 @@ const weekly = squash(await read('supabase/migrations/20260725000099_guild_m3_we
 const raidSchema = squash(await read('supabase/migrations/20260725000100_guild_m4_raid_schema.sql'));
 const raidRpc = squash(await read('supabase/migrations/20260725000101_guild_m4_raid_rpc.sql'));
 const tripleRaidDifficulty = squash(await read('supabase/migrations/20260801212229_guild_raid_difficulty_triple.sql'));
+const halvedRaidDifficulty = squash(await read('supabase/migrations/20260805215437_guild_raid_hp_halved.sql'));
 const pendingJoinState = squash(await read('supabase/migrations/20260726121500_guild_pending_join_state.sql'));
 const penaltyException = squash(await read('supabase/migrations/20260726123000_clear_mstz_sonsilba_guild_penalty.sql'));
 const requestedPenaltyException = squash(await read('supabase/migrations/20260728190000_clear_llliiiiilli_guild_penalty.sql'));
@@ -369,13 +370,19 @@ assert.match(router, /'gacha_s2_claim_guild_weekly_reward'/);
 assert.deepEqual(GUILD_RULES.raid.scheduleIsoDays, [3, 6], '수·토');
 assert.equal(GUILD_RULES.raid.hourKst, 21);
 assert.equal(GUILD_RULES.raid.maxAttempts, 3);
-assert.equal(GUILD_RULES.raid.hpPerActiveMember, 63_000_000);
+assert.equal(GUILD_RULES.raid.hpPerActiveMember, 31_500_000);
 assert.equal(GUILD_RULES.raid.successPoints, 50_000);
 assert.equal(GUILD_RULES.raid.failurePoints, 15_000);
 
 // HP 는 참여자 수가 아니라 활동 길드원 수 기준이어야 다수 참여 유인이 생긴다.
 assert.match(raidSchema, /greatest\(v_active, 1\)::bigint \* 21000000/);
 assert.match(tripleRaidDifficulty, /greatest\(v_active, 1\)::bigint \* 63000000/);
+// 2026-08-05: 9개 길드 전원 실패해 절반으로 내렸다. 서버가 실제로 쓰는 값은 이쪽이다.
+assert.match(halvedRaidDifficulty, /greatest\(v_active, 1\)::bigint \* 31500000/);
+// HP 대입부만 본다. 파일 뒤쪽 검증 블록에는 "옛 값이 안 남았는지" 확인하려고
+// 63000000 이 의도적으로 등장하므로 파일 전체를 훑으면 그게 걸린다.
+assert.doesNotMatch(halvedRaidDifficulty, /v_hp := greatest\(v_active, 1\)::bigint \* 63000000/, '옛 HP 리터럴이 남으면 안 된다');
+assert.doesNotMatch(halvedRaidDifficulty, /update public\.gacha_s2_guild_raids/, '진행·종료 회차는 변경하지 않는다');
 assert.doesNotMatch(tripleRaidDifficulty, /update public\.gacha_s2_guild_raids/, '진행·종료 회차는 변경하지 않는다');
 assert.match(raidSchema, /last_contributed_at >= p_now - interval '7 days'/, '활동 길드원 7일 기준');
 assert.match(raidSchema, /active_member_count integer not null/, 'HP 산정 근거 스냅샷');

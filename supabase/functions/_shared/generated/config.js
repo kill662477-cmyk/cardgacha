@@ -465,7 +465,10 @@ export const GUILD_RULES = {
     resultDurationSeconds: 30 * 60,
     maxAttempts: 3,
     // 월드보스 실측(시도당 약 1,000만 딜 × 인당 3회)에 목표 참여율 0.7 을 곱한 값.
-    hpPerActiveMember: 63_000_000,
+    // 2026-08-05: 6,300만에서 50% 하향. 그날 21:00 회차에서 9개 길드가 전부 실패했고
+    // 최고 진행도가 72.8% 였다. 08-01 회차(인당 2,100만)는 참여 길드 전부 격파했으므로
+    // 3,150만은 그 사이 지점이다.
+    hpPerActiveMember: 31_500_000,
     activeWindowDays: 7,
     successPoints: 50_000,
     failurePoints: 15_000,

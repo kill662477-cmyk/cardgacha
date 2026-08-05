@@ -24,29 +24,31 @@ export const WORLD_BOSS_RULES = {
     //   30분 회차 실측 딜이 268~273억 구간이라 250/280/280/280 계단이 된다.
     // 2026-08-04: 08-03 결과는 250억 격파 / 280억 실패 / 280억 실패 / 280억 격파(280.2억)로
     //   280억이 경계선이었다. 앞 회차를 낮춰 250/260/270/280억 10억 계단으로 만든다.
+    // 2026-08-05: 08-04 는 네 회차 전부 격파(초과딜 0.03~0.08억)로 계단이 맞았다.
+    //   성장분만 따라가도록 전 회차 +5억(255/265/275/285억).
     // difficultyMultiplier는 표시용이며 17시 대비 HP 비율과 맞춘다.
     17: {
       title: '신호 요새', name: 'SIGNAL//BASTION', difficultyMultiplier: 1,
-      maxHp: 25_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.05,
+      maxHp: 25_500_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.05,
       image: 'assets/renewal/worldboss/boss-17-signal-bastion.webp',
     },
     18: {
-      title: '중계 포식자', name: 'RELAY//DEVOURER', difficultyMultiplier: 1.04,
-      maxHp: 26_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.10,
+      title: '중계 포식자', name: 'RELAY//DEVOURER', difficultyMultiplier: 1.039,
+      maxHp: 26_500_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.10,
       image: 'assets/renewal/worldboss/boss-18-relay-devourer.webp',
     },
     19: {
-      title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 1.08,
-      maxHp: 27_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.15,
+      title: '공허 수확자', name: 'VOID//HARVESTER', difficultyMultiplier: 1.078,
+      maxHp: 27_500_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.15,
       image: 'assets/renewal/worldboss/boss-19-void-harvester.webp',
     },
     20: {
-      title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 1.12,
-      maxHp: 28_000_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.20,
+      title: '악의 특이점', name: 'MALICE//SINGULARITY', difficultyMultiplier: 1.118,
+      maxHp: 28_500_000_000, serverDamagePerSecond: 0, clearDestructionGuardRate: 0.20,
       image: 'assets/renewal/worldboss/boss-20-malice-singularity.webp',
     },
   },
-  maxHp: 25_000_000_000,
+  maxHp: 25_500_000_000,
   battleDuration: 60,
   maxAttempts: 3,
   eventDurationSeconds: 60 * 60,

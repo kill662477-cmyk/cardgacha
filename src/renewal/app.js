@@ -67,7 +67,7 @@ import { createFxController } from './fx-controller.js?v=202607271325';
 import { cardVisualChrome, enhancementLabel, enhancementStarMarkup, rarityMarkMarkup } from './card-visual.js?v=202607271325';
 import { applyLocalTestProfile } from './local-test-profile.js';
 import { bonusDropText, grantBonusDrop, rollAdventureBonusDrop } from './bonus-loot.js';
-import { createLiveTickerController } from './live-ticker-controller.js?v=202607271015';
+import { createLiveTickerController } from './live-ticker-controller.js?v=202608052100';
 import {
   applyMailboxRead,
   mailboxBadgeText,

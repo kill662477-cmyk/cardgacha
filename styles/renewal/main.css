@@ -97,6 +97,9 @@ button[aria-busy="true"]::after {
 .api-link-button:focus-visible { outline: 0; box-shadow: var(--focus-ring); }
 .api-link-button svg { width: 15px; height: 15px; }
 
+/* 운영 비활성 구간에 컨트롤러가 hidden 을 건다. 아래 display 선언들과
+   모바일/가로 미디어쿼리의 display: grid 를 모두 이겨야 하므로 !important 가 필요하다. */
+.live-ticker[hidden] { display: none !important; }
 .live-ticker { --ticker-accent: var(--acid); display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; min-width: 0; height: 38px; overflow: hidden; border: 1px solid #354139; background: linear-gradient(90deg, #07100c, #0d1510 54%, #070b09); box-shadow: inset 0 0 18px rgba(200,245,46,.035); }
 .live-ticker-label { align-self: stretch; display: inline-flex; align-items: center; gap: 5px; padding: 0 9px; background: var(--ticker-accent); color: #071008; font-size: 9px; font-weight: 950; white-space: nowrap; }
 .live-ticker-label svg { width: 12px; height: 12px; }

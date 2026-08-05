@@ -127,6 +127,12 @@ export const SUPPORT_PACK = {
   },
 };
 
+// 전광판(실시간 획득 알림) 노출 스위치.
+// false 면 상단 전광판을 통째로 감추고 서버 폴링도 하지 않는다.
+// 켜고 끄는 건 이 값 하나뿐이다. 자동 복귀 없음 — 운영자가 직접 true 로 되돌린다.
+// 2026-08-05 비활성화(운영 요청). 토요일에 다시 켤 예정.
+export const LIVE_TICKER_ENABLED = false;
+
 export const ADVANCED_SUPPORT_PACK = {
   name: '고급 작전 지원 보급팩', price: 1500, tenPrice: 15000,
   tenGuarantee: false,

@@ -1,4 +1,4 @@
-import { RARITIES } from './config.js';
+import { RARITIES, LIVE_TICKER_ENABLED } from './config.js';
 import { escapeHtml } from './html.js';
 
 export const LIVE_EVENT_TTL_MS = 10 * 60 * 1000;
@@ -93,6 +93,14 @@ export function createLiveTickerController({ runtime = null, getNickname = () =>
 
   function render() {
     if (!ticker || !track) return;
+    // LIVE_TICKER_ENABLED 가 false 면 전광판을 통째로 감춘다.
+    if (!LIVE_TICKER_ENABLED) {
+      ticker.hidden = true;
+      ticker.dataset.state = 'off';
+      track.textContent = '';
+      return;
+    }
+    ticker.hidden = false;
     events = mergeLiveEvents(events, now());
     if (!events.length) {
       ticker.dataset.state = 'idle';
@@ -146,6 +154,8 @@ export function createLiveTickerController({ runtime = null, getNickname = () =>
   }
 
   async function poll() {
+    // 꺼져 있으면 서버를 두드리지 않는다.
+    if (!LIVE_TICKER_ENABLED) return;
     if (!runtime?.getLiveEvents) return;
     try {
       const latest = await runtime.getLiveEvents();
@@ -156,6 +166,8 @@ export function createLiveTickerController({ runtime = null, getNickname = () =>
 
   async function start() {
     render();
+    // 꺼져 있으면 폴링 타이머도 걸지 않는다.
+    if (!LIVE_TICKER_ENABLED) return;
     await poll();
     // Realtime concurrent-connection cap is only 500 even on Pro, and world boss already
     // holds a realtime channel per active tab during raid windows. Keep the (non-essential)

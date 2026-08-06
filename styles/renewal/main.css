@@ -1146,7 +1146,7 @@ button[aria-busy="true"]::after {
 @keyframes ladder-winner { to { transform: translateY(-3px) scale(1.04); filter: brightness(1.25); } }
 
 /* 투기장(비동기 PvP) */
-.arena-shell { display: grid; grid-template-rows: auto auto auto auto minmax(60px, 1fr); gap: 10px; width: min(100%, 820px); height: 100%; min-height: 0; padding: 4px; overflow-y: auto; }
+.arena-shell { display: grid; grid-template-rows: auto auto auto auto auto minmax(60px, 1fr); gap: 10px; width: min(100%, 820px); height: 100%; min-height: 0; padding: 4px; overflow-y: auto; }
 .arena-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); background: linear-gradient(120deg, #0d1510, #080b09); }
 .arena-tier { display: flex; align-items: center; gap: 9px; padding: 6px 12px 6px 8px; border: 1px solid var(--line); background: #0b100d; }
 .arena-tier-copy { display: grid; gap: 2px; }
@@ -1174,6 +1174,25 @@ button[aria-busy="true"]::after {
 .arena-guide ol b { color: var(--acid); }
 .arena-guide p { margin: 2px 0 0; color: var(--dim); font-size: 10px; line-height: 1.5; }
 .arena-guide p b { color: var(--ink); }
+/* 전투 연출. 서버가 낸 피해 비율로 양쪽 체력바를 깎는다. */
+.arena-battle { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--line); background: linear-gradient(120deg, #0b100d, #0d1510 50%, #0b100d); }
+.arena-battle-side { display: grid; gap: 6px; min-width: 0; }
+.arena-battle-side header { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; min-width: 0; }
+.arena-battle-side header b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.arena-battle-side header small { color: var(--dim); font-size: 10px; font-variant-numeric: tabular-nums; }
+.arena-battle-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
+.arena-battle-card { display: block; overflow: hidden; aspect-ratio: 3 / 4; border: 1px solid var(--rarity, var(--line)); background: #080b09; }
+.arena-battle-card img { width: 100%; height: 100%; object-fit: cover; }
+.arena-battle-card.empty { opacity: .3; }
+.arena-battle-bar { height: 7px; overflow: hidden; border: 1px solid var(--line); background: #080b09; }
+.arena-battle-bar i { display: block; width: 100%; height: 100%; background: var(--acid); transition: width 1.4s cubic-bezier(.22,.61,.36,1); }
+.arena-battle-side[data-side="foe"] .arena-battle-bar i { background: #ef7c8d; }
+.arena-battle-vs { padding: 0 6px; color: var(--dim); font-size: 15px; font-weight: 700; letter-spacing: .08em; }
+.arena-battle[data-outcome="win"] { border-color: var(--acid); }
+.arena-battle[data-outcome="win"] .arena-battle-vs { color: var(--acid); }
+.arena-battle[data-outcome="lose"] { border-color: #d0576b; }
+.arena-battle[data-outcome="lose"] .arena-battle-vs { color: #ef7c8d; }
+@media (prefers-reduced-motion: reduce) { .arena-battle-bar i { transition: none; } }
 .arena-last-match { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 46px; padding: 10px; border: 1px solid var(--line); background: #0d120f; color: var(--dim); font-size: 11px; }
 .arena-last-match[data-outcome] { color: var(--ink); }
 .arena-last-match[data-outcome="win"] { border-color: var(--acid); }

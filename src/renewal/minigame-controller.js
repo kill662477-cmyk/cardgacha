@@ -56,6 +56,9 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     'arenaShell', 'arenaTier', 'arenaRating', 'arenaRankLabel', 'arenaRankingButton',
     'arenaAttempts', 'arenaAttackRecord', 'arenaDefendRecord', 'arenaLastMatch',
     'arenaRecentList', 'arenaRankingDialog', 'arenaRankingList',
+    'arenaBattle', 'arenaBattleVs', 'arenaBattleMeName', 'arenaBattleMeRating',
+    'arenaBattleMeCards', 'arenaBattleMeBar', 'arenaBattleFoeName', 'arenaBattleFoeRating',
+    'arenaBattleFoeCards', 'arenaBattleFoeBar',
   ].map((id) => [id, document.getElementById(id)]));
 
   let selectedGame = 'memory';
@@ -74,6 +77,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   let arenaState = null;
   let arenaLoading = false;
   let arenaLastResult = null;
+  let arenaBattleTimers = [];
   let result = null;
   let sequence = 0;
 
@@ -430,6 +434,61 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     renderArenaRanking();
   }
 
+  // 전투 연출. 서버가 낸 수치로 양쪽 체력바를 깎는다.
+  // 클라이언트가 전투를 다시 계산하면 방어자의 도감·길드 보너스를 몰라
+  // 서버 판정과 어긋난 장면이 나오므로 재계산하지 않는다.
+  function clearArenaBattleTimers() {
+    arenaBattleTimers.forEach((id) => window.clearTimeout(id));
+    arenaBattleTimers = [];
+  }
+
+  function arenaBattleCards(formation) {
+    const ids = Array.isArray(formation) ? formation : [];
+    return ids.map((cardId) => {
+      const card = cards.find((entry) => entry.id === cardId);
+      if (!card) return '<i class="arena-battle-card empty"></i>';
+      return `<i class="arena-battle-card" style="--rarity:${RARITIES[card.rarity]?.color ?? '#89939b'}">`
+        + `<img src="${imagePath(card)}" alt="" loading="lazy" decoding="async"></i>`;
+    }).join('');
+  }
+
+  function playArenaBattle(result) {
+    const battle = result?.battle;
+    if (!battle || !elements.arenaBattle) return;
+    clearArenaBattleTimers();
+    elements.arenaBattle.hidden = false;
+    elements.arenaBattle.removeAttribute('data-outcome');
+    elements.arenaBattleVs.textContent = 'VS';
+
+    elements.arenaBattleMeName.textContent = getState().nickname || '나';
+    elements.arenaBattleFoeName.textContent = battle.opponent ?? '상대';
+    elements.arenaBattleMeRating.textContent = number.format(result.ratingBefore ?? 0);
+    elements.arenaBattleFoeRating.textContent = number.format(result.opponentRatingBefore ?? 0);
+    elements.arenaBattleMeCards.innerHTML = arenaBattleCards(battle.attackerFormation);
+    elements.arenaBattleFoeCards.innerHTML = arenaBattleCards(battle.defenderFormation);
+
+    // 내 체력바는 "상대가 나에게 넣은 피해"만큼 줄어든다. 그 반대도 같다.
+    const meLeft = Math.max(0, 1 - Number(battle.defenderSide?.damageRatio ?? 0));
+    const foeLeft = Math.max(0, 1 - Number(battle.attackerSide?.damageRatio ?? 0));
+    elements.arenaBattleMeBar.style.transition = 'none';
+    elements.arenaBattleFoeBar.style.transition = 'none';
+    elements.arenaBattleMeBar.style.width = '100%';
+    elements.arenaBattleFoeBar.style.width = '100%';
+
+    arenaBattleTimers.push(window.setTimeout(() => {
+      elements.arenaBattleMeBar.style.transition = '';
+      elements.arenaBattleFoeBar.style.transition = '';
+      elements.arenaBattleMeBar.style.width = `${(meLeft * 100).toFixed(1)}%`;
+      elements.arenaBattleFoeBar.style.width = `${(foeLeft * 100).toFixed(1)}%`;
+    }, 60));
+
+    // 바가 다 깎인 뒤 승패를 띄운다. 결과가 먼저 뜨면 연출이 의미가 없다.
+    arenaBattleTimers.push(window.setTimeout(() => {
+      elements.arenaBattle.dataset.outcome = result.won ? 'win' : 'lose';
+      elements.arenaBattleVs.textContent = result.won ? 'WIN' : 'LOSE';
+    }, 1500));
+  }
+
   async function loadArenaState({ silent = false } = {}) {
     if (!serverCommands?.getArenaState || arenaLoading) return;
     arenaLoading = true;
@@ -463,6 +522,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     }
     arenaLastResult = response?.result ?? null;
     if (arenaLastResult) {
+      playArenaBattle(arenaLastResult);
       const delta = Number(arenaLastResult.ratingDelta ?? 0);
       showToast(`${arenaLastResult.won ? '승리' : '패배'} · ${delta >= 0 ? '+' : ''}${number.format(delta)} 점`);
     }
@@ -983,6 +1043,10 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     render();
     if (selectedGame === 'lotto') void loadLottoState();
     if (selectedGame === 'arena') void loadArenaState();
+    else {
+      clearArenaBattleTimers();
+      if (elements.arenaBattle) elements.arenaBattle.hidden = true;
+    }
   });
   elements.miniGameMode.addEventListener('click', (event) => {
     const button = event.target.closest('[data-mini-mode]');

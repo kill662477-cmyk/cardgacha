@@ -661,6 +661,19 @@
               </ol>
               <p>상대는 접속 중이 아니어도 됩니다. 상대의 <b>현재 편성</b>이 자동으로 방어에 나섭니다. 내가 방어를 당해도 레이팅이 오르내립니다.</p>
             </section>
+            <section class="arena-battle" id="arenaBattle" hidden>
+              <div class="arena-battle-side" data-side="me">
+                <header><b id="arenaBattleMeName">나</b><small id="arenaBattleMeRating">-</small></header>
+                <div class="arena-battle-cards" id="arenaBattleMeCards"></div>
+                <div class="arena-battle-bar"><i id="arenaBattleMeBar"></i></div>
+              </div>
+              <div class="arena-battle-vs" id="arenaBattleVs">VS</div>
+              <div class="arena-battle-side" data-side="foe">
+                <header><b id="arenaBattleFoeName">상대</b><small id="arenaBattleFoeRating">-</small></header>
+                <div class="arena-battle-cards" id="arenaBattleFoeCards"></div>
+                <div class="arena-battle-bar"><i id="arenaBattleFoeBar"></i></div>
+              </div>
+            </section>
             <section class="arena-last-match" id="arenaLastMatch">아직 전투 기록이 없습니다</section>
             <section class="arena-recent">
               <header><span>RECENT</span><strong>최근 전적</strong></header>
@@ -1010,6 +1023,6 @@
   </dialog>
 
   <script src="runtime-config.js?v=202607290915"></script>
-  <script type="module" src="src/renewal/app.js?v=202608061100"></script>
+  <script type="module" src="src/renewal/app.js?v=202608061200"></script>
 </body>
 </html>

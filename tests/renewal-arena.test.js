@@ -189,6 +189,24 @@ assert.throws(() => resolveArenaMatch({ attacker: strong.slice(0, 4), defender: 
 assert.throws(() => resolveArenaMatch({ attacker: strong, defender: weak.slice(0, 3) }));
 assert.equal(GAME_RULES.formationSize, 5);
 
+// --- 전투 연출 배선 ---
+// 연출은 서버가 낸 수치로만 그려야 한다. 클라이언트가 다시 계산하면 방어자의
+// 도감·길드 보너스를 몰라 서버 판정과 어긋난 장면이 나온다.
+const controllerSource = await readFile(new URL('../src/renewal/minigame-controller.js', import.meta.url), 'utf8');
+assert.match(controllerSource, /function playArenaBattle\(result\)/, '전투 연출 함수가 있어야 한다');
+assert.match(controllerSource, /result\?\.battle/, '연출은 서버가 준 battle 을 써야 한다');
+assert.doesNotMatch(controllerSource, /resolveArenaMatch/, '클라이언트가 전투를 다시 계산하면 안 된다');
+// 내 체력은 상대가 넣은 피해만큼 줄어야 한다. 좌우가 뒤집히면 이겨도 내 바가 비어 보인다.
+assert.match(controllerSource, /1 - Number\(battle\.defenderSide\?\.damageRatio/, '내 바는 상대 피해로 깎여야 한다');
+assert.match(controllerSource, /1 - Number\(battle\.attackerSide\?\.damageRatio/, '상대 바는 내 피해로 깎여야 한다');
+// 승패를 먼저 띄우면 연출이 의미가 없다.
+assert.match(controllerSource, /dataset\.outcome = result\.won/, '승패 표시가 있어야 한다');
+assert.match(controllerSource, /clearArenaBattleTimers/, '탭을 옮기면 연출 타이머를 정리해야 한다');
+
+const routerSource = await readFile(new URL('../src/renewal/server-command-router.js', import.meta.url), 'utf8');
+assert.match(routerSource, /p_attacker_side: resolved\.attacker/, '라우터가 연출 수치를 넘겨야 한다');
+assert.match(routerSource, /p_defender_side: resolved\.defender/, '라우터가 연출 수치를 넘겨야 한다');
+
 // --- 운영 수치 ---
 assert.equal(ARENA_RULES.attemptsPerHour, 3);
 assert.equal(ARENA_RULES.energyCost, 5);

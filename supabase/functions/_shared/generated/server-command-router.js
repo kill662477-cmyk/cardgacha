@@ -356,6 +356,10 @@ export function createServerCommandRouter(options) {
           p_attacker_won: resolved.attackerWon,
           p_reason: resolved.reason,
           p_idempotency_key: command.commandId,
+          // 연출용 수치. 클라이언트가 다시 계산하면 방어자의 도감·길드 보너스를 몰라
+          // 서버 판정과 어긋난 장면이 나오므로 여기서 낸 값을 그대로 넘긴다.
+          p_attacker_side: resolved.attacker ?? null,
+          p_defender_side: resolved.defender ?? null,
         });
       }
 

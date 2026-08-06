@@ -237,6 +237,28 @@ assert.match(
   '투기장 진입 시 보상 모드로 되돌려야 한다',
 );
 
+// 회귀: 로또 화면 밑에 투기장 정보(레이팅·전적·승패 가이드)가 그대로 딸려 나왔다.
+// renderLotto 가 숨길 패널을 직접 나열하면서 나중에 추가된 arenaShell 을 빼먹은 탓이다.
+// 각 render 함수는 전부 숨기는 헬퍼를 부른 뒤 자기 것만 켜야 한다.
+assert.match(controllerSource, /function hideMiniGamePanels\(\)/, '패널을 한 번에 숨기는 헬퍼가 있어야 한다');
+const panelList = controllerSource.match(/const MINI_GAME_PANELS = \[([^\]]+)\]/)?.[1] ?? '';
+for (const panel of ['miniGameEmpty', 'memoryBoard', 'sumTenShell', 'ladderShell', 'lottoShell', 'arenaShell', 'miniGameResult']) {
+  assert.ok(panelList.includes(`'${panel}'`), `${panel} 이 숨김 목록에 있어야 한다`);
+}
+// 어떤 render 함수도 패널을 손으로 숨기면 안 된다. 하나라도 빠지면 화면이 겹친다.
+for (const render of ['renderReady', 'renderResult', 'renderMemory', 'renderSumTen', 'renderLadder', 'renderArena', 'renderLotto']) {
+  const body = controllerSource.slice(controllerSource.indexOf(`function ${render}(`));
+  // 함수 첫 문단(빈 줄 전까지)만 본다. 패널 표시는 전부 여기서 끝나야 한다.
+  const head = body.split(/\r?\n\s*\r?\n/)[0];
+  assert.ok(head.includes('hideMiniGamePanels();'), `${render} 가 헬퍼를 불러야 한다`);
+  assert.doesNotMatch(head, /elements\.\w+\.hidden = true;/, `${render} 가 패널을 손으로 숨기면 안 된다`);
+}
+
+// 좌측 메뉴 라벨도 회차 상한을 따라가야 한다. 1~18 회차가 남아 있는 동안 6/16 으로
+// 고정돼 있으면 헤더와 숫자판이 서로 다른 값을 말한다.
+assert.match(controllerSource, /elements\.lottoNavRange\.textContent = lottoRange/, '메뉴 라벨이 회차 상한을 따라야 한다');
+assert.match(indexSource, /id="lottoNavRange"/, '메뉴 라벨에 id 가 있어야 한다');
+
 // --- 운영 수치 ---
 assert.equal(ARENA_RULES.attemptsPerHour, 3);
 assert.equal(ARENA_RULES.energyCost, 5);

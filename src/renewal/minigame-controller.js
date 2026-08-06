@@ -49,7 +49,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     'miniGameBest', 'miniGamePlays', 'miniGameRemaining', 'miniGameStartButton',
     'miniGameStopButton', 'miniGameRewardCost', 'ladderShell', 'ladderChoiceCopy', 'ladderBoard',
     'miniGameDailyBlock', 'miniGameControlEyebrow', 'miniGameControlTitle', 'miniGameRecords',
-    'lottoShell', 'lottoRoundLabel', 'lottoSaleStatus', 'lottoNumberGrid',
+    'lottoNavRange', 'lottoShell', 'lottoRoundLabel', 'lottoSaleStatus', 'lottoNumberGrid',
     'lottoSelectedNumbers', 'lottoMyTicket', 'lottoLatestResult', 'lottoWinnerList',
     'lottoControl', 'lottoFirstPool', 'lottoSecondPool', 'lottoEntryStatus',
     'lottoAutoPickButton', 'lottoHistoryButton', 'lottoHistoryDialog', 'lottoHistoryList',
@@ -106,8 +106,12 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     const ladder = selectedGame === 'ladder';
     const lotto = selectedGame === 'lotto';
     const arena = selectedGame === 'arena';
+    // 회차마다 상한이 다르다. 좌측 메뉴 라벨도 같은 값을 써야 6/18 회차가 남아 있는
+    // 동안 헤더와 숫자가 어긋나지 않는다.
+    const lottoRange = `LOTTO 6/${currentLottoMaxNumber()}`;
+    if (elements.lottoNavRange) elements.lottoNavRange.textContent = lottoRange;
     elements.miniGameEyebrow.textContent = arena ? 'ARENA PVP'
-      : memory ? 'MEMORY SIGNAL' : ladder ? 'LUCKY LADDER' : lotto ? `LOTTO 6/${currentLottoMaxNumber()}` : 'CAMMON APPLE';
+      : memory ? 'MEMORY SIGNAL' : ladder ? 'LUCKY LADDER' : lotto ? lottoRange : 'CAMMON APPLE';
     elements.miniGameTitle.textContent = arena ? '투기장'
       : memory ? '카드 짝맞추기' : ladder ? MINI_GAME_RULES.ladder.label : lotto ? '시그널 로또' : MINI_GAME_RULES.sumTen.label;
     elements.miniGameTimer.textContent = arena ? arenaResetLabel()
@@ -194,17 +198,21 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     });
   }
 
+  // 미니게임 화면은 한 번에 하나만 떠야 한다. 각 render 함수가 숨길 목록을 따로 적으면
+  // 새 게임을 추가할 때 한 곳을 빼먹고 두 화면이 겹쳐 보인다(로또 밑에 투기장이 딸려 나왔다).
+  // 전부 숨긴 뒤 자기 것만 켜는 방식으로 통일한다.
+  const MINI_GAME_PANELS = ['miniGameEmpty', 'memoryBoard', 'sumTenShell', 'ladderShell', 'lottoShell', 'arenaShell', 'miniGameResult'];
+
+  function hideMiniGamePanels() {
+    MINI_GAME_PANELS.forEach((name) => { if (elements[name]) elements[name].hidden = true; });
+  }
+
   function renderReady() {
     const rules = MINI_GAME_RULES.memory[memoryDifficulty];
     const ladder = selectedGame === 'ladder';
     const previewCard = cards.find((card) => card.id === 'kimyunhwan-2') ?? cards.find((card) => card.rarity !== 'EX');
+    hideMiniGamePanels();
     elements.miniGameEmpty.hidden = false;
-    elements.memoryBoard.hidden = true;
-    elements.sumTenShell.hidden = true;
-    elements.ladderShell.hidden = true;
-    elements.lottoShell.hidden = true;
-    elements.arenaShell.hidden = true;
-    elements.miniGameResult.hidden = true;
     elements.miniGameReadyVisual.dataset.game = selectedGame;
     elements.miniGameReadyVisual.innerHTML = selectedGame === 'memory'
       ? `<div class="memory-ready-preview"><i class="back"></i><figure style="--rarity:${RARITIES[previewCard.rarity].color}"><img src="${imagePath(previewCard)}" alt=""><b>${previewCard.rarity}</b></figure><figure style="--rarity:${RARITIES[previewCard.rarity].color}"><img src="${imagePath(previewCard)}" alt=""><b>${previewCard.rarity}</b></figure></div>`
@@ -231,12 +239,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   }
 
   function renderResult() {
-    elements.miniGameEmpty.hidden = true;
-    elements.memoryBoard.hidden = true;
-    elements.sumTenShell.hidden = true;
-    elements.ladderShell.hidden = true;
-    elements.lottoShell.hidden = true;
-    elements.arenaShell.hidden = true;
+    hideMiniGamePanels();
     elements.miniGameResult.hidden = false;
     elements.miniGameResultTitle.textContent = result.title;
     elements.miniGameResultScore.textContent = result.scoreLabel ?? `${number.format(result.score)} SCORE`;
@@ -244,12 +247,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   }
 
   function renderMemory() {
-    elements.miniGameEmpty.hidden = true;
-    elements.miniGameResult.hidden = true;
-    elements.sumTenShell.hidden = true;
-    elements.ladderShell.hidden = true;
-    elements.lottoShell.hidden = true;
-    elements.arenaShell.hidden = true;
+    hideMiniGamePanels();
     elements.memoryBoard.hidden = false;
     elements.memoryBoard.style.setProperty('--columns', session.columns);
     elements.memoryBoard.innerHTML = session.deck.map((card, index) => {
@@ -269,12 +267,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   }
 
   function renderSumTen() {
-    elements.miniGameEmpty.hidden = true;
-    elements.miniGameResult.hidden = true;
-    elements.memoryBoard.hidden = true;
-    elements.ladderShell.hidden = true;
-    elements.lottoShell.hidden = true;
-    elements.arenaShell.hidden = true;
+    hideMiniGamePanels();
     elements.sumTenShell.hidden = false;
     elements.sumTenBoard.style.setProperty('--columns', session.columns);
     elements.sumTenBoard.style.setProperty('--rows', session.rows);
@@ -292,12 +285,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   }
 
   function renderLadder() {
-    elements.miniGameEmpty.hidden = true;
-    elements.miniGameResult.hidden = true;
-    elements.memoryBoard.hidden = true;
-    elements.sumTenShell.hidden = true;
-    elements.lottoShell.hidden = true;
-    elements.arenaShell.hidden = true;
+    hideMiniGamePanels();
     elements.ladderShell.hidden = false;
     const columns = MINI_GAME_RULES.ladder.columns;
     const choosing = session.phase === 'choose';
@@ -387,12 +375,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   }
 
   function renderArena() {
-    elements.miniGameEmpty.hidden = true;
-    elements.memoryBoard.hidden = true;
-    elements.sumTenShell.hidden = true;
-    elements.ladderShell.hidden = true;
-    elements.lottoShell.hidden = true;
-    elements.miniGameResult.hidden = true;
+    hideMiniGamePanels();
     elements.arenaShell.hidden = false;
 
     const rating = Number(arenaState?.rating ?? ARENA_RULES.startRating);
@@ -598,11 +581,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   }
 
   function renderLotto() {
-    elements.miniGameEmpty.hidden = true;
-    elements.miniGameResult.hidden = true;
-    elements.memoryBoard.hidden = true;
-    elements.sumTenShell.hidden = true;
-    elements.ladderShell.hidden = true;
+    hideMiniGamePanels();
     elements.lottoShell.hidden = false;
 
     const round = lottoState?.round;

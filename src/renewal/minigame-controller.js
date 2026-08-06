@@ -144,7 +144,8 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     elements.miniGamePlays.textContent = `${number.format(daily.plays)}회`;
     elements.miniGameRemaining.textContent = `${number.format(remaining)} P`;
     elements.miniGameDifficulty.hidden = selectedGame !== 'memory' || lotto;
-    elements.miniGameMode.hidden = lotto || ladder;
+    // 투기장에는 연습이 없다. 레이팅이 실제로 움직이는 판이라 연습 개념이 성립하지 않는다.
+    elements.miniGameMode.hidden = lotto || ladder || arena;
     elements.miniGameStartButton.hidden = busy;
     elements.miniGameStopButton.hidden = !busy;
     elements.miniGameStopButton.disabled = ladderResolving;
@@ -1039,6 +1040,8 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     const button = event.target.closest('[data-minigame-select]');
     if (!button || session) return;
     selectedGame = button.dataset.minigameSelect;
+    // 연습 모드로 두고 투기장에 들어오면 토글이 숨겨진 채 값만 남는다. 보상으로 되돌린다.
+    if (selectedGame === 'arena') selectedMode = 'reward';
     result = null;
     render();
     if (selectedGame === 'lotto') void loadLottoState();

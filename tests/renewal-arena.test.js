@@ -207,6 +207,20 @@ const routerSource = await readFile(new URL('../src/renewal/server-command-route
 assert.match(routerSource, /p_attacker_side: resolved\.attacker/, '라우터가 연출 수치를 넘겨야 한다');
 assert.match(routerSource, /p_defender_side: resolved\.defender/, '라우터가 연출 수치를 넘겨야 한다');
 
+// 회귀: 투기장에 연습 모드가 노출돼 연습으로 돌려도 레이팅이 올랐다.
+// miniGameMode.hidden 을 두 곳에서 쓰는데 뒤쪽 줄이 앞줄을 덮어써서 토글이 되살아났다.
+const modeToggleLines = controllerSource.match(/elements\.miniGameMode\.hidden = [^;]+;/g) ?? [];
+assert.ok(modeToggleLines.length > 0, '모드 토글 제어를 찾지 못했다');
+for (const line of modeToggleLines) {
+  assert.match(line, /arena/, `투기장에서 연습 토글이 되살아난다: ${line}`);
+}
+// 연습 상태로 투기장에 들어와도 값이 남지 않도록 보상으로 되돌려야 한다.
+assert.match(
+  controllerSource,
+  /if \(selectedGame === 'arena'\) selectedMode = 'reward';/,
+  '투기장 진입 시 보상 모드로 되돌려야 한다',
+);
+
 // --- 운영 수치 ---
 assert.equal(ARENA_RULES.attemptsPerHour, 3);
 assert.equal(ARENA_RULES.energyCost, 5);

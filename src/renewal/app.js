@@ -3306,6 +3306,10 @@ async function init() {
           executeServerCommand(GAME_COMMAND_TYPES.PLAY_LADDER, payload)
         )),
         getLottoState: () => gameService.getLottoState(),
+        getArenaState: () => gameService.getArenaState(),
+        arenaFight: () => runUiOperation('arenaFight', elements.miniGameStartButton, () => (
+          executeServerCommand(GAME_COMMAND_TYPES.ARENA_FIGHT, {})
+        )),
         buyLottoTicket: (payload) => runUiOperation('buyLottoTicket', elements.miniGameStartButton, () => (
           executeServerCommand(GAME_COMMAND_TYPES.BUY_LOTTO_TICKET, payload)
         )),

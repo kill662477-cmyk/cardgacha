@@ -1,4 +1,5 @@
-import { RARITIES } from './config.js';
+import { ARENA_RULES, RARITIES } from './config.js';
+import { arenaTierFor } from './arena.js';
 import {
   MINI_GAME_RULES,
   applySumSelection,
@@ -52,6 +53,9 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     'lottoSelectedNumbers', 'lottoMyTicket', 'lottoLatestResult', 'lottoWinnerList',
     'lottoControl', 'lottoFirstPool', 'lottoSecondPool', 'lottoEntryStatus',
     'lottoAutoPickButton', 'lottoHistoryButton', 'lottoHistoryDialog', 'lottoHistoryList',
+    'arenaShell', 'arenaTier', 'arenaRating', 'arenaRankLabel', 'arenaRankingButton',
+    'arenaAttempts', 'arenaAttackRecord', 'arenaDefendRecord', 'arenaLastMatch',
+    'arenaRecentList', 'arenaRankingDialog', 'arenaRankingList',
   ].map((id) => [id, document.getElementById(id)]));
 
   let selectedGame = 'memory';
@@ -67,6 +71,9 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   let lottoLoading = false;
   let lottoNextSyncAt = 0;
   let lottoRequestSequence = 0;
+  let arenaState = null;
+  let arenaLoading = false;
+  let arenaLastResult = null;
   let result = null;
   let sequence = 0;
 
@@ -88,11 +95,20 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     const memory = selectedGame === 'memory';
     const ladder = selectedGame === 'ladder';
     const lotto = selectedGame === 'lotto';
-    elements.miniGameEyebrow.textContent = memory ? 'MEMORY SIGNAL' : ladder ? 'LUCKY LADDER' : lotto ? `LOTTO 6/${currentLottoMaxNumber()}` : 'CAMMON APPLE';
-    elements.miniGameTitle.textContent = memory ? '카드 짝맞추기' : ladder ? MINI_GAME_RULES.ladder.label : lotto ? '시그널 로또' : MINI_GAME_RULES.sumTen.label;
-    elements.miniGameTimer.textContent = lotto ? lottoCountdownLabel() : ladder ? '--:--' : formatTime(session ? sessionRemaining() : (
-      memory ? MINI_GAME_RULES.memory[memoryDifficulty].timeLimit : MINI_GAME_RULES.sumTen.timeLimit
-    ));
+    const arena = selectedGame === 'arena';
+    elements.miniGameEyebrow.textContent = arena ? 'ARENA PVP'
+      : memory ? 'MEMORY SIGNAL' : ladder ? 'LUCKY LADDER' : lotto ? `LOTTO 6/${currentLottoMaxNumber()}` : 'CAMMON APPLE';
+    elements.miniGameTitle.textContent = arena ? '투기장'
+      : memory ? '카드 짝맞추기' : ladder ? MINI_GAME_RULES.ladder.label : lotto ? '시그널 로또' : MINI_GAME_RULES.sumTen.label;
+    elements.miniGameTimer.textContent = arena ? arenaResetLabel()
+      : lotto ? lottoCountdownLabel() : ladder ? '--:--' : formatTime(session ? sessionRemaining() : (
+        memory ? MINI_GAME_RULES.memory[memoryDifficulty].timeLimit : MINI_GAME_RULES.sumTen.timeLimit
+      ));
+    if (arena) {
+      elements.miniGameScore.textContent = arenaState
+        ? `${number.format(arenaRemainingAttempts())} / ${number.format(arenaState.attemptsPerHour ?? ARENA_RULES.attemptsPerHour)}`
+        : '-';
+    }
     const lottoTickets = currentLottoTickets();
     elements.miniGameScore.textContent = lotto
       ? lottoTickets.length >= LOTTO_RULES.ticketLimit
@@ -105,17 +121,18 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     const daily = progress();
     const ladder = selectedGame === 'ladder';
     const lotto = selectedGame === 'lotto';
+    const arena = selectedGame === 'arena';
     const earned = daily.pointsEarnedByGame[selectedGame] ?? 0;
     const remaining = Math.max(0, MINI_GAME_RULES.dailyPointCapPerGame - earned);
     const busy = Boolean(session);
     const energyCost = ladder ? MINI_GAME_RULES.ladder.energyCost : MINI_GAME_RULES.energyCost;
-    elements.miniGameDailyBlock.hidden = lotto;
-    elements.miniGameMode.hidden = lotto;
-    elements.miniGameRecords.hidden = lotto;
+    elements.miniGameDailyBlock.hidden = lotto || arena;
+    elements.miniGameMode.hidden = lotto || arena;
+    elements.miniGameRecords.hidden = lotto || arena;
     elements.lottoControl.hidden = !lotto;
-    elements.miniGameControlEyebrow.textContent = lotto ? 'DRAW CONTROL' : 'PLAY MODE';
-    elements.miniGameControlTitle.textContent = lotto ? '구매 정보' : '작전 설정';
-    if (!lotto) {
+    elements.miniGameControlEyebrow.textContent = arena ? 'LADDER CONTROL' : lotto ? 'DRAW CONTROL' : 'PLAY MODE';
+    elements.miniGameControlTitle.textContent = arena ? '투기장 정보' : lotto ? '구매 정보' : '작전 설정';
+    if (!lotto && !arena) {
       elements.miniGameDaily.textContent = `${number.format(earned)} / ${number.format(MINI_GAME_RULES.dailyPointCapPerGame)} P`;
       elements.miniGameDailyBar.style.width = `${Math.min(100, earned / MINI_GAME_RULES.dailyPointCapPerGame * 100)}%`;
     }
@@ -128,7 +145,9 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     elements.miniGameStopButton.hidden = !busy;
     elements.miniGameStopButton.disabled = ladderResolving;
     const lottoTicketCount = currentLottoTickets().length;
-    elements.miniGameStartButton.disabled = lotto
+    elements.miniGameStartButton.disabled = arena
+      ? arenaLoading || arenaRemainingAttempts() <= 0 || getState().actionEnergy < ARENA_RULES.energyCost
+      : lotto
       ? lottoLoading
         || !lottoState?.round?.saleOpen
         || lottoTicketCount >= LOTTO_RULES.ticketLimit
@@ -136,12 +155,19 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
         || getState().points < LOTTO_RULES.ticketCost
       : (ladder || selectedMode === 'reward')
       && (getState().actionEnergy < energyCost || remaining <= 0);
-    elements.miniGameStartButton.querySelector('span').textContent = lotto
+    elements.miniGameStartButton.querySelector('span').textContent = arena
+      ? arenaRemainingAttempts() <= 0
+        ? '이번 시간 횟수 소진'
+        : `상대 찾기 · 행동력 ${ARENA_RULES.energyCost}`
+      : lotto
       ? lottoTicketCount >= LOTTO_RULES.ticketLimit
         ? '이번 회차 2장 구매 완료'
         : `${lottoTicketCount + 1}번째 티켓 1,000P 구매`
       : ladder ? '출발점 선택하기' : selectedMode === 'reward' ? '보상 게임 시작' : '연습 시작';
-    elements.miniGameStartButton.dataset.mode = lotto || ladder ? 'reward' : selectedMode;
+    elements.miniGameStartButton.dataset.mode = lotto || ladder || arena ? 'reward' : selectedMode;
+    elements.miniGameRewardCost.textContent = arena
+      ? `-${ARENA_RULES.energyCost} 행동력`
+      : `-${energyCost} 행동력`;
     elements.miniGameRewardCost.textContent = `-${energyCost} 행동력`;
     elements.miniGamePicker.querySelectorAll('[data-minigame-select]').forEach((button) => {
       button.classList.toggle('active', button.dataset.minigameSelect === selectedGame);
@@ -166,6 +192,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     elements.sumTenShell.hidden = true;
     elements.ladderShell.hidden = true;
     elements.lottoShell.hidden = true;
+    elements.arenaShell.hidden = true;
     elements.miniGameResult.hidden = true;
     elements.miniGameReadyVisual.dataset.game = selectedGame;
     elements.miniGameReadyVisual.innerHTML = selectedGame === 'memory'
@@ -198,6 +225,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     elements.sumTenShell.hidden = true;
     elements.ladderShell.hidden = true;
     elements.lottoShell.hidden = true;
+    elements.arenaShell.hidden = true;
     elements.miniGameResult.hidden = false;
     elements.miniGameResultTitle.textContent = result.title;
     elements.miniGameResultScore.textContent = result.scoreLabel ?? `${number.format(result.score)} SCORE`;
@@ -210,6 +238,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     elements.sumTenShell.hidden = true;
     elements.ladderShell.hidden = true;
     elements.lottoShell.hidden = true;
+    elements.arenaShell.hidden = true;
     elements.memoryBoard.hidden = false;
     elements.memoryBoard.style.setProperty('--columns', session.columns);
     elements.memoryBoard.innerHTML = session.deck.map((card, index) => {
@@ -234,6 +263,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     elements.memoryBoard.hidden = true;
     elements.ladderShell.hidden = true;
     elements.lottoShell.hidden = true;
+    elements.arenaShell.hidden = true;
     elements.sumTenShell.hidden = false;
     elements.sumTenBoard.style.setProperty('--columns', session.columns);
     elements.sumTenBoard.style.setProperty('--rows', session.rows);
@@ -256,6 +286,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     elements.memoryBoard.hidden = true;
     elements.sumTenShell.hidden = true;
     elements.lottoShell.hidden = true;
+    elements.arenaShell.hidden = true;
     elements.ladderShell.hidden = false;
     const columns = MINI_GAME_RULES.ladder.columns;
     const choosing = session.phase === 'choose';
@@ -300,6 +331,141 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   function currentLottoMaxNumber() {
     const value = Number(lottoState?.round?.maxNumber);
     return Number.isInteger(value) && value >= LOTTO_RULES.picks ? value : LOTTO_RULES.maximumNumber;
+  }
+
+
+  // ── 투기장 ─────────────────────────────────────────────
+  function arenaRemainingAttempts() {
+    const limit = Number(arenaState?.attemptsPerHour ?? ARENA_RULES.attemptsPerHour);
+    const used = Number(arenaState?.attemptsUsed ?? 0);
+    return Math.max(0, limit - used);
+  }
+
+  // 다음 정각까지 남은 시간. 미사용 횟수는 이월되지 않는다.
+  function arenaResetLabel() {
+    const resetAt = Number(arenaState?.attemptsResetAt);
+    if (!Number.isFinite(resetAt)) return '--:--';
+    return formatTime((resetAt - clock.now()) / 1000);
+  }
+
+  function arenaReasonLabel(reason) {
+    if (reason === 'knockout') return '제압';
+    if (reason === 'speed') return '속도 우위';
+    if (reason === 'survival') return '생존 우위';
+    if (reason === 'damage') return '피해량 우위';
+    return '';
+  }
+
+  function renderArenaRanking() {
+    if (!elements.arenaRankingList) return;
+    const rows = Array.isArray(arenaState?.ranking) ? arenaState.ranking : [];
+    if (!rows.length) {
+      elements.arenaRankingList.innerHTML = '<p>아직 랭킹이 없습니다.</p>';
+      return;
+    }
+    elements.arenaRankingList.innerHTML = rows.map((row) => {
+      const tier = arenaTierFor(row.rating, row.rank);
+      return `<article class="arena-rank-row${row.isSelf ? ' self' : ''}">
+        <b>${number.format(row.rank)}</b>
+        <span class="arena-rank-name">${escapeHtml(String(row.nickname ?? '-'))}</span>
+        <span class="arena-rank-tier">${escapeHtml(tier.label)}</span>
+        <strong>${number.format(row.rating)}</strong>
+        <small>${number.format(row.wins ?? 0)}승 ${number.format(row.losses ?? 0)}패</small>
+      </article>`;
+    }).join('');
+  }
+
+  function renderArena() {
+    elements.miniGameEmpty.hidden = true;
+    elements.memoryBoard.hidden = true;
+    elements.sumTenShell.hidden = true;
+    elements.ladderShell.hidden = true;
+    elements.lottoShell.hidden = true;
+    elements.miniGameResult.hidden = true;
+    elements.arenaShell.hidden = false;
+
+    const rating = Number(arenaState?.rating ?? ARENA_RULES.startRating);
+    const rank = Number.isFinite(Number(arenaState?.rank)) ? Number(arenaState.rank) : null;
+    const tier = arenaTierFor(rating, rank);
+    elements.arenaTier.innerHTML = `<span>${escapeHtml(tier.key.toUpperCase())}</span><strong>${escapeHtml(tier.label)}</strong>`;
+    elements.arenaRating.textContent = number.format(rating);
+    elements.arenaRankLabel.textContent = rank
+      ? `${number.format(rank)}위 / ${number.format(arenaState?.population ?? 0)}명`
+      : '순위 집계 전';
+    elements.arenaAttempts.textContent = arenaState
+      ? `${number.format(arenaRemainingAttempts())}회 · ${arenaResetLabel()} 후 충전`
+      : '-';
+    elements.arenaAttackRecord.textContent = arenaState
+      ? `${number.format(arenaState.wins ?? 0)}승 ${number.format(arenaState.losses ?? 0)}패`
+      : '-';
+    elements.arenaDefendRecord.textContent = arenaState
+      ? `${number.format(arenaState.defendWins ?? 0)}승 ${number.format(arenaState.defendLosses ?? 0)}패`
+      : '-';
+
+    if (arenaLastResult) {
+      const delta = Number(arenaLastResult.ratingDelta ?? 0);
+      elements.arenaLastMatch.dataset.outcome = arenaLastResult.won ? 'win' : 'lose';
+      elements.arenaLastMatch.innerHTML = `<b>${arenaLastResult.won ? '승리' : '패배'}</b>`
+        + `<span>${escapeHtml(arenaReasonLabel(arenaLastResult.reason))}</span>`
+        + `<strong>${delta >= 0 ? '+' : ''}${number.format(delta)}</strong>`;
+    } else {
+      elements.arenaLastMatch.removeAttribute('data-outcome');
+      elements.arenaLastMatch.textContent = '아직 전투 기록이 없습니다';
+    }
+
+    const recent = Array.isArray(arenaState?.recentMatches) ? arenaState.recentMatches : [];
+    elements.arenaRecentList.innerHTML = recent.length
+      ? recent.slice(0, 10).map((row) => {
+        const delta = Number(row.ratingDelta ?? 0);
+        return `<article class="arena-recent-row" data-outcome="${row.won ? 'win' : 'lose'}">
+          <span class="arena-recent-role">${row.role === 'attack' ? '공격' : '방어'}</span>
+          <b>${escapeHtml(String(row.opponent ?? '-'))}</b>
+          <span>${row.won ? '승' : '패'}</span>
+          <strong>${delta >= 0 ? '+' : ''}${number.format(delta)}</strong>
+        </article>`;
+      }).join('')
+      : '기록 대기 중';
+
+    renderArenaRanking();
+  }
+
+  async function loadArenaState({ silent = false } = {}) {
+    if (!serverCommands?.getArenaState || arenaLoading) return;
+    arenaLoading = true;
+    if (!silent) render();
+    const response = await serverCommands.getArenaState();
+    arenaLoading = false;
+    if (response?.ok === false) {
+      if (!silent) showToast(response.message ?? '투기장 정보를 불러오지 못했습니다.');
+      render();
+      return;
+    }
+    arenaState = response;
+    render();
+  }
+
+  async function startArenaFight() {
+    if (arenaLoading || !serverCommands?.arenaFight) return;
+    if (arenaRemainingAttempts() <= 0) return showToast('이번 시간대 투기장 횟수를 모두 썼습니다.');
+    if (getState().actionEnergy < ARENA_RULES.energyCost) {
+      return showToast(`행동력 ${ARENA_RULES.energyCost}이 필요합니다.`);
+    }
+    arenaLoading = true;
+    render();
+    const response = await serverCommands.arenaFight();
+    arenaLoading = false;
+    if (response?.ok === false) {
+      showToast(response.message ?? '투기장 전투에 실패했습니다.');
+      // 횟수·행동력이 이미 소모됐을 수 있으니 서버 상태를 다시 읽는다.
+      await loadArenaState({ silent: true });
+      return;
+    }
+    arenaLastResult = response?.result ?? null;
+    if (arenaLastResult) {
+      const delta = Number(arenaLastResult.ratingDelta ?? 0);
+      showToast(`${arenaLastResult.won ? '승리' : '패배'} · ${delta >= 0 ? '+' : ''}${number.format(delta)} 점`);
+    }
+    await loadArenaState({ silent: true });
   }
 
   function renderLotto() {
@@ -375,6 +541,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     renderHeader();
     renderControls();
     if (selectedGame === 'lotto') renderLotto();
+    else if (selectedGame === 'arena') renderArena();
     else if (session?.game === 'memory') renderMemory();
     else if (session?.game === 'sumTen') renderSumTen();
     else if (session?.game === 'ladder') renderLadder();
@@ -456,6 +623,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     const state = getState();
     const daily = progress();
     if (selectedGame === 'lotto') return buyLottoTicket();
+    if (selectedGame === 'arena') return startArenaFight();
     if (selectedGame === 'ladder') {
       if ((daily.pointsEarnedByGame.ladder ?? 0) >= MINI_GAME_RULES.dailyPointCapPerGame) {
         return showToast('오늘 운명의 사다리 보상 한도 도달');
@@ -813,6 +981,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     result = null;
     render();
     if (selectedGame === 'lotto') void loadLottoState();
+    if (selectedGame === 'arena') void loadArenaState();
   });
   elements.miniGameMode.addEventListener('click', (event) => {
     const button = event.target.closest('[data-mini-mode]');
@@ -849,6 +1018,11 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   elements.lottoAutoPickButton.addEventListener('click', autoPickLottoNumbers);
   elements.lottoHistoryButton.addEventListener('click', () => {
     openLottoHistory();
+  });
+  elements.arenaRankingButton?.addEventListener('click', () => {
+    renderArenaRanking();
+    elements.arenaRankingDialog?.showModal();
+    window.lucide?.createIcons();
   });
 
   progress();

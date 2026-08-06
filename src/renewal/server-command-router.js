@@ -1,6 +1,7 @@
 import { ADVENTURE_RULES, BALANCE_VERSION, STAGES } from './config.js';
 import { computeFormationPower, simulateBattle } from './battle.js';
 import { applyGuildBuff, calculateCollectionBonuses } from './collection.js';
+import { resolveArenaMatch } from './arena.js';
 import { simulateWorldBossAttempt } from './worldboss.js';
 import {
   GAME_COMMAND_TYPES,
@@ -318,6 +319,44 @@ export function createServerCommandRouter(options) {
         };
         rpcArgs.p_mode = mode;
         return await gateway.rpc(rpc, rpcArgs);
+      }
+
+      // 투기장은 3단계다. 서버가 상대를 고르고(개시) -> Edge 가 양쪽 편성으로 전투를
+      // 재현하고 -> 결과를 확정한다. 상대 선정과 자원 소모를 개시 단계에 묶어야
+      // 클라이언트가 마음에 드는 상대가 나올 때까지 다시 굴리는 것을 막을 수 있다.
+      if (command.type === GAME_COMMAND_TYPES.ARENA_FIGHT) {
+        const opened = await gateway.rpc('gacha_s2_arena_open_match', {
+          p_user_id: userId,
+          p_expected_revision: command.expectedRevision,
+          p_idempotency_key: command.commandId,
+        });
+        // 개시 단계가 거절하면(행동력·횟수·상대 없음) 그 응답을 그대로 돌려준다.
+        if (!opened?.ok) return opened;
+
+        const [attackerContext, defenderContext] = await Promise.all([
+          verifiedContext(userId, command),
+          verifiedContext(opened.defenderId, command).catch(() => null),
+        ]);
+
+        // 방어자 편성이 깨져 있으면(카드 삭제 등) 재현이 불가능하다.
+        // 공격자에게 자원만 태우고 끝내지 않도록 공격 승리로 확정한다.
+        const resolved = defenderContext
+          ? resolveArenaMatch({
+            attacker: attackerContext.formation,
+            defender: defenderContext.formation,
+            attackerBonuses: attackerContext.bonuses,
+            defenderBonuses: defenderContext.bonuses,
+            matchId: opened.matchId,
+          })
+          : { attackerWon: true, reason: 'knockout' };
+
+        return await gateway.rpc('gacha_s2_arena_commit_match', {
+          p_user_id: userId,
+          p_match_id: opened.matchId,
+          p_attacker_won: resolved.attackerWon,
+          p_reason: resolved.reason,
+          p_idempotency_key: command.commandId,
+        });
       }
 
       if (command.type === GAME_COMMAND_TYPES.CLAIM_ADVENTURE_REWARDS) {

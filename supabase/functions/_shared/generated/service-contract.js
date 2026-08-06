@@ -32,6 +32,9 @@ export const GAME_COMMAND_TYPES = Object.freeze({
   FINISH_MINIGAME: 'finishMinigame',
   PLAY_LADDER: 'playLadder',
   BUY_LOTTO_TICKET: 'buyLottoTicket',
+  // 투기장(비동기 PvP). 페이로드가 없다 - 상대 선정은 서버가 한다.
+  // 클라이언트가 상대를 고르게 두면 마음에 들 때까지 다시 굴릴 수 있다.
+  ARENA_FIGHT: 'arenaFight',
   ATTACK_WORLD_BOSS: 'attackWorldBoss',
   CLAIM_WORLD_BOSS_REWARD: 'claimWorldBossReward',
   // 길드(PDB-16 M1)
@@ -104,6 +107,7 @@ function validatePayload(type, payload, issues) {
     [GAME_COMMAND_TYPES.FINISH_MINIGAME]: ['runId', 'inputLog', 'score'],
     [GAME_COMMAND_TYPES.PLAY_LADDER]: ['lane'],
     [GAME_COMMAND_TYPES.BUY_LOTTO_TICKET]: ['numbers'],
+    [GAME_COMMAND_TYPES.ARENA_FIGHT]: [],
     [GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS]: ['eventId'],
     [GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD]: ['eventId'],
     // 길드(PDB-16). 인자가 없는 명령도 빈 배열로 반드시 선언해야 한다.
@@ -311,6 +315,8 @@ function validatePayload(type, payload, issues) {
       validateString(issues, payload.targetUserId, 'payload.targetUserId', 64);
       if (!['officer', 'member'].includes(payload.role)) addIssue(issues, 'payload.role', 'officer 또는 member 필요');
       break;
+    // 투기장은 페이로드가 없다. 상대 선정이 서버 몫이라 클라이언트가 넘길 값이 없다.
+    case GAME_COMMAND_TYPES.ARENA_FIGHT:
     // 추가 인자가 없는 길드 명령들.
     case GAME_COMMAND_TYPES.DISBAND_GUILD:
     case GAME_COMMAND_TYPES.LEAVE_GUILD:

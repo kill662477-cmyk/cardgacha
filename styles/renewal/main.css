@@ -1145,6 +1145,56 @@ button[aria-busy="true"]::after {
 .ladder-bottom span.winner { border-color: var(--acid); background: #18200c; color: var(--acid); box-shadow: 0 0 18px rgba(200,245,46,.28); animation: ladder-winner .7s ease infinite alternate; }
 @keyframes ladder-winner { to { transform: translateY(-3px) scale(1.04); filter: brightness(1.25); } }
 
+/* 투기장(비동기 PvP) */
+.arena-shell { display: grid; grid-template-rows: auto auto auto auto minmax(60px, 1fr); gap: 10px; width: min(100%, 820px); height: 100%; min-height: 0; padding: 4px; overflow-y: auto; }
+.arena-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); background: linear-gradient(120deg, #0d1510, #080b09); }
+.arena-tier { display: grid; gap: 2px; padding: 6px 12px; border: 1px solid var(--acid); background: rgba(200,245,46,.06); }
+.arena-tier span { color: var(--dim); font-size: 8px; letter-spacing: .12em; }
+.arena-tier strong { color: var(--acid); font-size: 15px; }
+.arena-head-meta { display: grid; gap: 2px; justify-items: end; min-width: 0; }
+.arena-head-meta b { font-size: 22px; font-variant-numeric: tabular-nums; }
+.arena-head-meta small { color: var(--dim); font-size: 10px; }
+.arena-head button { display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 0 12px; border: 1px solid var(--line); background: #0d120f; color: var(--ink); font-size: 11px; cursor: pointer; }
+.arena-head button:hover { border-color: var(--acid); color: var(--acid); }
+.arena-head button svg { width: 14px; height: 14px; }
+.arena-stat-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.arena-stat-row section { display: grid; gap: 3px; padding: 8px 10px; border: 1px solid var(--line); background: #0d120f; }
+.arena-stat-row span { color: var(--dim); font-size: 9px; }
+.arena-stat-row strong { font-size: 12px; font-variant-numeric: tabular-nums; }
+/* 승패 판정이 익숙한 방식이 아니라 화면에 규칙을 그대로 적어둔다. */
+.arena-guide { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--line); background: #0b100d; }
+.arena-guide header { display: flex; align-items: center; gap: 6px; color: var(--acid); font-size: 11px; }
+.arena-guide header svg { width: 13px; height: 13px; }
+.arena-guide ol { display: grid; gap: 3px; margin: 0; padding-left: 18px; color: var(--ink); font-size: 11px; line-height: 1.5; }
+.arena-guide ol b { color: var(--acid); }
+.arena-guide p { margin: 2px 0 0; color: var(--dim); font-size: 10px; line-height: 1.5; }
+.arena-guide p b { color: var(--ink); }
+.arena-last-match { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 46px; padding: 10px; border: 1px solid var(--line); background: #0d120f; color: var(--dim); font-size: 11px; }
+.arena-last-match[data-outcome] { color: var(--ink); }
+.arena-last-match[data-outcome="win"] { border-color: var(--acid); }
+.arena-last-match[data-outcome="lose"] { border-color: #d0576b; }
+.arena-last-match b { font-size: 15px; }
+.arena-last-match[data-outcome="win"] b, .arena-last-match[data-outcome="win"] strong { color: var(--acid); }
+.arena-last-match[data-outcome="lose"] b, .arena-last-match[data-outcome="lose"] strong { color: #ef7c8d; }
+.arena-last-match strong { font-size: 15px; font-variant-numeric: tabular-nums; }
+.arena-recent { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 6px; min-height: 0; padding: 10px 12px; border: 1px solid var(--line); background: #0b100d; }
+.arena-recent header { display: flex; align-items: baseline; gap: 8px; }
+.arena-recent header span { color: var(--dim); font-size: 8px; letter-spacing: .12em; }
+.arena-recent > div { display: grid; gap: 4px; min-height: 0; overflow-y: auto; color: var(--dim); font-size: 11px; }
+.arena-recent-row { display: grid; grid-template-columns: 38px minmax(0, 1fr) 24px 52px; align-items: center; gap: 6px; padding: 5px 7px; border: 1px solid var(--line); background: #0d120f; font-size: 11px; }
+.arena-recent-row b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); font-weight: 600; }
+.arena-recent-row strong { text-align: right; font-variant-numeric: tabular-nums; }
+.arena-recent-role { color: var(--dim); font-size: 9px; }
+.arena-recent-row[data-outcome="win"] strong { color: var(--acid); }
+.arena-recent-row[data-outcome="lose"] strong { color: #ef7c8d; }
+.arena-ranking-list { display: grid; gap: 4px; max-height: 60vh; overflow-y: auto; }
+.arena-rank-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) 76px 56px 78px; align-items: center; gap: 8px; padding: 7px 9px; border: 1px solid var(--line); background: #0d120f; font-size: 11px; }
+.arena-rank-row.self { border-color: var(--acid); background: rgba(200,245,46,.07); }
+.arena-rank-row b { font-variant-numeric: tabular-nums; }
+.arena-rank-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arena-rank-tier { color: var(--acid); font-size: 10px; }
+.arena-rank-row strong { text-align: right; font-variant-numeric: tabular-nums; }
+.arena-rank-row small { color: var(--dim); text-align: right; font-size: 10px; }
 .lotto-shell { display: grid; grid-template-rows: auto auto auto auto minmax(66px, 1fr); gap: 10px; width: min(100%, 820px); height: 100%; min-height: 0; padding: 4px; overflow-y: auto; }
 .lotto-round-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 13px; border: 1px solid #4b544e; background: rgba(7,11,8,.94); }
 .lotto-round-head span, .lotto-result-grid section > span, .lotto-result-head span, .lotto-winners header span { display: block; color: var(--muted); font-size: 8px; font-weight: 900; letter-spacing: .1em; }

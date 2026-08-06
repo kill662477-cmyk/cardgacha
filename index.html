@@ -571,6 +571,9 @@
           <button type="button" data-minigame-select="lotto">
             <i data-lucide="ticket-check"></i><span>시그널 로또</span><small>LOTTO 6/18</small>
           </button>
+          <button type="button" data-minigame-select="arena">
+            <i data-lucide="swords"></i><span>투기장</span><small>ARENA PVP</small>
+          </button>
         </nav>
         <div class="minigame-daily-block" id="miniGameDailyBlock">
           <span>오늘 획득</span><strong id="miniGameDaily">0 / 3,000 P</strong>
@@ -634,6 +637,36 @@
               <div id="lottoWinnerList">당첨 기록 대기 중</div>
             </section>
           </div>
+          <div class="arena-shell" id="arenaShell" hidden>
+            <header class="arena-head">
+              <div class="arena-tier" id="arenaTier"><span>UNRANKED</span><strong>-</strong></div>
+              <div class="arena-head-meta">
+                <b id="arenaRating">-</b>
+                <small id="arenaRankLabel">등수 확인 중</small>
+              </div>
+              <button id="arenaRankingButton" type="button"><i data-lucide="list-ordered"></i>랭킹</button>
+            </header>
+            <div class="arena-stat-row">
+              <section><span>이번 시간 남은 횟수</span><strong id="arenaAttempts">-</strong></section>
+              <section><span>공격 전적</span><strong id="arenaAttackRecord">-</strong></section>
+              <section><span>방어 전적</span><strong id="arenaDefendRecord">-</strong></section>
+            </div>
+            <section class="arena-guide">
+              <header><i data-lucide="info"></i><b>승패 판정</b></header>
+              <ol>
+                <li>제한시간 안에 <b>상대를 먼저 눕히면</b> 승리</li>
+                <li>둘 다 눕히면 <b>더 빨리</b> 끝낸 쪽</li>
+                <li>둘 다 못 눕히면 <b>더 많이 깎은</b> 쪽</li>
+                <li>그것도 같으면 <b>남은 체력이 많은</b> 쪽</li>
+              </ol>
+              <p>상대는 접속 중이 아니어도 됩니다. 상대의 <b>현재 편성</b>이 자동으로 방어에 나섭니다. 내가 방어를 당해도 레이팅이 오르내립니다.</p>
+            </section>
+            <section class="arena-last-match" id="arenaLastMatch">아직 전투 기록이 없습니다</section>
+            <section class="arena-recent">
+              <header><span>RECENT</span><strong>최근 전적</strong></header>
+              <div id="arenaRecentList">기록 대기 중</div>
+            </section>
+          </div>
           <div class="minigame-result-panel" id="miniGameResult" hidden>
             <span>RESULT</span><h3 id="miniGameResultTitle">작전 완료</h3>
             <strong id="miniGameResultScore">0 SCORE</strong>
@@ -676,6 +709,17 @@
     </main>
   </div>
 
+  <dialog class="lotto-history-dialog arena-ranking-dialog" id="arenaRankingDialog">
+    <form method="dialog" class="lotto-history-shell">
+      <header>
+        <div><span>ARENA LADDER</span><h2>투기장 랭킹 100</h2></div>
+        <button class="icon-button" value="cancel" aria-label="투기장 랭킹 닫기" title="닫기"><i data-lucide="x"></i></button>
+      </header>
+      <div class="arena-ranking-list" id="arenaRankingList">
+        <p>랭킹을 불러오는 중입니다.</p>
+      </div>
+    </form>
+  </dialog>
   <dialog class="lotto-history-dialog" id="lottoHistoryDialog">
     <form method="dialog" class="lotto-history-shell">
       <header>
@@ -966,6 +1010,6 @@
   </dialog>
 
   <script src="runtime-config.js?v=202607290915"></script>
-  <script type="module" src="src/renewal/app.js?v=202608060050"></script>
+  <script type="module" src="src/renewal/app.js?v=202608061200"></script>
 </body>
 </html>

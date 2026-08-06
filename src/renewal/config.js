@@ -416,6 +416,50 @@ export const COLLECTION_RULES = {
   idlePerRaceCompletion: 0.02,
 };
 
+// 투기장(비동기 PvP). 상대 편성을 의사 스테이지로 환산해 기존 전투 엔진으로 판정한다.
+// 실시간 접속이 필요 없고, 공격자·방어자 양쪽 레이팅이 함께 움직인다.
+export const ARENA_RULES = {
+  startRating: 1000,
+  // 하한. 연패해도 무한정 내려가지 않게 막는다(아이언 구간 안).
+  minRating: 800,
+  // ELO 계수. 동급끼리 승패 ±12, 300점 차이면 ±20 안팎.
+  eloK: 24,
+  // 방어자 변동폭 보정. 방어는 본인 의지와 무관하게 하루 수십 번 당하므로
+  // 공격 쪽보다 흔들림을 줄인다.
+  defenderDeltaScale: 0.8,
+  energyCost: 5,
+  // 매 정각 3회 충전. 미사용분은 이월되지 않는다.
+  attemptsPerHour: 3,
+  // 판정 제한시간. 둘 다 상대를 못 눕히면 깎은 비율로 가른다.
+  battleDuration: 60,
+  // 매칭 탐색 폭. 앞에서부터 넓혀가며 상대를 찾는다.
+  matchRatingBands: [100, 200, 400],
+  // 챌린저는 점수 구간이 아니라 그랜드마스터 점수 이상 중 상위 N명이다.
+  challengerSlots: 5,
+  // 주간 정산 후 시작점(1000) 쪽으로 절반 당긴다. 상위권은 유지하되 매주 경쟁이 생긴다.
+  seasonResetDivisor: 2,
+  // minRating 오름차순. 챌린저는 tiers 에 두지 않고 별도 판정한다.
+  tiers: [
+    { key: 'iron', label: '아이언', minRating: 0 },
+    { key: 'bronze', label: '브론즈', minRating: 1100 },
+    { key: 'silver', label: '실버', minRating: 1250 },
+    { key: 'gold', label: '골드', minRating: 1400 },
+    { key: 'platinum', label: '플래티넘', minRating: 1550 },
+    { key: 'emerald', label: '에메랄드', minRating: 1700 },
+    { key: 'diamond', label: '다이아', minRating: 1850 },
+    { key: 'master', label: '마스터', minRating: 2000 },
+    { key: 'grandmaster', label: '그랜드마스터', minRating: 2200 },
+  ],
+  challengerTier: { key: 'challenger', label: '챌린저' },
+  // 주간 보상(월~일 KST). maxRank 가 null 인 항목은 그 주 참여자 전원이 받는다.
+  weeklyRewards: [
+    { maxRank: 3, points: 300_000 },
+    { maxRank: 30, points: 200_000 },
+    { maxRank: 100, points: 100_000 },
+    { maxRank: null, points: 50_000 },
+  ],
+};
+
 export const MINI_GAME_RULES = {
   energyCost: 10,
   dailyPointCapPerGame: 10000,

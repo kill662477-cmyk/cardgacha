@@ -9,6 +9,7 @@ export const SUPABASE_GAME_SERVICE_METHODS = Object.freeze([
   'loadSnapshot',
   'getWorldBossStatus',
   'getLottoState',
+  'getArenaState',
   'getGuildApplicantProfile',
   'getGuildMemberProfile',
   'getPowerRanking',
@@ -242,6 +243,22 @@ export function createSupabaseGameService(options = {}) {
     return response.state;
   }
 
+  async function getArenaState() {
+    const response = await readRequest(
+      { kind: 'arenaState' },
+      'gacha_s2_client_get_arena_state',
+    );
+    if (response.ok === false) return response;
+    if (!response.state || typeof response.state !== 'object') {
+      return createGameError({
+        code: GAME_ERROR_CODES.INTERNAL_ERROR,
+        message: '투기장 정보를 불러오지 못했습니다.',
+        serverTime: clock.now(),
+      });
+    }
+    return response.state;
+  }
+
   async function getGuildApplicantProfile(targetUserId) {
     if (typeof targetUserId !== 'string' || !UUID_PATTERN.test(targetUserId)) {
       return createGameError({
@@ -354,6 +371,7 @@ export function createSupabaseGameService(options = {}) {
     loadSnapshot,
     getWorldBossStatus,
     getLottoState,
+    getArenaState,
     getGuildState,
     getGuildApplicantProfile,
     getGuildMemberProfile,

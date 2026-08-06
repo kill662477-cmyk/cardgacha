@@ -89,9 +89,26 @@ assert.ok(arenaTierBadgeMarkup(null).includes(`arena/${ARENA_RULES.tiers[0].key}
 // --- 레이팅 ---
 assert.equal(arenaExpectedScore(1000, 1000), 0.5, '동점 상대 기대승률은 50%');
 assert.ok(arenaExpectedScore(1400, 1000) > 0.9, '400점 위면 기대승률이 90%를 넘는다');
-// 동급끼리는 승패 변동이 대칭이어야 한다.
+// 지는 쪽 감소폭은 이기는 쪽 상승폭보다 작아야 한다. 연패해도 복귀가 덜 막막해진다.
+assert.equal(ARENA_RULES.lossDeltaScale, 0.85);
 assert.equal(arenaRatingDelta(1000, 1000, true), Math.round(ARENA_RULES.eloK / 2));
-assert.equal(arenaRatingDelta(1000, 1000, false), -Math.round(ARENA_RULES.eloK / 2));
+assert.equal(
+  arenaRatingDelta(1000, 1000, false),
+  -Math.round(ARENA_RULES.eloK / 2 * ARENA_RULES.lossDeltaScale),
+);
+// 어떤 점수 조합에서도 패배폭이 승리폭을 넘으면 안 된다.
+for (const [me, foe] of [[1000, 1000], [1000, 1200], [1200, 1000], [1000, 1400], [1400, 1000], [800, 2400]]) {
+  for (const role of ['attacker', 'defender']) {
+    const up = arenaRatingDelta(me, foe, true, role);
+    const down = Math.abs(arenaRatingDelta(me, foe, false, role));
+    assert.ok(down <= Math.abs(ARENA_RULES.eloK), `${me}vs${foe} ${role} 감소폭이 K 를 넘는다`);
+    // 같은 기대승률에서 재면 감소폭이 상승폭의 보정 비율만큼 작아야 한다.
+    const expected = arenaExpectedScore(me, foe);
+    const roleScale = role === 'defender' ? ARENA_RULES.defenderDeltaScale : 1;
+    assert.equal(down, Math.abs(Math.round(ARENA_RULES.eloK * roleScale * ARENA_RULES.lossDeltaScale * -expected)));
+    assert.equal(up, Math.round(ARENA_RULES.eloK * roleScale * (1 - expected)));
+  }
+}
 // 약한 상대를 이겨도 적게 오르고, 강한 상대를 이기면 많이 오른다.
 assert.ok(
   arenaRatingDelta(1000, 1400, true) > arenaRatingDelta(1400, 1000, true),
@@ -258,6 +275,15 @@ for (const render of ['renderReady', 'renderResult', 'renderMemory', 'renderSumT
 // 고정돼 있으면 헤더와 숫자판이 서로 다른 값을 말한다.
 assert.match(controllerSource, /elements\.lottoNavRange\.textContent = lottoRange/, '메뉴 라벨이 회차 상한을 따라야 한다');
 assert.match(indexSource, /id="lottoNavRange"/, '메뉴 라벨에 id 가 있어야 한다');
+
+// 서버가 같은 보정을 안 쓰면 화면에 뜬 변동값과 실제 반영값이 어긋난다.
+const lossMigration = await readFile(
+  new URL('../supabase/migrations/20260806220432_arena_softer_loss_delta.sql', import.meta.url),
+  'utf8',
+);
+assert.match(lossMigration, /lossDeltaScale/, '서버 설정에 패배 보정이 있어야 한다');
+assert.match(lossMigration, /then 1 else v_loss_scale end/, '공격자 패배에 보정이 걸려야 한다');
+assert.match(lossMigration, /then v_loss_scale else 1 end/, '방어자 패배에 보정이 걸려야 한다');
 
 // --- 운영 수치 ---
 assert.equal(ARENA_RULES.attemptsPerHour, 3);

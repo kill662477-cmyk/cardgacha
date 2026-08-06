@@ -44,10 +44,12 @@ export function arenaExpectedScore(rating, opponentRating) {
 
 // 승패에 따른 레이팅 변동.
 // 방어자는 본인이 고른 판이 아니라 하루에도 수십 번 당하므로 변동폭을 줄여 적용한다.
+// 지는 쪽 감소폭은 이기는 쪽 상승폭보다 작다. 두 보정은 함께 곱해진다.
 export function arenaRatingDelta(rating, opponentRating, won, role = 'attacker') {
   const expected = arenaExpectedScore(rating, opponentRating);
-  const scale = role === 'defender' ? ARENA_RULES.defenderDeltaScale : 1;
-  return Math.round(ARENA_RULES.eloK * scale * ((won ? 1 : 0) - expected));
+  const roleScale = role === 'defender' ? ARENA_RULES.defenderDeltaScale : 1;
+  const outcomeScale = won ? 1 : ARENA_RULES.lossDeltaScale;
+  return Math.round(ARENA_RULES.eloK * roleScale * outcomeScale * ((won ? 1 : 0) - expected));
 }
 
 export function applyArenaRating(rating, opponentRating, won, role = 'attacker') {

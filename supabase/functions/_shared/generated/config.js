@@ -461,6 +461,9 @@ export const ARENA_RULES = {
   // 방어자 변동폭 보정. 방어는 본인 의지와 무관하게 하루 수십 번 당하므로
   // 공격 쪽보다 흔들림을 줄인다.
   defenderDeltaScale: 0.8,
+  // 지는 쪽 감소폭을 이기는 쪽 상승폭보다 작게 둔다. 연패해도 복귀가 덜 막막하다.
+  // 전체 레이팅이 서서히 인플레되는 대신, 월요일 부분 초기화가 이를 되돌린다.
+  lossDeltaScale: 0.85,
   energyCost: 5,
   // 매 정각 3회 충전. 미사용분은 이월되지 않는다.
   attemptsPerHour: 3,

@@ -1175,24 +1175,65 @@ button[aria-busy="true"]::after {
 .arena-guide p { margin: 2px 0 0; color: var(--dim); font-size: 10px; line-height: 1.5; }
 .arena-guide p b { color: var(--ink); }
 /* 전투 연출. 서버가 낸 피해 비율로 양쪽 체력바를 깎는다. */
-.arena-battle { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--line); background: linear-gradient(120deg, #0b100d, #0d1510 50%, #0b100d); }
-.arena-battle-side { display: grid; gap: 6px; min-width: 0; }
-.arena-battle-side header { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; min-width: 0; }
-.arena-battle-side header b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+/* 투기장 전투 연출 모달. 미니게임 패널 안이 아니라 새 창으로 띄운다. */
+.arena-battle-dialog { width: min(560px, 94vw); padding: 0; border: 1px solid var(--line); background: transparent; color: var(--fg); }
+.arena-battle-dialog::backdrop { background: rgba(3, 6, 4, .82); backdrop-filter: blur(3px); }
+.arena-battle-stage { display: grid; gap: 14px; padding: 16px; cursor: pointer; border: 1px solid transparent; background: radial-gradient(120% 80% at 50% 0%, #14201a, #080d0a 70%); transition: border-color .3s ease; }
+.arena-battle-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.arena-battle-head span { font-size: 12px; font-weight: 700; letter-spacing: .22em; color: var(--dim); transition: color .3s ease; }
+.arena-battle-grid { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; }
+.arena-battle-side { display: grid; gap: 8px; min-width: 0; }
+.arena-battle-side header { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.arena-battle-side header div { display: grid; gap: 1px; min-width: 0; }
+.arena-battle-side header b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
 .arena-battle-side header small { color: var(--dim); font-size: 10px; font-variant-numeric: tabular-nums; }
+.arena-battle-side[data-side="foe"] header { flex-direction: row-reverse; text-align: right; }
 .arena-battle-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
-.arena-battle-card { display: block; overflow: hidden; aspect-ratio: 3 / 4; border: 1px solid var(--rarity, var(--line)); background: #080b09; }
+.arena-battle-card { display: block; overflow: hidden; aspect-ratio: 3 / 4; border: 1px solid var(--rarity, var(--line)); background: #080b09; opacity: 0; transform: translateY(10px); }
 .arena-battle-card img { width: 100%; height: 100%; object-fit: cover; }
 .arena-battle-card.empty { opacity: .3; }
-.arena-battle-bar { height: 7px; overflow: hidden; border: 1px solid var(--line); background: #080b09; }
-.arena-battle-bar i { display: block; width: 100%; height: 100%; background: var(--acid); transition: width 1.4s cubic-bezier(.22,.61,.36,1); }
+/* 카드가 한 장씩 올라온다. 다섯 장이 동시에 뜨면 연출이 없는 것과 같다. */
+.arena-battle-cards .arena-battle-card:nth-child(1) { animation: arena-card-in .34s ease forwards .05s; }
+.arena-battle-cards .arena-battle-card:nth-child(2) { animation: arena-card-in .34s ease forwards .14s; }
+.arena-battle-cards .arena-battle-card:nth-child(3) { animation: arena-card-in .34s ease forwards .23s; }
+.arena-battle-cards .arena-battle-card:nth-child(4) { animation: arena-card-in .34s ease forwards .32s; }
+.arena-battle-cards .arena-battle-card:nth-child(5) { animation: arena-card-in .34s ease forwards .41s; }
+@keyframes arena-card-in { to { opacity: 1; transform: none; } }
+.arena-battle-bar { position: relative; height: 14px; overflow: hidden; border: 1px solid var(--line); background: #080b09; }
+.arena-battle-bar i { display: block; width: 100%; height: 100%; background: var(--acid); }
+.arena-battle-bar i[data-state="critical"] { background: #f0b429; }
+.arena-battle-bar i[data-state="down"] { background: #5c1f28; }
+.arena-battle-bar em { position: absolute; inset: 0; display: grid; place-items: center; font-size: 9px; font-style: normal; font-weight: 700; letter-spacing: .06em; color: #040806; font-variant-numeric: tabular-nums; mix-blend-mode: hard-light; }
 .arena-battle-side[data-side="foe"] .arena-battle-bar i { background: #ef7c8d; }
-.arena-battle-vs { padding: 0 6px; color: var(--dim); font-size: 15px; font-weight: 700; letter-spacing: .08em; }
-.arena-battle[data-outcome="win"] { border-color: var(--acid); }
-.arena-battle[data-outcome="win"] .arena-battle-vs { color: var(--acid); }
-.arena-battle[data-outcome="lose"] { border-color: #d0576b; }
-.arena-battle[data-outcome="lose"] .arena-battle-vs { color: #ef7c8d; }
-@media (prefers-reduced-motion: reduce) { .arena-battle-bar i { transition: none; } }
+.arena-battle-side[data-side="foe"] .arena-battle-bar i[data-state="critical"] { background: #f0b429; }
+.arena-battle-vs { display: grid; place-items: center; min-width: 46px; padding: 0 4px; color: var(--dim); font-size: 17px; font-weight: 700; letter-spacing: .06em; }
+.arena-battle-stage[data-phase="engage"] .arena-battle-vs { color: var(--acid); animation: arena-clash .7s ease-in-out infinite; }
+@keyframes arena-clash { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.22); } }
+.arena-battle-result { display: grid; gap: 3px; justify-items: center; min-height: 58px; padding: 8px; border: 1px solid var(--line); background: #060a08; }
+.arena-battle-result b { font-size: 19px; letter-spacing: .1em; }
+.arena-battle-result span { font-size: 11px; color: var(--dim); }
+.arena-battle-result strong { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.arena-battle-skip { margin: 0; text-align: center; font-size: 10px; color: var(--dim); letter-spacing: .04em; }
+.arena-battle-stage[data-phase="win"] { border-color: var(--acid); }
+.arena-battle-stage[data-phase="win"] .arena-battle-head span,
+.arena-battle-stage[data-phase="win"] .arena-battle-vs,
+.arena-battle-stage[data-phase="win"] .arena-battle-result b { color: var(--acid); }
+.arena-battle-stage[data-phase="lose"] { border-color: #d0576b; }
+.arena-battle-stage[data-phase="lose"] .arena-battle-head span,
+.arena-battle-stage[data-phase="lose"] .arena-battle-vs,
+.arena-battle-stage[data-phase="lose"] .arena-battle-result b { color: #ef7c8d; }
+.arena-battle-stage[data-phase="win"] .arena-battle-result,
+.arena-battle-stage[data-phase="lose"] .arena-battle-result { animation: arena-stamp .34s cubic-bezier(.2,1.5,.4,1); }
+@keyframes arena-stamp { from { transform: scale(.86); opacity: .2; } to { transform: none; opacity: 1; } }
+@media (max-width: 520px) {
+  .arena-battle-grid { grid-template-columns: minmax(0, 1fr); }
+  .arena-battle-vs { min-width: 0; padding: 2px 0; }
+  .arena-battle-side[data-side="foe"] header { flex-direction: row; text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arena-battle-card { opacity: 1; transform: none; animation: none !important; }
+  .arena-battle-vs, .arena-battle-result { animation: none !important; }
+}
 .arena-last-match { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 46px; padding: 10px; border: 1px solid var(--line); background: #0d120f; color: var(--dim); font-size: 11px; }
 .arena-last-match[data-outcome] { color: var(--ink); }
 .arena-last-match[data-outcome="win"] { border-color: var(--acid); }

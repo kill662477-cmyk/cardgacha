@@ -661,19 +661,6 @@
               </ol>
               <p>상대는 접속 중이 아니어도 됩니다. 상대의 <b>현재 편성</b>이 자동으로 방어에 나섭니다. 내가 방어를 당해도 레이팅이 오르내립니다.</p>
             </section>
-            <section class="arena-battle" id="arenaBattle" hidden>
-              <div class="arena-battle-side" data-side="me">
-                <header><b id="arenaBattleMeName">나</b><small id="arenaBattleMeRating">-</small></header>
-                <div class="arena-battle-cards" id="arenaBattleMeCards"></div>
-                <div class="arena-battle-bar"><i id="arenaBattleMeBar"></i></div>
-              </div>
-              <div class="arena-battle-vs" id="arenaBattleVs">VS</div>
-              <div class="arena-battle-side" data-side="foe">
-                <header><b id="arenaBattleFoeName">상대</b><small id="arenaBattleFoeRating">-</small></header>
-                <div class="arena-battle-cards" id="arenaBattleFoeCards"></div>
-                <div class="arena-battle-bar"><i id="arenaBattleFoeBar"></i></div>
-              </div>
-            </section>
             <section class="arena-last-match" id="arenaLastMatch">아직 전투 기록이 없습니다</section>
             <section class="arena-recent">
               <header><span>RECENT</span><strong>최근 전적</strong></header>
@@ -722,6 +709,39 @@
     </main>
   </div>
 
+  <dialog class="arena-battle-dialog" id="arenaBattleDialog">
+    <div class="arena-battle-stage" id="arenaBattleStage" data-phase="intro">
+      <header class="arena-battle-head">
+        <span id="arenaBattlePhase">MATCH FOUND</span>
+        <button class="icon-button" type="button" id="arenaBattleClose" aria-label="전투 닫기" title="닫기"><i data-lucide="x"></i></button>
+      </header>
+      <div class="arena-battle-grid">
+        <section class="arena-battle-side" data-side="me">
+          <header>
+            <img class="arena-badge" id="arenaBattleMeBadge" alt="" width="34" height="34">
+            <div><b id="arenaBattleMeName">나</b><small id="arenaBattleMeRating">-</small></div>
+          </header>
+          <div class="arena-battle-cards" id="arenaBattleMeCards"></div>
+          <div class="arena-battle-bar"><i id="arenaBattleMeBar"></i><em id="arenaBattleMeHp">100%</em></div>
+        </section>
+        <div class="arena-battle-vs" id="arenaBattleVs"><b>VS</b></div>
+        <section class="arena-battle-side" data-side="foe">
+          <header>
+            <img class="arena-badge" id="arenaBattleFoeBadge" alt="" width="34" height="34">
+            <div><b id="arenaBattleFoeName">상대</b><small id="arenaBattleFoeRating">-</small></div>
+          </header>
+          <div class="arena-battle-cards" id="arenaBattleFoeCards"></div>
+          <div class="arena-battle-bar"><i id="arenaBattleFoeBar"></i><em id="arenaBattleFoeHp">100%</em></div>
+        </section>
+      </div>
+      <footer class="arena-battle-result" id="arenaBattleResult">
+        <b id="arenaBattleVerdict">-</b>
+        <span id="arenaBattleReason"></span>
+        <strong id="arenaBattleDelta"></strong>
+      </footer>
+      <p class="arena-battle-skip" id="arenaBattleSkip">화면을 누르면 건너뜁니다</p>
+    </div>
+  </dialog>
   <dialog class="lotto-history-dialog arena-ranking-dialog" id="arenaRankingDialog">
     <form method="dialog" class="lotto-history-shell">
       <header>

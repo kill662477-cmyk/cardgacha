@@ -193,6 +193,7 @@ assert.equal(GAME_RULES.formationSize, 5);
 // 연출은 서버가 낸 수치로만 그려야 한다. 클라이언트가 다시 계산하면 방어자의
 // 도감·길드 보너스를 몰라 서버 판정과 어긋난 장면이 나온다.
 const controllerSource = await readFile(new URL('../src/renewal/minigame-controller.js', import.meta.url), 'utf8');
+const indexSource = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 assert.match(controllerSource, /function playArenaBattle\(result\)/, '전투 연출 함수가 있어야 한다');
 assert.match(controllerSource, /result\?\.battle/, '연출은 서버가 준 battle 을 써야 한다');
 assert.doesNotMatch(controllerSource, /resolveArenaMatch/, '클라이언트가 전투를 다시 계산하면 안 된다');
@@ -200,8 +201,23 @@ assert.doesNotMatch(controllerSource, /resolveArenaMatch/, '클라이언트가 �
 assert.match(controllerSource, /1 - Number\(battle\.defenderSide\?\.damageRatio/, '내 바는 상대 피해로 깎여야 한다');
 assert.match(controllerSource, /1 - Number\(battle\.attackerSide\?\.damageRatio/, '상대 바는 내 피해로 깎여야 한다');
 // 승패를 먼저 띄우면 연출이 의미가 없다.
-assert.match(controllerSource, /dataset\.outcome = result\.won/, '승패 표시가 있어야 한다');
+assert.match(controllerSource, /dataset\.phase = result\.won/, '승패 표시가 있어야 한다');
 assert.match(controllerSource, /clearArenaBattleTimers/, '탭을 옮기면 연출 타이머를 정리해야 한다');
+
+// 연출은 미니게임 패널 안이 아니라 모달로 띄운다.
+assert.match(controllerSource, /arenaBattleDialog\.showModal\(\)/, '전투는 모달로 띄워야 한다');
+assert.match(indexSource, /<dialog class="arena-battle-dialog" id="arenaBattleDialog">/, '전투 모달 마크업이 있어야 한다');
+// 인라인 패널이 남아 있으면 같은 내용이 두 곳에 그려진다.
+assert.doesNotMatch(indexSource, /id="arenaBattle"[\s>]/, '인라인 전투 패널은 제거돼야 한다');
+
+// 승패가 뜨기까지 최소 4초는 끌어야 연출로 읽힌다. 1.5초는 결과 통보에 가깝다.
+const timelineSource = controllerSource.match(/ARENA_BATTLE_TIMELINE = Object\.freeze\(\{[\s\S]*?\}\)/)?.[0] ?? '';
+const timelineTotal = [...timelineSource.matchAll(/:\s*(\d+)/g)]
+  .reduce((sum, match) => sum + Number(match[1]), 0);
+assert.ok(timelineTotal >= 4000, `연출 길이가 너무 짧다: ${timelineTotal}ms`);
+
+// ESC 나 닫기로 창을 닫아도 남은 타이머가 계속 돌면 안 된다.
+assert.match(controllerSource, /arenaBattleDialog\?\.addEventListener\('close'/, '모달을 닫으면 타이머를 정리해야 한다');
 
 const routerSource = await readFile(new URL('../src/renewal/server-command-router.js', import.meta.url), 'utf8');
 assert.match(routerSource, /p_attacker_side: resolved\.attacker/, '라우터가 연출 수치를 넘겨야 한다');

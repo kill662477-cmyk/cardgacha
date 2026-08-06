@@ -1,5 +1,5 @@
 import { ARENA_RULES, RARITIES } from './config.js';
-import { arenaTierBadgeMarkup, arenaTierFor } from './arena.js';
+import { arenaTierBadgeMarkup, arenaTierBadgeSrc, arenaTierFor } from './arena.js';
 import {
   MINI_GAME_RULES,
   applySumSelection,
@@ -56,9 +56,13 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     'arenaShell', 'arenaTier', 'arenaRating', 'arenaRankLabel', 'arenaRankingButton',
     'arenaAttempts', 'arenaAttackRecord', 'arenaDefendRecord', 'arenaLastMatch',
     'arenaRecentList', 'arenaRankingDialog', 'arenaRankingList',
-    'arenaBattle', 'arenaBattleVs', 'arenaBattleMeName', 'arenaBattleMeRating',
-    'arenaBattleMeCards', 'arenaBattleMeBar', 'arenaBattleFoeName', 'arenaBattleFoeRating',
-    'arenaBattleFoeCards', 'arenaBattleFoeBar',
+    'arenaBattleDialog', 'arenaBattleStage', 'arenaBattlePhase', 'arenaBattleClose',
+    'arenaBattleVs', 'arenaBattleMeBadge', 'arenaBattleMeName', 'arenaBattleMeRating',
+    'arenaBattleMeCards', 'arenaBattleMeBar', 'arenaBattleMeHp',
+    'arenaBattleFoeBadge', 'arenaBattleFoeName', 'arenaBattleFoeRating',
+    'arenaBattleFoeCards', 'arenaBattleFoeBar', 'arenaBattleFoeHp',
+    'arenaBattleResult', 'arenaBattleVerdict', 'arenaBattleReason', 'arenaBattleDelta',
+    'arenaBattleSkip',
   ].map((id) => [id, document.getElementById(id)]));
 
   let selectedGame = 'memory';
@@ -78,6 +82,8 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   let arenaLoading = false;
   let arenaLastResult = null;
   let arenaBattleTimers = [];
+  let arenaBattleFrames = [];
+  let arenaBattleSkip = null;
   let result = null;
   let sequence = 0;
 
@@ -441,6 +447,8 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   function clearArenaBattleTimers() {
     arenaBattleTimers.forEach((id) => window.clearTimeout(id));
     arenaBattleTimers = [];
+    arenaBattleFrames.forEach((id) => window.cancelAnimationFrame(id));
+    arenaBattleFrames = [];
   }
 
   function arenaBattleCards(formation) {
@@ -453,41 +461,100 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     }).join('');
   }
 
+  // 연출 구간(ms). 승패가 먼저 보이면 볼 이유가 없어지므로 단계를 나눠 뒤에 둔다.
+  const ARENA_BATTLE_TIMELINE = Object.freeze({
+    intro: 1100,    // 양쪽 편성이 올라오는 구간
+    drain: 4200,    // 체력바가 깎이는 구간
+    verdict: 700,   // 바가 멈춘 뒤 승패가 찍히기까지의 뜸
+  });
+
+  // 체력바를 프레임마다 그린다. CSS transition 은 숫자 표기를 같이 움직일 수 없다.
+  function arenaAnimateHp(bar, label, from, to, durationMs) {
+    const startedAt = performance.now();
+    const step = () => {
+      const progress = Math.min(1, (performance.now() - startedAt) / durationMs);
+      // 초반이 빠르고 끝이 느리다. 교전이 잦아드는 느낌.
+      const ratio = from + (to - from) * (1 - (1 - progress) ** 3);
+      bar.style.width = `${(ratio * 100).toFixed(1)}%`;
+      bar.dataset.state = ratio <= 0.001 ? 'down' : ratio < 0.3 ? 'critical' : 'ok';
+      label.textContent = `${Math.round(ratio * 100)}%`;
+      if (progress < 1) arenaBattleFrames.push(window.requestAnimationFrame(step));
+    };
+    arenaBattleFrames.push(window.requestAnimationFrame(step));
+  }
+
+  function finishArenaBattle(result, meLeft, foeLeft) {
+    clearArenaBattleTimers();
+    elements.arenaBattleMeBar.style.width = `${(meLeft * 100).toFixed(1)}%`;
+    elements.arenaBattleFoeBar.style.width = `${(foeLeft * 100).toFixed(1)}%`;
+    elements.arenaBattleMeBar.dataset.state = meLeft <= 0.001 ? 'down' : meLeft < 0.3 ? 'critical' : 'ok';
+    elements.arenaBattleFoeBar.dataset.state = foeLeft <= 0.001 ? 'down' : foeLeft < 0.3 ? 'critical' : 'ok';
+    elements.arenaBattleMeHp.textContent = `${Math.round(meLeft * 100)}%`;
+    elements.arenaBattleFoeHp.textContent = `${Math.round(foeLeft * 100)}%`;
+    elements.arenaBattleStage.dataset.phase = result.won ? 'win' : 'lose';
+    elements.arenaBattlePhase.textContent = result.won ? 'VICTORY' : 'DEFEAT';
+    elements.arenaBattleVs.textContent = result.won ? 'WIN' : 'LOSE';
+    elements.arenaBattleVerdict.textContent = result.won ? '승리' : '패배';
+    elements.arenaBattleReason.textContent = arenaReasonLabel(result.reason);
+    const delta = Number(result.ratingDelta ?? 0);
+    elements.arenaBattleDelta.textContent = `${number.format(result.ratingBefore ?? 0)} → `
+      + `${number.format(result.ratingAfter ?? 0)} (${delta >= 0 ? '+' : ''}${number.format(delta)})`;
+    elements.arenaBattleSkip.textContent = '닫으려면 눌러 주세요';
+    arenaBattleSkip = null;
+  }
+
   function playArenaBattle(result) {
     const battle = result?.battle;
-    if (!battle || !elements.arenaBattle) return;
+    if (!battle || !elements.arenaBattleDialog) return;
     clearArenaBattleTimers();
-    elements.arenaBattle.hidden = false;
-    elements.arenaBattle.removeAttribute('data-outcome');
-    elements.arenaBattleVs.textContent = 'VS';
 
+    const meTier = arenaTierFor(result.ratingBefore ?? ARENA_RULES.startRating);
+    const foeTier = arenaTierFor(result.opponentRatingBefore ?? ARENA_RULES.startRating);
+    elements.arenaBattleMeBadge.src = arenaTierBadgeSrc(meTier);
+    elements.arenaBattleMeBadge.alt = meTier.label;
+    elements.arenaBattleFoeBadge.src = arenaTierBadgeSrc(foeTier);
+    elements.arenaBattleFoeBadge.alt = foeTier.label;
     elements.arenaBattleMeName.textContent = getState().nickname || '나';
     elements.arenaBattleFoeName.textContent = battle.opponent ?? '상대';
-    elements.arenaBattleMeRating.textContent = number.format(result.ratingBefore ?? 0);
-    elements.arenaBattleFoeRating.textContent = number.format(result.opponentRatingBefore ?? 0);
+    elements.arenaBattleMeRating.textContent = `${number.format(result.ratingBefore ?? 0)} · ${meTier.label}`;
+    elements.arenaBattleFoeRating.textContent = `${number.format(result.opponentRatingBefore ?? 0)} · ${foeTier.label}`;
     elements.arenaBattleMeCards.innerHTML = arenaBattleCards(battle.attackerFormation);
     elements.arenaBattleFoeCards.innerHTML = arenaBattleCards(battle.defenderFormation);
 
     // 내 체력바는 "상대가 나에게 넣은 피해"만큼 줄어든다. 그 반대도 같다.
     const meLeft = Math.max(0, 1 - Number(battle.defenderSide?.damageRatio ?? 0));
     const foeLeft = Math.max(0, 1 - Number(battle.attackerSide?.damageRatio ?? 0));
-    elements.arenaBattleMeBar.style.transition = 'none';
-    elements.arenaBattleFoeBar.style.transition = 'none';
+
+    elements.arenaBattleStage.dataset.phase = 'intro';
+    elements.arenaBattlePhase.textContent = 'MATCH FOUND';
+    elements.arenaBattleVs.textContent = 'VS';
+    elements.arenaBattleVerdict.textContent = '';
+    elements.arenaBattleReason.textContent = '';
+    elements.arenaBattleDelta.textContent = '';
+    elements.arenaBattleSkip.textContent = '화면을 누르면 건너뜁니다';
     elements.arenaBattleMeBar.style.width = '100%';
     elements.arenaBattleFoeBar.style.width = '100%';
+    elements.arenaBattleMeBar.dataset.state = 'ok';
+    elements.arenaBattleFoeBar.dataset.state = 'ok';
+    elements.arenaBattleMeHp.textContent = '100%';
+    elements.arenaBattleFoeHp.textContent = '100%';
+    arenaBattleSkip = () => finishArenaBattle(result, meLeft, foeLeft);
+
+    if (!elements.arenaBattleDialog.open) elements.arenaBattleDialog.showModal();
+    window.lucide?.createIcons();
 
     arenaBattleTimers.push(window.setTimeout(() => {
-      elements.arenaBattleMeBar.style.transition = '';
-      elements.arenaBattleFoeBar.style.transition = '';
-      elements.arenaBattleMeBar.style.width = `${(meLeft * 100).toFixed(1)}%`;
-      elements.arenaBattleFoeBar.style.width = `${(foeLeft * 100).toFixed(1)}%`;
-    }, 60));
+      elements.arenaBattleStage.dataset.phase = 'engage';
+      elements.arenaBattlePhase.textContent = 'ENGAGE';
+      elements.arenaBattleVs.textContent = '⚔';
+      arenaAnimateHp(elements.arenaBattleMeBar, elements.arenaBattleMeHp, 1, meLeft, ARENA_BATTLE_TIMELINE.drain);
+      arenaAnimateHp(elements.arenaBattleFoeBar, elements.arenaBattleFoeHp, 1, foeLeft, ARENA_BATTLE_TIMELINE.drain);
+    }, ARENA_BATTLE_TIMELINE.intro));
 
-    // 바가 다 깎인 뒤 승패를 띄운다. 결과가 먼저 뜨면 연출이 의미가 없다.
-    arenaBattleTimers.push(window.setTimeout(() => {
-      elements.arenaBattle.dataset.outcome = result.won ? 'win' : 'lose';
-      elements.arenaBattleVs.textContent = result.won ? 'WIN' : 'LOSE';
-    }, 1500));
+    arenaBattleTimers.push(window.setTimeout(
+      () => finishArenaBattle(result, meLeft, foeLeft),
+      ARENA_BATTLE_TIMELINE.intro + ARENA_BATTLE_TIMELINE.drain + ARENA_BATTLE_TIMELINE.verdict,
+    ));
   }
 
   async function loadArenaState({ silent = false } = {}) {
@@ -1048,7 +1115,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     if (selectedGame === 'arena') void loadArenaState();
     else {
       clearArenaBattleTimers();
-      if (elements.arenaBattle) elements.arenaBattle.hidden = true;
+      if (elements.arenaBattleDialog?.open) elements.arenaBattleDialog.close();
     }
   });
   elements.miniGameMode.addEventListener('click', (event) => {
@@ -1086,6 +1153,21 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   elements.lottoAutoPickButton.addEventListener('click', autoPickLottoNumbers);
   elements.lottoHistoryButton.addEventListener('click', () => {
     openLottoHistory();
+  });
+  // 연출 도중 누르면 결과로 건너뛰고, 결과가 떠 있으면 닫는다.
+  elements.arenaBattleStage?.addEventListener('click', (event) => {
+    if (event.target.closest('#arenaBattleClose')) return;
+    if (arenaBattleSkip) arenaBattleSkip();
+  });
+  elements.arenaBattleClose?.addEventListener('click', () => {
+    clearArenaBattleTimers();
+    arenaBattleSkip = null;
+    elements.arenaBattleDialog?.close();
+  });
+  // ESC 로 닫아도 남은 타이머가 돌면 안 된다.
+  elements.arenaBattleDialog?.addEventListener('close', () => {
+    clearArenaBattleTimers();
+    arenaBattleSkip = null;
   });
   elements.arenaRankingButton?.addEventListener('click', () => {
     renderArenaRanking();

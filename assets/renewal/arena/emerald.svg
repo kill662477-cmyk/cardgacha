@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="에메랄드">
+  <title>에메랄드</title>
+  <defs>
+    <linearGradient id="plate-emerald" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#34c86f"/>
+      <stop offset="1" stop-color="#166f39"/>
+    </linearGradient>
+  </defs>
+  <g style="--core:#34c86f;--edge:#166f39">
+    <path d="M32 3 L57 11 V31 C57 45 46 55 32 61 C18 55 7 45 7 31 V11 Z"
+          fill="url(#plate-emerald)" stroke="#34c86f" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M32 9 L51 15 V31 C51 41.5 42.5 49.5 32 54.5 C21.5 49.5 13 41.5 13 31 V15 Z"
+          fill="#080d0a" opacity=".62"/>
+    <path d="M25 22 H39 L43 28 L32 43 L21 28 Z" fill="var(--edge)" opacity=".92"/>
+    <path d="M21 28 H43 M25 22 L32 43 M39 22 L32 43" stroke="var(--core)" stroke-width="1.4" opacity=".55" fill="none"/>
+  </g>
+</svg>

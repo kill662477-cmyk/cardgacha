@@ -22,6 +22,22 @@ export function arenaTierFor(rating, rank = null) {
   return matched;
 }
 
+
+// 티어 뱃지 이미지. scripts/build-arena-badges.mjs 가 구워 둔 SVG 파일을 가리킨다.
+// 색을 바꾸면 ARENA_RULES 를 고치고 그 스크립트를 다시 돌린다.
+const BADGE_ASSET_VERSION = '202608061130';
+
+export function arenaTierBadgeSrc(tier) {
+  const key = tier?.key ?? ARENA_RULES.tiers[0].key;
+  return `assets/renewal/arena/${key}.svg?v=${BADGE_ASSET_VERSION}`;
+}
+
+export function arenaTierBadgeMarkup(tier, size = 40) {
+  const resolved = tier ?? ARENA_RULES.tiers[0];
+  return `<img class="arena-badge" src="${arenaTierBadgeSrc(resolved)}" alt="${resolved.label}"`
+    + ` width="${size}" height="${size}" loading="lazy" decoding="async">`;
+}
+
 export function arenaExpectedScore(rating, opponentRating) {
   return 1 / (1 + 10 ** ((Number(opponentRating) - Number(rating)) / 400));
 }

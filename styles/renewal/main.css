@@ -1148,9 +1148,14 @@ button[aria-busy="true"]::after {
 /* 투기장(비동기 PvP) */
 .arena-shell { display: grid; grid-template-rows: auto auto auto auto minmax(60px, 1fr); gap: 10px; width: min(100%, 820px); height: 100%; min-height: 0; padding: 4px; overflow-y: auto; }
 .arena-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); background: linear-gradient(120deg, #0d1510, #080b09); }
-.arena-tier { display: grid; gap: 2px; padding: 6px 12px; border: 1px solid var(--acid); background: rgba(200,245,46,.06); }
+.arena-tier { display: flex; align-items: center; gap: 9px; padding: 6px 12px 6px 8px; border: 1px solid var(--line); background: #0b100d; }
+.arena-tier-copy { display: grid; gap: 2px; }
 .arena-tier span { color: var(--dim); font-size: 8px; letter-spacing: .12em; }
-.arena-tier strong { color: var(--acid); font-size: 15px; }
+.arena-tier strong { font-size: 15px; }
+/* 뱃지는 assets/renewal/arena/*.svg 를 가리킨다(scripts/build-arena-badges.mjs 로 생성). */
+.arena-badge { flex: none; display: block; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
+.arena-rank-tier { display: inline-flex; align-items: center; gap: 5px; }
+.arena-rank-tier .arena-badge { filter: none; }
 .arena-head-meta { display: grid; gap: 2px; justify-items: end; min-width: 0; }
 .arena-head-meta b { font-size: 22px; font-variant-numeric: tabular-nums; }
 .arena-head-meta small { color: var(--dim); font-size: 10px; }

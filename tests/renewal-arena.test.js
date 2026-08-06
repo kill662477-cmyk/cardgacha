@@ -6,6 +6,8 @@ import {
   arenaExpectedScore,
   arenaRatingDelta,
   arenaSeasonReset,
+  arenaTierBadgeMarkup,
+  arenaTierBadgeSrc,
   arenaTierFor,
   arenaWeeklyReward,
   formationAsStage,
@@ -49,6 +51,40 @@ assert.equal(
 );
 // 1등이어도 그랜드마스터 점수에 못 미치면 챌린저가 아니다.
 assert.equal(arenaTierFor(gm.minRating - 1, 1).key, 'master');
+
+// --- 티어 뱃지 ---
+// 뱃지는 scripts/build-arena-badges.mjs 가 구운 SVG 파일이다.
+// 색은 설정에서만 오게 한다. 여기가 비면 뱃지가 전부 회색으로 구워진다.
+const badgeDir = new URL('../assets/renewal/arena/', import.meta.url);
+for (const tier of [...ARENA_RULES.tiers, ARENA_RULES.challengerTier]) {
+  assert.match(tier.color, /^#[0-9a-f]{6}$/i, `${tier.label} color 가 없다`);
+  assert.match(tier.accent, /^#[0-9a-f]{6}$/i, `${tier.label} accent 가 없다`);
+
+  // 파일이 실제로 있어야 한다. 없으면 화면에 깨진 이미지가 뜬다.
+  const svg = await readFile(new URL(`${tier.key}.svg`, badgeDir), 'utf8');
+  assert.ok(svg.includes('<svg'), `${tier.key}.svg 가 SVG 가 아니다`);
+  assert.ok(svg.includes(tier.color), `${tier.key}.svg 에 티어 색이 안 구워졌다`);
+  assert.ok(svg.includes(`aria-label="${tier.label}"`), `${tier.key}.svg 에 라벨이 없다`);
+  // gradient id 가 겹치면 한 화면에 여러 뱃지를 그릴 때 색이 서로 덮인다.
+  assert.ok(svg.includes(`plate-${tier.key}`), `${tier.key}.svg gradient id 가 티어별로 갈리지 않는다`);
+
+  const markup = arenaTierBadgeMarkup(tier, 40);
+  assert.ok(markup.startsWith('<img'), `${tier.label} 뱃지는 이미지 태그여야 한다`);
+  assert.ok(markup.includes(`arena/${tier.key}.svg`), `${tier.label} 뱃지가 제 파일을 안 가리킨다`);
+  assert.ok(markup.includes(`alt="${tier.label}"`), `${tier.label} 뱃지에 대체 텍스트가 없다`);
+  assert.match(arenaTierBadgeSrc(tier), /\?v=\d+$/, '캐시 무효화 버전이 없으면 색을 바꿔도 옛 뱃지가 남는다');
+}
+// 티어마다 실루엣이 달라야 작게 봐도 구분된다. 색만 다르면 축소했을 때 전부 같아 보인다.
+const silhouettes = new Set();
+for (const tier of [...ARENA_RULES.tiers, ARENA_RULES.challengerTier]) {
+  const svg = await readFile(new URL(`${tier.key}.svg`, badgeDir), 'utf8');
+  // 방패 틀과 색 정의를 걷어내고 장식만 남겨 비교한다.
+  const ornament = svg.slice(svg.indexOf('opacity=".62"/>')).replace(/#[0-9a-f]{6}/gi, '');
+  assert.ok(!silhouettes.has(ornament), `${tier.label} 장식이 다른 티어와 똑같다`);
+  silhouettes.add(ornament);
+}
+// 인자를 안 주면 최하위 티어로 떨어져야 한다(호출부가 터지지 않게).
+assert.ok(arenaTierBadgeMarkup(null).includes(`arena/${ARENA_RULES.tiers[0].key}.svg`));
 
 // --- 레이팅 ---
 assert.equal(arenaExpectedScore(1000, 1000), 0.5, '동점 상대 기대승률은 50%');

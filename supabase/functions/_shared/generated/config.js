@@ -439,18 +439,20 @@ export const ARENA_RULES = {
   // 주간 정산 후 시작점(1000) 쪽으로 절반 당긴다. 상위권은 유지하되 매주 경쟁이 생긴다.
   seasonResetDivisor: 2,
   // minRating 오름차순. 챌린저는 tiers 에 두지 않고 별도 판정한다.
+  // color/accent 는 티어 뱃지 SVG 가 그대로 쓴다. 배지는 파일이 아니라 인라인 SVG 라
+  // 여기 색만 바꾸면 화면 전체가 따라간다.
   tiers: [
-    { key: 'iron', label: '아이언', minRating: 0 },
-    { key: 'bronze', label: '브론즈', minRating: 1100 },
-    { key: 'silver', label: '실버', minRating: 1250 },
-    { key: 'gold', label: '골드', minRating: 1400 },
-    { key: 'platinum', label: '플래티넘', minRating: 1550 },
-    { key: 'emerald', label: '에메랄드', minRating: 1700 },
-    { key: 'diamond', label: '다이아', minRating: 1850 },
-    { key: 'master', label: '마스터', minRating: 2000 },
-    { key: 'grandmaster', label: '그랜드마스터', minRating: 2200 },
+    { key: 'iron', label: '아이언', minRating: 0, color: '#8b959d', accent: '#5b636a' },
+    { key: 'bronze', label: '브론즈', minRating: 1100, color: '#c1783f', accent: '#7d4a24' },
+    { key: 'silver', label: '실버', minRating: 1250, color: '#c9d4dd', accent: '#7f8b95' },
+    { key: 'gold', label: '골드', minRating: 1400, color: '#f0b429', accent: '#a3760f' },
+    { key: 'platinum', label: '플래티넘', minRating: 1550, color: '#4fd1c5', accent: '#1f7a72' },
+    { key: 'emerald', label: '에메랄드', minRating: 1700, color: '#34c86f', accent: '#166f39' },
+    { key: 'diamond', label: '다이아', minRating: 1850, color: '#5cb3f7', accent: '#1f5f96' },
+    { key: 'master', label: '마스터', minRating: 2000, color: '#b06bf5', accent: '#5f2a94' },
+    { key: 'grandmaster', label: '그랜드마스터', minRating: 2200, color: '#ef4d5e', accent: '#8d1f2c' },
   ],
-  challengerTier: { key: 'challenger', label: '챌린저' },
+  challengerTier: { key: 'challenger', label: '챌린저', color: '#ffd76a', accent: '#38d0e0' },
   // 주간 보상(월~일 KST). maxRank 가 null 인 항목은 그 주 참여자 전원이 받는다.
   weeklyRewards: [
     { maxRank: 3, points: 300_000 },

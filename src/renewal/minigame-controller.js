@@ -1,5 +1,5 @@
 import { ARENA_RULES, RARITIES } from './config.js';
-import { arenaTierFor } from './arena.js';
+import { arenaTierBadgeMarkup, arenaTierFor } from './arena.js';
 import {
   MINI_GAME_RULES,
   applySumSelection,
@@ -368,7 +368,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
       return `<article class="arena-rank-row${row.isSelf ? ' self' : ''}">
         <b>${number.format(row.rank)}</b>
         <span class="arena-rank-name">${escapeHtml(String(row.nickname ?? '-'))}</span>
-        <span class="arena-rank-tier">${escapeHtml(tier.label)}</span>
+        <span class="arena-rank-tier">${arenaTierBadgeMarkup(tier, 20)}${escapeHtml(tier.label)}</span>
         <strong>${number.format(row.rating)}</strong>
         <small>${number.format(row.wins ?? 0)}승 ${number.format(row.losses ?? 0)}패</small>
       </article>`;
@@ -387,7 +387,8 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     const rating = Number(arenaState?.rating ?? ARENA_RULES.startRating);
     const rank = Number.isFinite(Number(arenaState?.rank)) ? Number(arenaState.rank) : null;
     const tier = arenaTierFor(rating, rank);
-    elements.arenaTier.innerHTML = `<span>${escapeHtml(tier.key.toUpperCase())}</span><strong>${escapeHtml(tier.label)}</strong>`;
+    elements.arenaTier.innerHTML = `${arenaTierBadgeMarkup(tier, 44)}`
+      + `<div class="arena-tier-copy"><span>${escapeHtml(tier.key.toUpperCase())}</span><strong>${escapeHtml(tier.label)}</strong></div>`;
     elements.arenaRating.textContent = number.format(rating);
     elements.arenaRankLabel.textContent = rank
       ? `${number.format(rank)}위 / ${number.format(arenaState?.population ?? 0)}명`

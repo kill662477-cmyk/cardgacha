@@ -1,4 +1,4 @@
-import { ARCHETYPES, ENHANCEMENT, GAME_RULES, RARITIES } from './config.js';
+import { ARCHETYPES, CARD_PROFILES, ENHANCEMENT, GAME_RULES, RARITIES } from './config.js';
 
 function hashString(value) {
   let hash = 2166136261;
@@ -20,8 +20,15 @@ function seededRandom(seed) {
   };
 }
 
-function cardVariation(card) {
-  return 0.97 + (hashString(card.id) % 13) / 200;
+// 카드마다 붙는 개성. 예전에는 스칼라 하나(0.97~1.03)를 전 스탯에 곱해서, 같은 등급·특성
+// 이라도 한 장이 다른 장보다 그냥 6% 강한 우열이 됐다. 표시되지 않는 값이라 플레이어는
+// 이유도 알 수 없었다.
+//
+// 이제는 총합 전투력은 거의 같게 두고 배분만 바꾼다. 어떤 카드는 공격이 높고 체력이 낮고,
+// 어떤 카드는 공속이 빠르고, 어떤 카드는 단단하다. 같은 SSS 보스라도 고르는 재미가 생기고
+// 누가 더 세냐는 문제는 사라진다.
+export function cardProfileOf(card) {
+  return CARD_PROFILES[hashString(card.id) % CARD_PROFILES.length];
 }
 
 export function computeCardStats(card, accountBonuses = {}) {
@@ -32,16 +39,19 @@ export function computeCardStats(card, accountBonuses = {}) {
   // nolevel-1: accountLevelMultiplier 제거. 카드 자체(등급 × 강화 × 변동치)만으로 스케일링.
   const base = GAME_RULES.baseCardStats;
   const enhance = ENHANCEMENT.statMultipliers[card.enhancement] ?? 1;
-  const common = rarity.multiplier * enhance * cardVariation(card);
+  const profile = cardProfileOf(card);
+  // scale 은 배분을 바꾸면서 총 전투력이 어긋난 만큼을 되돌리는 보정값이다.
+  // 이게 없으면 공격형이 그냥 더 센 카드가 된다.
+  const common = rarity.multiplier * enhance * profile.scale;
   return {
-    atk: Math.round(base.atk * common * (archetype.atk ?? 1) * (1 + (accountBonuses.attack ?? 0))),
-    hp: Math.round(base.hp * common * (archetype.hp ?? 1) * (1 + (accountBonuses.hp ?? 0))),
-    def: Math.round(base.def * common * (archetype.def ?? 1) * (1 + (accountBonuses.defense ?? 0))),
-    speed: Number((base.speed * (archetype.speed ?? 1)).toFixed(2)),
+    atk: Math.round(base.atk * common * (archetype.atk ?? 1) * profile.atk * (1 + (accountBonuses.attack ?? 0))),
+    hp: Math.round(base.hp * common * (archetype.hp ?? 1) * profile.hp * (1 + (accountBonuses.hp ?? 0))),
+    def: Math.round(base.def * common * (archetype.def ?? 1) * profile.def * (1 + (accountBonuses.defense ?? 0))),
+    speed: Number((base.speed * (archetype.speed ?? 1) * profile.speed).toFixed(2)),
     // accountBonuses.crit 은 증폭 특성의 파티 치명타 오라가 들어오는 자리다.
     // 상한을 두지 않으면 증폭 5장에서 확률이 과하게 올라 딜 편차가 사라진다.
-    crit: Number(Math.min(0.6, base.crit + (archetype.crit ?? 0) + (accountBonuses.crit ?? 0)).toFixed(3)),
-    critDamage: Number((base.critDamage + (archetype.critDamage ?? 0)).toFixed(2)),
+    crit: Number(Math.min(0.6, base.crit + (archetype.crit ?? 0) + profile.crit + (accountBonuses.crit ?? 0)).toFixed(3)),
+    critDamage: Number((base.critDamage + (archetype.critDamage ?? 0) + profile.critDamage).toFixed(2)),
   };
 }
 

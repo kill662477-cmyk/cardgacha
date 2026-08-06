@@ -70,10 +70,10 @@ const isolatedRarityDeck = (rarity, enhancement = 0) => fixedArchetypes.map((arc
   race: 'Z',
 }));
 const zeroStarReach = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'].map((rarity) => reaches(isolatedRarityDeck(rarity)));
-// 범용 3종(속공·강타·연타) 소폭 상향분이 반영된 수치다. 검증 덱 5장 중 3장이 상향
-// 대상이라 실제 혼합 편성보다 효과가 과장돼 나온다. 저·중등급이 1~2 스테이지 늘었고
-// 엔드게임 종착점(SS 30 / SSS 40)은 상향 전과 동일해 벽이 그대로 유지된다.
-assert.deepEqual(zeroStarReach, [5, 7, 10, 10, 14, 20, 22, 30, 40], 'zero-star rarity progression must reflect the SS/SSS rarity retune and the generalist trait buff');
+// 범용 3종(속공·강타·연타) 소폭 상향과 카드 개성 프로필이 함께 반영된 수치다.
+// 검증 덱은 등급마다 특성 5종을 고정해 뽑으므로 어떤 프로필이 걸리느냐에 따라
+// 저등급 한두 칸이 흔들린다. 엔드게임 종착점(SS 30 / SSS 40)은 그대로라 벽은 유지된다.
+assert.deepEqual(zeroStarReach, [4, 6, 10, 10, 14, 20, 22, 30, 40], 'zero-star rarity progression must reflect the SS/SSS rarity retune and the generalist trait buff');
 
 const combatRarities = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
 for (let rarityIndex = 1; rarityIndex < combatRarities.length; rarityIndex += 1) {

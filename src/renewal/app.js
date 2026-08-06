@@ -1,9 +1,9 @@
 import {
-  ADVENTURE_RULES, ARCHETYPES, DISMANTLE_RULES, ENHANCEMENT, GAME_RULES, PACKS, RARITIES, RARITY_ORDER,
+  ADVENTURE_RULES, ARCHETYPES, CARD_PROFILE_DESCRIPTIONS, DISMANTLE_RULES, ENHANCEMENT, GAME_RULES, PACKS, RARITIES, RARITY_ORDER,
   canDismantleSupportItem, supportItemDismantleValue,
   REWARD_RULES, STAGES, ADVANCED_SUPPORT_PACK, SUPPORT_ITEMS, SUPPORT_PACK,
 } from './config.js';
-import { computeCardPower, computeCardStats, computeFormationPower, getRaceSynergy, simulateBattle } from './battle.js';
+import { cardProfileOf, computeCardPower, computeCardStats, computeFormationPower, getRaceSynergy, simulateBattle } from './battle.js';
 import { escapeHtml } from './html.js';
 import {
   advanceAdventureRun,
@@ -1668,7 +1668,7 @@ function renderCollectionSelected(bonuses) {
   elements.collectionSelected.innerHTML = `
     <div class="collection-selected-card card-visual${registered ? '' : ' unregistered'}" data-rarity="${card.rarity}" style="--rarity:${RARITIES[card.rarity].color}"><img class="card-photo" src="${art}" alt="${registered ? card.member : '미등록 카드 뒷면'}">${cardVisualChrome(card, { showEnhancement: registered })}</div>
     <div class="collection-selected-copy" style="--rarity:${RARITIES[card.rarity].color}">
-      <div class="card-copy-marks">${rarityMarkMarkup(card.rarity)}${registered ? enhancementStarMarkup(card.enhancement, { inline: true, rarity: card.rarity }) : ''}</div><h2>${registered ? card.member : '미등록 카드'}</h2><span>${card.race} · ${ARCHETYPES[card.archetype]?.label ?? '전시 전용'}</span>
+      <div class="card-copy-marks">${rarityMarkMarkup(card.rarity)}${registered ? enhancementStarMarkup(card.enhancement, { inline: true, rarity: card.rarity }) : ''}</div><h2>${registered ? card.member : '미등록 카드'}</h2><span>${card.race} · ${ARCHETYPES[card.archetype]?.label ?? '전시 전용'}${stats ? ` · ${cardProfileOf(card).label}` : ''}</span>
       ${stats ? `<dl><div class="power"><dt>전투력</dt><dd>${number.format(power)} <small class="power-breakdown">(기본 ${number.format(basePower)}${power > basePower ? ` + 강화 ${number.format(power - basePower)}` : ''})</small></dd></div><div><dt>공격력</dt><dd>${number.format(stats.atk)}</dd></div><div><dt>체력</dt><dd>${number.format(stats.hp)}</dd></div><div><dt>방어력</dt><dd>${number.format(stats.def)}</dd></div></dl>` : '<dl><div><dt>용도</dt><dd>도감 전시 전용</dd></div></dl>'}
       <div class="registered${registered ? '' : ' missing'}">${registered ? `등록 완료 · 현재 ${copies}장 보유${card.id === state.representativeCardId ? ' · 대표카드' : ''}` : '최초 획득 시 영구 등록'}</div>
     </div>`;
@@ -1685,6 +1685,7 @@ function renderCardDetail(cardId) {
   const representative = state.representativeCardId === card.id;
   const archetype = ARCHETYPES[card.archetype];
   const stats = computeCardStats(card, currentCombatBonuses());
+  const profile = cardProfileOf(card);
   const requiredExp = cardExpRequired(card.enhancement);
   const expPercent = requiredExp === 0 ? 100 : Math.min(100, card.exp / requiredExp * 100);
   const expText = requiredExp === 0 ? 'MAX' : `${number.format(card.exp)} / ${number.format(requiredExp)}`;
@@ -1705,6 +1706,7 @@ function renderCardDetail(cardId) {
       <div><dt>치명타 피해</dt><dd>${(stats.critDamage * 100).toFixed(0)}%</dd></div>
     </dl>
     <section class="card-detail-passive"><span>COMBAT PASSIVE</span><strong>${archetype.label}</strong><p>${ARCHETYPE_DESCRIPTIONS[card.archetype]}</p></section>
+    <section class="card-detail-passive card-detail-profile"><span>STAT PROFILE</span><strong>${profile.label}</strong><p>${CARD_PROFILE_DESCRIPTIONS[profile.key]}</p></section>
     <div class="card-detail-exp"><div><span>다음 강화 경험치</span><b>${expText}</b></div><div class="card-detail-exp-track"><i style="width:${expPercent}%"></i></div></div>`
     : '<p class="card-detail-display-only">EX 등급은 도감 전시 전용입니다. 모험, 월드보스와 전투력 계산에는 참여하지 않습니다.</p>';
 

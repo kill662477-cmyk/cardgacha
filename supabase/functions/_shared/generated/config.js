@@ -19,6 +19,35 @@ export const RARITIES = {
   EX: { multiplier: 0, color: '#f7f7f2', displayOnly: true },
 };
 
+// 카드 개성 프로필. 같은 등급·특성이라도 스탯 배분이 달라 고르는 재미가 생긴다.
+// 총 전투력은 거의 같게 두는 것이 핵심이다. 배분만 다르고 우열은 없어야 한다.
+//
+// key    : 화면 표기용 식별자
+// label  : 카드에 보여줄 이름
+// atk/hp/def/speed : 배수
+// crit/critDamage  : 가산값(확률은 0~1, 배수는 배)
+// scale  : 배분 변경으로 어긋난 총 전투력을 되돌리는 보정. 손으로 정하지 말고
+//          scripts/tune-card-profiles.mjs 로 다시 계산해 넣는다.
+export const CARD_PROFILES = [
+  { key: 'balanced', label: '균형', atk: 1, hp: 1, def: 1, speed: 1, crit: 0, critDamage: 0, scale: 1 },
+  { key: 'power', label: '완력', atk: 1.06, hp: 1.01, def: 1.01, speed: 0.97, crit: 0, critDamage: 0, scale: 0.9752 },
+  { key: 'swift', label: '민첩', atk: 0.96, hp: 0.99, def: 0.99, speed: 1.06, crit: 0, critDamage: 0, scale: 0.9867 },
+  { key: 'precise', label: '정밀', atk: 0.98, hp: 1, def: 1, speed: 1, crit: 0.04, critDamage: 0, scale: 1.0004 },
+  { key: 'fierce', label: '맹공', atk: 0.985, hp: 0.99, def: 0.99, speed: 1, crit: 0, critDamage: 0.12, scale: 1.0046 },
+  { key: 'stout', label: '완강', atk: 0.99, hp: 1.05, def: 1.05, speed: 1, crit: 0, critDamage: 0, scale: 1.0012 },
+];
+
+// 프로필 설명. 카드 상세에 그대로 나간다.
+// 총합이 같다는 점을 분명히 적어야 플레이어가 프로필을 뽑기 운으로 오해하지 않는다.
+export const CARD_PROFILE_DESCRIPTIONS = {
+  balanced: '모든 능력치가 고르게 배분된 표준형입니다.',
+  swift: '공격속도가 빠른 대신 공격력이 낮습니다. 총 화력은 같습니다.',
+  power: '한 방이 무거운 대신 공격속도가 느립니다. 총 화력은 같습니다.',
+  precise: '치명타 확률이 높은 대신 공격력이 낮습니다. 총 화력은 같습니다.',
+  fierce: '치명타 피해가 큰 대신 공격력이 낮습니다. 총 화력은 같습니다.',
+  stout: '체력과 방어력이 높은 대신 화력이 조금 낮습니다.',
+};
+
 export const ARCHETYPES = {
   // 속공/강타/연타는 보스든 잡몹이든 계수가 같은 범용 특성이다. 그런데 광역(잡몹 1.5배)과
   // 보스(보스 2배)가 자기 구간에서 압도적이라, 범용 3종은 65:35 혼합 기준으로도 84~89% 에

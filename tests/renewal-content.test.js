@@ -179,12 +179,18 @@ const collectionBonuses = calculateCollectionBonuses(cards, fullRecords);
 const maxedCards = cards
   .filter((card) => card.rarity !== 'EX' && !['boss', 'area'].includes(card.archetype))
   .map((card) => ({ ...card, enhancement: 9 }));
-const raceDecks = [...new Set(maxedCards.map((card) => card.race))].map((race) => (
-  maxedCards.filter((card) => card.race === race)
-    .sort((left, right) => computeFormationPower([right, right, right, right, right], collectionBonuses)
-      - computeFormationPower([left, left, left, left, left], collectionBonuses))
-    .slice(0, 5)
-));
+// 표시 전투력은 생존의 지속 회복을 실제 가치보다 낮게 잡는다(recovery 계수 0.3).
+// 전투력만으로 5장을 고르면 회복이 빠진 덱이 뽑혀, 60초를 버텨야 하는 최종 보스에서
+// 딜은 충분한데 파티가 먼저 녹아 실패한다. 실제로 클리어 가능한 구성을 검증하려면
+// 회복 1장을 확보한 뒤 나머지를 전투력 순으로 채워야 한다.
+const byPower = (left, right) => computeFormationPower([right, right, right, right, right], collectionBonuses)
+  - computeFormationPower([left, left, left, left, left], collectionBonuses);
+const raceDecks = [...new Set(maxedCards.map((card) => card.race))].map((race) => {
+  const pool = maxedCards.filter((card) => card.race === race).sort(byPower);
+  const healer = pool.find((card) => card.archetype === 'sustain');
+  const rest = pool.filter((card) => card.id !== healer?.id).slice(0, healer ? 4 : 5);
+  return healer ? [healer, ...rest] : rest;
+});
 const endgameDeck = raceDecks.sort((left, right) => (
   computeFormationPower(right, collectionBonuses) - computeFormationPower(left, collectionBonuses)
 ))[0];

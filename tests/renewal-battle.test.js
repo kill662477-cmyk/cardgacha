@@ -63,6 +63,9 @@ const totalDamage = (result) => result.damageByCard.reduce((sum, entry) => sum +
 assert.ok(totalDamage(areaNormal) > totalDamage(areaBoss), 'area bonus must apply to normal waves only');
 const comboWaveDeck = areaDeck.map((card) => ({ ...card, archetype: 'combo' }));
 const comboNormal = simulateBattle(comboWaveDeck, { ...target, boss: false });
+// 연타 소폭 상향(multiHit 1.1 -> 1.15) 뒤에도 격차는 1.206 이라 이 기준을 그대로 둔다.
+// 연타를 여기서 더 올리면 광역이 자기 구간인 잡몹 웨이브에서조차 앞서지 못해
+// 특화 특성의 정체성이 사라진다. 다음 상향 때 먼저 확인할 선이다.
 assert.ok(totalDamage(areaNormal) > totalDamage(comboNormal) * 1.2, 'area trait 1.5 must clearly lead normal-wave damage');
 
 const bossSpecialistDeck = Array.from({ length: 5 }, (_, index) => ({

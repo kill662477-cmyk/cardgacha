@@ -20,11 +20,16 @@ export const RARITIES = {
 };
 
 export const ARCHETYPES = {
-  quick: { label: '속공', atk: 0.9, hp: 0.94, def: 0.9, speed: 1.28, crit: 0.05 },
+  // 속공/강타/연타는 보스든 잡몹이든 계수가 같은 범용 특성이다. 그런데 광역(잡몹 1.5배)과
+  // 보스(보스 2배)가 자기 구간에서 압도적이라, 범용 3종은 65:35 혼합 기준으로도 84~89% 에
+  // 그쳤다. 유연함이 장점이라 해도 어느 판에서도 최선이 아니면 고를 이유가 없다.
+  // 셋 다 자기 정체성 스탯만 소폭 올린다. 격차를 다 메우지는 않는다. 범용이 특화를
+  // 따라잡으면 특화를 고를 이유가 사라지므로, 혼합 기준 89~92% 선까지만 당긴다.
+  quick: { label: '속공', atk: 0.9, hp: 0.94, def: 0.9, speed: 1.33, crit: 0.05 },
   // 강타: critDamage 는 치명타가 터져야 의미가 있는데 기본 확률이 8% 뿐이라 사실상 죽은 보정이었다.
-  // 확률을 20%로 올려 특성이 실제로 작동하게 하고, 그만큼 딜 손실을 atk 로 메운다.
-  heavy: { label: '강타', atk: 1.31, hp: 1.04, def: 1, speed: 0.78, crit: 0.12, critDamage: 0.2 },
-  combo: { label: '연타', atk: 0.96, hp: 0.96, def: 0.94, speed: 1.12, multiHit: 1.1 },
+  // 확률을 올려 특성이 실제로 작동하게 하고, 그만큼 딜 손실을 atk 로 메운다.
+  heavy: { label: '강타', atk: 1.35, hp: 1.04, def: 1, speed: 0.78, crit: 0.14, critDamage: 0.24 },
+  combo: { label: '연타', atk: 0.96, hp: 0.96, def: 0.94, speed: 1.12, multiHit: 1.15 },
   area: { label: '광역', atk: 1.04, hp: 0.98, def: 0.94, speed: 0.94, area: 1.5 },
   boss: { label: '보스', atk: 1.08, hp: 1.03, def: 1, speed: 0.91, bossDamage: 2.0 },
   // 증폭: 자기 치명타만 올리던 특성을 파티 전체 치명타 오라로 바꿨다. 강타가 치명타 담당이

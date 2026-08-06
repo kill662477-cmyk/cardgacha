@@ -14,3 +14,6 @@ trailer-output/
 /.codex-remote-attachments/
 /CLAUDE.md
 /stats_temp*.json
+
+# 작업 중 만든 임시 SQL/JSON. 저장소에 남을 이유가 없다.
+scratch/

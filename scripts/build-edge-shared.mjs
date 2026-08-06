@@ -9,6 +9,7 @@ const sources = [
   ['src/renewal/worldboss-rules.js', 'worldboss-rules.js'],
   ['src/renewal/battle.js', 'battle.js'],
   ['src/renewal/collection.js', 'collection.js'],
+  ['src/renewal/arena.js', 'arena.js'],
   ['src/renewal/worldboss-schedule.js', 'worldboss-schedule.js'],
   ['src/renewal/worldboss.js', 'worldboss.js'],
   ['src/renewal/service-contract.js', 'service-contract.js'],

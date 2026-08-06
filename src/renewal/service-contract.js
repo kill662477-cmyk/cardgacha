@@ -3,6 +3,10 @@ export const GAME_API_CONTRACT_VERSION = 1;
 // 보급품 분해 1회 최대 수량. 단가 최고치(1,200P)를 곱해도 정수 범위에 여유가 크다.
 export const SUPPORT_ITEM_DISMANTLE_MAX_COUNT = 100000;
 
+// 로또 번호 상한. 회차마다 범위가 다를 수 있어(1~18 로 팔린 과거 회차가 남아 있다)
+// 계약은 역대 가장 넓은 값까지 통과시키고, 회차별 실제 범위는 서버 RPC 가 막는다.
+export const LOTTO_CONTRACT_MAX_NUMBER = 18;
+
 export const GAME_COMMAND_TYPES = Object.freeze({
   UPDATE_FORMATION: 'updateFormation',
   // 편성 프리셋(최대 5개). 상태 필드(formationPresets/activeFormationPresetId)와 5개 상한은
@@ -261,8 +265,10 @@ function validatePayload(type, payload, issues) {
         addIssue(issues, 'payload.numbers', '번호 6개 배열 필요');
       } else {
         payload.numbers.forEach((value, index) => {
-          if (!Number.isInteger(value) || value < 1 || value > 18) {
-            addIssue(issues, `payload.numbers.${index}`, '1~18 정수 필요');
+          // 계약은 회차별 범위를 모르므로 가장 넓은 값(18)까지 허용하고,
+          // 실제 회차 범위는 서버 RPC 가 gacha_s2_lotto_rounds.max_number 로 강제한다.
+          if (!Number.isInteger(value) || value < 1 || value > LOTTO_CONTRACT_MAX_NUMBER) {
+            addIssue(issues, `payload.numbers.${index}`, `1~${LOTTO_CONTRACT_MAX_NUMBER} 정수 필요`);
           }
         });
         if (new Set(payload.numbers).size !== payload.numbers.length) {

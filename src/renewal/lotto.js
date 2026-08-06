@@ -1,6 +1,8 @@
 export const LOTTO_RULES = Object.freeze({
   minimumNumber: 1,
-  maximumNumber: 18,
+  // 2026-08-05: 1~18 -> 1~16. 서버는 회차마다 max_number 를 기록해 두므로
+  // 이 값이 바뀌어도 이미 팔린 회차는 팔릴 때의 범위로 추첨된다.
+  maximumNumber: 16,
   picks: 6,
   ticketCost: 1_000,
   ticketLimit: 2,
@@ -11,10 +13,15 @@ export const LOTTO_RULES = Object.freeze({
   fourthPrize: 1_000,
 });
 
-export function pickRandomLottoNumbers(random) {
+// maxNumber 를 넘기면 그 회차의 범위에서 뽑는다. 회차마다 상한이 다를 수 있어
+// (1~18 로 팔린 회차가 남아 있다) 자동 선택이 범위 밖 번호를 내면 구매가 거부된다.
+export function pickRandomLottoNumbers(random, maxNumber = LOTTO_RULES.maximumNumber) {
   if (typeof random !== 'function') throw new TypeError('lotto random adapter is required');
+  const maximum = Number.isInteger(maxNumber) && maxNumber >= LOTTO_RULES.picks
+    ? maxNumber
+    : LOTTO_RULES.maximumNumber;
   const pool = Array.from(
-    { length: LOTTO_RULES.maximumNumber - LOTTO_RULES.minimumNumber + 1 },
+    { length: maximum - LOTTO_RULES.minimumNumber + 1 },
     (_, index) => index + LOTTO_RULES.minimumNumber,
   );
   for (let index = pool.length - 1; index > 0; index -= 1) {

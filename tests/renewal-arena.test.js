@@ -285,6 +285,26 @@ assert.match(lossMigration, /lossDeltaScale/, '서버 설정에 패배 보정이
 assert.match(lossMigration, /then 1 else v_loss_scale end/, '공격자 패배에 보정이 걸려야 한다');
 assert.match(lossMigration, /then v_loss_scale else 1 end/, '방어자 패배에 보정이 걸려야 한다');
 
+// 회귀: 상대 선정에서 스트리머 계정을 빼는 조건이 요청 없이 들어가 있었다.
+// 그 결과 스트리머는 랭킹에는 오르면서 방어는 한 번도 당하지 않아, 공격만 하고
+// 잃을 일이 없는 구조가 됐다. 랭킹에 오르면 방어도 당해야 한다.
+const openMatchMigration = await readFile(
+  new URL('../supabase/migrations/20260806005949_arena_match_rpcs.sql', import.meta.url),
+  'utf8',
+);
+const streamerFixMigration = await readFile(
+  new URL('../supabase/migrations/20260808110047_arena_allow_streamers_as_defenders.sql', import.meta.url),
+  'utf8',
+);
+// 원본에는 남아 있고(이력 보존), 뒤 마이그레이션이 걷어낸다.
+assert.match(openMatchMigration, /acc\.is_streamer = false/, '원본 마이그레이션은 그대로 둔다');
+assert.match(streamerFixMigration, /replace\(v_src, E'      and acc\.is_streamer = false/, '스트리머 조건을 걷어내야 한다');
+assert.match(streamerFixMigration, /streamer filter survived/, '제거 여부를 검증해야 한다');
+// 접속 금지 계정은 계속 제외돼야 한다. 같이 걷어내면 정지된 계정이 방어자로 뽑힌다.
+assert.match(streamerFixMigration, /disabled filter was lost/, '비활성 계정 제외는 지켜야 한다');
+assert.match(streamerFixMigration, /formation filter was lost/, '편성 5장 조건은 지켜야 한다');
+assert.match(streamerFixMigration, /rating band filter was lost/, '레이팅 폭 조건은 지켜야 한다');
+
 // --- 운영 수치 ---
 assert.equal(ARENA_RULES.attemptsPerHour, 3);
 assert.equal(ARENA_RULES.energyCost, 5);

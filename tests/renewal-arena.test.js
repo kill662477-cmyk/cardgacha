@@ -211,6 +211,19 @@ assert.equal(GAME_RULES.formationSize, 5);
 // 도감·길드 보너스를 몰라 서버 판정과 어긋난 장면이 나온다.
 const controllerSource = await readFile(new URL('../src/renewal/minigame-controller.js', import.meta.url), 'utf8');
 const indexSource = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const mainStyles = await readFile(new URL('../styles/renewal/main.css', import.meta.url), 'utf8');
+const arenaGuildRankingMigration = await readFile(
+  new URL('../supabase/migrations/20260809190206_arena_ranking_guild_names.sql', import.meta.url),
+  'utf8',
+);
+assert.match(controllerSource, /row\.guildName/);
+assert.match(controllerSource, /class="arena-rank-identity"/);
+assert.match(controllerSource, /class="arena-rank-guild"/);
+assert.match(mainStyles, /\.arena-rank-identity \{[^}]*display: flex;[^}]*min-width: 0;/);
+assert.match(mainStyles, /\.arena-rank-guild \{[^}]*color: var\(--dim\);/);
+assert.match(arenaGuildRankingMigration, /'guildName', ranked\.guild_name/);
+assert.match(arenaGuildRankingMigration, /left join public\.gacha_s2_guild_members guild_member/);
+assert.match(arenaGuildRankingMigration, /guild\.disbanded_at is null/);
 assert.match(controllerSource, /function playArenaBattle\(result\)/, '전투 연출 함수가 있어야 한다');
 assert.match(controllerSource, /result\?\.battle/, '연출은 서버가 준 battle 을 써야 한다');
 assert.doesNotMatch(controllerSource, /resolveArenaMatch/, '클라이언트가 전투를 다시 계산하면 안 된다');

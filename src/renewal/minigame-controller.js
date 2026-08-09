@@ -364,9 +364,10 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     }
     elements.arenaRankingList.innerHTML = rows.map((row) => {
       const tier = arenaTierFor(row.rating, row.rank);
+      const guildName = String(row.guildName ?? '').trim();
       return `<article class="arena-rank-row${row.isSelf ? ' self' : ''}">
         <b>${number.format(row.rank)}</b>
-        <span class="arena-rank-name">${escapeHtml(String(row.nickname ?? '-'))}</span>
+        <span class="arena-rank-identity"><span class="arena-rank-name">${escapeHtml(String(row.nickname ?? '-'))}</span>${guildName ? `<span class="arena-rank-guild">[${escapeHtml(guildName)}]</span>` : ''}</span>
         <span class="arena-rank-tier">${arenaTierBadgeMarkup(tier, 20)}${escapeHtml(tier.label)}</span>
         <strong>${number.format(row.rating)}</strong>
         <small>${number.format(row.wins ?? 0)}승 ${number.format(row.losses ?? 0)}패</small>

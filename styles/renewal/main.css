@@ -1256,7 +1256,10 @@ button[aria-busy="true"]::after {
 .arena-rank-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) 76px 56px 78px; align-items: center; gap: 8px; padding: 7px 9px; border: 1px solid var(--line); background: #0d120f; font-size: 11px; }
 .arena-rank-row.self { border-color: var(--acid); background: rgba(200,245,46,.07); }
 .arena-rank-row b { font-variant-numeric: tabular-nums; }
-.arena-rank-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arena-rank-identity { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
+.arena-rank-name, .arena-rank-guild { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arena-rank-name { flex: 1 1 auto; }
+.arena-rank-guild { flex: 0 1 auto; color: var(--dim); font-size: 9px; }
 .arena-rank-tier { color: var(--acid); font-size: 10px; }
 .arena-rank-row strong { text-align: right; font-variant-numeric: tabular-nums; }
 .arena-rank-row small { color: var(--dim); text-align: right; font-size: 10px; }

@@ -57,10 +57,11 @@ function sqlValue(value) {
 }
 
 function validateCards(cards) {
-  if (!Array.isArray(cards) || cards.length !== 235) throw new Error(`Expected 235 cards, received ${cards?.length ?? 'invalid'}`);
+  if (!Array.isArray(cards) || cards.length !== 237) throw new Error(`Expected 237 cards, received ${cards?.length ?? 'invalid'}`);
   if (new Set(cards.map((card) => card.id)).size !== cards.length) throw new Error('Duplicate card ID');
   // 왜냐맨(장민철) 6장 추가: D/C/B/A/S/SS 각 +1.
-  const expectedRarityCounts = { F: 25, E: 24, D: 26, C: 25, B: 24, A: 27, S: 26, SS: 29, SSS: 21, EX: 8 };
+  // 2026-08-10: 지두두/주하랑 SSS 각 1장 추가(21 -> 23).
+  const expectedRarityCounts = { F: 25, E: 24, D: 26, C: 25, B: 24, A: 27, S: 26, SS: 29, SSS: 23, EX: 8 };
   Object.entries(expectedRarityCounts).forEach(([rarity, expected]) => {
     const actual = cards.filter((card) => card.rarity === rarity).length;
     if (actual !== expected) throw new Error(`${rarity} count mismatch: expected ${expected}, received ${actual}`);

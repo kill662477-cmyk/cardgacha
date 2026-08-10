@@ -19,20 +19,22 @@ const sateGrantMigration = fs.readFileSync(path.join(root, 'supabase', 'migratio
 const chiriNangniMigration = fs.readFileSync(path.join(root, 'supabase', 'migrations', '20260728231100_add_chiri19_refresh_nangni8.sql'), 'utf8');
 const combatRarities = ['F', 'E', 'D', 'C', 'B', 'A', 'S', 'SS', 'SSS'];
 const combatArchetypes = ['quick', 'heavy', 'combo', 'area', 'boss', 'amplify', 'weaken', 'sustain'];
-assert.equal(cards.length, 235);
-assert.equal(new Set(cards.map((card) => card.id)).size, 235);
+assert.equal(cards.length, 237);
+assert.equal(new Set(cards.map((card) => card.id)).size, 237);
 assert.equal(cards.filter((card) => card.rarity === 'EX').length, 8);
 assert.ok(cards.filter((card) => card.rarity === 'EX').every((card) => card.member === '단체사진' && card.archetype === null));
 const nonKimFurCards = cards.filter((card) => card.sourceRarity === 'FUR' && card.member !== '김윤환' && !card.group);
-assert.equal(nonKimFurCards.length, 19);
+assert.equal(nonKimFurCards.length, 21);
 assert.ok(nonKimFurCards.every((card) => card.rarity === 'SSS'));
 assert.equal(cards.find((card) => card.id === 'vitaming-14').rarity, 'SSS');
 assert.equal(cards.find((card) => card.id === 'imjoy-12').rarity, 'SSS');
 assert.equal(cards.find((card) => card.id === 'meonjin-12').rarity, 'SSS');
+// 카드 데이터 등장 순서 그대로다. 순서가 어긋나면 도감 정렬이 바뀐 것이므로 같이 확인한다.
+// 2026-08-10: jidudu-14(연타) / juharang-18(생존) 추가. SSS 에서 가장 얇던 두 특성을 2 -> 3 으로 채웠다.
 const fixedSssIds = [
-  'jidudu-1', 'juharang-2', 'kimyunhwan-2', 'kimyunhwan-4', 'tomato-6', 'nangni-8', 'jjiking-12', 'tomato-11',
-  'haetsal-12', 'kimmincheol-7', 'sojuyang-13', 'chiri-14', 'namdeokseon-12', 'vitaming-14', 'imjoy-12', 'meonjin-12',
-  'byeonhyeonje-7', 'sate-5', 'arisongi-11', 'parksubeom-6', 'jidongwon-8',
+  'jidudu-1', 'juharang-2', 'juharang-18', 'kimyunhwan-2', 'kimyunhwan-4', 'tomato-6', 'nangni-8', 'jjiking-12',
+  'tomato-11', 'haetsal-12', 'kimmincheol-7', 'sojuyang-13', 'chiri-14', 'namdeokseon-12', 'vitaming-14', 'imjoy-12',
+  'meonjin-12', 'jidudu-14', 'byeonhyeonje-7', 'sate-5', 'arisongi-11', 'parksubeom-6', 'jidongwon-8',
 ];
 assert.deepEqual(cards.filter((card) => card.rarity === 'SSS').map((card) => card.id), fixedSssIds);
 const deletedIds = ['juharang-15', 'sojuyang-5', 'chiri-10', 'nangni-12', 'sojuyang-11', 'sojuyang-12', 'jidudu-11', 'chiri-15'];

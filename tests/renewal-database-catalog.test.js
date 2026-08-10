@@ -60,9 +60,33 @@ assert.doesNotMatch(normalized, /grant (?:select|insert|update|delete|all).*gach
 const catalogSeed = normalizedSql.match(/insert into public\.gacha_s2_card_catalog \([\s\S]*?\)\nvalues\n([\s\S]*?)\non conflict \(card_id\)/i)?.[1];
 assert.ok(catalogSeed, 'catalog seed block missing');
 const rows = catalogSeed.split('\n').filter((line) => line.startsWith('  ('));
-assert.equal(rows.length, 235);
+// 002 는 배포 후 고정이다. 여기 씨앗은 235장에서 멈춰 있고, 그 뒤 추가된 카드는
+// 각자 보충 마이그레이션에서 들어온다. 002 를 다시 만들면 잔액 payload 까지
+// 덮어써서 위쪽 drift 검사가 깨진다.
+assert.equal(rows.length, 235, 'migration 002 is immutable - new cards belong in supplemental migrations');
 const seededIds = rows.map((line) => line.match(/^  \('([^']+)'/)?.[1]);
-assert.deepEqual(seededIds, [...cards.map((card) => card.id)].sort((left, right) => left.localeCompare(right)));
+
+// 002 이후 추가된 카드. 카드를 더 넣을 때마다 마이그레이션 경로와 id 를 함께 적는다.
+const supplementalCardMigrations = [
+  ['20260810100443_add_jidudu14_juharang18_sss_cards.sql', ['jidudu-14', 'juharang-18']],
+];
+const supplementalIds = [];
+for (const [file, ids] of supplementalCardMigrations) {
+  const migration = await readFile(new URL(`../supabase/migrations/${file}`, import.meta.url), 'utf8');
+  for (const id of ids) {
+    assert.ok(migration.includes(`('${id}'`), `${file} 에 ${id} insert 가 없다`);
+    // 002 씨앗에 이미 있으면 중복이다.
+    assert.ok(!seededIds.includes(id), `${id} 는 002 에 이미 있다 - 보충 목록에서 빼야 한다`);
+    supplementalIds.push(id);
+  }
+}
+// 002 씨앗 + 보충분이 카드 데이터와 정확히 일치해야 한다. 어긋나면 DB 에 없는 카드가
+// 화면에 뜨거나, 뽑기에서 나온 카드가 저장에 실패한다.
+const byName = (left, right) => left.localeCompare(right);
+assert.deepEqual(
+  [...seededIds, ...supplementalIds].sort(byName),
+  [...cards.map((card) => card.id)].sort(byName),
+);
 assert.equal((normalizedSql.match(/'[0-9a-f]{64}'/g) ?? []).length >= 4, true, 'config and catalog hashes must be embedded and verified');
 
 console.log(`renewal database catalog tests passed: ${cards.length} cards, balance ${BALANCE_VERSION}, deterministic seed`);

@@ -702,6 +702,19 @@
     "group": false
   },
   {
+    "id": "juharang-18",
+    "member": "주하랑",
+    "file": "juharang-18.avif",
+    "rarity": "SSS",
+    "race": "프로토스",
+    "archetype": "sustain",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "FUR",
+    "group": false
+  },
+  {
     "id": "kimmincheol-1",
     "member": "김민철",
     "file": "kimmincheol-1.avif",
@@ -2805,6 +2818,19 @@
     "exp": 0,
     "copies": 0,
     "sourceRarity": "MUR",
+    "group": false
+  },
+  {
+    "id": "jidudu-14",
+    "member": "지두두",
+    "file": "jidudu-14.png",
+    "rarity": "SSS",
+    "race": "테란",
+    "archetype": "combo",
+    "enhancement": 0,
+    "exp": 0,
+    "copies": 0,
+    "sourceRarity": "FUR",
     "group": false
   },
   {

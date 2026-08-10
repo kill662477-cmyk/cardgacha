@@ -2762,3 +2762,8 @@ button[aria-busy="true"]::after {
 .guild-level-bar { height: 8px; border-radius: 999px; background: var(--panel); overflow: hidden; }
 .guild-level-bar > i { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--acid); transition: width .3s ease; }
 .guild-level-progress small { color: var(--muted); font-size: .76rem; }
+
+/* 카드 목록을 다시 받는 동안 잠깐 뜨는 자리표시. 새 카드가 배포된 직후
+   옛 탭에서 그 카드를 받으면 이 상태로 한 번 그려진다. */
+.shop-result-card.pending-card { display: grid; place-items: center; border: 1px dashed var(--line); background: #0a0f0c; color: var(--dim); }
+.shop-result-card.pending-card .shop-result-name { position: static; padding: 6px; font-size: 10px; text-align: center; word-break: break-all; }

@@ -2279,8 +2279,21 @@ function renderCardResultPage() {
   elements.shopResultGrid.classList.toggle('bulk', layout.bulk);
   elements.shopResultGrid.style.setProperty('--result-columns', layout.columns);
   elements.shopResultGrid.style.setProperty('--result-card-width', layout.cardWidth);
+  // 새 카드가 배포되면 이미 열려 있던 탭은 옛 카드 목록을 들고 있다. 그 카드를 받으면
+  // cardsById 에 없어 RARITIES[card.rarity] 에서 TypeError 가 났고, 그 예외가 요청 실패로
+  // 잡혀 "카드는 지급됐는데 화면엔 요청 처리 실패"가 떴다(2026-08-10 신규 SSS 2장).
+  // 서버가 정본이므로 결과 화면이 예외로 무너지면 안 된다. 자리만 채우고 목록을 다시 받는다.
+  const unknownIds = pageCards.filter((id) => !cardsById.has(id));
+  if (unknownIds.length) {
+    console.warn('[cards] unknown card ids in result view, reloading catalog:', unknownIds);
+    void refreshCardCatalog();
+  }
   elements.shopResultGrid.innerHTML = pageCards.map((id) => {
     const card = cardsById.get(id);
+    if (!card) {
+      return '<article class="shop-result-card card-visual pending-card"><div class="shop-result-shade"></div>'
+        + `<span class="shop-result-name">${escapeHtml(id)}</span></article>`;
+    }
     return `<article class="shop-result-card card-visual" style="--rarity:${RARITIES[card.rarity].color}"><img class="card-photo" src="${imagePath(card)}" alt="" loading="lazy"><div class="shop-result-shade"></div>${cardVisualChrome(card)}<span class="shop-result-name">${card.member}</span></article>`;
   }).join('');
   elements.shopResultPager.hidden = pageCount <= 1;

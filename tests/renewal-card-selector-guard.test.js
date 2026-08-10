@@ -55,4 +55,24 @@ assert.equal(
   '확인 버튼 리스너는 하나여야 한다',
 );
 
+
+// 회귀: 새 카드가 배포된 뒤 옛 탭에서 그 카드를 받으면 결과 화면이 예외로 무너졌다.
+// cardsById 에 없는 id 를 RARITIES[card.rarity] 로 바로 까서 TypeError 가 났고,
+// 그 예외가 요청 실패로 잡혀 "카드는 지급됐는데 요청 처리 실패"가 떴다.
+const resultView = source.slice(source.indexOf('function renderCardResultPage()'));
+const resultBody = resultView.split(/\r?\n}\r?\n/)[0];
+assert.match(resultBody, /if \(!card\)/, '모르는 카드에 대비한 분기가 있어야 한다');
+assert.match(resultBody, /pending-card/, '자리표시 마크업이 있어야 한다');
+assert.match(resultBody, /refreshCardCatalog\(\)/, '카드 목록을 다시 받아야 한다');
+// 분기가 RARITIES 접근보다 앞에 있어야 예외를 막는다.
+// 주석에도 같은 표현이 나오므로 주석을 걷어내고 실제 코드만 본다.
+const resultCode = resultBody.replace(/^\s*\/\/.*$/gm, '');
+assert.ok(
+  resultCode.indexOf('if (!card)') < resultCode.indexOf('RARITIES[card.rarity]'),
+  '모르는 카드 분기가 RARITIES 접근보다 앞서야 한다',
+);
+
+const css = await readFile(new URL('../styles/renewal/main.css', import.meta.url), 'utf8');
+assert.match(css, /\.shop-result-card\.pending-card/, '자리표시 스타일이 있어야 한다');
+
 console.log('card selector guard tests passed: dialog-open guard, selection cleared on every close');

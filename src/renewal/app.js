@@ -2138,17 +2138,30 @@ function showCardSelectorResult(cardId, item) {
   elements.shopResultDialog.showModal();
 }
 
+// 선택권을 한 장 쓰고 나면 고른 카드와 아이템을 반드시 비운다.
+// 남겨 두면 선택 창이 닫힌 뒤에도 확인 버튼이 같은 카드를 그대로 들고 있어서,
+// 결과창을 닫는 클릭이나 버튼에 남은 포커스에서 누른 엔터가 두 번째 장을
+// 곧바로 써 버린다(2026-08-10: 사용 계정 64명 중 61명이 이렇게 두 장을 잃었다).
+function clearCardSelectorSelection() {
+  selectedCardSelectorItemId = null;
+  selectedCardSelectorCardId = null;
+  if (elements.cardSelectorConfirm) elements.cardSelectorConfirm.disabled = true;
+}
+
 async function redeemSelectedCardSelector() {
   const itemId = selectedCardSelectorItemId;
   const cardId = selectedCardSelectorCardId;
   const item = SUPPORT_ITEMS[itemId];
   const card = cardsById.get(cardId);
   if (!item?.cardSelectorRarity || !card) return;
+  // 선택 창이 닫혀 있으면 사용자가 고르는 중이 아니다. 창 밖에서 들어온 입력은 무시한다.
+  if (!elements.cardSelectorDialog?.open) return;
   return runUiOperation('redeemCardSelector', elements.cardSelectorConfirm, async () => {
     if (remoteMode) {
       const response = await executeServerCommand(GAME_COMMAND_TYPES.REDEEM_CARD_SELECTOR, { itemId, cardId });
       if (!response?.ok) return response;
       elements.cardSelectorDialog.close();
+      clearCardSelectorSelection();
       renderHeader();
       renderShop();
       showCardSelectorResult(response.result?.cardId ?? cardId, item);
@@ -2159,6 +2172,7 @@ async function redeemSelectedCardSelector() {
     state = result.state;
     gameService.persistSnapshot(state);
     elements.cardSelectorDialog.close();
+    clearCardSelectorSelection();
     renderHeader();
     renderShop();
     showCardSelectorResult(cardId, item);
@@ -2184,6 +2198,8 @@ async function rerollSelectedCardTrait() {
   const item = SUPPORT_ITEMS[itemId];
   const card = cardsById.get(cardId);
   if (!item?.traitReroll || !card) return;
+  // 선택권과 같은 구조라 같은 방식으로 두 장이 연달아 써질 수 있다.
+  if (!elements.cardSelectorDialog?.open) return;
   return runUiOperation('rerollCardArchetype', elements.cardSelectorConfirm, async () => {
     if (remoteMode) {
       const response = await executeServerCommand(GAME_COMMAND_TYPES.USE_SUPPORT_ITEM, {
@@ -2193,6 +2209,7 @@ async function rerollSelectedCardTrait() {
       const previousArchetype = response.result?.previousArchetype ?? card.archetype;
       const archetype = response.result?.archetype ?? cardWithProgress(card).archetype;
       elements.cardSelectorDialog.close();
+      clearCardSelectorSelection();
       renderHeader();
       renderShop();
       showTraitRerollResult(card, previousArchetype, archetype);
@@ -2203,6 +2220,7 @@ async function rerollSelectedCardTrait() {
     state = result.state;
     gameService.persistSnapshot(state);
     elements.cardSelectorDialog.close();
+    clearCardSelectorSelection();
     renderHeader();
     renderShop();
     showTraitRerollResult(card, result.previousArchetype, result.archetype);
@@ -3229,6 +3247,8 @@ function bindEvents() {
     renderCardSelectorDialog();
   });
   elements.cardSelectorConfirm.addEventListener('click', confirmSelectedCardItem);
+  // ESC, 배경 클릭, 닫기 버튼 - 어떤 경로로 닫혀도 고른 카드가 남으면 안 된다.
+  elements.cardSelectorDialog.addEventListener('close', clearCardSelectorSelection);
   elements.cardSelectorClose.addEventListener('click', () => elements.cardSelectorDialog.close());
   elements.shopResultPager.addEventListener('click', (event) => {
     const button = event.target.closest('[data-result-page]');

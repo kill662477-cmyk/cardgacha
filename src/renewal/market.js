@@ -4,7 +4,8 @@ export const MARKET_RULES = Object.freeze({
   totalInvestmentCap: 500_000,
   perAssetInvestmentCap: 500_000,
   hourlyChangeCap: 0.30,
-  historyHours: 24,
+  historyResetsDaily: true,
+  historyTimeZone: 'Asia/Seoul',
 });
 
 export const MARKET_ASSETS = Object.freeze([

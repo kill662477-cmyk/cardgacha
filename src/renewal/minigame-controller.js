@@ -669,13 +669,13 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     const line = coords.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
     const area = `10,176 ${line} 630,176`;
     return `
-      <svg viewBox="0 0 640 180" preserveAspectRatio="none" role="img" aria-label="최근 가격 흐름">
+      <svg viewBox="0 0 640 180" preserveAspectRatio="none" role="img" aria-label="오늘 시간별 가격 흐름">
         <defs><linearGradient id="marketArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-opacity=".28"/><stop offset="1" stop-opacity="0"/></linearGradient></defs>
         <g class="market-chart-grid"><path d="M0 45H640M0 90H640M0 135H640"/></g>
         <polygon class="market-chart-area ${positive ? 'up' : 'down'}" points="${area}"/>
         <polyline class="market-chart-line ${positive ? 'up' : 'down'}" points="${line}"/>
       </svg>
-      <div><span>LOW ${number.format(min)}P</span><span>24H</span><span>HIGH ${number.format(max)}P</span></div>
+      <div><span>LOW ${number.format(min)}P</span><span>오늘 · 1시간봉</span><span>HIGH ${number.format(max)}P</span></div>
     `;
   }
 

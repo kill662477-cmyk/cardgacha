@@ -83,6 +83,10 @@ assert.match(css, /\.market-shell/);
 assert.match(controller, /loadMarketState/);
 assert.match(controller, /submitMarketTrade/);
 assert.match(controller, /serverCommands\?\.marketTrade/);
+assert.match(controller, /minigameScreen\.classList\.toggle\('market-mode', market\)/);
+assert.match(css, /\.minigame-screen\.market-mode\s*\{[^}]*grid-template-columns:\s*200px/);
+assert.match(css, /@media \(max-width: 900px\) and \(orientation: portrait\)[\s\S]*\.market-mode \.market-asset-list\s*\{[^}]*grid-auto-flow:\s*column/);
+assert.match(css, /@media \(max-width: 900px\) and \(orientation: portrait\)[\s\S]*\.market-mode \.minigame-control\s*\{[^}]*grid-row:\s*3/);
 assert.match(edge, /body\.kind === 'marketState'/);
 
 console.log('renewal market tests passed: 14 assets, shared hourly pricing, 500k caps, atomic real-P ledger');

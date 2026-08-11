@@ -2858,3 +2858,128 @@ button[aria-busy="true"]::after {
    옛 탭에서 그 카드를 받으면 이 상태로 한 번 그려진다. */
 .shop-result-card.pending-card { display: grid; place-items: center; border: 1px dashed var(--line); background: #0a0f0c; color: var(--dim); }
 .shop-result-card.pending-card .shop-result-name { position: static; padding: 6px; font-size: 10px; text-align: center; word-break: break-all; }
+
+/* 캄스증권 가독성 보정. 넓은 거래 화면은 정보 밀도를 유지하되 10px 미만 본문을 없앤다. */
+.minigame-screen.market-mode { grid-template-columns: 200px minmax(520px, 1fr) minmax(280px, 310px); }
+.market-mode .market-tape { min-height: 54px; padding: 10px 14px; }
+.market-mode .market-tape span,
+.market-mode .market-clock small { font-size: 9px; }
+.market-mode .market-tape strong { font-size: 17px; }
+.market-mode .market-clock b { font-size: 19px; }
+.market-mode .market-watch > header { padding: 10px 11px; }
+.market-mode .market-watch > header span { font-size: 9px; }
+.market-mode .market-watch > header b { font-size: 12px; }
+.market-mode .market-watch > header small { font-size: 9px; }
+.market-mode .market-asset-row { grid-template-columns: 38px minmax(0, 1fr) auto; min-height: 52px; gap: 2px 9px; padding: 6px 9px; }
+.market-mode .market-asset-row img { width: 38px; height: 40px; }
+.market-mode .market-asset-row span { gap: 7px; }
+.market-mode .market-asset-row span b { font-size: 12px; }
+.market-mode .market-asset-row span small { font-size: 8px; }
+.market-mode .market-asset-row > strong { font-size: 12px; }
+.market-mode .market-asset-row > em { font-size: 10px; }
+.market-mode .market-selected-head { grid-template-columns: 56px minmax(0, 1fr) auto; min-height: 72px; gap: 11px; padding: 8px 12px; }
+.market-mode .market-selected-head img { width: 56px; height: 58px; }
+.market-mode .market-selected-head span { font-size: 9px; }
+.market-mode .market-selected-head h3 { font-size: 20px; }
+.market-mode .market-selected-price strong { font-size: clamp(22px, 2.15vw, 29px); }
+.market-mode .market-selected-price b { font-size: 12px; }
+.market-mode .market-chart { min-height: 170px; padding: 12px 14px 7px; }
+.market-mode .market-chart > p { font-size: 11px; }
+.market-mode .market-chart svg { min-height: 145px; }
+.market-mode .market-chart > div { font-size: 8px; }
+.market-mode .market-position div { padding: 9px 10px; }
+.market-mode .market-position dt { font-size: 9px; }
+.market-mode .market-position dd { font-size: 13px; }
+.market-mode .market-order { gap: 8px; padding: 10px 12px 12px; }
+.market-mode .market-order > label { font-size: 9px; }
+.market-mode .market-order input,
+.market-mode .market-order button { min-height: 38px; font-size: 11px; }
+.market-mode .market-order input { font-size: 15px; }
+.market-mode .market-order-summary { font-size: 9px; }
+.market-mode .market-order-actions button { min-height: 42px; font-size: 12px; }
+.market-mode .market-control { gap: 10px; padding: 12px; }
+.market-mode .market-portfolio { padding: 12px; }
+.market-mode .market-portfolio > span,
+.market-mode .market-trade-log header span { font-size: 9px; }
+.market-mode .market-portfolio dl div { padding: 8px 0; }
+.market-mode .market-portfolio dt { font-size: 10px; }
+.market-mode .market-portfolio dd { font-size: 12px; }
+.market-mode .market-cap { gap: 6px; }
+.market-mode .market-cap span { font-size: 9px; }
+.market-mode .market-cap strong { font-size: 11px; }
+.market-mode .market-cap > i { height: 6px; }
+.market-mode .market-trade-log { padding: 11px; }
+.market-mode .market-trade-log header b { font-size: 11px; }
+.market-mode .market-trade-log > div > p { font-size: 10px; }
+.market-mode .market-trade-row { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 7px; padding: 8px 2px; font-size: 9px; }
+.market-mode .market-control > small { font-size: 9px; line-height: 1.65; }
+
+@media (max-width: 1180px) and (min-width: 901px) {
+  .minigame-screen.market-mode { grid-template-columns: 175px minmax(440px, 1fr) 265px; }
+  .market-mode .market-asset-row { grid-template-columns: 34px minmax(0, 1fr) auto; padding-inline: 7px; }
+  .market-mode .market-asset-row img { width: 34px; height: 37px; }
+  .market-mode .market-control { padding: 9px; }
+}
+
+/* 세로 모바일: 게임 선택은 가로 스와이프, 시세/주문/포트폴리오는 한 열로 읽는다. */
+@media (max-width: 900px) and (orientation: portrait) {
+  .minigame-screen.market-mode {
+    grid-template: auto auto auto / minmax(0, 1fr);
+    min-height: calc(100svh - 130px);
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  .market-mode .minigame-picker { grid-column: 1; grid-row: 1; display: block; position: sticky; top: 0; z-index: 12; border-right: 0; border-bottom: 1px solid var(--line); }
+  .market-mode .minigame-picker > header,
+  .market-mode .minigame-daily-block { display: none; }
+  .market-mode .minigame-picker nav { display: flex; gap: 6px; padding: 7px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; scrollbar-width: thin; }
+  .market-mode .minigame-picker nav button { flex: 0 0 124px; grid-template-columns: 24px minmax(0, 1fr); min-height: 46px; padding: 6px 8px; scroll-snap-align: start; }
+  .market-mode .minigame-picker nav button svg { width: 17px; }
+  .market-mode .minigame-picker nav button span { font-size: 10px; }
+  .market-mode .minigame-picker nav button small { font-size: 8px; }
+  .market-mode .minigame-play { grid-column: 1; grid-row: 2; min-height: 0; overflow: visible; }
+  .market-mode .minigame-play-head { min-height: 58px; padding: 8px 10px; }
+  .market-mode .minigame-play-head h2 { font-size: 16px; }
+  .market-mode .minigame-live-stats div { min-width: 58px; padding: 5px 7px; }
+  .market-mode .minigame-live-stats span { font-size: 7px; }
+  .market-mode .minigame-live-stats b { font-size: 13px; }
+  .market-mode .minigame-stage { display: block; min-height: 0; padding: 6px; overflow: visible; }
+  .market-mode .market-shell { height: auto; padding: 0; }
+  .market-mode .market-board { grid-template-columns: minmax(0, 1fr); }
+  .market-mode .market-watch { grid-template-rows: auto auto; }
+  .market-mode .market-asset-list { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(190px, 54vw); overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; }
+  .market-mode .market-asset-row { min-height: 60px; border-right: 1px solid #27312a; scroll-snap-align: start; }
+  .market-mode .market-terminal { grid-template-rows: auto 230px auto auto; overflow: visible; }
+  .market-mode .market-chart { min-height: 230px; }
+  .market-mode .market-chart svg { min-height: 202px; }
+  .market-mode .market-position { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .market-mode .market-position div:nth-child(2) { border-right: 0; }
+  .market-mode .market-position div:nth-child(-n + 2) { border-bottom: 1px solid #2b352e; }
+  .market-mode .market-order > div:nth-of-type(1) { grid-template-columns: minmax(0, 1fr) 92px 92px; }
+  .market-mode .market-order input { font-size: 16px; }
+  .market-mode .minigame-control { grid-column: 1; grid-row: 3; display: block; border-top: 1px solid var(--line); border-right: 0; overflow: visible; }
+  .market-mode .minigame-control > header { display: none; }
+  .market-mode .market-control { grid-row: auto; grid-template-rows: auto minmax(150px, auto) auto; gap: 8px; padding: 8px; overflow: visible; }
+  .market-mode .market-trade-log { min-height: 170px; max-height: 260px; }
+}
+
+/* 가로 모바일은 거래소 3열을 유지. 각 열 내부 스크롤로 작은 높이를 처리한다. */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 560px) {
+  .minigame-screen.market-mode { grid-template-columns: 110px minmax(500px, 1fr) 230px; overflow-x: auto; }
+  .market-mode .market-tape { min-height: 44px; padding: 6px 9px; }
+  .market-mode .market-tape strong { font-size: 14px; }
+  .market-mode .market-clock b { font-size: 15px; }
+  .market-mode .market-asset-row { grid-template-columns: 30px minmax(0, 1fr); min-height: 48px; gap: 2px 6px; padding: 4px 6px; }
+  .market-mode .market-asset-row img { width: 30px; height: 34px; }
+  .market-mode .market-asset-row span b,
+  .market-mode .market-asset-row > strong { font-size: 10px; }
+  .market-mode .market-asset-row > strong { grid-column: 2; grid-row: 2; justify-self: start; }
+  .market-mode .market-asset-row > em { grid-column: 2; grid-row: 2; font-size: 9px; }
+  .market-mode .market-selected-head { min-height: 54px; grid-template-columns: 40px minmax(0, 1fr) auto; padding: 5px 8px; }
+  .market-mode .market-selected-head img { width: 40px; height: 42px; }
+  .market-mode .market-selected-head h3 { font-size: 15px; }
+  .market-mode .market-selected-price strong { font-size: 18px; }
+  .market-mode .market-chart { min-height: 125px; padding: 6px 9px 4px; }
+  .market-mode .market-chart svg { min-height: 105px; }
+  .market-mode .market-control { padding: 7px; }
+}

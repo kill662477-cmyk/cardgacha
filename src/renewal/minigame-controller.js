@@ -161,6 +161,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     const lotto = selectedGame === 'lotto';
     const arena = selectedGame === 'arena';
     const market = selectedGame === 'market';
+    elements.minigameScreen.classList.toggle('market-mode', market);
     const earned = daily.pointsEarnedByGame[selectedGame] ?? 0;
     const remaining = Math.max(0, MINI_GAME_RULES.dailyPointCapPerGame - earned);
     const busy = Boolean(session);

@@ -34,6 +34,13 @@ export function marketFee(grossPoints, feeRate = MARKET_RULES.feeRate) {
   return Math.max(1, Math.ceil(Math.max(0, Number(grossPoints) || 0) * feeRate));
 }
 
+export function marketReturnRate(unrealizedPnl, investedPoints) {
+  const invested = Number(investedPoints);
+  if (!Number.isFinite(invested) || invested <= 0) return 0;
+  const rate = (Number(unrealizedPnl) || 0) / invested * 100;
+  return Number.isFinite(rate) ? rate : 0;
+}
+
 export function nextMarketPrice(previousPrice, changeRate) {
   const previous = Math.max(1, Math.round(Number(previousPrice) || 1));
   const bounded = Math.max(-MARKET_RULES.hourlyChangeCap, Math.min(MARKET_RULES.hourlyChangeCap, Number(changeRate) || 0));

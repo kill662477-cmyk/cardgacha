@@ -25,6 +25,7 @@ import {
   MARKET_ASSETS,
   MARKET_RULES,
   marketFee,
+  marketReturnRate,
   normalizeMarketQuantity,
 } from './market.js';
 
@@ -621,6 +622,11 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     return `${amount > 0 ? '+' : ''}${number.format(amount)}P`;
   }
 
+  function marketSignedPercent(value) {
+    const amount = Math.abs(Number(value) || 0) < 0.005 ? 0 : Number(value) || 0;
+    return `${amount > 0 ? '+' : ''}${amount.toFixed(2)}%`;
+  }
+
   function marketLocalPreview() {
     const hourAt = Math.floor(clock.now() / 3_600_000) * 3_600_000;
     return {
@@ -737,7 +743,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     const cap = Number(state.totalInvestmentCap ?? MARKET_RULES.totalInvestmentCap);
     elements.marketInvestedPoints.textContent = `${number.format(invested)}P`;
     elements.marketValue.textContent = `${number.format(value)}P`;
-    elements.marketUnrealizedPnl.textContent = marketSignedPoints(unrealized);
+    elements.marketUnrealizedPnl.textContent = `${marketSignedPoints(unrealized)} (${marketSignedPercent(marketReturnRate(unrealized, invested))})`;
     elements.marketUnrealizedPnl.className = unrealized > 0 ? 'up' : unrealized < 0 ? 'down' : '';
     elements.marketRealizedPnl.textContent = marketSignedPoints(state.realizedPnl);
     elements.marketRealizedPnl.className = Number(state.realizedPnl) > 0 ? 'up' : Number(state.realizedPnl) < 0 ? 'down' : '';

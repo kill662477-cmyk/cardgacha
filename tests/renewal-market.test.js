@@ -6,6 +6,7 @@ import {
   MARKET_RULES,
   canAddMarketInvestment,
   marketFee,
+  marketReturnRate,
   nextMarketPrice,
   normalizeMarketQuantity,
 } from '../src/renewal/market.js';
@@ -36,6 +37,9 @@ assert.equal(MARKET_RULES.historyResetsDaily, true);
 assert.equal(MARKET_RULES.historyTimeZone, 'Asia/Seoul');
 assert.equal(marketFee(10_000), 150);
 assert.equal(marketFee(1), 1);
+assert.equal(marketReturnRate(1_500, 100_000), 1.5);
+assert.equal(marketReturnRate(-1_500, 100_000), -1.5);
+assert.equal(marketReturnRate(500, 0), 0);
 assert.equal(nextMarketPrice(10_000, 0.80), 13_000);
 assert.equal(nextMarketPrice(10_000, -0.80), 7_000);
 assert.equal(normalizeMarketQuantity('3'), 3);
@@ -91,6 +95,7 @@ assert.match(css, /\.market-shell/);
 assert.match(controller, /loadMarketState/);
 assert.match(controller, /submitMarketTrade/);
 assert.match(controller, /serverCommands\?\.marketTrade/);
+assert.match(controller, /marketReturnRate\(unrealized, invested\)/);
 assert.match(controller, /오늘 · 1시간봉/);
 assert.match(controller, /minigameScreen\.classList\.toggle\('market-mode', market\)/);
 assert.match(css, /\.minigame-screen\.market-mode\s*\{[^}]*grid-template-columns:\s*200px/);

@@ -167,6 +167,17 @@ assert.equal(lotto.rpc, 'gacha_s2_buy_lotto_ticket');
 assert.deepEqual(lotto.args.p_numbers, [1, 4, 7, 10, 13, 18]);
 assert.equal(lotto.args.p_user_id, 'user-fixed-by-auth');
 
+const market = await router.execute('user-fixed-by-auth', command(
+  GAME_COMMAND_TYPES.MARKET_TRADE,
+  { symbol: 'TMT', side: 'buy', quantity: 3 },
+  'market-edge-00001',
+));
+assert.equal(market.rpc, 'gacha_s2_market_trade');
+assert.equal(market.args.p_symbol, 'TMT');
+assert.equal(market.args.p_side, 'buy');
+assert.equal(market.args.p_quantity, 3);
+assert.equal(market.args.p_user_id, 'user-fixed-by-auth');
+
 const mismatchRouter = createServerCommandRouter({
   gateway: { ...gateway, activeBalanceVersion: async () => 'stale-balance' },
   cards,

@@ -10,6 +10,7 @@ export const SUPABASE_GAME_SERVICE_METHODS = Object.freeze([
   'getWorldBossStatus',
   'getLottoState',
   'getArenaState',
+  'getMarketState',
   'getGuildApplicantProfile',
   'getGuildMemberProfile',
   'getPowerRanking',
@@ -279,6 +280,22 @@ export function createSupabaseGameService(options = {}) {
     return response.profile;
   }
 
+  async function getMarketState() {
+    const response = await readRequest(
+      { kind: 'marketState' },
+      'gacha_s2_client_get_market_state',
+    );
+    if (response.ok === false) return response;
+    if (!response.state || typeof response.state !== 'object') {
+      return createGameError({
+        code: GAME_ERROR_CODES.INTERNAL_ERROR,
+        message: '캄스증권 시세를 불러오지 못했습니다.',
+        serverTime: clock.now(),
+      });
+    }
+    return response.state;
+  }
+
   async function getGuildMemberProfile(targetUserId) {
     if (typeof targetUserId !== 'string' || !UUID_PATTERN.test(targetUserId)) {
       return createGameError({
@@ -372,6 +389,7 @@ export function createSupabaseGameService(options = {}) {
     getWorldBossStatus,
     getLottoState,
     getArenaState,
+    getMarketState,
     getGuildState,
     getGuildApplicantProfile,
     getGuildMemberProfile,

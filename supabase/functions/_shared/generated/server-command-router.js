@@ -28,6 +28,7 @@ const DIRECT_RPCS = Object.freeze({
   [GAME_COMMAND_TYPES.FINISH_MINIGAME]: 'gacha_s2_finish_minigame',
   [GAME_COMMAND_TYPES.PLAY_LADDER]: 'gacha_s2_play_ladder',
   [GAME_COMMAND_TYPES.BUY_LOTTO_TICKET]: 'gacha_s2_buy_lotto_ticket',
+  [GAME_COMMAND_TYPES.MARKET_TRADE]: 'gacha_s2_market_trade',
   [GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD]: 'gacha_s2_claim_world_boss_reward',
   [GAME_COMMAND_TYPES.DISMANTLE_CARDS]: 'gacha_s2_dismantle_cards',
   [GAME_COMMAND_TYPES.DISMANTLE_SUPPORT_ITEM]: 'gacha_s2_dismantle_support_item',
@@ -125,6 +126,8 @@ function directArgs(userId, command) {
       return { ...args, p_lane: payload.lane };
     case GAME_COMMAND_TYPES.BUY_LOTTO_TICKET:
       return { ...args, p_numbers: payload.numbers };
+    case GAME_COMMAND_TYPES.MARKET_TRADE:
+      return { ...args, p_symbol: payload.symbol, p_side: payload.side, p_quantity: payload.quantity };
     case GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD:
       return { ...args, p_event_id: payload.eventId };
     case GAME_COMMAND_TYPES.DISMANTLE_CARDS:

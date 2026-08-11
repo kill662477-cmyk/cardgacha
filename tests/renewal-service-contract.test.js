@@ -139,6 +139,16 @@ assert.equal(validateGameCommand({
   ...lottoPurchase,
   payload: { numbers: [1, 4, 7, 10, 13, 19] },
 }).valid, false, '로또 번호는 1~18만 허용해야 한다');
+const marketTrade = createGameCommand({
+  type: GAME_COMMAND_TYPES.MARKET_TRADE,
+  payload: { symbol: 'TMT', side: 'sell', quantity: 2 },
+  expectedRevision: 8,
+  idempotencyKey: 'market-trade-0001',
+  clientSentAt: clock.now(),
+});
+assert.equal(validateGameCommand(marketTrade).valid, true);
+assert.equal(validateGameCommand({ ...marketTrade, payload: { ...marketTrade.payload, quantity: 0 } }).valid, false);
+assert.equal(validateGameCommand({ ...marketTrade, payload: { ...marketTrade.payload, unitPrice: 1 } }).valid, false);
 assert.equal(validateGameCommand({
   ...minigameFinish,
   payload: { ...minigameFinish.payload, inputDigest: 'client-forged' },

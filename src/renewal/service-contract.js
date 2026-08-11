@@ -32,6 +32,7 @@ export const GAME_COMMAND_TYPES = Object.freeze({
   FINISH_MINIGAME: 'finishMinigame',
   PLAY_LADDER: 'playLadder',
   BUY_LOTTO_TICKET: 'buyLottoTicket',
+  MARKET_TRADE: 'marketTrade',
   // 투기장(비동기 PvP). 페이로드가 없다 - 상대 선정은 서버가 한다.
   // 클라이언트가 상대를 고르게 두면 마음에 들 때까지 다시 굴릴 수 있다.
   ARENA_FIGHT: 'arenaFight',
@@ -107,6 +108,7 @@ function validatePayload(type, payload, issues) {
     [GAME_COMMAND_TYPES.FINISH_MINIGAME]: ['runId', 'inputLog', 'score'],
     [GAME_COMMAND_TYPES.PLAY_LADDER]: ['lane'],
     [GAME_COMMAND_TYPES.BUY_LOTTO_TICKET]: ['numbers'],
+    [GAME_COMMAND_TYPES.MARKET_TRADE]: ['symbol', 'side', 'quantity'],
     [GAME_COMMAND_TYPES.ARENA_FIGHT]: [],
     [GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS]: ['eventId'],
     [GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD]: ['eventId'],
@@ -278,6 +280,13 @@ function validatePayload(type, payload, issues) {
         if (new Set(payload.numbers).size !== payload.numbers.length) {
           addIssue(issues, 'payload.numbers', '중복 번호 불가');
         }
+      }
+      break;
+    case GAME_COMMAND_TYPES.MARKET_TRADE:
+      validateString(issues, payload.symbol, 'payload.symbol', 8);
+      if (!['buy', 'sell'].includes(payload.side)) addIssue(issues, 'payload.side', 'buy or sell required');
+      if (!Number.isSafeInteger(payload.quantity) || payload.quantity < 1 || payload.quantity > 100000) {
+        addIssue(issues, 'payload.quantity', '1~100000 integer required');
       }
       break;
     case GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS:

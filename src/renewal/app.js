@@ -58,7 +58,7 @@ import { createLocalGameService } from './local-game-service.js';
 import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './remote-runtime.js?v=202607290900';
 import { GAME_COMMAND_TYPES, SUPPORT_ITEM_DISMANTLE_MAX_COUNT, isRetryableGameError } from './service-contract.js';
 import { createRequestCoordinator, REQUEST_PHASES } from './request-coordinator.js?v=202607211025';
-import { createMiniGameController } from './minigame-controller.js?v=202608091902';
+import { createMiniGameController } from './minigame-controller.js?v=202608111000';
 import { executeCommandWithVersionRetry } from './server-command-retry.js';
 import { createWorldBossController } from './worldboss-controller.js?v=202607290900';
 import { createRankingController } from './ranking-controller.js?v=202608031600';
@@ -3342,11 +3342,15 @@ async function init() {
         )),
         getLottoState: () => gameService.getLottoState(),
         getArenaState: () => gameService.getArenaState(),
+        getMarketState: () => gameService.getMarketState(),
         arenaFight: () => runUiOperation('arenaFight', elements.miniGameStartButton, () => (
           executeServerCommand(GAME_COMMAND_TYPES.ARENA_FIGHT, {})
         )),
         buyLottoTicket: (payload) => runUiOperation('buyLottoTicket', elements.miniGameStartButton, () => (
           executeServerCommand(GAME_COMMAND_TYPES.BUY_LOTTO_TICKET, payload)
+        )),
+        marketTrade: (payload) => runUiOperation('marketTrade', null, () => (
+          executeServerCommand(GAME_COMMAND_TYPES.MARKET_TRADE, payload)
         )),
         refreshSnapshot: async () => {
           const loaded = await loadRemoteSnapshotWithRetry();

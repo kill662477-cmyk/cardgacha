@@ -170,6 +170,7 @@ const directReadService = createSupabaseGameService({
       gacha_s2_client_get_snapshot: { ok: true, snapshot },
       gacha_s2_client_get_world_boss_status: { ok: true, status: { event: null } },
       gacha_s2_client_get_lotto_state: { ok: true, state: { ok: true, round: null } },
+      gacha_s2_client_get_market_state: { ok: true, state: { assets: [], investedPoints: 0 } },
       gacha_s2_client_get_guild_state: { ok: true, state: { ok: true, guild: null } },
       gacha_s2_client_get_guild_raid_status: { ok: true, status: { active: false, raid: null } },
       gacha_s2_client_get_bridge_status: { ok: true, status: { canUseDonationBridge: false, soopId: null } },
@@ -194,6 +195,7 @@ const directReadService = createSupabaseGameService({
 await directReadService.loadSnapshot();
 await directReadService.getWorldBossStatus();
 await directReadService.getLottoState();
+await directReadService.getMarketState();
 await directReadService.getGuildState();
 await directReadService.getGuildRaidStatus();
 await directReadService.getBridgeStatus();
@@ -202,6 +204,7 @@ assert.deepEqual(directReadCalls.map(({ name }) => name), [
   'gacha_s2_client_get_snapshot',
   'gacha_s2_client_get_world_boss_status',
   'gacha_s2_client_get_lotto_state',
+  'gacha_s2_client_get_market_state',
   'gacha_s2_client_get_guild_state',
   'gacha_s2_client_get_guild_raid_status',
   'gacha_s2_client_get_bridge_status',

@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/renewal/brand/card-gacha-s2-favicon-32.png">
   <link rel="apple-touch-icon" sizes="192x192" href="assets/renewal/brand/card-gacha-s2-icon-192.png">
   <link rel="stylesheet" href="styles/renewal/tokens.css">
-  <link rel="stylesheet" href="styles/renewal/main.css?v=202608091902">
+  <link rel="stylesheet" href="styles/renewal/main.css?v=202608111000">
   <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
 </head>
 <body>
@@ -574,6 +574,9 @@
           <button type="button" data-minigame-select="arena">
             <i data-lucide="swords"></i><span>투기장</span><small>ARENA PVP</small>
           </button>
+          <button type="button" data-minigame-select="market">
+            <i data-lucide="candlestick-chart"></i><span>캄스증권</span><small>CALMS MARKET</small>
+          </button>
         </nav>
         <div class="minigame-daily-block" id="miniGameDailyBlock">
           <span>오늘 획득</span><strong id="miniGameDaily">0 / 3,000 P</strong>
@@ -667,6 +670,50 @@
               <div id="arenaRecentList">기록 대기 중</div>
             </section>
           </div>
+          <div class="market-shell" id="marketShell" hidden>
+            <header class="market-tape">
+              <div><span>CALMS EXCHANGE</span><strong>공통 시간봉 시장</strong></div>
+              <div class="market-clock"><small>NEXT TICK</small><b id="marketNextUpdate">--:--</b></div>
+            </header>
+            <div class="market-board">
+              <section class="market-watch">
+                <header><span>WATCH 14</span><b>종목</b><small>현재가 / 1시간</small></header>
+                <div id="marketAssetList" class="market-asset-list">
+                  <p>시세 동기화 중</p>
+                </div>
+              </section>
+              <section class="market-terminal">
+                <header class="market-selected-head">
+                  <img id="marketSelectedImage" alt="">
+                  <div><span id="marketSelectedSymbol">---</span><h3 id="marketSelectedName">종목 선택</h3></div>
+                  <div class="market-selected-price"><strong id="marketSelectedPrice">-</strong><b id="marketSelectedChange">0.00%</b></div>
+                </header>
+                <div class="market-chart" id="marketChart" aria-label="최근 24시간 가격 차트"></div>
+                <dl class="market-position">
+                  <div><dt>보유</dt><dd id="marketOwnedQuantity">0주</dd></div>
+                  <div><dt>평균단가</dt><dd id="marketAveragePrice">0P</dd></div>
+                  <div><dt>평가금</dt><dd id="marketPositionValue">0P</dd></div>
+                  <div><dt>평가손익</dt><dd id="marketPositionPnl">0P</dd></div>
+                </dl>
+                <section class="market-order">
+                  <label for="marketQuantity">주문 수량</label>
+                  <div>
+                    <input id="marketQuantity" type="number" min="1" max="100000" step="1" value="1" inputmode="numeric">
+                    <button id="marketMaxBuy" type="button">최대 매수</button>
+                    <button id="marketMaxSell" type="button">전량 매도</button>
+                  </div>
+                  <div class="market-order-summary">
+                    <span>예상 금액 <b id="marketOrderGross">0P</b></span>
+                    <span>수수료 1.5% <b id="marketOrderFee">0P</b></span>
+                  </div>
+                  <div class="market-order-actions">
+                    <button id="marketBuyButton" type="button" data-side="buy">매수</button>
+                    <button id="marketSellButton" type="button" data-side="sell">매도</button>
+                  </div>
+                </section>
+              </section>
+            </div>
+          </div>
           <div class="minigame-result-panel" id="miniGameResult" hidden>
             <span>RESULT</span><h3 id="miniGameResultTitle">작전 완료</h3>
             <strong id="miniGameResultScore">0 SCORE</strong>
@@ -702,6 +749,23 @@
           </ul>
           <p id="lottoEntryStatus">번호 6개를 선택하세요.</p>
           <small>계정당 회차별 2장 · 1장 1,000P · 추첨 10분 전 마감 · 자동 지급 · 1등 누적 최대 1,000,000P</small>
+        </section>
+        <section class="market-control" id="marketControl" hidden>
+          <div class="market-portfolio">
+            <span>PORTFOLIO</span>
+            <dl>
+              <div><dt>투자 원금</dt><dd id="marketInvestedPoints">0P</dd></div>
+              <div><dt>현재 평가금</dt><dd id="marketValue">0P</dd></div>
+              <div><dt>평가 손익</dt><dd id="marketUnrealizedPnl">0P</dd></div>
+              <div><dt>실현 손익</dt><dd id="marketRealizedPnl">0P</dd></div>
+            </dl>
+            <div class="market-cap"><span>투자 한도</span><strong id="marketInvestmentCap">0 / 500,000P</strong><i><b id="marketInvestmentBar"></b></i></div>
+          </div>
+          <div class="market-trade-log">
+            <header><span>ORDER LOG</span><b>최근 체결</b></header>
+            <div id="marketTradeList"><p>체결 내역 없음</p></div>
+          </div>
+          <small>매수·매도 각각 1.5% 수수료 · 전체/종목당 투자 원금 최대 500,000P · 매시간 정각 가격 갱신 · 시간당 등락폭 최대 ±30%</small>
         </section>
         <button class="minigame-start-button" id="miniGameStartButton" type="button"><i data-lucide="play"></i><span>게임 시작</span></button>
         <button class="minigame-stop-button" id="miniGameStopButton" type="button" hidden><i data-lucide="square"></i><span>게임 종료</span></button>
@@ -1043,6 +1107,6 @@
   </dialog>
 
   <script src="runtime-config.js?v=202607290915"></script>
-  <script type="module" src="src/renewal/app.js?v=202608091902"></script>
+  <script type="module" src="src/renewal/app.js?v=202608111000"></script>
 </body>
 </html>

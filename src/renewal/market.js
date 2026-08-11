@@ -1,0 +1,46 @@
+export const MARKET_RULES = Object.freeze({
+  label: '캄스증권',
+  feeRate: 0.015,
+  totalInvestmentCap: 500_000,
+  perAssetInvestmentCap: 500_000,
+  hourlyChangeCap: 0.30,
+  historyHours: 24,
+});
+
+export const MARKET_ASSETS = Object.freeze([
+  { symbol: 'KYH', name: '김윤환', cardId: 'kimyunhwan-4', basePrice: 12_000 },
+  { symbol: 'NDS', name: '남덕선', cardId: 'namdeokseon-12', basePrice: 9_400 },
+  { symbol: 'TMT', name: '토마토', cardId: 'tomato-11', basePrice: 15_000 },
+  { symbol: 'JDD', name: '지두두', cardId: 'jidudu-14', basePrice: 13_500 },
+  { symbol: 'SUN', name: '햇살', cardId: 'haetsal-12', basePrice: 10_800 },
+  { symbol: 'JJK', name: '찌킹', cardId: 'jjiking-12', basePrice: 8_800 },
+  { symbol: 'CHR', name: '치리', cardId: 'chiri-19', basePrice: 7_600 },
+  { symbol: 'SJY', name: '소주양', cardId: 'sojuyang-13', basePrice: 11_200 },
+  { symbol: 'JHR', name: '주하랑', cardId: 'juharang-18', basePrice: 16_500 },
+  { symbol: 'JOY', name: '임조이', cardId: 'imjoy-12', basePrice: 9_900 },
+  { symbol: 'VTM', name: '비타밍', cardId: 'vitaming-14', basePrice: 12_800 },
+  { symbol: 'MJG', name: '먼진', cardId: 'meonjin-12', basePrice: 8_200 },
+  { symbol: 'ARS', name: '아리송이', cardId: 'arisongi-11', basePrice: 14_200 },
+  { symbol: 'NGN', name: '낭니', cardId: 'nangni-8', basePrice: 17_000 },
+]);
+
+export function normalizeMarketQuantity(value) {
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 0;
+}
+
+export function marketFee(grossPoints, feeRate = MARKET_RULES.feeRate) {
+  return Math.max(1, Math.ceil(Math.max(0, Number(grossPoints) || 0) * feeRate));
+}
+
+export function nextMarketPrice(previousPrice, changeRate) {
+  const previous = Math.max(1, Math.round(Number(previousPrice) || 1));
+  const bounded = Math.max(-MARKET_RULES.hourlyChangeCap, Math.min(MARKET_RULES.hourlyChangeCap, Number(changeRate) || 0));
+  return Math.max(100, Math.round(previous * (1 + bounded)));
+}
+
+export function canAddMarketInvestment({ totalCostBasis = 0, assetCostBasis = 0, purchaseCost = 0 } = {}) {
+  const added = Math.max(0, Math.round(Number(purchaseCost) || 0));
+  return Number(totalCostBasis) + added <= MARKET_RULES.totalInvestmentCap
+    && Number(assetCostBasis) + added <= MARKET_RULES.perAssetInvestmentCap;
+}

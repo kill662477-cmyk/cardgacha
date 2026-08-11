@@ -235,6 +235,16 @@ Deno.serve(async (req: Request) => {
       return respond({ ok: false, code: 'INTERNAL_ERROR', message: '로또 정보를 불러오지 못했습니다.' }, 500);
     }
   }
+  if (body.kind === 'marketState') {
+    try {
+      const state = await gateway.rpc('gacha_s2_get_market_state', { p_user_id: userId });
+      if (state?.ok === false) return respond(state, statusFor(state));
+      return respond({ ok: true, serverTime: Date.now(), state });
+    } catch (error) {
+      await logFailure('marketState', 'INTERNAL_ERROR', 500, 'marketState', error);
+      return respond({ ok: false, code: 'INTERNAL_ERROR', message: '캄스증권 시세를 불러오지 못했습니다.' }, 500);
+    }
+  }
   if (body.kind === 'powerRanking') {
     try {
       const ranking = await router.getPowerRanking(userId);

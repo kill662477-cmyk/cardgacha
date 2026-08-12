@@ -169,11 +169,13 @@ assert.equal(lotto.args.p_user_id, 'user-fixed-by-auth');
 
 const market = await router.execute('user-fixed-by-auth', command(
   GAME_COMMAND_TYPES.MARKET_TRADE,
-  { symbol: 'TMT', side: 'buy', quantity: 3 },
+  { symbol: 'TMT', side: 'buy', quantity: 3, positionType: 'inverse', multiplier: 4 },
   'market-edge-00001',
 ));
 assert.equal(market.rpc, 'gacha_s2_market_trade');
 assert.equal(market.args.p_symbol, 'TMT');
+assert.equal(market.args.p_position_type, 'inverse');
+assert.equal(market.args.p_multiplier, 4);
 assert.equal(market.args.p_side, 'buy');
 assert.equal(market.args.p_quantity, 3);
 assert.equal(market.args.p_user_id, 'user-fixed-by-auth');

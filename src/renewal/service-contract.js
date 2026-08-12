@@ -108,7 +108,7 @@ function validatePayload(type, payload, issues) {
     [GAME_COMMAND_TYPES.FINISH_MINIGAME]: ['runId', 'inputLog', 'score'],
     [GAME_COMMAND_TYPES.PLAY_LADDER]: ['lane'],
     [GAME_COMMAND_TYPES.BUY_LOTTO_TICKET]: ['numbers'],
-    [GAME_COMMAND_TYPES.MARKET_TRADE]: ['symbol', 'side', 'quantity'],
+    [GAME_COMMAND_TYPES.MARKET_TRADE]: ['symbol', 'side', 'quantity', 'positionType', 'multiplier'],
     [GAME_COMMAND_TYPES.ARENA_FIGHT]: [],
     [GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS]: ['eventId'],
     [GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD]: ['eventId'],
@@ -287,6 +287,15 @@ function validatePayload(type, payload, issues) {
       if (!['buy', 'sell'].includes(payload.side)) addIssue(issues, 'payload.side', 'buy or sell required');
       if (!Number.isSafeInteger(payload.quantity) || payload.quantity < 1 || payload.quantity > 100000) {
         addIssue(issues, 'payload.quantity', '1~100000 integer required');
+      }
+      if (payload.positionType !== undefined && !['long', 'inverse'].includes(payload.positionType)) {
+        addIssue(issues, 'payload.positionType', 'long or inverse required');
+      }
+      if (payload.multiplier !== undefined && ![1, 2, 3, 4, 5].includes(payload.multiplier)) {
+        addIssue(issues, 'payload.multiplier', '1~5 integer required');
+      }
+      if ((payload.positionType ?? 'long') === 'inverse' && ![2, 3, 4, 5].includes(payload.multiplier)) {
+        addIssue(issues, 'payload.multiplier', 'inverse requires 2~5 multiplier');
       }
       break;
     case GAME_COMMAND_TYPES.ATTACK_WORLD_BOSS:

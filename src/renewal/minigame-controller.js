@@ -23,9 +23,12 @@ import {
 } from './lotto.js';
 import {
   MARKET_ASSETS,
+  MARKET_PRODUCTS,
   MARKET_RULES,
   marketFee,
+  marketProductLabel,
   marketReturnRate,
+  normalizeMarketProduct,
   normalizeMarketQuantity,
 } from './market.js';
 
@@ -71,10 +74,10 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     'arenaBattleResult', 'arenaBattleVerdict', 'arenaBattleReason', 'arenaBattleDelta',
     'arenaBattleSkip',
     'marketShell', 'marketNextUpdate', 'marketAssetList', 'marketSelectedImage',
-    'marketSelectedSymbol', 'marketSelectedName', 'marketSelectedPrice', 'marketSelectedChange',
+    'marketSelectedSymbol', 'marketSelectedName', 'marketSelectedProduct', 'marketSelectedPrice', 'marketSelectedChange',
     'marketChart', 'marketOwnedQuantity', 'marketAveragePrice', 'marketPositionValue',
     'marketPositionPnl', 'marketQuantity', 'marketMaxBuy', 'marketMaxSell',
-    'marketOrderGross', 'marketOrderFee', 'marketBuyButton', 'marketSellButton',
+    'marketProductSelect', 'marketProductRisk', 'marketOrderGross', 'marketOrderFee', 'marketBuyButton', 'marketSellButton',
     'marketControl', 'marketInvestedPoints', 'marketValue', 'marketUnrealizedPnl',
     'marketRealizedPnl', 'marketInvestmentCap', 'marketInvestmentBar', 'marketTradeList',
   ].map((id) => [id, document.getElementById(id)]));
@@ -102,6 +105,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   let marketLoading = false;
   let marketNextSyncAt = 0;
   let marketSelectedSymbol = MARKET_ASSETS[0].symbol;
+  let marketSelectedProductKey = MARKET_PRODUCTS[0].key;
   let result = null;
   let sequence = 0;
 
@@ -640,6 +644,7 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
       realizedPnl: 0,
       assets: MARKET_ASSETS.map((asset) => ({
         ...asset,
+        investedPoints: 0,
         price: asset.basePrice,
         changeBps: 0,
         regime: 'open',
@@ -649,6 +654,20 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
         marketValue: 0,
         unrealizedPnl: 0,
         history: [{ at: hourAt, price: asset.basePrice }],
+        positions: MARKET_PRODUCTS.map((product) => ({
+          positionType: product.positionType,
+          multiplier: product.multiplier,
+          label: product.label,
+          price: asset.basePrice,
+          changeBps: 0,
+          quantity: 0,
+          costBasis: 0,
+          averagePrice: 0,
+          marketValue: 0,
+          unrealizedPnl: 0,
+          liquidationPrice: 0,
+          history: [{ at: hourAt, price: asset.basePrice }],
+        })),
       })),
       recentTrades: [],
     };
@@ -657,6 +676,28 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   function currentMarketAsset() {
     const assets = Array.isArray(marketState?.assets) ? marketState.assets : [];
     return assets.find((asset) => asset.symbol === marketSelectedSymbol) ?? assets[0] ?? null;
+  }
+
+  function currentMarketProduct() {
+    const [positionType, multiplier] = marketSelectedProductKey.split(':');
+    return normalizeMarketProduct(positionType, Number(multiplier));
+  }
+
+  function currentMarketPosition(asset = currentMarketAsset()) {
+    if (!asset) return null;
+    const product = currentMarketProduct();
+    const positions = Array.isArray(asset.positions) ? asset.positions : [];
+    return positions.find((position) => (
+      position.positionType === product.positionType && Number(position.multiplier) === product.multiplier
+    )) ?? (product.key === 'long:1' ? asset : null);
+  }
+
+  function marketProductRiskText(product, position) {
+    if (product.multiplier === 1) return '기초 종목과 같은 방향으로 움직이며 강제청산이 없습니다.';
+    const liquidationMove = (100 / product.multiplier).toFixed(product.multiplier === 3 ? 2 : 0);
+    const direction = product.positionType === 'inverse' ? '상승' : '하락';
+    const price = Number(position?.liquidationPrice ?? 0);
+    return `${direction} ${liquidationMove}% 도달 시 전량 청산${price > 0 ? ` · 청산선 ${number.format(price)}P` : ''}`;
   }
 
   function marketChartMarkup(history, positive) {
@@ -687,13 +728,14 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
 
   function updateMarketOrderSummary() {
     const asset = currentMarketAsset();
+    const position = currentMarketPosition(asset);
     const quantity = normalizeMarketQuantity(elements.marketQuantity?.value);
-    const gross = asset ? Number(asset.price) * quantity : 0;
+    const gross = position ? Number(position.price) * quantity : 0;
     elements.marketOrderGross.textContent = `${number.format(gross)}P`;
     elements.marketOrderFee.textContent = `${number.format(gross ? marketFee(gross) : 0)}P`;
-    elements.marketBuyButton.disabled = marketLoading || !asset || !quantity || !serverCommands?.marketTrade;
-    elements.marketSellButton.disabled = marketLoading || !asset || !quantity
-      || quantity > Number(asset.quantity ?? 0) || !serverCommands?.marketTrade;
+    elements.marketBuyButton.disabled = marketLoading || !asset || !position || !quantity || !serverCommands?.marketTrade;
+    elements.marketSellButton.disabled = marketLoading || !asset || !position || !quantity
+      || quantity > Number(position.quantity ?? 0) || !serverCommands?.marketTrade;
   }
 
   function renderMarket() {
@@ -721,20 +763,26 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     const asset = currentMarketAsset() ?? assets[0];
     if (asset) {
       const card = cardById.get(asset.cardId);
-      const change = Number(asset.changeBps ?? 0) / 100;
+      const product = currentMarketProduct();
+      const position = currentMarketPosition(asset);
+      const change = Number(position?.changeBps ?? asset.changeBps ?? 0) / 100;
       elements.marketSelectedImage.src = card ? imagePath(card) : '';
       elements.marketSelectedImage.alt = asset.name;
       elements.marketSelectedSymbol.textContent = asset.symbol;
       elements.marketSelectedName.textContent = asset.name;
-      elements.marketSelectedPrice.textContent = `${number.format(asset.price)}P`;
+      elements.marketSelectedProduct.textContent = marketProductLabel(product.positionType, product.multiplier);
+      elements.marketSelectedProduct.dataset.type = product.positionType;
+      elements.marketSelectedPrice.textContent = `${number.format(position?.price ?? asset.price)}P`;
       elements.marketSelectedChange.textContent = `${change > 0 ? '+' : ''}${change.toFixed(2)}%`;
       elements.marketSelectedChange.className = change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
-      elements.marketChart.innerHTML = marketChartMarkup(asset.history, change >= 0);
-      elements.marketOwnedQuantity.textContent = `${number.format(asset.quantity ?? 0)}주`;
-      elements.marketAveragePrice.textContent = `${number.format(asset.averagePrice ?? 0)}P`;
-      elements.marketPositionValue.textContent = `${number.format(asset.marketValue ?? 0)}P`;
-      elements.marketPositionPnl.textContent = marketSignedPoints(asset.unrealizedPnl);
-      elements.marketPositionPnl.className = Number(asset.unrealizedPnl) > 0 ? 'up' : Number(asset.unrealizedPnl) < 0 ? 'down' : '';
+      elements.marketChart.innerHTML = marketChartMarkup(position?.history ?? asset.history, change >= 0);
+      elements.marketOwnedQuantity.textContent = `${number.format(position?.quantity ?? 0)}주`;
+      elements.marketAveragePrice.textContent = `${number.format(position?.averagePrice ?? 0)}P`;
+      elements.marketPositionValue.textContent = `${number.format(position?.marketValue ?? 0)}P`;
+      elements.marketPositionPnl.textContent = marketSignedPoints(position?.unrealizedPnl);
+      elements.marketPositionPnl.className = Number(position?.unrealizedPnl) > 0 ? 'up' : Number(position?.unrealizedPnl) < 0 ? 'down' : '';
+      elements.marketProductSelect.value = product.key;
+      elements.marketProductRisk.textContent = marketProductRiskText(product, position);
     }
 
     const invested = Number(state.investedPoints ?? 0);
@@ -753,9 +801,9 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     const trades = Array.isArray(state.recentTrades) ? state.recentTrades : [];
     elements.marketTradeList.innerHTML = trades.length ? trades.map((trade) => `
       <article class="market-trade-row" data-side="${trade.side}">
-        <b>${trade.side === 'buy' ? '매수' : '매도'}</b>
-        <span>${escapeHtml(trade.name ?? trade.symbol)} · ${number.format(trade.quantity)}주</span>
-        <strong>${marketSignedPoints(trade.netPoints)}</strong>
+        <b>${trade.side === 'buy' ? '매수' : trade.side === 'sell' ? '매도' : '청산'}</b>
+        <span>${escapeHtml(trade.name ?? trade.symbol)} ${escapeHtml(trade.productLabel ?? marketProductLabel(trade.positionType, trade.multiplier))} · ${number.format(trade.quantity)}주</span>
+        <strong>${marketSignedPoints(trade.side === 'liquidation' ? trade.realizedPnl : trade.netPoints)}</strong>
       </article>
     `).join('') : '<p>체결 내역 없음</p>';
     updateMarketOrderSummary();
@@ -787,19 +835,27 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
   async function submitMarketTrade(side) {
     if (marketLoading || !serverCommands?.marketTrade) return;
     const asset = currentMarketAsset();
+    const product = currentMarketProduct();
+    const position = currentMarketPosition(asset);
     const quantity = normalizeMarketQuantity(elements.marketQuantity.value);
-    if (!asset || !quantity) return showToast('주문 수량을 확인하세요.');
-    if (side === 'sell' && quantity > Number(asset.quantity ?? 0)) return showToast('보유 수량이 부족합니다.');
+    if (!asset || !position || !quantity) return showToast('주문 수량을 확인하세요.');
+    if (side === 'sell' && quantity > Number(position.quantity ?? 0)) return showToast('선택 상품 보유 수량이 부족합니다.');
     marketLoading = true;
     render();
-    const response = await serverCommands.marketTrade({ symbol: asset.symbol, side, quantity });
+    const response = await serverCommands.marketTrade({
+      symbol: asset.symbol,
+      side,
+      quantity,
+      positionType: product.positionType,
+      multiplier: product.multiplier,
+    });
     marketLoading = false;
     if (response?.ok === false) {
       render();
       return showToast(response.message ?? '매매 주문 처리에 실패했습니다.');
     }
     const result = response.result ?? {};
-    showToast(`${asset.name} ${side === 'buy' ? '매수' : '매도'} ${number.format(quantity)}주 체결 · ${number.format(result.unitPrice ?? asset.price)}P`);
+    showToast(`${asset.name} ${product.label} ${side === 'buy' ? '매수' : '매도'} ${number.format(quantity)}주 체결 · ${number.format(result.unitPrice ?? position.price)}P`);
     await loadMarketState({ silent: true });
   }
 
@@ -1374,20 +1430,26 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     render();
   });
   elements.marketQuantity?.addEventListener('input', updateMarketOrderSummary);
+  elements.marketProductSelect?.addEventListener('change', () => {
+    marketSelectedProductKey = elements.marketProductSelect.value;
+    elements.marketQuantity.value = '1';
+    render();
+  });
   elements.marketMaxBuy?.addEventListener('click', () => {
     const asset = currentMarketAsset();
-    if (!asset) return;
+    const position = currentMarketPosition(asset);
+    if (!asset || !position) return;
     const totalRemaining = Math.max(0, Number(marketState?.totalInvestmentCap ?? MARKET_RULES.totalInvestmentCap) - Number(marketState?.investedPoints ?? 0));
-    const assetRemaining = Math.max(0, Number(marketState?.perAssetInvestmentCap ?? MARKET_RULES.perAssetInvestmentCap) - Number(asset.costBasis ?? 0));
+    const assetRemaining = Math.max(0, Number(marketState?.perAssetInvestmentCap ?? MARKET_RULES.perAssetInvestmentCap) - Number(asset.investedPoints ?? asset.costBasis ?? 0));
     const available = Math.min(Number(getState().points ?? 0), totalRemaining, assetRemaining);
-    let quantity = Math.max(0, Math.floor(available / (Number(asset.price) * (1 + MARKET_RULES.feeRate))));
-    while (quantity > 0 && Number(asset.price) * quantity + marketFee(Number(asset.price) * quantity) > available) quantity -= 1;
+    let quantity = Math.max(0, Math.floor(available / (Number(position.price) * (1 + MARKET_RULES.feeRate))));
+    while (quantity > 0 && Number(position.price) * quantity + marketFee(Number(position.price) * quantity) > available) quantity -= 1;
     elements.marketQuantity.value = String(Math.max(1, quantity));
     updateMarketOrderSummary();
     if (!quantity) showToast('현재 한도와 포인트로 매수 가능한 수량이 없습니다.');
   });
   elements.marketMaxSell?.addEventListener('click', () => {
-    const quantity = Number(currentMarketAsset()?.quantity ?? 0);
+    const quantity = Number(currentMarketPosition()?.quantity ?? 0);
     elements.marketQuantity.value = String(Math.max(1, quantity));
     updateMarketOrderSummary();
     if (!quantity) showToast('매도할 보유 주식이 없습니다.');

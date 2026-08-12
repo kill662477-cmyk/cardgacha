@@ -141,7 +141,7 @@ assert.equal(validateGameCommand({
 }).valid, false, '로또 번호는 1~18만 허용해야 한다');
 const marketTrade = createGameCommand({
   type: GAME_COMMAND_TYPES.MARKET_TRADE,
-  payload: { symbol: 'TMT', side: 'sell', quantity: 2 },
+  payload: { symbol: 'TMT', side: 'sell', quantity: 2, positionType: 'inverse', multiplier: 3 },
   expectedRevision: 8,
   idempotencyKey: 'market-trade-0001',
   clientSentAt: clock.now(),
@@ -149,6 +149,11 @@ const marketTrade = createGameCommand({
 assert.equal(validateGameCommand(marketTrade).valid, true);
 assert.equal(validateGameCommand({ ...marketTrade, payload: { ...marketTrade.payload, quantity: 0 } }).valid, false);
 assert.equal(validateGameCommand({ ...marketTrade, payload: { ...marketTrade.payload, unitPrice: 1 } }).valid, false);
+assert.equal(validateGameCommand({ ...marketTrade, payload: { ...marketTrade.payload, multiplier: 1 } }).valid, false);
+assert.equal(validateGameCommand({
+  ...marketTrade,
+  payload: { symbol: 'TMT', side: 'buy', quantity: 1 },
+}).valid, true, '구버전 일반 주문은 long x1 기본값으로 호환해야 한다');
 assert.equal(validateGameCommand({
   ...minigameFinish,
   payload: { ...minigameFinish.payload, inputDigest: 'client-forged' },

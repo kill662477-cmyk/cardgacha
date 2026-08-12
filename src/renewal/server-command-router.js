@@ -127,7 +127,14 @@ function directArgs(userId, command) {
     case GAME_COMMAND_TYPES.BUY_LOTTO_TICKET:
       return { ...args, p_numbers: payload.numbers };
     case GAME_COMMAND_TYPES.MARKET_TRADE:
-      return { ...args, p_symbol: payload.symbol, p_side: payload.side, p_quantity: payload.quantity };
+      return {
+        ...args,
+        p_symbol: payload.symbol,
+        p_side: payload.side,
+        p_quantity: payload.quantity,
+        p_position_type: payload.positionType ?? 'long',
+        p_multiplier: payload.multiplier ?? 1,
+      };
     case GAME_COMMAND_TYPES.CLAIM_WORLD_BOSS_REWARD:
       return { ...args, p_event_id: payload.eventId };
     case GAME_COMMAND_TYPES.DISMANTLE_CARDS:

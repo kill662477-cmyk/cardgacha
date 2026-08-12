@@ -685,7 +685,7 @@
               <section class="market-terminal">
                 <header class="market-selected-head">
                   <img id="marketSelectedImage" alt="">
-                  <div><span id="marketSelectedSymbol">---</span><h3 id="marketSelectedName">종목 선택</h3></div>
+                  <div><span id="marketSelectedSymbol">---</span><h3 id="marketSelectedName">종목 선택</h3><small id="marketSelectedProduct">일반</small></div>
                   <div class="market-selected-price"><strong id="marketSelectedPrice">-</strong><b id="marketSelectedChange">0.00%</b></div>
                 </header>
                 <div class="market-chart" id="marketChart" aria-label="오늘 시간별 가격 차트"></div>
@@ -696,8 +696,23 @@
                   <div><dt>평가손익</dt><dd id="marketPositionPnl">0P</dd></div>
                 </dl>
                 <section class="market-order">
+                  <div class="market-product-picker">
+                    <label for="marketProductSelect">매수 상품</label>
+                    <select id="marketProductSelect">
+                      <option value="long:1">일반</option>
+                      <option value="long:2">레버리지 x2</option>
+                      <option value="long:3">레버리지 x3</option>
+                      <option value="long:4">레버리지 x4</option>
+                      <option value="long:5">레버리지 x5</option>
+                      <option value="inverse:2">인버스 x2</option>
+                      <option value="inverse:3">인버스 x3</option>
+                      <option value="inverse:4">인버스 x4</option>
+                      <option value="inverse:5">인버스 x5</option>
+                    </select>
+                    <small id="marketProductRisk">기초 종목과 같은 방향으로 움직입니다.</small>
+                  </div>
                   <label for="marketQuantity">주문 수량</label>
-                  <div>
+                  <div class="market-quantity-row">
                     <input id="marketQuantity" type="number" min="1" max="100000" step="1" value="1" inputmode="numeric">
                     <button id="marketMaxBuy" type="button">최대 매수</button>
                     <button id="marketMaxSell" type="button">전량 매도</button>
@@ -759,13 +774,13 @@
               <div><dt>평가 손익</dt><dd id="marketUnrealizedPnl">0P</dd></div>
               <div><dt>실현 손익</dt><dd id="marketRealizedPnl">0P</dd></div>
             </dl>
-            <div class="market-cap"><span>투자 한도</span><strong id="marketInvestmentCap">0 / 500,000P</strong><i><b id="marketInvestmentBar"></b></i></div>
+            <div class="market-cap"><span>투자 한도</span><strong id="marketInvestmentCap">0 / 1,000,000P</strong><i><b id="marketInvestmentBar"></b></i></div>
           </div>
           <div class="market-trade-log">
             <header><span>ORDER LOG</span><b>최근 체결</b></header>
             <div id="marketTradeList"><p>체결 내역 없음</p></div>
           </div>
-          <small>매수·매도 각각 1.5% 수수료 · 전체/종목당 투자 원금 최대 500,000P · 매시간 정각 가격 갱신 · 시간당 등락폭 최대 ±30%</small>
+          <small>매수·매도 각각 1.5% 수수료 · 전체/종목당 투자 원금 최대 1,000,000P · 레버리지/인버스는 매시간 수익률 배수 적용 · 손실은 투자금 이내</small>
         </section>
         <button class="minigame-start-button" id="miniGameStartButton" type="button"><i data-lucide="play"></i><span>게임 시작</span></button>
         <button class="minigame-stop-button" id="miniGameStopButton" type="button" hidden><i data-lucide="square"></i><span>게임 종료</span></button>

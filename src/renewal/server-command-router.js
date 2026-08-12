@@ -451,6 +451,14 @@ export function createServerCommandRouter(options) {
       if (error?.message?.includes('SERVER_FORMATION_INVALID')) {
         return commandError(command, GAME_ERROR_CODES.COMMAND_REJECTED, '유효한 전투 카드 5장 편성이 필요합니다.', clock);
       }
+      if (error?.message?.includes('MARKET_PRODUCT_BUY_SUSPENDED')) {
+        return commandError(
+          command,
+          GAME_ERROR_CODES.COMMAND_REJECTED,
+          '1P에 도달한 레버리지·인버스 상품은 신규 매수할 수 없습니다.',
+          clock,
+        );
+      }
       options?.onError?.({
         commandId: command.commandId,
         commandType: command.type,

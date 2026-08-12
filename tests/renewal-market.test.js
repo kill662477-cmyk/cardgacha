@@ -25,6 +25,8 @@ const derivativesMigration = await read('supabase/migrations/20260812133000_mark
 const derivativesSql = derivativesMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const derivativeFloorMigration = await read('supabase/migrations/20260813084000_market_derivative_price_floor_1.sql');
 const derivativeFloorSql = derivativeFloorMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
+const derivativeBuyGuardMigration = await read('supabase/migrations/20260813085400_block_derivative_buy_at_1p.sql');
+const derivativeBuyGuardSql = derivativeBuyGuardMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const html = await read('index.html');
 const css = await read('styles/renewal/main.css');
 const controller = await read('src/renewal/minigame-controller.js');
@@ -124,6 +126,10 @@ assert.match(derivativesSql, /p_multiplier integer/);
 assert.match(derivativeFloorSql, /gacha_s2_market_product_prices_price_check check \(price >= 1\)/);
 assert.match(derivativeFloorSql, /gacha_s2_market_trades_unit_price_check check \(unit_price >= 1\)/);
 assert.match(derivativeFloorSql, /then 100 else 1 end/);
+assert.match(derivativeBuyGuardSql, /new\.side = 'buy'/);
+assert.match(derivativeBuyGuardSql, /new\.multiplier >= 2/);
+assert.match(derivativeBuyGuardSql, /new\.unit_price <= 1/);
+assert.match(derivativeBuyGuardSql, /market_product_buy_suspended/);
 
 assert.match(html, /data-minigame-select="market"/);
 assert.match(html, /id="marketShell"/);
@@ -139,6 +145,8 @@ assert.match(controller, /submitMarketTrade/);
 assert.match(controller, /serverCommands\?\.marketTrade/);
 assert.match(controller, /marketReturnRate\(unrealized, invested\)/);
 assert.match(controller, /marketProductRiskText/);
+assert.match(controller, /buySuspended/);
+assert.match(controller, /1P에 도달한 레버리지·인버스 상품은 신규 매수할 수 없습니다/);
 assert.match(controller, /positionType: product\.positionType/);
 assert.match(controller, /오늘 · 1시간봉/);
 assert.match(controller, /minigameScreen\.classList\.toggle\('market-mode', market\)/);

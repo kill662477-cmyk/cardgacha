@@ -694,6 +694,9 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
 
   function marketProductRiskText(product, position) {
     if (product.multiplier === 1) return '기초 종목과 같은 방향으로 움직이며 강제청산이 없습니다.';
+    if (Number(position?.price ?? 0) <= MARKET_RULES.productPriceFloor) {
+      return `현재 ${MARKET_RULES.productPriceFloor}P · 신규 매수 중단, 보유분 매도 가능`;
+    }
     const liquidationMove = (100 / product.multiplier).toFixed(product.multiplier === 3 ? 2 : 0);
     const direction = product.positionType === 'inverse' ? '상승' : '하락';
     const price = Number(position?.liquidationPrice ?? 0);
@@ -733,7 +736,11 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     const gross = position ? Number(position.price) * quantity : 0;
     elements.marketOrderGross.textContent = `${number.format(gross)}P`;
     elements.marketOrderFee.textContent = `${number.format(gross ? marketFee(gross) : 0)}P`;
-    elements.marketBuyButton.disabled = marketLoading || !asset || !position || !quantity || !serverCommands?.marketTrade;
+    const product = currentMarketProduct();
+    const buySuspended = product.multiplier >= 2
+      && Number(position?.price ?? 0) <= MARKET_RULES.productPriceFloor;
+    elements.marketBuyButton.disabled = marketLoading || !asset || !position || !quantity
+      || buySuspended || !serverCommands?.marketTrade;
     elements.marketSellButton.disabled = marketLoading || !asset || !position || !quantity
       || quantity > Number(position.quantity ?? 0) || !serverCommands?.marketTrade;
   }
@@ -839,6 +846,10 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     const position = currentMarketPosition(asset);
     const quantity = normalizeMarketQuantity(elements.marketQuantity.value);
     if (!asset || !position || !quantity) return showToast('주문 수량을 확인하세요.');
+    if (side === 'buy' && product.multiplier >= 2
+      && Number(position.price) <= MARKET_RULES.productPriceFloor) {
+      return showToast('1P에 도달한 레버리지·인버스 상품은 신규 매수할 수 없습니다.');
+    }
     if (side === 'sell' && quantity > Number(position.quantity ?? 0)) return showToast('선택 상품 보유 수량이 부족합니다.');
     marketLoading = true;
     render();

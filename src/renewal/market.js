@@ -4,7 +4,8 @@ export const MARKET_RULES = Object.freeze({
   totalInvestmentCap: 1_000_000,
   perAssetInvestmentCap: 1_000_000,
   hourlyChangeCap: 0.30,
-  productPriceFloor: 100,
+  underlyingPriceFloor: 100,
+  productPriceFloor: 1,
   productPriceCapMultiplier: 10,
   historyResetsDaily: true,
   historyTimeZone: 'Asia/Seoul',
@@ -82,10 +83,14 @@ export function nextMarketProductPrice(previousPrice, underlyingChangeRate, {
   multiplier = 1,
   basePrice = previousPrice,
 } = {}) {
-  const previous = Math.max(MARKET_RULES.productPriceFloor, Math.round(Number(previousPrice) || 1));
-  const cap = Math.max(MARKET_RULES.productPriceFloor, Math.round(Number(basePrice) || 1) * MARKET_RULES.productPriceCapMultiplier);
+  const product = normalizeMarketProduct(positionType, multiplier);
+  const floor = product.multiplier === 1
+    ? MARKET_RULES.underlyingPriceFloor
+    : MARKET_RULES.productPriceFloor;
+  const previous = Math.max(floor, Math.round(Number(previousPrice) || 1));
+  const cap = Math.max(floor, Math.round(Number(basePrice) || 1) * MARKET_RULES.productPriceCapMultiplier);
   return Math.max(
-    MARKET_RULES.productPriceFloor,
+    floor,
     Math.min(cap, Math.round(previous * (1 + marketProductChangeRate(underlyingChangeRate, positionType, multiplier)))),
   );
 }

@@ -41,6 +41,8 @@ const lowPriceRecoveryMigration = await read('supabase/migrations/20260813101600
 const lowPriceRecoverySql = lowPriceRecoveryMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const vitamingNextLimitDownMigration = await read('supabase/migrations/20260813221500_schedule_vitaming_2300_limit_down_tick.sql');
 const vitamingNextLimitDownSql = vitamingNextLimitDownMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
+const tickOverrideRoundingMigration = await read('supabase/migrations/20260813232000_fix_market_tick_override_rounding.sql');
+const tickOverrideRoundingSql = tickOverrideRoundingMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const html = await read('index.html');
 const css = await read('styles/renewal/main.css');
 const controller = await read('src/renewal/minigame-controller.js');
@@ -204,6 +206,9 @@ assert.match(lowPriceRecoverySql, /new\.trend_remaining := floor\(1 \+ v_length_
 assert.match(lowPriceRecoverySql, /gacha_s2_00_apply_market_low_price_recovery_trigger/);
 assert.match(vitamingNextLimitDownSql, /'vtm', timestamptz '2026-08-13 23:00:00\+09', -3000/);
 assert.match(vitamingNextLimitDownSql, /on conflict \(symbol, hour_at\) do update/);
+assert.match(tickOverrideRoundingSql, /when v_override_bps < 0 then ceil\(v_target_price\)/);
+assert.match(tickOverrideRoundingSql, /when v_override_bps > 0 then floor\(v_target_price\)/);
+assert.match(tickOverrideRoundingSql, /greatest\( -3000, least\(3000/);
 
 assert.match(html, /data-minigame-select="market"/);
 assert.match(html, /id="marketShell"/);

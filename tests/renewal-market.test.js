@@ -29,6 +29,8 @@ const derivativeBuyGuardMigration = await read('supabase/migrations/202608130854
 const derivativeBuyGuardSql = derivativeBuyGuardMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const floorRecoveryMigration = await read('supabase/migrations/20260813091000_recover_market_100p_floor_profit.sql');
 const floorRecoverySql = floorRecoveryMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
+const floorRecoveryCorrectionMigration = await read('supabase/migrations/20260813092500_correct_market_floor_recovery_qualification.sql');
+const floorRecoveryCorrectionSql = floorRecoveryCorrectionMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const html = await read('index.html');
 const css = await read('styles/renewal/main.css');
 const controller = await read('src/renewal/minigame-controller.js');
@@ -142,6 +144,17 @@ assert.match(floorRecoverySql, /before update of points on public\.gacha_s2_play
 assert.match(floorRecoverySql, /when \(new\.points > old\.points\)/);
 assert.match(floorRecoverySql, /market-100p-floor-recovery-notice-20260813/);
 assert.doesNotMatch(floorRecoverySql, /nickname|display_name|account\.id \|\|/);
+assert.match(floorRecoveryCorrectionSql, /create table if not exists public\.gacha_s2_market_floor_recovery_corrections/);
+assert.match(floorRecoveryCorrectionSql, /v_event\.product_price = 100/);
+assert.match(floorRecoveryCorrectionSql, /v_event\.underlying_price < v_state\.previous_underlying_price/);
+assert.match(floorRecoveryCorrectionSql, /v_event\.underlying_price > v_state\.previous_underlying_price/);
+assert.match(floorRecoveryCorrectionSql, /v_event\.underlying_price <= v_threshold/);
+assert.match(floorRecoveryCorrectionSql, /v_event\.underlying_price >= v_threshold/);
+assert.match(floorRecoveryCorrectionSql, /set qualified = true/);
+assert.match(floorRecoveryCorrectionSql, /refund_points = greatest\(0, recovered_before_correction - revised_recovery_amount\)/);
+assert.match(floorRecoveryCorrectionSql, /effective_recovered_points \+ outstanding_points = revised_recovery_amount/);
+assert.match(floorRecoveryCorrectionSql, /market-100p-floor-recovery-correction-notice-20260813/);
+assert.doesNotMatch(floorRecoveryCorrectionSql, /nickname|display_name|account\.id \|\|/);
 
 assert.match(html, /data-minigame-select="market"/);
 assert.match(html, /id="marketShell"/);

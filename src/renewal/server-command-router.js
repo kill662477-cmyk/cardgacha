@@ -455,7 +455,7 @@ export function createServerCommandRouter(options) {
         return commandError(
           command,
           GAME_ERROR_CODES.COMMAND_REJECTED,
-          '1P에 도달한 레버리지·인버스 상품은 신규 매수할 수 없습니다.',
+          '가격 보호 구간의 레버리지·인버스 상품은 신규 매수할 수 없습니다.',
           clock,
         );
       }

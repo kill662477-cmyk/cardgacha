@@ -6,6 +6,7 @@ import {
   MARKET_PRODUCTS,
   MARKET_RULES,
   canAddMarketInvestment,
+  isMarketProductBuySuspended,
   marketFee,
   marketProductChangeRate,
   marketProductLabel,
@@ -27,6 +28,8 @@ const derivativeFloorMigration = await read('supabase/migrations/20260813084000_
 const derivativeFloorSql = derivativeFloorMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const derivativeBuyGuardMigration = await read('supabase/migrations/20260813085400_block_derivative_buy_at_1p.sql');
 const derivativeBuyGuardSql = derivativeBuyGuardMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
+const derivativeUpperCapMigration = await read('supabase/migrations/20260813170000_market_derivative_upper_cap_fix.sql');
+const derivativeUpperCapSql = derivativeUpperCapMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const floorRecoveryMigration = await read('supabase/migrations/20260813091000_recover_market_100p_floor_profit.sql');
 const floorRecoverySql = floorRecoveryMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const floorRecoveryCorrectionMigration = await read('supabase/migrations/20260813092500_correct_market_floor_recovery_qualification.sql');
@@ -53,6 +56,7 @@ assert.equal(MARKET_RULES.feeRate, 0.015);
 assert.equal(MARKET_RULES.hourlyChangeCap, 0.30);
 assert.equal(MARKET_RULES.underlyingPriceFloor, 100);
 assert.equal(MARKET_RULES.productPriceFloor, 1);
+assert.equal(MARKET_RULES.productPriceCeiling, 2_000_000_000);
 assert.equal(MARKET_RULES.historyResetsDaily, true);
 assert.equal(MARKET_RULES.historyTimeZone, 'Asia/Seoul');
 assert.equal(MARKET_PRODUCTS.length, 9);
@@ -67,6 +71,11 @@ assert.equal(nextMarketProductPrice(10_000, 0.1, { positionType: 'long', multipl
 assert.equal(nextMarketProductPrice(10_000, 0.3, { positionType: 'inverse', multiplier: 5, basePrice: 10_000 }), 1);
 assert.equal(nextMarketProductPrice(100, -0.1, { positionType: 'long', multiplier: 2, basePrice: 10_000 }), 80);
 assert.equal(nextMarketProductPrice(100, -0.3, { positionType: 'long', multiplier: 1, basePrice: 10_000 }), 100);
+assert.equal(nextMarketProductPrice(165_000, 0.1, { positionType: 'long', multiplier: 2, basePrice: 16_500 }), 198_000);
+assert.equal(nextMarketProductPrice(165_000, 0.1, { positionType: 'long', multiplier: 1, basePrice: 16_500 }), 165_000);
+assert.equal(isMarketProductBuySuspended(1, { positionType: 'long', multiplier: 2, basePrice: 16_500 }), true);
+assert.equal(isMarketProductBuySuspended(165_000, { positionType: 'long', multiplier: 2, basePrice: 16_500 }), true);
+assert.equal(isMarketProductBuySuspended(198_000, { positionType: 'long', multiplier: 2, basePrice: 16_500 }), false);
 assert.equal(marketFee(10_000), 150);
 assert.equal(marketFee(1), 1);
 assert.equal(marketReturnRate(1_500, 100_000), 1.5);
@@ -138,6 +147,11 @@ assert.match(derivativeBuyGuardSql, /new\.side = 'buy'/);
 assert.match(derivativeBuyGuardSql, /new\.multiplier >= 2/);
 assert.match(derivativeBuyGuardSql, /new\.unit_price <= 1/);
 assert.match(derivativeBuyGuardSql, /market_product_buy_suspended/);
+assert.match(derivativeUpperCapSql, /else 2000000000 end/);
+assert.match(derivativeUpperCapSql, /new\.unit_price >= 2000000000/);
+assert.match(derivativeUpperCapSql, /select asset\.base_price \* 10 into v_legacy_cap/);
+assert.match(derivativeUpperCapSql, /new\.unit_price = v_legacy_cap/);
+assert.match(derivativeUpperCapSql, /market_derivative_upper_cap_fix_guard_failed/);
 assert.match(floorRecoverySql, /create table if not exists public\.gacha_s2_market_floor_recoveries/);
 assert.match(floorRecoverySql, /trade\.unit_price = 100|v_event\.unit_price = 100/);
 assert.match(floorRecoverySql, /realized_floor_profit/);
@@ -187,7 +201,7 @@ assert.match(controller, /serverCommands\?\.marketTrade/);
 assert.match(controller, /marketReturnRate\(unrealized, invested\)/);
 assert.match(controller, /marketProductRiskText/);
 assert.match(controller, /buySuspended/);
-assert.match(controller, /1P에 도달한 레버리지·인버스 상품은 신규 매수할 수 없습니다/);
+assert.match(controller, /가격 보호 구간의 레버리지·인버스 상품은 신규 매수할 수 없습니다/);
 assert.match(controller, /positionType: product\.positionType/);
 assert.match(controller, /오늘 · 1시간봉/);
 assert.match(controller, /minigameScreen\.classList\.toggle\('market-mode', market\)/);

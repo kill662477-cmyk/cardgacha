@@ -7,6 +7,7 @@ export const MARKET_RULES = Object.freeze({
   underlyingPriceFloor: 100,
   productPriceFloor: 1,
   productPriceCapMultiplier: 10,
+  productPriceCeiling: 2_000_000_000,
   historyResetsDaily: true,
   historyTimeZone: 'Asia/Seoul',
 });
@@ -88,11 +89,27 @@ export function nextMarketProductPrice(previousPrice, underlyingChangeRate, {
     ? MARKET_RULES.underlyingPriceFloor
     : MARKET_RULES.productPriceFloor;
   const previous = Math.max(floor, Math.round(Number(previousPrice) || 1));
-  const cap = Math.max(floor, Math.round(Number(basePrice) || 1) * MARKET_RULES.productPriceCapMultiplier);
+  const cap = product.multiplier === 1
+    ? Math.max(floor, Math.round(Number(basePrice) || 1) * MARKET_RULES.productPriceCapMultiplier)
+    : MARKET_RULES.productPriceCeiling;
   return Math.max(
     floor,
     Math.min(cap, Math.round(previous * (1 + marketProductChangeRate(underlyingChangeRate, positionType, multiplier)))),
   );
+}
+
+export function isMarketProductBuySuspended(price, {
+  positionType = 'long',
+  multiplier = 1,
+  basePrice = 0,
+} = {}) {
+  const product = normalizeMarketProduct(positionType, multiplier);
+  if (product.multiplier === 1) return false;
+  const current = Math.round(Number(price) || 0);
+  const legacyCap = Math.round(Number(basePrice) || 0) * MARKET_RULES.productPriceCapMultiplier;
+  return current <= MARKET_RULES.productPriceFloor
+    || current >= MARKET_RULES.productPriceCeiling
+    || (legacyCap > 0 && current === legacyCap);
 }
 
 export function nextMarketPrice(previousPrice, changeRate) {

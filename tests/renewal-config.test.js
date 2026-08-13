@@ -117,11 +117,12 @@ assert.equal(WORLD_BOSS_RULES.timeZone, 'Asia/Seoul');
 assert.deepEqual(WORLD_BOSS_RULES.scheduleHours, [17, 18, 19, 20]);
 assert.equal(WORLD_BOSS_RULES.attackEnergyCost, 10);
 assert.deepEqual(Object.values(WORLD_BOSS_RULES.slotTiers).map(({ difficultyMultiplier, maxHp }) => [difficultyMultiplier, maxHp]), [
-  // 2026-08-13: 네 회차 모두 20억씩 상향(275/285/295/305 -> 295/305/315/325억).
-  [1, 29_500_000_000],
-  [1.034, 30_500_000_000],
-  [1.068, 31_500_000_000],
-  [1.102, 32_500_000_000],
+  // 2026-08-13 재조정: 08-13 네 회차 전부 격파돼 10억씩 더 올렸다
+  // (295/305/315/325 -> 305/315/325/335억).
+  [1, 30_500_000_000],
+  [1.033, 31_500_000_000],
+  [1.066, 32_500_000_000],
+  [1.098, 33_500_000_000],
 ]);
 // difficultyMultiplier 는 표시 전용이라 17시 대비 HP 비율과 어긋나면 안내 문구가 거짓말이 된다.
 for (const tier of Object.values(WORLD_BOSS_RULES.slotTiers)) {

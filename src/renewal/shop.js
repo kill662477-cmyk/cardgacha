@@ -118,35 +118,6 @@ export function rerollCardArchetype(state, cardId, cardCatalog, random = Math.ra
   };
 }
 
-export function changeCardRace(state, cardId, race, cardCatalog) {
-  const itemId = 'raceChangeSelector';
-  const item = SUPPORT_ITEMS[itemId];
-  const card = cardCatalog.find((candidate) => candidate.id === cardId);
-  if ((state.supportItems[itemId] ?? 0) <= 0) return { used: false, reason: `${item.name} 없음`, state };
-  if (!card || card.group || card.rarity === 'EX' || (state.cardCopies[cardId] ?? 0) <= 0) {
-    return { used: false, reason: '보유 중인 전투 카드만 변경 가능', state };
-  }
-  if (!['저그', '테란', '프로토스'].includes(race)) return { used: false, reason: '변경할 종족을 선택하세요', state };
-  const current = state.cardProgress[cardId] ?? { enhancement: 0, exp: 0 };
-  const previousRace = current.race ?? card.race;
-  if (race === previousRace) return { used: false, reason: '현재 종족과 다른 종족을 선택하세요', state };
-  return {
-    used: true,
-    cardId,
-    previousRace,
-    race,
-    reason: `${previousRace} → ${race}`,
-    state: {
-      ...state,
-      supportItems: { ...state.supportItems, [itemId]: state.supportItems[itemId] - 1 },
-      cardProgress: {
-        ...state.cardProgress,
-        [cardId]: { ...current, race },
-      },
-    },
-  };
-}
-
 export function useSupportItem(state, itemId, now = Date.now()) {
   const item = SUPPORT_ITEMS[itemId];
   if (!item || (state.supportItems[itemId] ?? 0) <= 0) return { used: false, reason: '보유 아이템 없음', state };

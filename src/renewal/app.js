@@ -1,7 +1,7 @@
 import {
   ADVENTURE_RULES, ARCHETYPES, CARD_PROFILE_DESCRIPTIONS, DISMANTLE_RULES, ENHANCEMENT, GAME_RULES, PACKS, RARITIES, RARITY_ORDER,
   canDismantleSupportItem, supportItemDismantleValue,
-  REWARD_RULES, STAGES, ADVANCED_SUPPORT_PACK, RACE_CHANGE_SELECTOR, SUPPORT_ITEMS, SUPPORT_PACK,
+  REWARD_RULES, STAGES, ADVANCED_SUPPORT_PACK, SUPPORT_ITEMS, SUPPORT_PACK,
 } from './config.js';
 import { cardProfileOf, computeCardPower, computeCardStats, computeFormationPower, getRaceSynergy, simulateBattle } from './battle.js';
 import { escapeHtml } from './html.js';
@@ -32,7 +32,6 @@ import { applyGuildBuff, buildCollectionModel, calculateCollectionBonuses, group
 import {
   addCardResults,
   addSupportResults,
-  changeCardRace,
   cardExpPotionsNeeded,
   cardResultGridLayout,
   cardExpBoostSeconds,
@@ -130,7 +129,6 @@ let selectedShopProduct = 'general';
 let selectedShopRace = '저그';
 let selectedCardSelectorItemId = null;
 let selectedCardSelectorCardId = null;
-let selectedCardSelectorRace = null;
 let dismantleRarity = null;
 let miniGameController = null;
 let worldBossController = null;
@@ -268,7 +266,7 @@ function cacheElements() {
     'shopDetailTitle', 'shopDetailSummary', 'shopProbabilityList', 'shopDetailNote',
     'shopResultDialog', 'shopResultTitle', 'shopResultSummary', 'shopResultGrid',
     'shopResultPager', 'shopResultPageLabel',
-    'cardSelectorDialog', 'cardSelectorTitle', 'cardSelectorSummary', 'cardSelectorGrid', 'cardSelectorRaces',
+    'cardSelectorDialog', 'cardSelectorTitle', 'cardSelectorSummary', 'cardSelectorGrid',
     'cardSelectorSelection', 'cardSelectorConfirm', 'cardSelectorClose',
     'minigameScreen', 'worldBossScreen', 'rankingScreen',
     'systemStateLayer', 'systemStateEyebrow', 'systemStateTitle', 'systemStateMessage', 'systemStateCode', 'systemStateRetry',
@@ -1912,11 +1910,11 @@ const SHOP_SUPPORT_PRODUCTS = {
   support: { pack: SUPPORT_PACK, eyebrow: 'TACTICAL ITEM', accent: '#62d4d0' },
   advancedSupport: { pack: ADVANCED_SUPPORT_PACK, eyebrow: 'ADVANCED TACTICAL', accent: '#e5bd4e' },
 };
-const SHOP_SUPPORT_PRODUCT_ORDER = ['support', 'advancedSupport', RACE_CHANGE_SELECTOR.itemId];
+const SHOP_SUPPORT_PRODUCT_ORDER = ['support', 'advancedSupport'];
 
 const ITEM_ICONS = {
   행동력: 'battery-charging', 강화: 'chevrons-up', 경험치: 'radio', 교환권: 'ticket',
-  선택권: 'badge-check', 특성: 'shuffle', 종족: 'dna', 초기화: 'rotate-ccw',
+  선택권: 'badge-check', 특성: 'shuffle', 초기화: 'rotate-ccw',
 };
 
 const ITEM_IMAGES = {
@@ -1986,14 +1984,6 @@ function advancedPackPityMarkup() {
 }
 
 function supportPackProductMarkup(productId) {
-  if (productId === RACE_CHANGE_SELECTOR.itemId) {
-    const selected = selectedShopProduct === productId;
-    return `<article class="shop-product support fixed-item${selected ? ' selected' : ''}" data-shop-product="${productId}" style="--accent:#c8f52e">
-      <div class="shop-product-visual fixed-support-icon">${supportItemIconMarkup(productId, SUPPORT_ITEMS[productId])}</div>
-      <div class="shop-product-copy"><span>DIRECT SYNERGY</span><h3>${RACE_CHANGE_SELECTOR.name}</h3><p>카드 1종의 종족을 원하는 시너지 종족으로 직접 변경</p></div>
-      <div class="shop-buy-row"><button type="button" data-buy-fixed-support="${productId}" ${state.points < RACE_CHANGE_SELECTOR.price ? 'disabled' : ''}><b>1장 구매</b><small>${number.format(RACE_CHANGE_SELECTOR.price)}P</small></button></div>
-    </article>`;
-  }
   const product = SHOP_SUPPORT_PRODUCTS[productId];
   const pack = product.pack;
   const selected = selectedShopProduct === productId;
@@ -2037,7 +2027,7 @@ function openEnergyItemDialog() {
 function shopItemMarkup(itemId) {
   const item = SUPPORT_ITEMS[itemId];
   const count = state.supportItems[itemId] ?? 0;
-  const directlyUsable = Boolean(item.energy || item.durationMinutes || item.pack || item.cardExp || item.cardSelectorRarity || item.traitReroll || item.raceSelector || item.reset);
+  const directlyUsable = Boolean(item.energy || item.durationMinutes || item.pack || item.cardExp || item.cardSelectorRarity || item.traitReroll || item.reset);
   // 선택권처럼 보급팩 확률이 없는 아이템은 환급 기준가가 없어 분해 대상이 아니다.
   const dismantlable = canDismantleSupportItem(itemId);
   const unitPoints = supportItemDismantleValue(itemId);
@@ -2045,7 +2035,7 @@ function shopItemMarkup(itemId) {
     <div class="shop-item-icon">${supportItemIconMarkup(itemId, item)}</div>
     <div class="shop-item-copy"><b>${item.name}</b><span>${item.effect}</span><small>보유 ${count}개</small></div>
     <div class="shop-item-actions">
-      <button class="shop-item-action" type="button" data-use-shop-item="${itemId}" ${count <= 0 || !directlyUsable ? 'disabled' : ''}>${item.cardSelectorRarity ? '선택' : item.traitReroll || item.raceSelector ? '변경' : item.pack ? '교환' : item.cardExp ? '강화' : '사용'}</button>
+      <button class="shop-item-action" type="button" data-use-shop-item="${itemId}" ${count <= 0 || !directlyUsable ? 'disabled' : ''}>${item.cardSelectorRarity ? '선택' : item.traitReroll ? '변경' : item.pack ? '교환' : item.cardExp ? '강화' : '사용'}</button>
       ${dismantlable ? `<button class="shop-item-action dismantle" type="button" data-dismantle-shop-item="${itemId}" ${count <= 0 ? 'disabled' : ''} title="1개당 ${number.format(unitPoints)}P 환급">분해</button>` : ''}
     </div>
   </article>`;
@@ -2063,18 +2053,6 @@ function renderShopDetail() {
       ? `${product.race} 카드만 등장. 인물군을 좁히는 대신 상위 등급 확률이 더 낮음.`
       : '등급 확정 슬롯과 누적 천장 없음. 표시 확률로 모든 카드 슬롯을 독립 추첨.';
   } else if (shopTab === 'support') {
-    if (selectedShopProduct === RACE_CHANGE_SELECTOR.itemId) {
-      const item = SUPPORT_ITEMS[RACE_CHANGE_SELECTOR.itemId];
-      elements.shopDetailTitle.textContent = item.name;
-      elements.shopDetailSummary.innerHTML = `<strong>${number.format(RACE_CHANGE_SELECTOR.price)} P</strong><span>확률 없는 고정 구매 · 1장</span>`;
-      elements.shopProbabilityList.innerHTML = [
-        ['대상', '보유 중인 EX·그룹 제외 전투 카드 1종'],
-        ['선택', '저그 · 테란 · 프로토스 중 현재와 다른 종족'],
-        ['적용', '편성 시너지·전투·도감·프로필·랭킹·길드 덱'],
-      ].map(([name, rule]) => `<div class="shop-rate-row"><b>${name}</b><span></span><small>${rule}</small></div>`).join('');
-      elements.shopDetailNote.textContent = '변경은 계정 내 해당 카드 ID 전체에 적용되며, 변경권 1장을 소비합니다.';
-      return;
-    }
     const pack = SHOP_SUPPORT_PRODUCTS[selectedShopProduct]?.pack ?? SUPPORT_PACK;
     elements.shopDetailTitle.textContent = pack.name;
     elements.shopDetailSummary.innerHTML = `<strong>${number.format(pack.price)} P</strong><span>1회 1개 · 10회도 매회 개별 확률 적용</span>`;
@@ -2095,14 +2073,13 @@ function renderShopDetail() {
       ['교환권', '동일 카드팩의 장수와 확률 그대로 적용'],
       ['선택권', '표시 등급 카드 중 원하는 카드 1장을 직접 선택'],
       ['특성', '선택 카드의 현재 특성을 제외한 나머지 7종 중 서버 무작위 변경'],
-      ['종족', '보유 카드 1종을 저그·테란·프로토스 중 원하는 종족으로 직접 변경'],
     ].map(([name, rule]) => `<div class="shop-rate-row"><b>${name}</b><span></span><small>${rule}</small></div>`).join('');
     elements.shopDetailNote.textContent = '모든 아이템은 만료 기간 없음.';
   }
 }
 
 function cardSelectorCandidates(itemId) {
-  if (SUPPORT_ITEMS[itemId]?.traitReroll || SUPPORT_ITEMS[itemId]?.raceSelector) {
+  if (SUPPORT_ITEMS[itemId]?.traitReroll) {
     return cards
       .filter((card) => !card.group && card.rarity !== 'EX' && (state.cardCopies[card.id] ?? 0) > 0)
       .map(cardWithProgress)
@@ -2117,47 +2094,36 @@ function cardSelectorCandidates(itemId) {
 
 function renderCardSelectorDialog() {
   const item = SUPPORT_ITEMS[selectedCardSelectorItemId];
-  if (!item?.cardSelectorRarity && !item?.traitReroll && !item?.raceSelector) return;
+  if (!item?.cardSelectorRarity && !item?.traitReroll) return;
   const candidates = cardSelectorCandidates(selectedCardSelectorItemId);
   const selectedBase = cardsById.get(selectedCardSelectorCardId);
   const selected = selectedBase ? cardWithProgress(selectedBase) : null;
   elements.cardSelectorTitle.textContent = item.name;
   elements.cardSelectorSummary.textContent = item.traitReroll
     ? `보유 전투 카드 ${candidates.length}종 · 현재 특성을 제외한 7종 중 무작위 변경`
-    : item.raceSelector
-      ? `보유 전투 카드 ${candidates.length}종 · 원하는 시너지 종족 직접 선택`
     : `${item.cardSelectorRarity} 등급 ${candidates.length}종 · 1장 선택`;
   elements.cardSelectorGrid.innerHTML = candidates.map((card) => {
     const active = card.id === selectedCardSelectorCardId;
     return `<button class="card-selector-card${active ? ' selected' : ''}" type="button" data-selector-card="${card.id}" aria-pressed="${active}" style="--rarity:${RARITIES[card.rarity].color}">
       <span class="card-selector-photo"><img src="${imagePath(card)}" alt="${escapeHtml(card.member)} ${card.rarity} 카드"></span>
-      <span class="card-selector-copy"><b>${escapeHtml(card.member)}</b><small>현재 ${card.race} · ${ARCHETYPES[card.archetype].label}</small><em>현재 보유 ${state.cardCopies[card.id] ?? 0}장</em></span>
+      <span class="card-selector-copy"><b>${escapeHtml(card.member)}</b><small>${card.race} · 현재 ${ARCHETYPES[card.archetype].label}</small><em>현재 보유 ${state.cardCopies[card.id] ?? 0}장</em></span>
       <strong>${card.rarity}</strong>
     </button>`;
   }).join('');
   elements.cardSelectorSelection.textContent = selected
     ? item.traitReroll
       ? `${selected.member} · 현재 ${ARCHETYPES[selected.archetype].label} · 결과는 사용 후 공개`
-      : item.raceSelector
-        ? `${selected.member} · ${selected.race}${selectedCardSelectorRace ? ` → ${selectedCardSelectorRace}` : ' · 변경할 종족을 선택하세요'}`
       : `${selected.member} ${selected.rarity} 카드 선택됨`
-    : item.traitReroll ? '특성을 변경할 카드를 선택하세요.' : item.raceSelector ? '종족을 변경할 카드를 선택하세요.' : '받을 카드를 선택하세요.';
-  elements.cardSelectorRaces.hidden = !item.raceSelector;
-  elements.cardSelectorRaces.querySelectorAll('[data-selector-race]').forEach((button) => {
-    const currentRace = selected?.race ?? null;
-    button.classList.toggle('active', button.dataset.selectorRace === selectedCardSelectorRace);
-    button.disabled = !selected || button.dataset.selectorRace === currentRace;
-  });
-  elements.cardSelectorConfirm.textContent = item.traitReroll ? '랜덤 특성 변경' : item.raceSelector ? '선택 종족으로 변경' : '선택 카드 받기';
-  elements.cardSelectorConfirm.disabled = !selected || (item.raceSelector && (!selectedCardSelectorRace || selectedCardSelectorRace === selected.race));
+    : item.traitReroll ? '특성을 변경할 카드를 선택하세요.' : '받을 카드를 선택하세요.';
+  elements.cardSelectorConfirm.textContent = item.traitReroll ? '랜덤 특성 변경' : '선택 카드 받기';
+  elements.cardSelectorConfirm.disabled = !selected;
 }
 
 function openCardSelector(itemId) {
   const item = SUPPORT_ITEMS[itemId];
-  if ((!item?.cardSelectorRarity && !item?.traitReroll && !item?.raceSelector) || (state.supportItems[itemId] ?? 0) <= 0) return;
+  if ((!item?.cardSelectorRarity && !item?.traitReroll) || (state.supportItems[itemId] ?? 0) <= 0) return;
   selectedCardSelectorItemId = itemId;
   selectedCardSelectorCardId = null;
-  selectedCardSelectorRace = null;
   renderCardSelectorDialog();
   elements.cardSelectorDialog.showModal();
 }
@@ -2179,7 +2145,6 @@ function showCardSelectorResult(cardId, item) {
 function clearCardSelectorSelection() {
   selectedCardSelectorItemId = null;
   selectedCardSelectorCardId = null;
-  selectedCardSelectorRace = null;
   if (elements.cardSelectorConfirm) elements.cardSelectorConfirm.disabled = true;
 }
 
@@ -2262,58 +2227,10 @@ async function rerollSelectedCardTrait() {
   });
 }
 
-function showRaceChangeResult(card, previousRace, race) {
-  elements.shopResultTitle.textContent = '종족 변경 완료';
-  elements.shopResultSummary.textContent = `${card.member} · ${previousRace} → ${race}`;
-  elements.shopResultGrid.dataset.resultType = 'items';
-  elements.shopResultPager.hidden = true;
-  elements.shopResultGrid.classList.remove('bulk');
-  elements.shopResultGrid.style.removeProperty('--result-columns');
-  elements.shopResultGrid.style.removeProperty('--result-card-width');
-  elements.shopResultGrid.innerHTML = `<article class="shop-result-item rare"><em class="rare-badge">SELECT</em><i data-lucide="dna"></i><b>${escapeHtml(card.member)}</b><span>${previousRace} → ${race}</span></article>`;
-  window.lucide?.createIcons();
-  elements.shopResultDialog.showModal();
-}
-
-async function changeSelectedCardRace() {
-  const itemId = selectedCardSelectorItemId;
-  const cardId = selectedCardSelectorCardId;
-  const race = selectedCardSelectorRace;
-  const item = SUPPORT_ITEMS[itemId];
-  const card = cardsById.get(cardId);
-  if (!item?.raceSelector || !card || !race || !elements.cardSelectorDialog?.open) return;
-  return runUiOperation('changeCardRace', elements.cardSelectorConfirm, async () => {
-    if (remoteMode) {
-      const response = await executeServerCommand(GAME_COMMAND_TYPES.USE_SUPPORT_ITEM, {
-        itemId, targetCardId: cardId, race,
-      });
-      if (!response?.ok) return response;
-      const previousRace = response.result?.previousRace ?? cardWithProgress(card).race;
-      const nextRace = response.result?.race ?? race;
-      elements.cardSelectorDialog.close();
-      clearCardSelectorSelection();
-      renderHeader();
-      renderShop();
-      showRaceChangeResult(card, previousRace, nextRace);
-      return response;
-    }
-    const result = changeCardRace(state, cardId, race, cards);
-    if (!result.used) return showToast(result.reason);
-    state = result.state;
-    gameService.persistSnapshot(state);
-    elements.cardSelectorDialog.close();
-    clearCardSelectorSelection();
-    renderHeader();
-    renderShop();
-    showRaceChangeResult(card, result.previousRace, result.race);
-  });
-}
-
 function confirmSelectedCardItem() {
-  const item = SUPPORT_ITEMS[selectedCardSelectorItemId];
-  if (item?.traitReroll) return rerollSelectedCardTrait();
-  if (item?.raceSelector) return changeSelectedCardRace();
-  return redeemSelectedCardSelector();
+  return SUPPORT_ITEMS[selectedCardSelectorItemId]?.traitReroll
+    ? rerollSelectedCardTrait()
+    : redeemSelectedCardSelector();
 }
 
 function renderShop() {
@@ -2329,7 +2246,7 @@ function renderShop() {
     elements.shopTitle.textContent = '카드팩';
     elements.shopProductGrid.innerHTML = SHOP_CARD_PRODUCT_ORDER.map(cardPackProductMarkup).join('');
   } else if (shopTab === 'support') {
-    if (!SHOP_SUPPORT_PRODUCTS[selectedShopProduct] && selectedShopProduct !== RACE_CHANGE_SELECTOR.itemId) selectedShopProduct = 'support';
+    if (!SHOP_SUPPORT_PRODUCTS[selectedShopProduct]) selectedShopProduct = 'support';
     elements.shopEyebrow.textContent = 'TACTICAL SUPPLY';
     elements.shopTitle.textContent = '작전 지원 보급';
     elements.shopProductGrid.innerHTML = SHOP_SUPPORT_PRODUCT_ORDER.map(supportPackProductMarkup).join('');
@@ -2514,29 +2431,6 @@ function purchaseSupportPack(productId = 'support', amount = 1, triggerButton = 
   });
 }
 
-function purchaseFixedSupportItem(itemId, triggerButton = null) {
-  if (itemId !== RACE_CHANGE_SELECTOR.itemId) return null;
-  return runUiOperation(`purchaseFixedSupportItem:${itemId}`, triggerButton, async () => {
-    if (remoteMode) {
-      const response = await executeServerCommand(GAME_COMMAND_TYPES.PURCHASE_FIXED_SUPPORT_ITEM, { itemId });
-      if (!response?.ok) return response;
-      renderHeader();
-      renderShop();
-      showToast(`${RACE_CHANGE_SELECTOR.name} 1장 구매 · ${number.format(response.result?.spentPoints ?? RACE_CHANGE_SELECTOR.price)}P`);
-      return response;
-    }
-    if (state.points < RACE_CHANGE_SELECTOR.price) return showToast('포인트 부족');
-    state.points -= RACE_CHANGE_SELECTOR.price;
-    state.supportItems[itemId] = (state.supportItems[itemId] ?? 0) + 1;
-    state.shopTransactions += 1;
-    gameService.purchasePack(state);
-    renderHeader();
-    renderShop();
-    showToast(`${RACE_CHANGE_SELECTOR.name} 1장 구매`);
-    return null;
-  });
-}
-
 async function dismantleShopItem(itemId) {
   const item = SUPPORT_ITEMS[itemId];
   if (!item || !canDismantleSupportItem(itemId)) return;
@@ -2584,10 +2478,6 @@ async function activateShopItem(itemId, triggerButton = null) {
     return;
   }
   if (item.traitReroll) {
-    openCardSelector(itemId);
-    return;
-  }
-  if (item.raceSelector) {
     openCardSelector(itemId);
     return;
   }
@@ -3348,11 +3238,6 @@ function bindEvents() {
       purchaseSupportPack(supportPurchase.dataset.supportProduct, Number(supportPurchase.dataset.buySupport), supportPurchase);
       return;
     }
-    const fixedSupportPurchase = event.target.closest('[data-buy-fixed-support]');
-    if (fixedSupportPurchase) {
-      purchaseFixedSupportItem(fixedSupportPurchase.dataset.buyFixedSupport, fixedSupportPurchase);
-      return;
-    }
     const product = event.target.closest('[data-shop-product]');
     if (!product) return;
     selectedShopProduct = product.dataset.shopProduct;
@@ -3372,13 +3257,6 @@ function bindEvents() {
     const button = event.target.closest('[data-selector-card]');
     if (!button) return;
     selectedCardSelectorCardId = button.dataset.selectorCard;
-    selectedCardSelectorRace = null;
-    renderCardSelectorDialog();
-  });
-  elements.cardSelectorRaces.addEventListener('click', (event) => {
-    const button = event.target.closest('[data-selector-race]');
-    if (!button || button.disabled) return;
-    selectedCardSelectorRace = button.dataset.selectorRace;
     renderCardSelectorDialog();
   });
   elements.cardSelectorConfirm.addEventListener('click', confirmSelectedCardItem);

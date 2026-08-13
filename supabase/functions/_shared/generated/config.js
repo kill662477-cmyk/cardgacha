@@ -196,13 +196,6 @@ export const ADVANCED_SUPPORT_PACK = {
   },
 };
 
-// 확률형 보급품과 분리된 고정가 상품. 서버도 balance config의 같은 값을 사용한다.
-export const RACE_CHANGE_SELECTOR = Object.freeze({
-  itemId: 'raceChangeSelector',
-  name: '종족선택 변경권',
-  price: 20_000_000,
-});
-
 // 보급품 분해. 환급 포인트는 "보급팩 1회 가격 ÷ 해당 아이템 출현 확률"에서 나온다.
 // 나오기 어려운 아이템일수록 환급이 크다. 기본식은 round(basis / rate) 이고,
 // basis 는 보급팩 1회 가격(150P) 기준으로 기대 환급률이 약 24% 가 되도록 잡았다.
@@ -276,10 +269,6 @@ export const SUPPORT_ITEMS = {
   traitReroll: {
     name: '랜덤특성변경권', category: '특성', effect: '선택 카드의 현재 특성을 제외한 다른 특성으로 무작위 변경',
     traitReroll: true, ultraRare: true, hideWhenEmpty: true,
-  },
-  raceChangeSelector: {
-    name: '종족선택 변경권', category: '종족', effect: '보유 카드 1종을 원하는 시너지 종족으로 변경',
-    raceSelector: true, hideWhenEmpty: true,
   },
   adventureRunReset: { name: '모험 시작 초기화권', category: '초기화', effect: '모험 시작 횟수 3회 복구', reset: 'adventureRuns' },
   quickBattleReset: { name: '빠른 전투 초기화권', category: '초기화', effect: '오늘 빠른 전투 횟수 3회 복구', reset: 'quickBattle' },

@@ -18,7 +18,6 @@ const DIRECT_RPCS = Object.freeze({
   [GAME_COMMAND_TYPES.PURCHASE_PACK]: 'gacha_s2_purchase_pack',
   [GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK]: 'gacha_s2_purchase_support_pack',
   [GAME_COMMAND_TYPES.PURCHASE_ADVANCED_SUPPORT_PACK]: 'gacha_s2_purchase_advanced_support_pack',
-  [GAME_COMMAND_TYPES.PURCHASE_FIXED_SUPPORT_ITEM]: 'gacha_s2_purchase_fixed_support_item',
   [GAME_COMMAND_TYPES.USE_SUPPORT_ITEM]: 'gacha_s2_use_support_item',
   [GAME_COMMAND_TYPES.REDEEM_CARD_SELECTOR]: 'gacha_s2_redeem_card_selector',
   [GAME_COMMAND_TYPES.ENHANCE_CARD]: 'gacha_s2_enhance_card',
@@ -90,8 +89,6 @@ function directArgs(userId, command) {
     case GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK:
     case GAME_COMMAND_TYPES.PURCHASE_ADVANCED_SUPPORT_PACK:
       return { ...args, p_quantity: payload.quantity };
-    case GAME_COMMAND_TYPES.PURCHASE_FIXED_SUPPORT_ITEM:
-      return { ...args, p_item_id: payload.itemId };
     case GAME_COMMAND_TYPES.USE_SUPPORT_ITEM:
       return {
         ...args,
@@ -197,7 +194,6 @@ function formationFromSnapshot(snapshot, cardsById) {
       enhancement: Number(progress.enhancement ?? base.enhancement ?? 0),
       exp: Number(progress.exp ?? base.exp ?? 0),
       archetype: progress.archetype ?? base.archetype,
-      race: progress.race ?? base.race,
     };
   });
 }
@@ -216,7 +212,7 @@ export function buildGuildApplicantProfile(profile, cards) {
   const formation = (Array.isArray(profile?.formation) ? profile.formation : []).map((item) => {
     const card = cardsById.get(item?.cardId);
     if (!card) return null;
-    return { ...card, enhancement: Number(item?.enhancement) || 0, archetype: item?.archetype ?? card.archetype, race: item?.race ?? card.race };
+    return { ...card, enhancement: Number(item?.enhancement) || 0, archetype: item?.archetype ?? card.archetype };
   }).filter(Boolean);
   const collectionRecords = Object.fromEntries(
     (Array.isArray(profile?.registeredCardIds) ? profile.registeredCardIds : [])
@@ -236,7 +232,6 @@ export function buildGuildApplicantProfile(profile, cards) {
       cardId: card.id,
       enhancement: card.enhancement,
       archetype: card.archetype,
-      race: card.race,
     })),
   };
 }

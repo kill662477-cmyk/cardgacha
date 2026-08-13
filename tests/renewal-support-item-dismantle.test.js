@@ -63,7 +63,6 @@ for (const [aId, aRate] of curved) {
 assert.equal(canDismantleSupportItem('ssCardSelector'), false, 'SS 선택권은 분해 대상이 아니어야 한다');
 assert.equal(canDismantleSupportItem('sssCardSelector'), false, 'SSS 선택권은 분해 대상이 아니어야 한다');
 assert.equal(canDismantleSupportItem('traitReroll'), false, '초희귀 특성변경권은 오분해 방지를 위해 분해 대상이 아니어야 한다');
-assert.equal(canDismantleSupportItem('raceChangeSelector'), false, '2천만P 종족 변경권은 분해 대상이 아니어야 한다');
 assert.equal(supportItemDismantleValue('ssCardSelector'), 0);
 assert.equal(canDismantleSupportItem('energySmall'), true);
 // values 의 모든 키는 실재하는 보급품이어야 한다(오타 방지).

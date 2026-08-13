@@ -43,6 +43,7 @@ assert.equal(Object.hasOwn(obsoleteMaterials.state, 'growthMaterials'), false);
 const preResetItems = clone(state);
 delete preResetItems.supportItems.adventureRunReset;
 delete preResetItems.supportItems.quickBattleReset;
+delete preResetItems.supportItems.raceChangeSelector;
 const resetItemMigration = migrateGameState(preResetItems);
 assert.equal(resetItemMigration.ok, true);
 assert.equal(resetItemMigration.migrated, true);
@@ -50,6 +51,7 @@ assert.equal(resetItemMigration.state.supportItems.adventureRunReset, 0);
 assert.equal(resetItemMigration.state.supportItems.ssCardSelector, 0);
 assert.equal(resetItemMigration.state.supportItems.sssCardSelector, 0);
 assert.equal(resetItemMigration.state.supportItems.quickBattleReset, 0);
+assert.equal(resetItemMigration.state.supportItems.raceChangeSelector, 0, 'legacy snapshots stay valid without the new stored key');
 assert.equal(validateGameState(resetItemMigration.state, { cardIds }).valid, true);
 
 const preMiniGameBreakdown = clone(state);

@@ -91,7 +91,12 @@ function directArgs(userId, command) {
     case GAME_COMMAND_TYPES.PURCHASE_ADVANCED_SUPPORT_PACK:
       return { ...args, p_quantity: payload.quantity };
     case GAME_COMMAND_TYPES.PURCHASE_FIXED_SUPPORT_ITEM:
-      return { ...args, p_item_id: payload.itemId };
+      return {
+        ...args,
+        p_item_id: payload.itemId,
+        p_target_card_id: payload.targetCardId,
+        p_race: payload.race,
+      };
     case GAME_COMMAND_TYPES.USE_SUPPORT_ITEM:
       return {
         ...args,

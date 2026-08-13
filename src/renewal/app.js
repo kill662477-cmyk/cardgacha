@@ -57,7 +57,7 @@ import {
 import { assertValidGameState, migrateGameState } from './state-schema.js';
 import { createLocalGameService } from './local-game-service.js';
 import { createRemoteRuntime, mergeServerSnapshot, readRemoteConfig } from './remote-runtime.js?v=202607290900';
-import { GAME_COMMAND_TYPES, SUPPORT_ITEM_DISMANTLE_MAX_COUNT, isRetryableGameError } from './service-contract.js';
+import { GAME_COMMAND_TYPES, SUPPORT_ITEM_DISMANTLE_MAX_COUNT, isRetryableGameError } from './service-contract.js?v=202608131800';
 import { createRequestCoordinator, REQUEST_PHASES } from './request-coordinator.js?v=202607211025';
 import { createMiniGameController } from './minigame-controller.js?v=202608111630';
 import { executeCommandWithVersionRetry } from './server-command-retry.js';
@@ -1990,8 +1990,8 @@ function supportPackProductMarkup(productId) {
     const selected = selectedShopProduct === productId;
     return `<article class="shop-product support fixed-item${selected ? ' selected' : ''}" data-shop-product="${productId}" style="--accent:#c8f52e">
       <div class="shop-product-visual fixed-support-icon">${supportItemIconMarkup(productId, SUPPORT_ITEMS[productId])}</div>
-      <div class="shop-product-copy"><span>DIRECT SYNERGY</span><h3>${RACE_CHANGE_SELECTOR.name}</h3><p>카드 1종의 종족을 원하는 시너지 종족으로 직접 변경</p></div>
-      <div class="shop-buy-row"><button type="button" data-buy-fixed-support="${productId}" ${state.points < RACE_CHANGE_SELECTOR.price ? 'disabled' : ''}><b>1장 구매</b><small>${number.format(RACE_CHANGE_SELECTOR.price)}P</small></button></div>
+      <div class="shop-product-copy"><span>DIRECT SYNERGY</span><h3>${RACE_CHANGE_SELECTOR.name}</h3><p>카드와 종족을 먼저 선택한 뒤 구매 즉시 변경</p></div>
+      <div class="shop-buy-row"><button type="button" data-open-race-selector="${productId}" ${state.points < RACE_CHANGE_SELECTOR.price ? 'disabled' : ''}><b>카드·종족 선택</b><small>${number.format(RACE_CHANGE_SELECTOR.price)}P</small></button></div>
     </article>`;
   }
   const product = SHOP_SUPPORT_PRODUCTS[productId];
@@ -2152,9 +2152,10 @@ function renderCardSelectorDialog() {
   elements.cardSelectorConfirm.disabled = !selected || (item.raceSelector && (!selectedCardSelectorRace || selectedCardSelectorRace === selected.race));
 }
 
-function openCardSelector(itemId) {
+function openCardSelector(itemId, { requireOwnedItem = true } = {}) {
   const item = SUPPORT_ITEMS[itemId];
-  if ((!item?.cardSelectorRarity && !item?.traitReroll && !item?.raceSelector) || (state.supportItems[itemId] ?? 0) <= 0) return;
+  if ((!item?.cardSelectorRarity && !item?.traitReroll && !item?.raceSelector)
+    || (requireOwnedItem && (state.supportItems[itemId] ?? 0) <= 0)) return;
   selectedCardSelectorItemId = itemId;
   selectedCardSelectorCardId = null;
   selectedCardSelectorRace = null;
@@ -2284,7 +2285,7 @@ async function changeSelectedCardRace() {
   if (!item?.raceSelector || !card || !race || !elements.cardSelectorDialog?.open) return;
   return runUiOperation('changeCardRace', elements.cardSelectorConfirm, async () => {
     if (remoteMode) {
-      const response = await executeServerCommand(GAME_COMMAND_TYPES.USE_SUPPORT_ITEM, {
+      const response = await executeServerCommand(GAME_COMMAND_TYPES.PURCHASE_FIXED_SUPPORT_ITEM, {
         itemId, targetCardId: cardId, race,
       });
       if (!response?.ok) return response;
@@ -2297,9 +2298,13 @@ async function changeSelectedCardRace() {
       showRaceChangeResult(card, previousRace, nextRace);
       return response;
     }
+    if (state.points < RACE_CHANGE_SELECTOR.price) return showToast('포인트 부족');
+    state.supportItems[itemId] = 1;
     const result = changeCardRace(state, cardId, race, cards);
     if (!result.used) return showToast(result.reason);
     state = result.state;
+    state.points -= RACE_CHANGE_SELECTOR.price;
+    state.shopTransactions += 1;
     gameService.persistSnapshot(state);
     elements.cardSelectorDialog.close();
     clearCardSelectorSelection();
@@ -2511,29 +2516,6 @@ function purchaseSupportPack(productId = 'support', amount = 1, triggerButton = 
     renderHeader();
     renderShop();
     showSupportResults(pack, itemIds, cost);
-  });
-}
-
-function purchaseFixedSupportItem(itemId, triggerButton = null) {
-  if (itemId !== RACE_CHANGE_SELECTOR.itemId) return null;
-  return runUiOperation(`purchaseFixedSupportItem:${itemId}`, triggerButton, async () => {
-    if (remoteMode) {
-      const response = await executeServerCommand(GAME_COMMAND_TYPES.PURCHASE_FIXED_SUPPORT_ITEM, { itemId });
-      if (!response?.ok) return response;
-      renderHeader();
-      renderShop();
-      showToast(`${RACE_CHANGE_SELECTOR.name} 1장 구매 · ${number.format(response.result?.spentPoints ?? RACE_CHANGE_SELECTOR.price)}P`);
-      return response;
-    }
-    if (state.points < RACE_CHANGE_SELECTOR.price) return showToast('포인트 부족');
-    state.points -= RACE_CHANGE_SELECTOR.price;
-    state.supportItems[itemId] = (state.supportItems[itemId] ?? 0) + 1;
-    state.shopTransactions += 1;
-    gameService.purchasePack(state);
-    renderHeader();
-    renderShop();
-    showToast(`${RACE_CHANGE_SELECTOR.name} 1장 구매`);
-    return null;
   });
 }
 
@@ -3348,9 +3330,9 @@ function bindEvents() {
       purchaseSupportPack(supportPurchase.dataset.supportProduct, Number(supportPurchase.dataset.buySupport), supportPurchase);
       return;
     }
-    const fixedSupportPurchase = event.target.closest('[data-buy-fixed-support]');
-    if (fixedSupportPurchase) {
-      purchaseFixedSupportItem(fixedSupportPurchase.dataset.buyFixedSupport, fixedSupportPurchase);
+    const raceSelectorPurchase = event.target.closest('[data-open-race-selector]');
+    if (raceSelectorPurchase) {
+      openCardSelector(raceSelectorPurchase.dataset.openRaceSelector, { requireOwnedItem: false });
       return;
     }
     const product = event.target.closest('[data-shop-product]');

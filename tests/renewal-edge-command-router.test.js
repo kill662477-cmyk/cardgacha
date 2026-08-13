@@ -140,11 +140,13 @@ assert.equal(advancedSupportPack.rpc, 'gacha_s2_purchase_advanced_support_pack')
 
 const fixedSupportItem = await router.execute('user-fixed-by-auth', command(
   GAME_COMMAND_TYPES.PURCHASE_FIXED_SUPPORT_ITEM,
-  { itemId: 'raceChangeSelector' },
+  { itemId: 'raceChangeSelector', targetCardId: 'jidudu-1', race: '프로토스' },
   'fixed-item-buy-001',
 ));
 assert.equal(fixedSupportItem.rpc, 'gacha_s2_purchase_fixed_support_item');
 assert.equal(fixedSupportItem.args.p_item_id, 'raceChangeSelector');
+assert.equal(fixedSupportItem.args.p_target_card_id, 'jidudu-1');
+assert.equal(fixedSupportItem.args.p_race, '프로토스');
 
 const cardSelector = await router.execute('user-fixed-by-auth', command(
   GAME_COMMAND_TYPES.REDEEM_CARD_SELECTOR,

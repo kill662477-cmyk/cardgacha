@@ -86,13 +86,14 @@ const minigameStart = createGameCommand({
 assert.equal(validateGameCommand(minigameStart).valid, true);
 const fixedSupportPurchase = createGameCommand({
   type: GAME_COMMAND_TYPES.PURCHASE_FIXED_SUPPORT_ITEM,
-  payload: { itemId: 'raceChangeSelector' },
+  payload: { itemId: 'raceChangeSelector', targetCardId: 'card-a', race: '프로토스' },
   expectedRevision: 6,
   idempotencyKey: 'race-ticket-buy-001',
   clientSentAt: clock.now(),
 });
 assert.equal(validateGameCommand(fixedSupportPurchase).valid, true);
-assert.equal(validateGameCommand({ ...fixedSupportPurchase, payload: { itemId: 'traitReroll' } }).valid, false);
+assert.equal(validateGameCommand({ ...fixedSupportPurchase, payload: { ...fixedSupportPurchase.payload, itemId: 'traitReroll' } }).valid, false);
+assert.equal(validateGameCommand({ ...fixedSupportPurchase, payload: { ...fixedSupportPurchase.payload, targetCardId: null } }).valid, false);
 const raceChangeUse = createGameCommand({
   type: GAME_COMMAND_TYPES.USE_SUPPORT_ITEM,
   payload: { itemId: 'raceChangeSelector', targetCardId: 'card-a', race: '프로토스' },

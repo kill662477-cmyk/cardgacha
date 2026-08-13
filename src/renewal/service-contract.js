@@ -98,7 +98,7 @@ function validatePayload(type, payload, issues) {
     [GAME_COMMAND_TYPES.PURCHASE_PACK]: ['productId', 'quantity', 'race'],
     [GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK]: ['quantity'],
     [GAME_COMMAND_TYPES.PURCHASE_ADVANCED_SUPPORT_PACK]: ['quantity'],
-    [GAME_COMMAND_TYPES.PURCHASE_FIXED_SUPPORT_ITEM]: ['itemId'],
+    [GAME_COMMAND_TYPES.PURCHASE_FIXED_SUPPORT_ITEM]: ['itemId', 'targetCardId', 'race'],
     [GAME_COMMAND_TYPES.USE_SUPPORT_ITEM]: ['itemId', 'targetCardId', 'race', 'count'],
     [GAME_COMMAND_TYPES.REDEEM_CARD_SELECTOR]: ['itemId', 'cardId'],
     [GAME_COMMAND_TYPES.ENHANCE_CARD]: ['cardId', 'targetEnhancement', 'materialCardIds', 'boosterId'],
@@ -211,6 +211,8 @@ function validatePayload(type, payload, issues) {
       break;
     case GAME_COMMAND_TYPES.PURCHASE_FIXED_SUPPORT_ITEM:
       if (payload.itemId !== 'raceChangeSelector') addIssue(issues, 'payload.itemId', 'raceChangeSelector required');
+      validateString(issues, payload.targetCardId, 'payload.targetCardId', 80);
+      if (!['저그', '테란', '프로토스'].includes(payload.race)) addIssue(issues, 'payload.race', 'valid race required');
       break;
     case GAME_COMMAND_TYPES.USE_SUPPORT_ITEM: {
       validateString(issues, payload.itemId, 'payload.itemId', 80);

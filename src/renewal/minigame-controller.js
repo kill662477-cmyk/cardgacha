@@ -27,6 +27,7 @@ import {
   MARKET_RULES,
   isMarketProductBuySuspended,
   marketFee,
+  marketHoldings,
   marketProductLabel,
   marketReturnRate,
   normalizeMarketProduct,
@@ -80,7 +81,8 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     'marketPositionPnl', 'marketQuantity', 'marketMaxBuy', 'marketMaxSell',
     'marketProductSelect', 'marketProductRisk', 'marketOrderGross', 'marketOrderFee', 'marketBuyButton', 'marketSellButton',
     'marketControl', 'marketInvestedPoints', 'marketValue', 'marketUnrealizedPnl',
-    'marketRealizedPnl', 'marketInvestmentCap', 'marketInvestmentBar', 'marketTradeList',
+    'marketRealizedPnl', 'marketInvestmentCap', 'marketInvestmentBar',
+    'marketHoldingCount', 'marketHoldingList', 'marketTradeList',
   ].map((id) => [id, document.getElementById(id)]));
 
   let selectedGame = 'memory';
@@ -814,6 +816,20 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     elements.marketInvestmentCap.textContent = `${number.format(invested)} / ${number.format(cap)}P`;
     elements.marketInvestmentBar.style.width = `${Math.min(100, invested / Math.max(1, cap) * 100)}%`;
 
+    const holdings = marketHoldings(assets);
+    elements.marketHoldingCount.textContent = number.format(holdings.length);
+    elements.marketHoldingList.innerHTML = holdings.length ? holdings.map((holding) => {
+      const rate = marketReturnRate(holding.unrealizedPnl, holding.costBasis);
+      const direction = holding.unrealizedPnl > 0 ? 'up' : holding.unrealizedPnl < 0 ? 'down' : '';
+      const active = holding.symbol === marketSelectedSymbol && holding.productKey === marketSelectedProductKey;
+      return `<button type="button" class="market-holding-row ${active ? 'active' : ''}" data-market-holding="${escapeHtml(holding.symbol)}" data-market-product="${escapeHtml(holding.productKey)}">
+        <span><b>${escapeHtml(holding.name)}</b><small>${escapeHtml(holding.productLabel)}</small></span>
+        <em>${number.format(holding.quantity)}주</em>
+        <strong>${number.format(holding.marketValue)}P</strong>
+        <i class="${direction}">${marketSignedPercent(rate)}</i>
+      </button>`;
+    }).join('') : '<p>현재 보유 종목 없음</p>';
+
     const trades = Array.isArray(state.recentTrades) ? state.recentTrades : [];
     elements.marketTradeList.innerHTML = trades.length ? trades.map((trade) => `
       <article class="market-trade-row" data-side="${trade.side}">
@@ -1445,6 +1461,14 @@ export function createMiniGameController({ cards, getState, persist, showToast, 
     const button = event.target.closest('[data-market-symbol]');
     if (!button || marketLoading) return;
     marketSelectedSymbol = button.dataset.marketSymbol;
+    elements.marketQuantity.value = '1';
+    render();
+  });
+  elements.marketHoldingList?.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-market-holding]');
+    if (!button || marketLoading) return;
+    marketSelectedSymbol = button.dataset.marketHolding;
+    marketSelectedProductKey = button.dataset.marketProduct;
     elements.marketQuantity.value = '1';
     render();
   });

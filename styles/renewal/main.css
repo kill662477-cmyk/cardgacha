@@ -1446,9 +1446,9 @@ button[aria-busy="true"]::after {
 .market-order-actions button[data-side="buy"] { border-color: #8f3340; background: #34151a; color: #ff7b8a; }
 .market-order-actions button[data-side="sell"] { border-color: #285b86; background: #10283d; color: #79bcff; }
 .market-order button:disabled { cursor: default; filter: grayscale(.8); opacity: .42; }
-.market-control { grid-row: 2 / 5; display: grid; grid-template-rows: auto minmax(90px, 1fr) auto; gap: 8px; min-height: 0; padding: 10px 11px; overflow-y: auto; }
+.market-control { grid-row: 2 / 5; display: grid; grid-template-rows: auto minmax(128px, 1.05fr) minmax(90px, .75fr) auto; gap: 8px; min-height: 0; padding: 10px 11px; overflow-y: auto; }
 .market-portfolio { padding: 10px; border: 1px solid #3f4b42; background: #0b120d; }
-.market-portfolio > span, .market-trade-log header span { color: #ffbd43; font-size: 7px; font-weight: 950; letter-spacing: .14em; }
+.market-portfolio > span, .market-holdings > header span, .market-trade-log header span { color: #ffbd43; font-size: 7px; font-weight: 950; letter-spacing: .14em; }
 .market-portfolio dl { margin: 7px 0 10px; }
 .market-portfolio dl div { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid #273129; }
 .market-portfolio dt { color: #7a887d; font-size: 8px; }
@@ -1458,6 +1458,21 @@ button[aria-busy="true"]::after {
 .market-cap strong { color: #e1e8e2; font-size: 9px; text-align: right; font-variant-numeric: tabular-nums; }
 .market-cap > i { display: block; height: 4px; background: #273129; }
 .market-cap > i b { display: block; width: 0; height: 100%; background: #ffbd43; transition: width .2s ease; }
+.market-holdings { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; padding: 9px; border: 1px solid #3f4b42; background: #090f0b; }
+.market-holdings > header { display: flex; align-items: baseline; justify-content: space-between; gap: 7px; padding-bottom: 6px; border-bottom: 1px solid #2b352e; }
+.market-holdings > header strong { color: #758278; font-size: 7px; letter-spacing: .08em; }
+.market-holdings > header strong b { color: #dce5de; }
+.market-holdings > div { min-height: 0; overflow-y: auto; }
+.market-holdings > div > p { display: grid; min-height: 74px; margin: 0; place-items: center; color: #667269; font-size: 8px; }
+.market-holding-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 8px; width: 100%; padding: 7px 4px; border: 0; border-bottom: 1px solid #252e27; background: transparent; color: #dce5de; text-align: left; cursor: pointer; }
+.market-holding-row:hover, .market-holding-row:focus-visible { background: #121c15; outline: none; }
+.market-holding-row.active { background: #182116; box-shadow: inset 2px 0 #c7ff26; }
+.market-holding-row span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.market-holding-row span b { font-size: 8px; }
+.market-holding-row span small { margin-left: 5px; color: #7e8b81; font-size: 6px; }
+.market-holding-row em { color: #8f9b92; font-size: 7px; font-style: normal; font-variant-numeric: tabular-nums; }
+.market-holding-row strong { color: #e3ebe5; font-size: 8px; font-variant-numeric: tabular-nums; }
+.market-holding-row i { color: #89958b; font-size: 7px; font-style: normal; font-weight: 900; font-variant-numeric: tabular-nums; }
 .market-trade-log { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; padding: 9px; border: 1px solid #3f4b42; background: #090f0b; }
 .market-trade-log header { display: flex; align-items: baseline; gap: 7px; padding-bottom: 6px; border-bottom: 1px solid #2b352e; }
 .market-trade-log header b { font-size: 9px; }
@@ -2918,6 +2933,7 @@ button[aria-busy="true"]::after {
 .market-mode .market-control { gap: 10px; padding: 12px; }
 .market-mode .market-portfolio { padding: 12px; }
 .market-mode .market-portfolio > span,
+.market-mode .market-holdings > header span,
 .market-mode .market-trade-log header span { font-size: 9px; }
 .market-mode .market-portfolio dl div { padding: 8px 0; }
 .market-mode .market-portfolio dt { font-size: 10px; }
@@ -2926,6 +2942,15 @@ button[aria-busy="true"]::after {
 .market-mode .market-cap span { font-size: 9px; }
 .market-mode .market-cap strong { font-size: 11px; }
 .market-mode .market-cap > i { height: 6px; }
+.market-mode .market-holdings { padding: 11px; }
+.market-mode .market-holdings > header strong { font-size: 9px; }
+.market-mode .market-holdings > div > p { font-size: 10px; }
+.market-mode .market-holding-row { gap: 4px 9px; padding: 9px 3px; }
+.market-mode .market-holding-row span b { font-size: 10px; }
+.market-mode .market-holding-row span small { font-size: 8px; }
+.market-mode .market-holding-row em,
+.market-mode .market-holding-row i { font-size: 9px; }
+.market-mode .market-holding-row strong { font-size: 10px; }
 .market-mode .market-trade-log { padding: 11px; }
 .market-mode .market-trade-log header b { font-size: 11px; }
 .market-mode .market-trade-log > div > p { font-size: 10px; }
@@ -2979,7 +3004,8 @@ button[aria-busy="true"]::after {
   .market-mode .market-order input { font-size: 16px; }
   .market-mode .minigame-control { grid-column: 1; grid-row: 3; display: block; border-top: 1px solid var(--line); border-right: 0; overflow: visible; }
   .market-mode .minigame-control > header { display: none; }
-  .market-mode .market-control { grid-row: auto; grid-template-rows: auto minmax(150px, auto) auto; gap: 8px; padding: 8px; overflow: visible; }
+  .market-mode .market-control { grid-row: auto; grid-template-rows: auto minmax(180px, auto) minmax(150px, auto) auto; gap: 8px; padding: 8px; overflow: visible; }
+  .market-mode .market-holdings { max-height: 360px; }
   .market-mode .market-trade-log { min-height: 170px; max-height: 260px; }
 }
 

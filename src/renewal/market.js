@@ -61,6 +61,35 @@ export function marketReturnRate(unrealizedPnl, investedPoints) {
   return Number.isFinite(rate) ? rate : 0;
 }
 
+export function marketHoldings(assets = []) {
+  return (Array.isArray(assets) ? assets : [])
+    .flatMap((asset) => {
+      const positions = Array.isArray(asset?.positions) && asset.positions.length
+        ? asset.positions
+        : [asset];
+      return positions
+        .filter((position) => Number(position?.quantity ?? 0) > 0)
+        .map((position) => {
+          const product = normalizeMarketProduct(position.positionType, Number(position.multiplier ?? 1));
+          return {
+            symbol: String(asset?.symbol ?? ''),
+            name: String(asset?.name ?? asset?.symbol ?? ''),
+            productKey: product.key,
+            productLabel: product.label,
+            quantity: Number(position.quantity ?? 0),
+            costBasis: Number(position.costBasis ?? 0),
+            marketValue: Number(position.marketValue ?? 0),
+            unrealizedPnl: Number(position.unrealizedPnl ?? 0),
+          };
+        });
+    })
+    .sort((left, right) => (
+      right.marketValue - left.marketValue
+      || right.costBasis - left.costBasis
+      || left.name.localeCompare(right.name)
+    ));
+}
+
 export function normalizeMarketProduct(positionType = 'long', multiplier = 1) {
   const type = positionType === 'inverse' ? 'inverse' : 'long';
   const multiple = Number(multiplier);

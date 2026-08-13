@@ -8,6 +8,7 @@ import {
   canAddMarketInvestment,
   isMarketProductBuySuspended,
   marketFee,
+  marketHoldings,
   marketProductChangeRate,
   marketProductLabel,
   marketReturnRate,
@@ -81,6 +82,20 @@ assert.equal(marketFee(1), 1);
 assert.equal(marketReturnRate(1_500, 100_000), 1.5);
 assert.equal(marketReturnRate(-1_500, 100_000), -1.5);
 assert.equal(marketReturnRate(500, 0), 0);
+assert.deepEqual(marketHoldings([
+  {
+    symbol: 'TMT',
+    name: '토마토',
+    positions: [
+      { positionType: 'long', multiplier: 1, quantity: 3, costBasis: 30_000, marketValue: 36_000, unrealizedPnl: 6_000 },
+      { positionType: 'inverse', multiplier: 2, quantity: 4, costBasis: 20_000, marketValue: 40_000, unrealizedPnl: 20_000 },
+      { positionType: 'long', multiplier: 3, quantity: 0, costBasis: 0, marketValue: 0, unrealizedPnl: 0 },
+    ],
+  },
+]), [
+  { symbol: 'TMT', name: '토마토', productKey: 'inverse:2', productLabel: '인버스 x2', quantity: 4, costBasis: 20_000, marketValue: 40_000, unrealizedPnl: 20_000 },
+  { symbol: 'TMT', name: '토마토', productKey: 'long:1', productLabel: '일반', quantity: 3, costBasis: 30_000, marketValue: 36_000, unrealizedPnl: 6_000 },
+]);
 assert.equal(nextMarketPrice(10_000, 0.80), 13_000);
 assert.equal(nextMarketPrice(10_000, -0.80), 7_000);
 assert.equal(normalizeMarketQuantity('3'), 3);
@@ -191,14 +206,20 @@ assert.match(html, /id="marketShell"/);
 assert.match(html, /id="marketBuyButton"/);
 assert.match(html, /aria-label="오늘 시간별 가격 차트"/);
 assert.match(html, /id="marketProductSelect"/);
+assert.match(html, /id="marketHoldingCount"/);
+assert.match(html, /id="marketHoldingList"/);
 assert.match(html, /레버리지 x5/);
 assert.match(html, /인버스 x5/);
 assert.match(html, /전체\/종목당 투자 원금 최대 1,000,000P/);
 assert.match(css, /\.market-shell/);
+assert.match(css, /\.market-holding-row/);
 assert.match(controller, /loadMarketState/);
 assert.match(controller, /submitMarketTrade/);
 assert.match(controller, /serverCommands\?\.marketTrade/);
 assert.match(controller, /marketReturnRate\(unrealized, invested\)/);
+assert.match(controller, /marketHoldings\(assets\)/);
+assert.match(controller, /data-market-holding/);
+assert.match(controller, /marketHoldingList\?\.addEventListener\('click'/);
 assert.match(controller, /marketProductRiskText/);
 assert.match(controller, /buySuspended/);
 assert.match(controller, /가격 보호 구간의 레버리지·인버스 상품은 신규 매수할 수 없습니다/);

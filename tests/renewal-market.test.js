@@ -33,6 +33,8 @@ const floorRecoveryCorrectionMigration = await read('supabase/migrations/2026081
 const floorRecoveryCorrectionSql = floorRecoveryCorrectionMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const marketCompensationMigration = await read('supabase/migrations/20260813094000_market_bug_global_compensation_500k.sql');
 const marketCompensationSql = marketCompensationMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
+const lowPriceRecoveryMigration = await read('supabase/migrations/20260813101600_market_low_price_recovery_guard.sql');
+const lowPriceRecoverySql = lowPriceRecoveryMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const html = await read('index.html');
 const css = await read('styles/renewal/main.css');
 const controller = await read('src/renewal/minigame-controller.js');
@@ -163,6 +165,12 @@ assert.match(marketCompensationSql, /offset_applied \+ net_credited = gross_rewa
 assert.match(marketCompensationSql, /outstanding_before - outstanding_after = offset_applied/);
 assert.match(marketCompensationSql, /set points = state\.points \+ reward\.gross_reward/);
 assert.match(marketCompensationSql, /market-bug-global-compensation-500k-20260813/);
+assert.match(lowPriceRecoverySql, /v_previous_price < v_base_price \* 0\.10/);
+assert.match(lowPriceRecoverySql, /v_previous_price < v_base_price \* 0\.20/);
+assert.match(lowPriceRecoverySql, /v_direction_roll < 0\.75/);
+assert.match(lowPriceRecoverySql, /new\.trend_direction := 1/);
+assert.match(lowPriceRecoverySql, /new\.trend_remaining := floor\(1 \+ v_length_roll \* 3\)/);
+assert.match(lowPriceRecoverySql, /gacha_s2_00_apply_market_low_price_recovery_trigger/);
 
 assert.match(html, /data-minigame-select="market"/);
 assert.match(html, /id="marketShell"/);

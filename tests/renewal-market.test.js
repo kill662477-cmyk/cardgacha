@@ -31,6 +31,8 @@ const floorRecoveryMigration = await read('supabase/migrations/20260813091000_re
 const floorRecoverySql = floorRecoveryMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const floorRecoveryCorrectionMigration = await read('supabase/migrations/20260813092500_correct_market_floor_recovery_qualification.sql');
 const floorRecoveryCorrectionSql = floorRecoveryCorrectionMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
+const marketCompensationMigration = await read('supabase/migrations/20260813094000_market_bug_global_compensation_500k.sql');
+const marketCompensationSql = marketCompensationMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const html = await read('index.html');
 const css = await read('styles/renewal/main.css');
 const controller = await read('src/renewal/minigame-controller.js');
@@ -155,6 +157,12 @@ assert.match(floorRecoveryCorrectionSql, /refund_points = greatest\(0, recovered
 assert.match(floorRecoveryCorrectionSql, /effective_recovered_points \+ outstanding_points = revised_recovery_amount/);
 assert.match(floorRecoveryCorrectionSql, /market-100p-floor-recovery-correction-notice-20260813/);
 assert.doesNotMatch(floorRecoveryCorrectionSql, /nickname|display_name|account\.id \|\|/);
+assert.match(marketCompensationSql, /create table if not exists public\.gacha_s2_market_bug_compensation_20260813/);
+assert.match(marketCompensationSql, /gross_reward integer not null default 500000/);
+assert.match(marketCompensationSql, /offset_applied \+ net_credited = gross_reward/);
+assert.match(marketCompensationSql, /outstanding_before - outstanding_after = offset_applied/);
+assert.match(marketCompensationSql, /set points = state\.points \+ reward\.gross_reward/);
+assert.match(marketCompensationSql, /market-bug-global-compensation-500k-20260813/);
 
 assert.match(html, /data-minigame-select="market"/);
 assert.match(html, /id="marketShell"/);

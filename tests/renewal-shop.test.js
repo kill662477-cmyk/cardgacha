@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { ADVANCED_SUPPORT_PACK, PACKS, SUPPORT_ITEMS, SUPPORT_PACK } from '../src/renewal/config.js';
+import { ADVANCED_SUPPORT_PACK, PACKS, RACE_CHANGE_SELECTOR, SUPPORT_ITEMS, SUPPORT_PACK } from '../src/renewal/config.js';
 import {
   addCardResults,
   cardExpPotionsNeeded,
   cardResultGridLayout,
   cardExpBoostSeconds,
+  changeCardRace,
   drawCardPack,
   drawSupportPack,
   effectivePackRates,
@@ -41,6 +42,9 @@ assert.equal(SUPPORT_PACK.rareItems.includes('traitReroll'), true, 'sub-1% item 
 assert.equal(SUPPORT_PACK.tenGuarantee, false);
 assert.equal(ADVANCED_SUPPORT_PACK.tenGuarantee, false);
 assert.equal(SUPPORT_ITEMS.traitReroll.name, '랜덤특성변경권');
+assert.equal(SUPPORT_ITEMS.raceChangeSelector.name, '종족선택 변경권');
+assert.equal(RACE_CHANGE_SELECTOR.price, 20_000_000);
+assert.equal(Object.hasOwn(SUPPORT_PACK.items, 'raceChangeSelector'), false, '종족 변경권은 확률형 보급팩에서 나오면 안 된다');
 assert.equal(drawSupportPack(1, () => 0.9998, ADVANCED_SUPPORT_PACK)[0], 'traitReroll');
 assert.equal(drawSupportPack(1, () => 0.9996, ADVANCED_SUPPORT_PACK)[0], 'quickBattleReset');
 assert.match(advancedTraitRateMigration, /'traitReroll', 0\.03/);
@@ -194,5 +198,21 @@ assert.equal(rerolled.state.supportItems.traitReroll, 0);
 assert.equal(rerolled.state.cardProgress[rerollCard.id].enhancement, 7);
 assert.equal(rerolled.state.cardProgress[rerollCard.id].exp, 123);
 assert.equal(rerolled.state.cardProgress[rerollCard.id].archetype, rerolled.archetype);
+
+const raceChangeState = {
+  supportItems: { raceChangeSelector: 1 },
+  cardCopies: { [rerollCard.id]: 3 },
+  cardProgress: { [rerollCard.id]: { enhancement: 7, exp: 123, archetype: rerolled.archetype } },
+};
+const nextRace = ['저그', '테란', '프로토스'].find((race) => race !== rerollCard.race);
+const raceChanged = changeCardRace(raceChangeState, rerollCard.id, nextRace, cards);
+assert.equal(raceChanged.used, true);
+assert.equal(raceChanged.previousRace, rerollCard.race);
+assert.equal(raceChanged.race, nextRace);
+assert.equal(raceChanged.state.supportItems.raceChangeSelector, 0);
+assert.equal(raceChanged.state.cardProgress[rerollCard.id].enhancement, 7);
+assert.equal(raceChanged.state.cardProgress[rerollCard.id].archetype, rerolled.archetype);
+assert.equal(raceChanged.state.cardProgress[rerollCard.id].race, nextRace);
+assert.equal(changeCardRace(raceChangeState, rerollCard.id, rerollCard.race, cards).used, false, '현재 종족 재선택은 소비 없이 거절해야 한다');
 
 console.log('renewal shop tests passed: card packs, support guarantee, selectors, random traits, consumables, resets, batch EXP potion fill');

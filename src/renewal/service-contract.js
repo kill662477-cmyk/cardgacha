@@ -21,6 +21,7 @@ export const GAME_COMMAND_TYPES = Object.freeze({
   PURCHASE_PACK: 'purchasePack',
   PURCHASE_SUPPORT_PACK: 'purchaseSupportPack',
   PURCHASE_ADVANCED_SUPPORT_PACK: 'purchaseAdvancedSupportPack',
+  PURCHASE_FIXED_SUPPORT_ITEM: 'purchaseFixedSupportItem',
   USE_SUPPORT_ITEM: 'useSupportItem',
   REDEEM_CARD_SELECTOR: 'redeemCardSelector',
   ENHANCE_CARD: 'enhanceCard',
@@ -97,6 +98,7 @@ function validatePayload(type, payload, issues) {
     [GAME_COMMAND_TYPES.PURCHASE_PACK]: ['productId', 'quantity', 'race'],
     [GAME_COMMAND_TYPES.PURCHASE_SUPPORT_PACK]: ['quantity'],
     [GAME_COMMAND_TYPES.PURCHASE_ADVANCED_SUPPORT_PACK]: ['quantity'],
+    [GAME_COMMAND_TYPES.PURCHASE_FIXED_SUPPORT_ITEM]: ['itemId'],
     [GAME_COMMAND_TYPES.USE_SUPPORT_ITEM]: ['itemId', 'targetCardId', 'race', 'count'],
     [GAME_COMMAND_TYPES.REDEEM_CARD_SELECTOR]: ['itemId', 'cardId'],
     [GAME_COMMAND_TYPES.ENHANCE_CARD]: ['cardId', 'targetEnhancement', 'materialCardIds', 'boosterId'],
@@ -207,15 +209,18 @@ function validatePayload(type, payload, issues) {
     case GAME_COMMAND_TYPES.PURCHASE_ADVANCED_SUPPORT_PACK:
       if (![1, 10].includes(payload.quantity)) addIssue(issues, 'payload.quantity', '1 or 10 required');
       break;
+    case GAME_COMMAND_TYPES.PURCHASE_FIXED_SUPPORT_ITEM:
+      if (payload.itemId !== 'raceChangeSelector') addIssue(issues, 'payload.itemId', 'raceChangeSelector required');
+      break;
     case GAME_COMMAND_TYPES.USE_SUPPORT_ITEM: {
       validateString(issues, payload.itemId, 'payload.itemId', 80);
       const expTargetRequired = payload.itemId === 'cardExpPotion' || payload.itemId === 'cardExpPotionLarge';
-      const targetRequired = expTargetRequired || payload.itemId === 'traitReroll';
-      const raceRequired = payload.itemId === 'raceTicket';
+      const targetRequired = expTargetRequired || payload.itemId === 'traitReroll' || payload.itemId === 'raceChangeSelector';
+      const raceRequired = payload.itemId === 'raceTicket' || payload.itemId === 'raceChangeSelector';
       if (targetRequired) validateString(issues, payload.targetCardId, 'payload.targetCardId', 80);
       else if (payload.targetCardId !== null && payload.targetCardId !== undefined) addIssue(issues, 'payload.targetCardId', 'targetCardId is only valid for card-target items');
       if (raceRequired && !['저그', '테란', '프로토스'].includes(payload.race)) addIssue(issues, 'payload.race', 'valid race required');
-      else if (!raceRequired && payload.race !== null && payload.race !== undefined) addIssue(issues, 'payload.race', 'race is only valid for raceTicket');
+      else if (!raceRequired && payload.race !== null && payload.race !== undefined) addIssue(issues, 'payload.race', 'race is only valid for race-target items');
       if (payload.count !== null && payload.count !== undefined) {
         if (!expTargetRequired) addIssue(issues, 'payload.count', 'count is only valid for EXP potions');
         else if (!Number.isInteger(payload.count) || payload.count < 1 || payload.count > 9999) addIssue(issues, 'payload.count', '1~9999 정수 필요');

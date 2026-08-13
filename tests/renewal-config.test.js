@@ -13,6 +13,7 @@ import {
   SOOP_RULES,
   SUPPORT_PACK,
   ADVANCED_SUPPORT_PACK,
+  RACE_CHANGE_SELECTOR,
   WORLD_BOSS_RULES,
   RARITIES,
 } from '../src/renewal/config.js';
@@ -70,6 +71,7 @@ assert.equal(ADVANCED_SUPPORT_PACK.items.destructionGuard, 15);
 assert.equal(ADVANCED_SUPPORT_PACK.items.adventureRunReset, 0.5);
 assert.equal(ADVANCED_SUPPORT_PACK.items.quickBattleReset, 3.97);
 assert.equal(ADVANCED_SUPPORT_PACK.items.traitReroll, 0.03);
+assert.equal(RACE_CHANGE_SELECTOR.price, 20_000_000);
 for (const pack of [SUPPORT_PACK, ADVANCED_SUPPORT_PACK]) {
   assert.equal(pack.tenGuarantee, false);
   assert.deepEqual(pack.guaranteeRates, pack.items, `${pack.name} 10회 확정 제거`);

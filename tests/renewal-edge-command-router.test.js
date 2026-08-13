@@ -40,12 +40,17 @@ const applicantProfile = buildGuildApplicantProfile({
   userId: 'applicant',
   nickname: '신청자',
   powerSnapshot: 1,
-  formation: playable.map((card) => ({ cardId: card.id, enhancement: 3 })),
+  formation: playable.map((card, index) => ({
+    cardId: card.id,
+    enhancement: 3,
+    race: index === 0 ? ['저그', '테란', '프로토스'].find((race) => race !== card.race) : card.race,
+  })),
   registeredCardIds: playable.map((card) => card.id),
   guildBuff: { atk: 0, hp: 0, def: 0 },
 }, cards);
 assert.equal(applicantProfile.power > 1, true, '신청자 전투력은 현재 덱·강화·도감으로 계산해야 한다');
 assert.equal(applicantProfile.formation.length, 5);
+assert.notEqual(applicantProfile.formation[0].race, playable[0].race, '길드 덱 조회는 계정 종족 변경값을 표시해야 한다');
 assert.equal('registeredCardIds' in applicantProfile, false, '도감 원본은 승인자 브라우저에 노출하지 않는다');
 assert.equal('guildBuff' in applicantProfile, false, '내부 전투력 계산값은 승인자 브라우저에 노출하지 않는다');
 
@@ -132,6 +137,14 @@ const advancedSupportPack = await router.execute('user-fixed-by-auth', command(
   'advanced-pack-0001',
 ));
 assert.equal(advancedSupportPack.rpc, 'gacha_s2_purchase_advanced_support_pack');
+
+const fixedSupportItem = await router.execute('user-fixed-by-auth', command(
+  GAME_COMMAND_TYPES.PURCHASE_FIXED_SUPPORT_ITEM,
+  { itemId: 'raceChangeSelector' },
+  'fixed-item-buy-001',
+));
+assert.equal(fixedSupportItem.rpc, 'gacha_s2_purchase_fixed_support_item');
+assert.equal(fixedSupportItem.args.p_item_id, 'raceChangeSelector');
 
 const cardSelector = await router.execute('user-fixed-by-auth', command(
   GAME_COMMAND_TYPES.REDEEM_CARD_SELECTOR,

@@ -27,6 +27,8 @@ const derivativeFloorMigration = await read('supabase/migrations/20260813084000_
 const derivativeFloorSql = derivativeFloorMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const derivativeBuyGuardMigration = await read('supabase/migrations/20260813085400_block_derivative_buy_at_1p.sql');
 const derivativeBuyGuardSql = derivativeBuyGuardMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
+const floorRecoveryMigration = await read('supabase/migrations/20260813091000_recover_market_100p_floor_profit.sql');
+const floorRecoverySql = floorRecoveryMigration.replace(/--[^\n]*/g, '').replace(/\s+/g, ' ').toLowerCase();
 const html = await read('index.html');
 const css = await read('styles/renewal/main.css');
 const controller = await read('src/renewal/minigame-controller.js');
@@ -130,6 +132,16 @@ assert.match(derivativeBuyGuardSql, /new\.side = 'buy'/);
 assert.match(derivativeBuyGuardSql, /new\.multiplier >= 2/);
 assert.match(derivativeBuyGuardSql, /new\.unit_price <= 1/);
 assert.match(derivativeBuyGuardSql, /market_product_buy_suspended/);
+assert.match(floorRecoverySql, /create table if not exists public\.gacha_s2_market_floor_recoveries/);
+assert.match(floorRecoverySql, /trade\.unit_price = 100|v_event\.unit_price = 100/);
+assert.match(floorRecoverySql, /realized_floor_profit/);
+assert.match(floorRecoverySql, /unrealized_floor_profit/);
+assert.match(floorRecoverySql, /floor_quantity \* product_mark\.price - calc\.floor_cost/);
+assert.match(floorRecoverySql, /recovered_points \+ outstanding_points = recovery_amount/);
+assert.match(floorRecoverySql, /before update of points on public\.gacha_s2_player_states/);
+assert.match(floorRecoverySql, /when \(new\.points > old\.points\)/);
+assert.match(floorRecoverySql, /market-100p-floor-recovery-notice-20260813/);
+assert.doesNotMatch(floorRecoverySql, /nickname|display_name|account\.id \|\|/);
 
 assert.match(html, /data-minigame-select="market"/);
 assert.match(html, /id="marketShell"/);

@@ -2273,6 +2273,7 @@ function showRaceChangeResult(card, previousRace, race) {
   elements.shopResultGrid.style.removeProperty('--result-card-width');
   elements.shopResultGrid.innerHTML = `<article class="shop-result-item rare"><em class="rare-badge">SELECT</em><i data-lucide="dna"></i><b>${escapeHtml(card.member)}</b><span>${previousRace} → ${race}</span></article>`;
   window.lucide?.createIcons();
+  if (elements.shopResultDialog.open) elements.shopResultDialog.close();
   elements.shopResultDialog.showModal();
 }
 
@@ -2283,21 +2284,29 @@ async function changeSelectedCardRace() {
   const item = SUPPORT_ITEMS[itemId];
   const card = cardsById.get(cardId);
   if (!item?.raceSelector || !card || !race || !elements.cardSelectorDialog?.open) return;
-  return runUiOperation('changeCardRace', elements.cardSelectorConfirm, async () => {
-    if (remoteMode) {
-      const response = await executeServerCommand(GAME_COMMAND_TYPES.PURCHASE_FIXED_SUPPORT_ITEM, {
+  if (remoteMode) {
+    const response = await runUiOperation('changeCardRace', elements.cardSelectorConfirm, () => (
+      executeServerCommand(GAME_COMMAND_TYPES.PURCHASE_FIXED_SUPPORT_ITEM, {
         itemId, targetCardId: cardId, race,
-      });
-      if (!response?.ok) return response;
-      const previousRace = response.result?.previousRace ?? cardWithProgress(card).race;
-      const nextRace = response.result?.race ?? race;
-      elements.cardSelectorDialog.close();
+      })
+    ));
+    if (!response?.ok) return response;
+    const previousRace = response.result?.previousRace ?? cardWithProgress(card).race;
+    const nextRace = response.result?.race ?? race;
+    try {
+      if (elements.cardSelectorDialog.open) elements.cardSelectorDialog.close();
       clearCardSelectorSelection();
       renderHeader();
       renderShop();
       showRaceChangeResult(card, previousRace, nextRace);
-      return response;
+    } catch (error) {
+      console.warn('[race-selector] result presentation failed after committed change:', error);
+      setSystemState(null);
+      showToast(`${card.member} 종족 변경 완료 · ${previousRace} → ${nextRace}`);
     }
+    return response;
+  }
+  return runUiOperation('changeCardRace', elements.cardSelectorConfirm, async () => {
     if (state.points < RACE_CHANGE_SELECTOR.price) return showToast('포인트 부족');
     state.supportItems[itemId] = 1;
     const result = changeCardRace(state, cardId, race, cards);

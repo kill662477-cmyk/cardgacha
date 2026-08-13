@@ -65,6 +65,9 @@ function validateCardProgress(issues, value, cardIds) {
     if (progress.archetype != null && !Object.hasOwn(ARCHETYPES, progress.archetype)) {
       issue(issues, `${path}.archetype`, '존재하지 않는 특성 ID');
     }
+    if (progress.race != null && !['저그', '테란', '프로토스'].includes(progress.race)) {
+      issue(issues, `${path}.race`, '존재하지 않는 종족');
+    }
   });
 }
 

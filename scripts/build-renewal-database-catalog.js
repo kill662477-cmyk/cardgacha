@@ -21,6 +21,7 @@ import {
   SOOP_RULES,
   STAGES,
   ADVANCED_SUPPORT_PACK,
+  RACE_CHANGE_SELECTOR,
   SUPPORT_ITEMS,
   SUPPORT_PACK,
   WORLD_BOSS_RULES,
@@ -90,6 +91,9 @@ export function buildBalancePayload() {
     packs: PACKS,
     supportPack: SUPPORT_PACK,
     advancedSupportPack: ADVANCED_SUPPORT_PACK,
+    directSupportItems: {
+      [RACE_CHANGE_SELECTOR.itemId]: { name: RACE_CHANGE_SELECTOR.name, price: RACE_CHANGE_SELECTOR.price },
+    },
     supportItems: SUPPORT_ITEMS,
     bonusDropRules: BONUS_DROP_RULES,
     regions: REGIONS,

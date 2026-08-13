@@ -273,7 +273,7 @@ export function createGuildController({ cards = [], getState, gameService, serve
     return (Array.isArray(profile?.formation) ? profile.formation : []).map((item) => {
       const card = cardsById.get(item?.cardId);
       if (!card) return null;
-      return { ...card, enhancement: Number(item?.enhancement) || 0, archetype: item?.archetype ?? card.archetype };
+      return { ...card, enhancement: Number(item?.enhancement) || 0, archetype: item?.archetype ?? card.archetype, race: item?.race ?? card.race };
     }).filter(Boolean);
   }
 

@@ -617,7 +617,7 @@ button[aria-busy="true"]::after {
 
 .card-selector-dialog { width: min(980px, calc(100vw - 28px)); max-height: min(820px, calc(100dvh - 28px)); padding: 0; border: 1px solid var(--line-bright); background: #080b09; color: var(--text); }
 .card-selector-dialog::backdrop { background: rgba(0,0,0,.88); backdrop-filter: blur(6px); }
-.card-selector-shell { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; max-height: min(818px, calc(100dvh - 30px)); }
+.card-selector-shell { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; max-height: min(818px, calc(100dvh - 30px)); }
 .card-selector-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 18px 20px; border-bottom: 1px solid var(--line); }
 .card-selector-head span { color: var(--acid); font-size: 8px; font-weight: 900; letter-spacing: .14em; }
 .card-selector-head h2 { margin: 4px 0 0; font-size: 22px; }
@@ -638,6 +638,10 @@ button[aria-busy="true"]::after {
 .card-selector-copy small { margin-top: 5px; color: var(--muted); font-size: 8px; }
 .card-selector-copy em { margin-top: 7px; color: var(--gold); font-size: 8px; font-style: normal; }
 .card-selector-card > strong { position: absolute; top: 7px; right: 7px; color: var(--rarity); font-size: 8px; }
+.card-selector-races { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; padding: 10px 20px; border-top: 1px solid var(--line); background: #0b100c; }
+.card-selector-races button { min-height: 40px; border: 1px solid var(--line-bright); background: #101711; color: var(--muted); font-size: 11px; font-weight: 900; cursor: pointer; }
+.card-selector-races button:hover:not(:disabled), .card-selector-races button.active { border-color: var(--acid); background: rgba(200,245,46,.12); color: var(--acid); }
+.card-selector-races button:disabled { cursor: not-allowed; opacity: .35; }
 .card-selector-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 70px; padding: 12px 20px; border-top: 1px solid var(--line); background: #090d0a; }
 .card-selector-footer p { margin: 0; color: var(--muted); font-size: 10px; }
 .card-selector-footer .confirm-button { min-width: 180px; }
@@ -652,6 +656,8 @@ button[aria-busy="true"]::after {
   .card-selector-head h2 { font-size: 17px; }
   .card-selector-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; padding: 6px; }
   .card-selector-card { grid-template-columns: 50px minmax(0, 1fr); min-height: 74px; padding: 5px; }
+  .card-selector-races { gap: 4px; padding: 7px 10px; }
+  .card-selector-races button { min-height: 34px; font-size: 9px; }
   .card-selector-photo { width: 44px; height: 58px; }
   .card-selector-footer { min-height: 58px; padding: 8px 10px; }
   .card-selector-footer .confirm-button { min-width: 132px; }

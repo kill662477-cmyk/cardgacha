@@ -75,7 +75,7 @@ begin
   );
   if v_source not like '%when v_override_bps < 0 then ceil(v_target_price)%'
      or v_source not like '%when v_override_bps > 0 then floor(v_target_price)%'
-     or v_source not like '%greatest(-3000,%' then
+     or v_source not like '%least(3000,%' then
     raise exception 'MARKET_TICK_OVERRIDE_ROUNDING_FIX_FAILED';
   end if;
 end;
